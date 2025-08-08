@@ -1,0 +1,78 @@
+# Render configuration for deploying Royal Equips Orchestrator
+
+services:
+  # Web service for the orchestrator API
+  - type: web
+    name: orchestrator-api
+    # Use docker deployment for a custom container
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    # Health check endpoint exposed by FastAPI
+    healthCheckPath: /health
+    # Pull environment variables from Render dashboard or secret store
+    envVars:
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: SHOP_NAME
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: BIGQUERY_PROJECT_ID
+        sync: false
+      - key: BIGQUERY_DATASET
+        sync: false
+      - key: BIGQUERY_TABLE
+        sync: false
+
+  # Web service for the Streamlit control center
+  - type: web
+    name: control-center
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    # Override the start command to launch Streamlit instead of API
+    startCommand: >
+      streamlit run royal_equips_orchestrator/orchestrator/control_center/app.py --server.port $PORT --server.enableCORS false
+    envVars:
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: SHOP_NAME
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: BIGQUERY_PROJECT_ID
+        sync: false
+      - key: BIGQUERY_DATASET
+        sync: false
+      - key: BIGQUERY_TABLE
+        sync: false
+
+jobs:
+  # Cron job to export analytics to BigQuery every day at 03:00 UTC
+  - type: cron
+    name: export-analytics
+    env: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "0 3 * * *"
+    command: >
+      python scripts/run_analytics.py
+    envVars:
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: SHOP_NAME
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: BIGQUERY_PROJECT_ID
+        sync: false
+      - key: BIGQUERY_DATASET
+        sync: false
+      - key: BIGQUERY_TABLE
+        sync: false
