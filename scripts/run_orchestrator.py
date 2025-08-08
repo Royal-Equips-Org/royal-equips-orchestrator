@@ -30,6 +30,7 @@ from ..orchestrator.agents import (
     MarketingAutomationAgent,
     CustomerSupportAgent,
     OrderManagementAgent,
+    AnalyticsAgent,
 )
 
 app = FastAPI(title="Royal Equips Orchestrator API")
@@ -44,6 +45,7 @@ orch.register_agent(PricingOptimizerAgent(), interval=7200)
 orch.register_agent(MarketingAutomationAgent(), interval=43200)
 orch.register_agent(CustomerSupportAgent(), interval=300)
 orch.register_agent(OrderManagementAgent(), interval=600)
+orch.register_agent(AnalyticsAgent(orch), interval=86400)  # export analytics daily
 loop.create_task(orch.run_forever())
 
 @app.get("/health")

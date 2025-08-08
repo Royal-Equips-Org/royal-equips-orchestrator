@@ -15,6 +15,7 @@ from .pricing_optimizer import PricingOptimizerAgent
 from .marketing_automation import MarketingAutomationAgent
 from .customer_support import CustomerSupportAgent
 from .order_management import OrderManagementAgent
+from .analytics import AnalyticsAgent
 
 __all__ = [
     "ProductResearchAgent",
@@ -23,4 +24,5 @@ __all__ = [
     "MarketingAutomationAgent",
     "CustomerSupportAgent",
     "OrderManagementAgent",
+    "AnalyticsAgent",
 ]
