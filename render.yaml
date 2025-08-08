@@ -76,3 +76,33 @@ jobs:
         sync: false
       - key: BIGQUERY_TABLE
         sync: false
+
+  # Cron job to run security scans on the codebase every day at 02:00 UTC
+  # This job executes scripts/run_security_checks.py which installs security
+  # tooling (Bandit, pip‑audit) at runtime, scans the source code and
+  # dependencies, and writes a JSON report to the container's filesystem. The
+  # report is also printed to STDOUT so that it can be viewed in Render's
+  # logs. Environment variables are passed through for completeness, although
+  # they are not used directly by the script.
+  - type: cron
+    name: security-scan
+    env: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "0 2 * * *"
+    command: >
+      python scripts/run_security_checks.py
+    envVars:
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: SHOP_NAME
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: BIGQUERY_PROJECT_ID
+        sync: false
+      - key: BIGQUERY_DATASET
+        sync: false
+      - key: BIGQUERY_TABLE
+        sync: false

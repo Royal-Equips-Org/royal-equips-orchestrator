@@ -1,0 +1,9 @@
+# Ignore user secrets and transient output
+.env
+security_report.json
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.swp

@@ -173,6 +173,29 @@ stores. The orchestrator uses HTTPS when communicating with Shopify
 and OpenAI. Additional layers such as request signing, audit logging,
 and rate limiting can be added depending on deployment requirements.
 
+### Continuous Security
+
+Security is treated as a first‑class citizen in this repository. In addition
+to coding best practices and dependency management, the project includes
+automated security scans:
+
+* **Runtime security job** – The `render.yaml` blueprint defines a
+  `security-scan` cron job that executes `scripts/run_security_checks.py`
+  every day at 02:00 UTC. The script dynamically installs the latest
+  versions of the static analysis tool Bandit and the dependency
+  vulnerability scanner pip‑audit, runs them against the source code and
+  `requirements.txt`, and emits a consolidated JSON report. Non‑zero exit
+  codes signal potential security issues.
+* **Security report** – Scan results are written to `security_report.json`
+  and printed to the Render log stream. This enables continuous
+  monitoring and allows you to configure alerts via Render’s log
+  subscriptions.
+* **Environment isolation** – The security tools are only installed
+  in the short‑lived container that executes the scan. They are not part
+  of the runtime image used by the web services.
+
+Remember to review the security reports and address findings promptly.
+
 ## License
 
 This project is provided under the MIT License. See `LICENSE` for

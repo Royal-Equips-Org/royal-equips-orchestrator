@@ -1,6 +1,6 @@
 # Makefile for the Royal Equips Orchestrator
 
-.PHONY: help install run api dashboard docker-build docker-up clean
+.PHONY: help install run api dashboard docker-build docker-up clean security
 
 help:
 	@echo "Common tasks:"
@@ -11,6 +11,7 @@ help:
 	@echo "  make docker-build   Build Docker image"
 	@echo "  make docker-up      Run docker-compose stack"
 	@echo "  make clean          Remove build artifacts"
+	@echo "  make security       Run local security scans (bandit & pip‑audit)"
 
 install:
 	python3 -m venv .venv && \
@@ -35,3 +36,7 @@ docker-up:
 
 clean:
 	rm -rf .venv __pycache__ royal_equips_orchestrator/__pycache__ royal_equips_orchestrator/orchestrator/*/__pycache__
+
+security:
+	@echo "Running security scans..."
+	@python scripts/run_security_checks.py
