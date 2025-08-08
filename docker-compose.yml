@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  orchestrator:
+    build: .
+    container_name: royal-equips-orchestrator
+    environment:
+      # Replace these with your actual Shopify and OpenAI credentials
+      SHOPIFY_API_KEY: "${SHOPIFY_API_KEY}"
+      SHOPIFY_API_SECRET: "${SHOPIFY_API_SECRET}"
+      SHOP_NAME: "${SHOP_NAME}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+  control-center:
+    build: .
+    container_name: royal-equips-control-center
+    command: ["streamlit", "run", "royal_equips_orchestrator/orchestrator/control_center/app.py", "--server.port", "8501", "--server.enableCORS", "false"]
+    environment:
+      SHOPIFY_API_KEY: "${SHOPIFY_API_KEY}"
+      SHOPIFY_API_SECRET: "${SHOPIFY_API_SECRET}"
+      SHOP_NAME: "${SHOP_NAME}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+    ports:
+      - "8501:8501"
+    depends_on:
+      - orchestrator
+    restart: unless-stopped
