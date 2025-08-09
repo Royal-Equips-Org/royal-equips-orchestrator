@@ -1,22 +1,28 @@
 FROM python:3.11-slim
 
-# Set working directory
+# System deps (tiny, helps scientific libs/builds; safe to keep)
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    build-essential curl && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy requirements and install first for better caching
+# Dependencies first for caching
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy the application code
-COPY royal_equips_orchestrator /app/royal_equips_orchestrator
+# ✅ Correct repo paths
+COPY orchestrator /app/orchestrator
 COPY scripts /app/scripts
 
-# Default environment variables (can be overridden)
+# Runtime env
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
     PORT=8000
 
-# Expose port for the API
+# Render will probe this; we bind to 0.0.0.0:$PORT
 EXPOSE ${PORT}
 
-# Run the orchestrator API by default
-CMD ["uvicorn", "royal_equips_orchestrator.scripts.run_orchestrator:app", "--host", "0.0.0.0", "--port", "8000"]
+# ✅ Point uvicorn at your FastAPI app module and use $PORT
+# Adjust 'orchestrator.api:app' if your app object lives elsewhere (see note below).
+CMD ["bash", "-lc", "uvicorn orchestrator.api:app --host 0.0.0.0 --port ${PORT}"]
