@@ -19,14 +19,13 @@ from .analytics import AnalyticsAgent
 from .recommendation import ProductRecommendationAgent
 
 
-__all__ = [
-      "ProductResearchAgent",
+____all__ = [
+    "ProductResearchAgent",
     "InventoryForecastingAgent",
     "PricingOptimizerAgent",
     "MarketingAutomationAgent",
     "CustomerSupportAgent",
-    ""OrderManagementAgent",",
+    "OrderManagementAgent",
     "ProductRecommendationAgent",
     "AnalyticsAgent",
-       "AnalyticsAgent",
 ]
