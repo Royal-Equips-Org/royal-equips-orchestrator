@@ -6,7 +6,7 @@ sqlalchemy>=2.0
 pandas>=2.0
 numpy>=1.25
 prophet>=1.1
-lightfm>=1.16
+
 scikit-learn>=1.4
 requests>=2.31
 beautifulsoup4>=4.12
