@@ -23,6 +23,5 @@ ENV PYTHONUNBUFFERED=1 \
 # Render will probe this; we bind to 0.0.0.0:$PORT
 EXPOSE ${PORT}
 
-# ✅ Point uvicorn at your FastAPI app module and use $PORT
-# Adjust 'orchestrator.api:app' if your app object lives elsewhere (see note below).
-CMD ["bash", "-lc", "uvicorn orchestrator.api:app --host 0.0.0.0 --port ${PORT}"]
+# ✅ Use resilient launcher (auto-detects the ASGI app)
+CMD ["python", "scripts/launch_api.py"]

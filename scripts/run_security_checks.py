@@ -79,7 +79,7 @@ def perform_security_scans() -> Dict[str, object]:
     bandit_cmd = [
         "bandit",
         "-r",
-        "royal_equips_orchestrator",
+        "orchestrator",
         "-f",
         "json",
     ]

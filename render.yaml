@@ -31,8 +31,9 @@ services:
     dockerfilePath: ./Dockerfile
     # For Docker services use dockerCommand to override CMD
     dockerCommand: >
-      streamlit run royal_equips_orchestrator/orchestrator/control_center/app.py
-      --server.port=$PORT --server.enableCORS=false
+      streamlit run orchestrator/control_center/app.py
+      --server.address=0.0.0.0 --server.port=$PORT
+      --server.enableCORS=false --server.headless=true
     envVars:
       - key: SHOPIFY_API_KEY
         sync: false
