@@ -1,16 +1,12 @@
 # Render configuration for deploying Royal Equips Orchestrator
-
 services:
-  # Web service for the orchestrator API
+  # FastAPI API
   - type: web
     name: orchestrator-api
-    # Use docker deployment for a custom container
     env: docker
+    plan: free
     dockerfilePath: ./Dockerfile
-    plan: starter
-    # Health check endpoint exposed by FastAPI
     healthCheckPath: /health
-    # Pull environment variables from Render dashboard or secret store
     envVars:
       - key: SHOPIFY_API_KEY
         sync: false
@@ -27,15 +23,16 @@ services:
       - key: BIGQUERY_TABLE
         sync: false
 
-  # Web service for the Streamlit control center
+  # Streamlit control center
   - type: web
     name: control-center
     env: docker
+    plan: free
     dockerfilePath: ./Dockerfile
-    plan: starter
-    # Override the start command to launch Streamlit instead of API
-    startCommand: >
-      streamlit run royal_equips_orchestrator/orchestrator/control_center/app.py --server.port $PORT --server.enableCORS false
+    # For Docker services use dockerCommand to override CMD
+    dockerCommand: >
+      streamlit run royal_equips_orchestrator/orchestrator/control_center/app.py
+      --server.port=$PORT --server.enableCORS=false
     envVars:
       - key: SHOPIFY_API_KEY
         sync: false
@@ -53,13 +50,14 @@ services:
         sync: false
 
 jobs:
-  # Cron job to export analytics to BigQuery every day at 03:00 UTC
+  # Daily analytics export at 03:00 UTC
   - type: cron
     name: export-analytics
     env: docker
     dockerfilePath: ./Dockerfile
     schedule: "0 3 * * *"
-    command: >
+    # Docker jobs also use dockerCommand
+    dockerCommand: >
       python scripts/run_analytics.py
     envVars:
       - key: SHOPIFY_API_KEY
@@ -77,19 +75,13 @@ jobs:
       - key: BIGQUERY_TABLE
         sync: false
 
-  # Cron job to run security scans on the codebase every day at 02:00 UTC
-  # This job executes scripts/run_security_checks.py which installs security
-  # tooling (Bandit, pip‑audit) at runtime, scans the source code and
-  # dependencies, and writes a JSON report to the container's filesystem. The
-  # report is also printed to STDOUT so that it can be viewed in Render's
-  # logs. Environment variables are passed through for completeness, although
-  # they are not used directly by the script.
+  # Daily security scan at 02:00 UTC
   - type: cron
     name: security-scan
     env: docker
     dockerfilePath: ./Dockerfile
     schedule: "0 2 * * *"
-    command: >
+    dockerCommand: >
       python scripts/run_security_checks.py
     envVars:
       - key: SHOPIFY_API_KEY
