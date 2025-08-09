@@ -49,14 +49,12 @@ services:
       - key: BIGQUERY_TABLE
         sync: false
 
-jobs:
   # Daily analytics export at 03:00 UTC
   - type: cron
     name: export-analytics
     env: docker
     dockerfilePath: ./Dockerfile
     schedule: "0 3 * * *"
-    # Docker jobs also use dockerCommand
     dockerCommand: >
       python scripts/run_analytics.py
     envVars:
