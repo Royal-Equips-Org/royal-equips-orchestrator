@@ -11,12 +11,12 @@ from typing import List
 
 CANDIDATES: List[str] = [
     os.getenv("API_APP_PATH", ""),              # explicit override if provided
-    "orchestrator.api:app",
+    "scripts.run_orchestrator:app",             # full orchestrator app (preferred)
+    "orchestrator.api:app",                     # minimal fallback API
     "orchestrator.core.api:app",
     "orchestrator.main:app",
     "orchestrator.app:app",
     "orchestrator.server:app",
-    "scripts.run_orchestrator:app",             # existing working app
 ]
 CANDIDATES = [c for c in CANDIDATES if c]
 
