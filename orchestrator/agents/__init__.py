@@ -16,13 +16,17 @@ from .marketing_automation import MarketingAutomationAgent
 from .customer_support import CustomerSupportAgent
 from .order_management import OrderManagementAgent
 from .analytics import AnalyticsAgent
+from .recommendation import ProductRecommendationAgent
+
 
 __all__ = [
-    "ProductResearchAgent",
+      "ProductResearchAgent",
     "InventoryForecastingAgent",
     "PricingOptimizerAgent",
     "MarketingAutomationAgent",
     "CustomerSupportAgent",
-    "OrderManagementAgent",
+    ""OrderManagementAgent",",
+    "ProductRecommendationAgent",
     "AnalyticsAgent",
+       "AnalyticsAgent",
 ]
