@@ -14,6 +14,8 @@ from .orchestrator.agents import (
     MarketingAutomationAgent,
     CustomerSupportAgent,
     OrderManagementAgent,
+    ProductRecommendationAgent,
+    AnalyticsAgent,
 )
 
 __all__ = [
@@ -24,6 +26,8 @@ __all__ = [
     "MarketingAutomationAgent",
     "CustomerSupportAgent",
     "OrderManagementAgent",
+    "ProductRecommendationAgent",
+    "AnalyticsAgent",
 ]
 
 __version__ = "0.1.0"
