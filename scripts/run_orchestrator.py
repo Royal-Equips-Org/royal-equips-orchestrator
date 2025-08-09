@@ -23,14 +23,15 @@ from typing import Any, Dict
 from fastapi import FastAPI, HTTPException
 
 from ..orchestrator.core.orchestrator import Orchestrator
-from ..orchestrator.agents import (
+
     ProductResearchAgent,
     InventoryForecastingAgent,
     PricingOptimizerAgent,
     MarketingAutomationAgent,
     CustomerSupportAgent,
     OrderManagementAgent,
-    AnalyticsAgent,
+        ProductRecommendationAgent
+            AnalyticsAgent,,)    AnalyticsAgent,
 )
 
 app = FastAPI(title="Royal Equips Orchestrator API")

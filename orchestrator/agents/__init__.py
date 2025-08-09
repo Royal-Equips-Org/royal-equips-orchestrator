@@ -16,7 +16,7 @@ from .marketing_automation import MarketingAutomationAgent
 from .customer_support import CustomerSupportAgent
 from .order_management import OrderManagementAgent
 from .analytics import AnalyticsAgent
-from .recommendation import ProductRecommendationAgent
+from .recommendation import ProductRecommendationAgentendationAgent
 
 
 ____all__ = [
