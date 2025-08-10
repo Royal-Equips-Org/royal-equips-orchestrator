@@ -1,4 +1,5 @@
 # Wrangler v4 configuration
+# Deploy command: wrangler deploy -e <environment> (e.g., -e production)
 name = "royal-equips-orchestrator"
 main = "src/index.js"
 compatibility_date = "2025-08-10"
