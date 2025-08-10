@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # ✅ Correct repo paths
 COPY orchestrator /app/orchestrator
 COPY scripts /app/scripts
+RUN chmod +x /app/scripts/*.sh || true
 
 # Runtime env
 ENV PYTHONUNBUFFERED=1 \
