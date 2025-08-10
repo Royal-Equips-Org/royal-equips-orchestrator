@@ -4,6 +4,9 @@ Enhanced FastAPI backend for Royal Equips Orchestrator with agents support.
 This module provides a production-ready FastAPI application with:
 - Agent chat endpoints with SSE streaming
 - System health and metrics endpoints
+- Command center with one-click access
+- Friendly error pages and routing aliases
+- Health log filtering to reduce noise
 - Proper CORS configuration
 - Structured logging and error handling
 """
@@ -17,11 +20,17 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from sse_starlette import EventSourceResponse
+
+# Import our configuration and logging utilities
+from api.config import settings
+from api.utils.logging_setup import setup_logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -66,6 +75,11 @@ class EventPayload(BaseModel):
 async def lifespan(app: FastAPI):
     """Manage application lifespan."""
     logger.info("Starting Royal Equips Orchestrator Backend")
+    
+    # Set up logging filters early in startup
+    setup_logging()
+    logger.info("Logging configuration applied, health endpoint noise suppressed")
+    
     yield
     logger.info("Shutting down Royal Equips Orchestrator Backend")
 
@@ -86,26 +100,62 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files and templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
 # Store startup time for uptime calculation
 startup_time = datetime.now()
 
+# Custom exception handlers for friendly error pages
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    """Handle 404 errors with a friendly HTML page."""
+    return templates.TemplateResponse(
+        "errors/404.html", 
+        {"request": request, "app_name": settings.app_name},
+        status_code=404
+    )
+
+@app.exception_handler(500)
+async def server_error_handler(request: Request, exc: HTTPException):
+    """Handle 500 errors with a friendly HTML page."""
+    return templates.TemplateResponse(
+        "errors/500.html",
+        {"request": request, "app_name": settings.app_name},
+        status_code=500
+    )
+
 @app.get("/")
-async def root():
-    """Root endpoint with basic service info."""
-    return {
-        "message": "Royal Equips Orchestrator Backend API",
-        "status": "running",
-        "version": "1.0.0"
-    }
+async def root(request: Request):
+    """Root endpoint with landing page and one-click Command Center access."""
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "app_name": settings.app_name
+        }
+    )
 
 @app.get("/health")
 async def health():
-    """Health check endpoint."""
-    return {
-        "ok": True,
-        "backend": "fastapi",
-        "timestamp": datetime.now().isoformat()
-    }
+    """Health check endpoint - returns plain text 'ok' for monitoring systems."""
+    return PlainTextResponse("ok")
+
+@app.get("/command-center")
+async def command_center():
+    """Redirect to the configured Command Center URL."""
+    return RedirectResponse(url=settings.command_center_url, status_code=307)
+
+@app.get("/control-center")
+async def control_center():
+    """Alias for command center - redirects to /command-center."""
+    return RedirectResponse(url="/command-center", status_code=307)
+
+@app.get("/dashboard")
+async def dashboard():
+    """Alias for command center - redirects to /command-center."""
+    return RedirectResponse(url="/command-center", status_code=307)
 
 @app.get("/metrics", response_model=SystemMetrics)
 async def get_metrics():
