@@ -155,6 +155,46 @@ The orchestrator relies on several environment variables. See
 | `OPENAI_API_KEY`    | API key for OpenAI’s Chat API (support agent)     |
 | `DATABASE_URL`      | Optional connection string for persistent storage |
 
+## Logging and Health Checks
+
+The orchestrator includes intelligent log filtering to reduce noise from
+health check probes and other routine requests, especially important when
+deployed on platforms like Render that frequently hit health endpoints.
+
+### Health Check Logging Behavior
+
+By default, Render's health checks continuously hit `/health`, which can
+quickly fill logs with repetitive "GET /health 200 OK" entries. The
+orchestrator automatically suppresses these access log entries while
+preserving error logs and normal traffic logs.
+
+### Environment Variables for Logging Control
+
+| Variable               | Default | Purpose                                          |
+|------------------------|---------|--------------------------------------------------|
+| `SUPPRESS_HEALTH_LOGS` | `true`  | When `true`, suppresses access logs for `/health`, `HEAD /`, and `/favicon.ico` requests |
+| `DISABLE_ACCESS_LOG`   | `false` | When `true`, completely disables uvicorn access logging |
+| `LOG_LEVEL`            | `info`  | Sets log level for uvicorn (`debug`, `info`, `warning`, `error`, `critical`) |
+
+### Minimal Noise-Reduction Routes
+
+To prevent common 404 errors that add noise to logs, the orchestrator provides:
+
+- **GET /** - Returns basic service status: `{"service": "orchestrator", "status": "ok", "version": "..."}`
+- **GET|HEAD /favicon.ico** - Returns 204 No Content to prevent browser favicon requests from generating 404s
+
+These routes are provided purely to reduce log noise and are not intended
+as application features. The main health check endpoint remains `/health`.
+
+### Deployment Considerations
+
+The log filtering system works automatically with Render's deployment pattern
+using import strings (e.g., `scripts.run_orchestrator:app`). The filters are
+installed at module import time, so no changes to startup commands are needed.
+
+Error logs from uvicorn are never suppressed, ensuring that real issues
+remain visible in your monitoring systems.
+
 ## Scaling & Evolution
 
 The orchestrator is designed to scale horizontally. Agents are
