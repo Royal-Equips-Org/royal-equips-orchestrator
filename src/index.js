@@ -1,71 +1,86 @@
-/**
- * Cloudflare Workers entry point for Royal Equips Orchestrator
- * 
- * This Worker acts as a proxy/router to the main Python FastAPI application
- * deployed on Render. This allows the project to work with Cloudflare Workers
- * while keeping the main application logic in Python.
- */
-
 export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    
-    // Health check endpoint - return immediately from Workers
-    if (url.pathname === '/health') {
-      return new Response(JSON.stringify({
-        status: "ok",
-        service: "royal-equips-orchestrator",
-        environment: "cloudflare-workers",
-        timestamp: new Date().toISOString()
-      }), {
-        headers: { 'Content-Type': 'application/json' },
+  async fetch(request, env) {
+    const originHeader = request.headers.get("Origin") || "*";
+
+    // CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: buildCorsHeaders(originHeader, request.headers.get("Access-Control-Request-Headers"))
       });
     }
-    
-    // Root endpoint
-    if (url.pathname === '/') {
-      return new Response(JSON.stringify({
-        message: "Royal Equips Orchestrator - Cloudflare Workers Proxy",
-        status: "running",
-        python_api: env.PYTHON_API_URL || "https://royal-equips-orchestrator.onrender.com",
-        documentation: "This Workers service proxies requests to the Python FastAPI application"
-      }), {
-        headers: { 'Content-Type': 'application/json' },
+
+    const incomingUrl = new URL(request.url);
+    const base = env.PYTHON_API_URL;
+    if (!base) {
+      return json(
+        { error: "PYTHON_API_URL is not configured" },
+        500,
+        originHeader
+      );
+    }
+
+    const backendBase = new URL(base);
+    // Preserve path and query; append to backend
+    const backendUrl = new URL(
+      `${backendBase.origin}${backendBase.pathname.replace(/\/$/, "")}${incomingUrl.pathname}${incomingUrl.search}`
+    );
+
+    // Prepare upstream request
+    const init = {
+      method: request.method,
+      headers: new Headers(request.headers),
+      redirect: "follow"
+    };
+
+    if (!["GET", "HEAD"].includes(request.method)) {
+      const body = await request.arrayBuffer();
+      init.body = body;
+    }
+
+    // Avoid forwarding encodings that can cause issues
+    init.headers.delete("accept-encoding");
+
+    try {
+      const upstream = await fetch(backendUrl.toString(), init);
+      const respHeaders = new Headers(upstream.headers);
+      applyCors(respHeaders, originHeader, request.headers.get("Access-Control-Request-Headers"));
+
+      return new Response(upstream.body, {
+        status: upstream.status,
+        statusText: upstream.statusText,
+        headers: respHeaders
       });
+    } catch (err) {
+      return json(
+        { error: "Upstream request failed", details: String(err) },
+        502,
+        originHeader
+      );
     }
-    
-    // For all other requests, proxy to the Python API if configured
-    const pythonApiUrl = env.PYTHON_API_URL;
-    if (pythonApiUrl) {
-      try {
-        const proxyUrl = new URL(url.pathname + url.search, pythonApiUrl);
-        const proxyRequest = new Request(proxyUrl, {
-          method: request.method,
-          headers: request.headers,
-          body: request.body,
-        });
-        
-        const response = await fetch(proxyRequest);
-        return response;
-      } catch (error) {
-        return new Response(JSON.stringify({
-          error: "Failed to proxy request to Python API",
-          details: error.message,
-          fallback: "Cloudflare Workers endpoint"
-        }), {
-          status: 502,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-    }
-    
-    // Fallback response
-    return new Response(JSON.stringify({
-      message: "Royal Equips Orchestrator",
-      status: "available",
-      note: "Python API URL not configured for proxying"
-    }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  },
+  }
 };
+
+function buildCorsHeaders(origin, requestHeaders) {
+  const h = new Headers();
+  h.set("Access-Control-Allow-Origin", origin);
+  h.set("Vary", "Origin");
+  h.set("Access-Control-Allow-Credentials", "true");
+  h.set("Access-Control-Allow-Methods", "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS");
+  h.set("Access-Control-Allow-Headers", requestHeaders || "*");
+  return h;
+}
+
+function applyCors(headers, origin, requestHeaders) {
+  headers.set("Access-Control-Allow-Origin", origin);
+  headers.set("Vary", "Origin");
+  headers.set("Access-Control-Allow-Credentials", "true");
+  headers.set("Access-Control-Allow-Methods", "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS");
+  headers.set("Access-Control-Allow-Headers", requestHeaders || "*");
+}
+
+function json(data, status = 200, origin = "*") {
+  const headers = buildCorsHeaders(origin, "*");
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  return new Response(JSON.stringify(data), { status, headers });
+}
