@@ -212,9 +212,14 @@ detect_and_start() {
         done
     fi
     
-    # Last resort: try to run any Python file with __main__
-    log "🔍 Looking for Python scripts with __main__..."
+    # Last resort: try to run any Python file with __main__ (excluding test scripts)
+    log "🔍 Looking for Python scripts with __main__ (excluding tests)..."
     while IFS= read -r filepath; do
+        # Skip test files and integration scripts
+        if [[ "$filepath" == *"test"* ]] || [[ "$filepath" == *"_test"* ]] || [[ "$filepath" == *"integration"* ]]; then
+            continue
+        fi
+        
         if [[ -n "$filepath" ]] && check_file_patterns "$filepath" "if __name__ == ['\"]__main__['\"]"; then
             log "✅ Found Python script with __main__: $filepath"
             start_python "$filepath"
