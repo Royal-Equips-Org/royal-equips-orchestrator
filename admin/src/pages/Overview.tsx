@@ -24,9 +24,9 @@ export const Overview: React.FC = () => {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        // Test Worker health via direct call (not through API proxy)
-        const workerResponse = await fetch('/health');
-        const workerHealth = await workerResponse.json();
+        // Test Worker health via Worker health endpoint
+        const workerResponse = await fetch(window.location.origin + '/health');
+        const workerHealth = await workerResponse.json().catch(() => ({ ok: false }));
         
         // Test backend health via API proxy
         let backendStatus = 'offline';

@@ -9,6 +9,172 @@ modern orchestration patterns, the orchestrator coordinates specialized
 agents under a unified control plane and exposes a digital control
 center for monitoring and intervention.
 
+## 🌌 Elite Admin Control Center
+
+The system now includes a **futuristic, elite admin interface** accessible at `/admin` that provides:
+
+- **Multi-page dashboard** with glassmorphism and neon aesthetics
+- **Real-time system monitoring** and health checks
+- **Agent communication interface** with SSE streaming chat
+- **Responsive design** optimized for both desktop and mobile
+- **High-performance architecture** with code splitting and lazy loading
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ELITE ADMIN CONTROL CENTER                  │
+│  React + TypeScript + Vite  │  Glassmorphism + Neon UI      │
+│  Pages: Overview │ Operations │ Data │ Commerce │ Agents      │
+└─────────────────┬───────────────────────────────────────────────┘
+                  │
+                  ▼ HTTP/WebSocket
+┌─────────────────────────────────────────────────────────────────┐
+│                    CLOUDFLARE WORKER PROXY                     │
+│  Routes: /health │ /api/* (proxy) │ /admin/* (SPA)           │
+│  Hono Framework  │  Environment-aware deployment             │
+└─────────────────┬───────────────────────────────────────────────┘
+                  │
+                  ▼ Proxy to PYTHON_API_URL
+┌─────────────────────────────────────────────────────────────────┐
+│                     FASTAPI BACKEND                            │
+│  Agents: Session management │ SSE streaming │ Chat interface  │
+│  System: Health │ Metrics │ Jobs │ Events                     │
+│  CORS: Configured for Worker origin                           │
+└─────────────────────────────────────────────────────────────────┘
+                  │
+                  ▼
+   ┌────────────────────────────────────────────┐
+   │           Orchestrator (async)             │
+   │  • registers agents & schedules runs       │
+   │  • exposes health information              │
+   │  • monitors agents and restarts on failure│
+   └────────────────────────────────────────────┘
+          ▲               ▲            ▲
+          │               │            │
+┌───────────────────────┐  │  ┌─────────────────────────┐
+│ Product Research     │  │  │ Inventory Forecasting  │
+│ (news scraping)      │  │  │ (Prophet + Shopify)    │
+└───────────────────────┘  │  └─────────────────────────┘
+          │               │            │
+          │               │            │
+          ▼               ▼            ▼
+┌───────────────────────┐     ┌─────────────────────────┐
+│ Pricing Optimizer     │     │ Marketing Automation    │
+│ (competitor scrape)   │     │ (email campaigns)       │
+└───────────────────────┘     └─────────────────────────┘
+          │                        │
+          ▼                        ▼
+┌───────────────────────┐     ┌──────────────────────────┐
+│ Customer Support      │     │ Order Management         │
+│ (OpenAI Chat)         │     │ (fulfilment, returns)     │
+└───────────────────────┘     └──────────────────────────┘
+```
+
+## Quick Start
+
+### Development Setup
+
+1. **Clone the repository**
+
+   ```bash
+   git clone git@github.com:Skidaw23/royal-equips-orchestrator.git
+   cd royal-equips-orchestrator
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   # Python backend dependencies
+   pip install -r requirements.txt sse-starlette
+   
+   # Cloudflare Worker dependencies
+   npm install
+   
+   # Admin SPA dependencies  
+   cd admin && npm install && cd ..
+   ```
+
+3. **Environment configuration**
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your secrets:
+   # - SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME
+   # - OPENAI_API_KEY (optional, for real AI responses)
+   # - PYTHON_API_URL (for Worker proxy configuration)
+   ```
+
+4. **Development servers**
+
+   ```bash
+   # Terminal 1: Start enhanced backend
+   python -m uvicorn api.main:app --reload --port 8000
+   
+   # Terminal 2: Start Cloudflare Worker (local)
+   npx wrangler dev --local --port 8787
+   
+   # Terminal 3: Start admin SPA dev server
+   cd admin && npm run dev
+   
+   # Terminal 4: Alternative - Start original orchestrator
+   uvicorn orchestrator.api:app --reload --port 8002
+   ```
+
+5. **Access the interfaces**
+
+   - **Elite Admin Control Center**: http://localhost:3000/admin/
+   - **Worker Proxy Health**: http://localhost:8787/health
+   - **Backend API**: http://localhost:8000/health
+   - **Original Orchestrator**: http://localhost:8002/health
+
+### Production Deployment
+
+#### Cloudflare Worker Deployment
+
+The Worker now supports explicit environment targeting to eliminate deployment warnings:
+
+```bash
+# Deploy to staging
+npx wrangler deploy -e staging
+
+# Deploy to production  
+npx wrangler deploy -e production
+
+# Check deployment status
+npx wrangler deployments list
+```
+
+**Environment Variables per Environment:**
+
+- **Staging**: `PYTHON_API_URL` points to staging backend
+- **Production**: `PYTHON_API_URL` points to production backend
+
+#### Backend Deployment
+
+```bash
+# Production deployment with enhanced backend
+python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# Or using Docker
+docker compose up --build
+```
+
+#### Admin SPA Build & Deployment
+
+```bash
+cd admin
+
+# Build for production
+npm run build
+
+# Preview production build locally
+npm run preview
+
+# Deploy static assets to CDN/hosting platform
+# Built files are in admin/dist/ directory
+```
+
 ## Why AI Agents?
 
 Traditional automation scripts are brittle and require constant human
