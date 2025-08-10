@@ -1,6 +1,0 @@
-
-{
-  "analytics_engine_datasets": [
-    { "binding": "ANALYTICS_ENGINE", "dataset": "analytic_events" }
-  ]
-}
