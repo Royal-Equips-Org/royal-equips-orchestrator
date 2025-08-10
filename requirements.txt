@@ -28,3 +28,9 @@ pandas-gbq>=0.22
 # Security scan tools (used by cron jobs)
 bandit>=1.7
 pip-audit>=2.6
+
+# Holographic Control Center dependencies
+openai>=1.0
+streamlit-webrtc>=0.47
+PyGithub>=1.59
+typing-extensions>=4.8

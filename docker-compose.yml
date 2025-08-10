@@ -16,12 +16,22 @@ services:
   control-center:
     build: .
     container_name: royal-equips-control-center
-    command: ["streamlit", "run", "royal_equips_orchestrator/orchestrator/control_center/app.py", "--server.port", "8501", "--server.enableCORS", "false"]
+    command: >
+      sh -c "
+      if [ \"$${CONTROL_CENTER_VARIANT}\" = \"holo\" ]; then
+        streamlit run orchestrator/control_center/holo_app.py --server.port 8501 --server.enableCORS false --theme.base dark
+      else
+        streamlit run orchestrator/control_center/app.py --server.port 8501 --server.enableCORS false
+      fi
+      "
     environment:
       SHOPIFY_API_KEY: "${SHOPIFY_API_KEY}"
       SHOPIFY_API_SECRET: "${SHOPIFY_API_SECRET}"
       SHOP_NAME: "${SHOP_NAME}"
       OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+      VOICE_ENABLED: "${VOICE_ENABLED:-true}"
+      CONTROL_CENTER_VARIANT: "${CONTROL_CENTER_VARIANT:-standard}"
     ports:
       - "8501:8501"
     depends_on:

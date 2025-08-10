@@ -148,7 +148,69 @@ legacy APIs, something traditional integrations struggle with【571575397346020�
    python scripts/run_control_center.py
    ```
 
-## Control Center (Streamlit)
+## Control Centers
+
+The Royal Equips Orchestrator provides two control center interfaces:
+
+### 🌌 Holographic Control Center (NEW!)
+
+A next-generation, futuristic interface with neon/cyberpunk styling, real-time data integration, voice control, and AI assistance.
+
+**Features:**
+- **Immersive UI**: Neon/cyberpunk color palette with glassmorphism effects and animated particle backgrounds
+- **Multi-panel Interface**: Six dedicated pages (Overview, Agents, Shopify Live, GitHub Ops, Copilot & Voice, Settings)
+- **Real-time Data**: Live integration with Shopify metrics and GitHub repository status
+- **AI Copilot**: Chat with ARIA (Autonomous Robotics Intelligence Assistant) for system control and insights
+- **Voice Control**: Microphone capture with OpenAI Whisper speech-to-text and browser-based text-to-speech
+- **Agent Management**: Visual control station for running and monitoring all AI agents
+
+**Launch the Holographic Control Center:**
+```bash
+# Using make (recommended)
+make holo
+
+# Using streamlit directly
+streamlit run orchestrator/control_center/holo_app.py
+
+# Using the helper script
+python scripts/run_holo_control_center.py
+```
+
+**Environment Variables for Enhanced Features:**
+```bash
+# Required for AI features
+OPENAI_API_KEY=your_openai_api_key
+
+# Required for GitHub integration
+GITHUB_TOKEN=your_github_personal_access_token
+
+# Optional holographic settings
+VOICE_ENABLED=true                    # Enable voice control
+POLL_SECONDS=30                      # Data refresh interval
+OPENAI_MODEL=gpt-4o-mini            # Chat model
+WHISPER_MODEL=whisper-1             # Speech-to-text model
+```
+
+### 📊 Classic Dashboard
+
+The original Streamlit control center with basic monitoring and controls.
+
+**Launch the Classic Dashboard:**
+```bash
+make dashboard
+```
+
+## Docker Deployment
+
+The Docker setup supports both control centers via the `CONTROL_CENTER_VARIANT` environment variable:
+
+```bash
+# Launch with Holographic Control Center
+CONTROL_CENTER_VARIANT=holo docker compose up
+
+# Launch with Classic Dashboard (default)
+docker compose up
+``` (Streamlit)
 
 The Streamlit Control Center provides a web-based dashboard for monitoring and controlling the orchestrator and its agents.
 

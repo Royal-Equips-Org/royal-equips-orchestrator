@@ -28,6 +28,11 @@ dashboard:
 	@export $(grep -v '^#' .env | xargs) && \
 	.venv/bin/streamlit run orchestrator/control_center/app.py
 
+holo:
+	@echo "Starting Holographic Control Center..."
+	@export $(grep -v '^#' .env | xargs) && \
+	.venv/bin/streamlit run orchestrator/control_center/holo_app.py
+
 docker-build:
 	docker build -t royal-equips-orchestrator .
 
