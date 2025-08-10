@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Card } from '../components/Card';
+import { HolographicHub } from '../components/HolographicHub';
+import { RealTimeMonitor } from '../components/RealTimeMonitor';
+import { ParticleBackground } from '../components/ParticleBackground';
+import { useSystemMetrics } from '../hooks/useWebSocket';
 import { apiClient } from '../utils/api';
 import './Overview.css';
 
@@ -11,6 +16,40 @@ interface SystemStats {
   uptime_hours: number;
 }
 
+// Generate mock real-time data for visualization
+const generateMockData = () => {
+  const now = new Date();
+  const data = [];
+  
+  for (let i = 0; i < 50; i++) {
+    const timestamp = new Date(now.getTime() - i * 30000); // 30 second intervals
+    data.push(
+      {
+        timestamp,
+        value: Math.random() * 100,
+        category: 'cpu' as const
+      },
+      {
+        timestamp,
+        value: Math.random() * 100,
+        category: 'memory' as const
+      },
+      {
+        timestamp,
+        value: Math.random() * 1000,
+        category: 'network' as const
+      },
+      {
+        timestamp,
+        value: Math.random() * 8 + 1,
+        category: 'agents' as const
+      }
+    );
+  }
+  
+  return data.reverse(); // Most recent data first
+};
+
 export const Overview: React.FC = () => {
   const [stats, setStats] = useState<SystemStats>({
     worker_status: 'unknown',
@@ -20,6 +59,9 @@ export const Overview: React.FC = () => {
     uptime_hours: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [realTimeData, setRealTimeData] = useState(generateMockData());
+  
+  const { metrics, connected: metricsConnected } = useSystemMetrics();
 
   useEffect(() => {
     const loadStats = async () => {
@@ -40,8 +82,8 @@ export const Overview: React.FC = () => {
         setStats({
           worker_status: workerHealth.ok ? 'online' : 'offline',
           backend_status: backendStatus,
-          api_calls_today: Math.floor(Math.random() * 1500) + 200,
-          active_sessions: Math.floor(Math.random() * 10) + 3,
+          api_calls_today: metrics.apiCalls || Math.floor(Math.random() * 1500) + 200,
+          active_sessions: metrics.activeAgents || Math.floor(Math.random() * 10) + 3,
           uptime_hours: Math.floor(Math.random() * 720) + 24,
         });
       } catch (error) {
@@ -54,91 +96,300 @@ export const Overview: React.FC = () => {
     loadStats();
     const interval = setInterval(loadStats, 30000); // Refresh every 30s
     return () => clearInterval(interval);
-  }, []);
+  }, [metrics]);
+
+  // Update real-time data periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRealTimeData(prevData => {
+        const newData = [...prevData];
+        const now = new Date();
+        
+        // Add new data points
+        newData.push(
+          {
+            timestamp: now,
+            value: metrics.cpu || Math.random() * 100,
+            category: 'cpu' as const
+          },
+          {
+            timestamp: now,
+            value: metrics.memory || Math.random() * 100,
+            category: 'memory' as const
+          },
+          {
+            timestamp: now,
+            value: metrics.network || Math.random() * 1000,
+            category: 'network' as const
+          },
+          {
+            timestamp: now,
+            value: metrics.activeAgents || Math.random() * 8 + 1,
+            category: 'agents' as const
+          }
+        );
+        
+        // Keep only last 50 data points per category
+        const maxPoints = 50;
+        const grouped = new Map();
+        
+        newData.forEach(point => {
+          if (!grouped.has(point.category)) {
+            grouped.set(point.category, []);
+          }
+          grouped.get(point.category).push(point);
+        });
+        
+        const filteredData = [];
+        grouped.forEach((points) => {
+          const sorted = points.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+          filteredData.push(...sorted.slice(0, maxPoints));
+        });
+        
+        return filteredData.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      });
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [metrics]);
 
   if (loading) {
     return (
-      <div className="overview-loading">
+      <motion.div 
+        className="overview-loading"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="loading-spinner"></div>
-        <p>Loading system overview...</p>
-      </div>
+        <p>Initializing command center...</p>
+      </motion.div>
     );
   }
 
+  const systemStatus = stats.worker_status === 'online' && stats.backend_status === 'online' 
+    ? 'operational' 
+    : stats.worker_status === 'offline' && stats.backend_status === 'offline'
+    ? 'critical'
+    : 'warning';
+
   return (
-    <div className="overview">
-      <div className="overview-header">
-        <h1 className="page-title">System Overview</h1>
-        <p className="page-subtitle">Elite operational command center</p>
-      </div>
+    <>
+      <ParticleBackground particleCount={1500} speed={0.3} color="#00ffff" />
+      
+      <motion.div 
+        className="overview"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <div className="overview-header">
+          <motion.h1 
+            className="page-title"
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            Command Center
+          </motion.h1>
+          <motion.p 
+            className="page-subtitle"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            2050 Elite operational command center
+          </motion.p>
+          
+          {metricsConnected && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              style={{ 
+                display: 'inline-block', 
+                background: 'rgba(0, 255, 65, 0.2)', 
+                padding: '4px 12px', 
+                borderRadius: '16px',
+                border: '1px solid #00ff41',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: '#00ff41',
+                marginTop: '8px'
+              }}
+            >
+              ⚡ REAL-TIME ACTIVE
+            </motion.div>
+          )}
+        </div>
 
-      <div className="overview-grid">
-        <Card 
-          title="Worker Status" 
-          className={stats.worker_status === 'online' ? 'success' : 'danger'}
+        {/* Central Holographic Hub */}
+        <motion.div
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
+          style={{ marginBottom: '2rem' }}
         >
-          <div className="status-display">
-            <div className={`status-indicator ${stats.worker_status}`}>
-              <div className="status-dot"></div>
-              <span>{stats.worker_status.toUpperCase()}</span>
-            </div>
-            <p className="status-detail">Cloudflare Worker Proxy</p>
-          </div>
-        </Card>
+          <HolographicHub
+            systemStatus={systemStatus}
+            activeAgents={metrics.activeAgents}
+            systemLoad={metrics.systemLoad}
+          />
+        </motion.div>
 
-        <Card 
-          title="Backend Status" 
-          className={stats.backend_status === 'online' ? 'success' : 'warning'}
-        >
-          <div className="status-display">
-            <div className={`status-indicator ${stats.backend_status}`}>
-              <div className="status-dot"></div>
-              <span>{stats.backend_status.toUpperCase()}</span>
-            </div>
-            <p className="status-detail">FastAPI Backend</p>
-          </div>
-        </Card>
-
-        <Card title="API Metrics" className="info">
-          <div className="metrics-display">
-            <div className="metric">
-              <span className="metric-value">{stats.api_calls_today.toLocaleString()}</span>
-              <span className="metric-label">API Calls Today</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card title="Active Sessions" className="info">
-          <div className="metrics-display">
-            <div className="metric">
-              <span className="metric-value">{stats.active_sessions}</span>
-              <span className="metric-label">Agent Sessions</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card title="System Uptime" className="info">
-          <div className="metrics-display">
-            <div className="metric">
-              <span className="metric-value">{stats.uptime_hours}h</span>
-              <span className="metric-label">Continuous Operation</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card title="Empire Status" className="success">
-          <div className="empire-status">
-            <div className="empire-indicator">
-              <div className="empire-icon">👑</div>
-              <div className="empire-text">
-                <h4>ROYAL EQUIPS EMPIRE</h4>
-                <p>All systems operational</p>
-                <p>Ready for elite operations</p>
+        <div className="overview-grid">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <Card 
+              title="System Status Matrix" 
+              className={systemStatus === 'operational' ? 'success' : systemStatus === 'warning' ? 'warning' : 'danger'}
+            >
+              <div className="system-matrix">
+                <div className="status-grid">
+                  <div className={`status-cell ${stats.worker_status}`}>
+                    <div className="status-indicator">
+                      <div className="status-dot"></div>
+                      <span>WORKER</span>
+                    </div>
+                    <span className="status-value">{stats.worker_status.toUpperCase()}</span>
+                  </div>
+                  
+                  <div className={`status-cell ${stats.backend_status}`}>
+                    <div className="status-indicator">
+                      <div className="status-dot"></div>
+                      <span>BACKEND</span>
+                    </div>
+                    <span className="status-value">{stats.backend_status.toUpperCase()}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-    </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+          >
+            <Card title="Real-Time Performance Analytics" className="info">
+              <RealTimeMonitor data={realTimeData} width={350} height={200} />
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <Card title="Live System Metrics" className="info">
+              <div className="metrics-matrix">
+                <div className="metric-row">
+                  <span className="metric-label">CPU Load</span>
+                  <span className="metric-value">{metrics.cpu.toFixed(1)}%</span>
+                  <div className="metric-bar">
+                    <div 
+                      className="metric-fill" 
+                      style={{ width: `${metrics.cpu}%`, backgroundColor: '#00ffff' }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div className="metric-row">
+                  <span className="metric-label">Memory</span>
+                  <span className="metric-value">{metrics.memory.toFixed(1)}%</span>
+                  <div className="metric-bar">
+                    <div 
+                      className="metric-fill" 
+                      style={{ width: `${metrics.memory}%`, backgroundColor: '#ff00ff' }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div className="metric-row">
+                  <span className="metric-label">Network</span>
+                  <span className="metric-value">{metrics.network.toFixed(0)} MB/s</span>
+                  <div className="metric-bar">
+                    <div 
+                      className="metric-fill" 
+                      style={{ width: `${Math.min(metrics.network / 10, 100)}%`, backgroundColor: '#00ff41' }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.9 }}
+          >
+            <Card title="Agent Operations" className="info">
+              <div className="metrics-display">
+                <div className="metric">
+                  <span className="metric-value">{stats.active_sessions}</span>
+                  <span className="metric-label">Active Agents</span>
+                </div>
+                <div className="metric">
+                  <span className="metric-value">{metrics.errors}</span>
+                  <span className="metric-label">Error Count</span>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, rotate: -10 }}
+            animate={{ opacity: 1, rotate: 0 }}
+            transition={{ duration: 0.6, delay: 1.0 }}
+          >
+            <Card title="API Performance" className="info">
+              <div className="metrics-display">
+                <div className="metric">
+                  <span className="metric-value">{stats.api_calls_today.toLocaleString()}</span>
+                  <span className="metric-label">API Calls Today</span>
+                </div>
+                <div className="metric">
+                  <span className="metric-value">{stats.uptime_hours}h</span>
+                  <span className="metric-label">System Uptime</span>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.8, delay: 1.1 }}
+          >
+            <Card title="Empire Command Status" className="success">
+              <div className="empire-status">
+                <motion.div 
+                  className="empire-indicator"
+                  animate={{ 
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity,
+                    repeatType: "reverse" 
+                  }}
+                >
+                  <div className="empire-icon">👑</div>
+                  <div className="empire-text">
+                    <h4>ROYAL EQUIPS EMPIRE</h4>
+                    <p>{systemStatus === 'operational' ? 'All systems operational' : 'Systems monitoring'}</p>
+                    <p>Ready for elite operations</p>
+                  </div>
+                </motion.div>
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+      </motion.div>
+    </>
   );
 };
