@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 
 from orchestrator.core.orchestrator import Orchestrator
 from orchestrator.agents import ProductResearchAgent
@@ -25,6 +26,11 @@ from orchestrator.agents import CustomerSupportAgent
 from orchestrator.agents import OrderManagementAgent
 from orchestrator.agents import ProductRecommendationAgent
 from orchestrator.agents import AnalyticsAgent
+
+# Install logging filters at module import time
+# This ensures the filters are active when Render starts uvicorn by import string
+from scripts.logging_filters import install_log_filters
+install_log_filters()
 
 app = FastAPI(title="Royal Equips Orchestrator API")
 
@@ -45,6 +51,24 @@ orch.register_agent(AnalyticsAgent(orch), interval=86400)  # export analytics da
 
 # Start orchestrator background loop
 loop.create_task(orch.run_forever())
+
+
+@app.get("/")
+async def get_root() -> Dict[str, str]:
+    """Return basic service information to avoid 404s."""
+    service_version = os.getenv("SERVICE_VERSION", "unknown")
+    return {
+        "service": "orchestrator",
+        "status": "ok",
+        "version": service_version
+    }
+
+
+@app.get("/favicon.ico")
+@app.head("/favicon.ico")
+async def get_favicon() -> Response:
+    """Return empty response for favicon requests to avoid 404 logs."""
+    return Response(status_code=204)
 
 
 @app.get("/health")
