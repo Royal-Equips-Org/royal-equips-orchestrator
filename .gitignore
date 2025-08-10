@@ -7,3 +7,9 @@ __pycache__/
 *.pyo
 *.pyd
 *.swp
+
+# Node.js and Cloudflare Workers
+node_modules/
+.wrangler/
+dist/
+*.log
