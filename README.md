@@ -124,7 +124,7 @@ legacy APIs, something traditional integrations struggle with【571575397346020�
 
    This will start two services:
    * `orchestrator` – FastAPI application on `localhost:8000`.
-   * `control-center` – Streamlit dashboard on `localhost:8501`.
+   * `control-center` – Holographic Control Center on `localhost:8501`.
 
 4. **Run locally without Docker**:
 
@@ -139,20 +139,21 @@ legacy APIs, something traditional integrations struggle with【571575397346020�
 5. **Access the control center** (optional):
 
    ```bash
-   streamlit run orchestrator/control_center/app.py
-   ```
-
-   Or use the provided helper script:
+   # Launch the holographic control center (default)
+   streamlit run orchestrator/control_center/holo_app.py
    
-   ```bash
+   # Or use the unified helper script (recommended)
    python scripts/run_control_center.py
+   
+   # For classic dashboard, set the variant
+   CONTROL_CENTER_VARIANT=classic python scripts/run_control_center.py
    ```
 
 ## Control Centers
 
-The Royal Equips Orchestrator provides two control center interfaces:
+The Royal Equips Orchestrator provides two control center interfaces, with the **Holographic Control Center** as the default.
 
-### 🌌 Holographic Control Center (NEW!)
+### 🌌 Holographic Control Center (Default)
 
 A next-generation, futuristic interface with neon/cyberpunk styling, real-time data integration, voice control, and AI assistance.
 
@@ -166,14 +167,16 @@ A next-generation, futuristic interface with neon/cyberpunk styling, real-time d
 
 **Launch the Holographic Control Center:**
 ```bash
-# Using make (recommended)
+# Using the unified helper script (recommended)
+python scripts/run_control_center.py
+
+# Using make
+make dashboard
+# or
 make holo
 
 # Using streamlit directly
 streamlit run orchestrator/control_center/holo_app.py
-
-# Using the helper script
-python scripts/run_holo_control_center.py
 ```
 
 **Environment Variables for Enhanced Features:**
@@ -193,40 +196,50 @@ WHISPER_MODEL=whisper-1             # Speech-to-text model
 
 ### 📊 Classic Dashboard
 
-The original Streamlit control center with basic monitoring and controls.
+The original Streamlit control center with basic monitoring and controls. Available when you need a simpler interface.
 
 **Launch the Classic Dashboard:**
 ```bash
-make dashboard
+# Using the unified helper script with classic variant
+CONTROL_CENTER_VARIANT=classic python scripts/run_control_center.py
+
+# Using make
+make classic
+
+# Using streamlit directly
+streamlit run orchestrator/control_center/app.py
 ```
 
 ## Docker Deployment
 
-The Docker setup supports both control centers via the `CONTROL_CENTER_VARIANT` environment variable:
+The Docker setup supports both control centers via the `CONTROL_CENTER_VARIANT` environment variable, with **holographic as the default**:
 
 ```bash
-# Launch with Holographic Control Center
-CONTROL_CENTER_VARIANT=holo docker compose up
-
-# Launch with Classic Dashboard (default)
+# Launch with Holographic Control Center (default)
 docker compose up
-``` (Streamlit)
 
-The Streamlit Control Center provides a web-based dashboard for monitoring and controlling the orchestrator and its agents.
+# Launch with Classic Dashboard  
+CONTROL_CENTER_VARIANT=classic docker compose up
+```
 
 ### Local Development
 
 To run the Control Center locally:
 
 ```bash
-# Direct streamlit command
-streamlit run orchestrator/control_center/app.py
-
-# Using helper script (recommended)
+# Using the unified helper script (recommended, defaults to holographic)
 python scripts/run_control_center.py
 
-# Using Make target
-make dashboard
+# For classic variant
+CONTROL_CENTER_VARIANT=classic python scripts/run_control_center.py
+
+# Using Make targets
+make dashboard  # Starts holographic (default)
+make classic    # Starts classic
+
+# Direct streamlit commands
+streamlit run orchestrator/control_center/holo_app.py  # Holographic
+streamlit run orchestrator/control_center/app.py      # Classic
 ```
 
 ### Configuration
@@ -235,26 +248,19 @@ The Control Center can be configured using environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `CONTROL_CENTER_VARIANT` | `holo` | Which control center to launch (`holo` or `classic`) |
 | `STREAMLIT_SERVER_PORT` | `8501` | Port for the Streamlit server |
 | `STREAMLIT_SERVER_ADDRESS` | `localhost` | Address to bind the server to |
 | `STREAMLIT_SERVER_HEADLESS` | `false` | Run in headless mode (no browser) |
 
 ### Render Deployment
 
-For Render deployments, add the Control Center as a separate web service in your `render.yaml`:
+For Render deployments, the holographic control center is launched by default. The `render.yaml` includes a conditional that runs the appropriate interface based on the `CONTROL_CENTER_VARIANT` environment variable:
 
-```yaml
-services:
-  - type: web
-    name: control-center
-    env: docker
-    dockerfilePath: ./Dockerfile
-    plan: starter
-    startCommand: streamlit run orchestrator/control_center/app.py --server.headless true --server.address 0.0.0.0 --server.port $PORT
-    envVars:
-      - key: STREAMLIT_SERVER_HEADLESS
-        value: "true"
-```
+- **Default**: Holographic Control Center
+- **Classic**: Set `CONTROL_CENTER_VARIANT=classic` to use the classic dashboard
+
+The control center service in `render.yaml` is already configured to handle both variants automatically.
 
 ### Troubleshooting
 
