@@ -18,15 +18,26 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict
+
+# Bootstrap for script execution: ensure project root is on sys.path
+# so absolute imports work when run as a script via streamlit
+if __package__ in (None, ""):
+    # Ensure project root is on sys.path so absolute imports work
+    # app.py is at orchestrator/control_center/app.py, so we need to go up 2 levels
+    root = Path(__file__).resolve().parents[2]
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from ..core.orchestrator import Orchestrator
-from ..agents import (
+from orchestrator.core.orchestrator import Orchestrator
+from orchestrator.agents import (
     ProductResearchAgent,
     InventoryForecastingAgent,
     PricingOptimizerAgent,
