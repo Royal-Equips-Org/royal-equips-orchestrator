@@ -2,20 +2,17 @@
   "name": "royal-equips-orchestrator-workers",
   "version": "1.0.0",
   "description": "Cloudflare Workers proxy for Royal Equips Orchestrator Python API",
+  "type": "module",
   "main": "src/index.js",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"
   },
-  "keywords": [
-    "cloudflare-workers",
-    "proxy",
-    "api",
-    "royal-equips-orchestrator"
-  ],
-  "author": "Royal Equips Team",
-  "license": "MIT",
   "devDependencies": {
-    "wrangler": "^3.0.0"
-  }
+    "wrangler": "^4.28.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
 }
