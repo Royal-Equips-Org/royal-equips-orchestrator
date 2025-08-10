@@ -25,12 +25,12 @@ services:
       - key: GITHUB_TOKEN
         sync: false
 
-  # Streamlit control center
+  # FastAPI control center (lightweight runtime)
   - type: web
     name: control-center
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt          # CHANGED
+    buildCommand: pip install -r requirements-minimal.txt
     startCommand: ./start.sh
     envVars:
       - key: PYTHON_VERSION

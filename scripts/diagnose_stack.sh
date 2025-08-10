@@ -5,7 +5,7 @@ set -euo pipefail
 echo "🔍 Royal Equips Orchestrator - Stack Diagnosis v2.0"
 echo "=================================================="
 
-KNOWN_MISSING="orchestrator/control_center/holo_app.py"
+KNOWN_MISSING=""
 
 # Logging function
 log() {
@@ -133,9 +133,6 @@ fastapi_found=0
 candidates_module=(
     "api.main:app"
     "orchestrator.api:app"
-    "scripts.launch_api:app"
-    "orchestrator.core.api:app"
-    "orchestrator.main:app"
 )
 
 for candidate in "${candidates_module[@]}"; do
@@ -168,10 +165,8 @@ echo
 log "Streamlit Application Candidates"  
 streamlit_found=0
 streamlit_candidates=(
-  "orchestrator/control_center/holo_app.py"
   "orchestrator/control_center/streamlit_app.py"
   "orchestrator/control_center/app.py"
-  "orchestrator/holo_app.py"
   "orchestrator/app.py"
   "streamlit_app.py"
   "st_app.py"
@@ -206,10 +201,14 @@ fi
 
 echo
 log "Known Issues Validation"
-if [[ -f "$KNOWN_MISSING" ]]; then
-  echo "- ✅ $KNOWN_MISSING exists"
+if [[ -n "$KNOWN_MISSING" ]]; then
+  if [[ -f "$KNOWN_MISSING" ]]; then
+    echo "- ✅ $KNOWN_MISSING exists"
+  else
+    echo "- ❌ $KNOWN_MISSING is missing (expected from logs)"
+  fi
 else
-  echo "- ❌ $KNOWN_MISSING is missing (expected from logs)"
+  echo "- ✅ No known missing files"
 fi
 
 # Check React/Node.js admin panel  

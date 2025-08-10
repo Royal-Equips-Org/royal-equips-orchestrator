@@ -14,6 +14,9 @@ import importlib.util
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
+# Add current directory to Python path so we can import local modules
+sys.path.insert(0, str(Path.cwd()))
+
 
 def log(level: str, message: str) -> None:
     """Log message with level."""
@@ -226,8 +229,7 @@ def main():
         # Check common FastAPI patterns
         fastapi_candidates = [
             "api.main:app",
-            "orchestrator.api:app",
-            "scripts.launch_api:app"
+            "orchestrator.api:app"
         ]
         
         fastapi_valid = []

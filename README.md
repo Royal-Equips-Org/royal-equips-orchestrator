@@ -87,7 +87,10 @@ The system features an **ultimate futuristic command center** built with React +
 2. **Install dependencies**
 
    ```bash
-   # Python backend dependencies
+   # Minimal FastAPI backend dependencies (for basic deployment)
+   pip install -r requirements-minimal.txt
+   
+   # OR Full feature set (for complete development)
    pip install -r requirements.txt
    
    # Cloudflare Worker dependencies
@@ -110,8 +113,11 @@ The system features an **ultimate futuristic command center** built with React +
 4. **Development servers**
 
    ```bash
-   # Terminal 1: Start enhanced backend
-   python -m uvicorn api.main:app --reload --port 8000
+   # Option 1: Use the universal start script (recommended)
+   APP_TYPE=fastapi APP_PATH=api.main:app ./start.sh
+   
+   # Option 2: Start backend directly with uvicorn
+   uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
    
    # Terminal 2: Start Cloudflare Worker (local)
    npx wrangler dev --local --port 8787
@@ -326,19 +332,20 @@ Access points:
 
 ### Production Deployment via Render
 
-When deployed using the `render.yaml` blueprint, the system provides a **single Holographic Control Center** powered by Streamlit:
+When deployed using the `render.yaml` blueprint, the system provides:
 
+1. **orchestrator-api**: Docker-based FastAPI service
+2. **control-center**: Python runtime service (uses FastAPI with minimal deps)
+
+**Deployment Process**:
 1. **Deploy to Render** using the blueprint configuration in `render.yaml`
-2. **Access the Command Center**: Navigate to Render Dashboard → Services → `control-center` → click the public URL
-3. **Environment Variables**: The following variables are required and should be set as secrets in Render:
-   - `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOP_NAME` - Shopify integration
-   - `OPENAI_API_KEY` - AI-powered features
-   - `GITHUB_TOKEN` - GitHub status and operations
-   - `BIGQUERY_*` variables - Analytics export (optional)
+2. **Access the API**: Navigate to Render Dashboard → Services → `control-center` → click the public URL
+3. **Environment Variables**: The following variables are configured in the blueprint:
+   - `APP_TYPE=fastapi` - Specifies FastAPI mode
+   - `APP_PATH=api.main:app` - Specifies the app entry point
+   - Service-specific secrets: `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOP_NAME`, `OPENAI_API_KEY`, etc.
 
-The system is pinned to use the **holographic variant** exclusively via the `CONTROL_CENTER_VARIANT=holographic` environment variable configured in the blueprint.
-
-**Note**: The React admin interface (`admin/` directory) is not deployed by the Render blueprint and is intended for local development only.
+**Important**: The `control-center` service uses `requirements-minimal.txt` to ensure fast builds and reliable deployment on Render's Python runtime.
 
 ## Environment Variables
 
@@ -347,12 +354,13 @@ The orchestrator relies on several environment variables. See
 
 | Variable            | Purpose                                            |
 |--------------------|----------------------------------------------------|
+| `APP_TYPE`         | Application type (`fastapi`, `streamlit`, `auto`)  |
+| `APP_PATH`         | Application entry point (e.g. `api.main:app`)     |
 | `SHOPIFY_API_KEY`   | API key for your custom Shopify app               |
 | `SHOPIFY_API_SECRET`| API secret/password for your Shopify app          |
 | `SHOP_NAME`         | Your store's subdomain (e.g. `my-shop`)           |
 | `OPENAI_API_KEY`    | API key for OpenAI’s Chat API (support agent)     |
-| `GITHUB_TOKEN`      | GitHub API token for holographic control center   |
-| `CONTROL_CENTER_VARIANT` | Set to `holographic` (pinned in Render blueprint) |
+| `GITHUB_TOKEN`      | GitHub API token for operations                   |
 | `DATABASE_URL`      | Optional connection string for persistent storage |
 
 ### Command Center Configuration

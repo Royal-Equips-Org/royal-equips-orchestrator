@@ -117,8 +117,7 @@ detect_and_start() {
     # FastAPI candidates (highest priority for production)
     local fastapi_candidates=(
         "api.main:app"
-        "orchestrator.api:app" 
-        "scripts.launch_api:app"
+        "orchestrator.api:app"
         "api/main.py"
         "orchestrator/api.py"
         "main.py"
@@ -127,10 +126,8 @@ detect_and_start() {
     
     # Streamlit candidates
     local streamlit_candidates=(
-        "orchestrator/control_center/holo_app.py"
         "orchestrator/control_center/streamlit_app.py"
         "orchestrator/control_center/app.py"
-        "orchestrator/holo_app.py"
         "orchestrator/app.py"
         "streamlit_app.py"
         "st_app.py"
