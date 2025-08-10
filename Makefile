@@ -21,12 +21,12 @@ install:
 run api:
 	@echo "Starting FastAPI server..."
 	@export $(grep -v '^#' .env | xargs) && \
-	.venv/bin/uvicorn royal_equips_orchestrator.scripts.run_orchestrator:app --reload
+	.venv/bin/uvicorn scripts.launch_api:app --reload
 
 dashboard:
 	@echo "Starting Streamlit dashboard..."
 	@export $(grep -v '^#' .env | xargs) && \
-	.venv/bin/streamlit run royal_equips_orchestrator/orchestrator/control_center/app.py
+	.venv/bin/streamlit run orchestrator/control_center/app.py
 
 docker-build:
 	docker build -t royal-equips-orchestrator .

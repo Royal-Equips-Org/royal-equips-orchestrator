@@ -139,8 +139,67 @@ legacy APIs, something traditional integrations struggle with„Äê571575397346020‚
 5. **Access the control center** (optional):
 
    ```bash
-   streamlit run royal_equips_orchestrator/orchestrator/control_center/app.py
+   streamlit run orchestrator/control_center/app.py
    ```
+
+   Or use the provided helper script:
+   
+   ```bash
+   python scripts/run_control_center.py
+   ```
+
+## Control Center (Streamlit)
+
+The Streamlit Control Center provides a web-based dashboard for monitoring and controlling the orchestrator and its agents.
+
+### Local Development
+
+To run the Control Center locally:
+
+```bash
+# Direct streamlit command
+streamlit run orchestrator/control_center/app.py
+
+# Using helper script (recommended)
+python scripts/run_control_center.py
+
+# Using Make target
+make dashboard
+```
+
+### Configuration
+
+The Control Center can be configured using environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `STREAMLIT_SERVER_PORT` | `8501` | Port for the Streamlit server |
+| `STREAMLIT_SERVER_ADDRESS` | `localhost` | Address to bind the server to |
+| `STREAMLIT_SERVER_HEADLESS` | `false` | Run in headless mode (no browser) |
+
+### Render Deployment
+
+For Render deployments, add the Control Center as a separate web service in your `render.yaml`:
+
+```yaml
+services:
+  - type: web
+    name: control-center
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    startCommand: streamlit run orchestrator/control_center/app.py --server.headless true --server.address 0.0.0.0 --server.port $PORT
+    envVars:
+      - key: STREAMLIT_SERVER_HEADLESS
+        value: "true"
+```
+
+### Troubleshooting
+
+If you encounter import errors:
+- Ensure all `__init__.py` files are present in the orchestrator packages
+- Verify you're running from the project root directory
+- Check that dependencies are installed: `pip install -r requirements.txt`
 
 ## Environment Variables
 
