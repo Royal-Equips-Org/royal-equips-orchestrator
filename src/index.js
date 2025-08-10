@@ -21,7 +21,21 @@ app.get('/health', (c) => {
   });
 });
 
-// API proxy - forward all /api/* requests to backend with SSE and binary support
+// Handle CORS preflight requests
+app.options('/api/*', (c) => {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Max-Age': '86400'
+    }
+  });
+});
+
+// API proxy - forward all /api/* requests to backend with enhanced SSE and binary support
 app.all('/api/*', async (c) => {
   const pythonApiUrl = c.env.PYTHON_API_URL;
   
@@ -37,20 +51,15 @@ app.all('/api/*', async (c) => {
     const targetPath = url.pathname.replace('/api', '') || '/';
     const targetUrl = new URL(targetPath + url.search, backendUrl);
 
-    // Prepare request headers
+    // Prepare request headers - remove accept-encoding to avoid compression mismatches
     const headers = new Headers(c.req.raw.headers);
+    headers.delete('accept-encoding'); // Always remove to ensure clean pass-through
     
-    // Keep accept-encoding for SSE streams but handle carefully
-    const acceptHeader = c.req.header('accept');
-    const isSSERequest = acceptHeader && acceptHeader.includes('text/event-stream');
-    
-    if (!isSSERequest) {
-      headers.delete('accept-encoding'); // Avoid encoding issues for regular requests
-    }
-    
+    // Set forwarding headers
     headers.set('x-forwarded-for', c.req.header('CF-Connecting-IP') || '');
     headers.set('x-forwarded-proto', 'https');
     headers.set('x-forwarded-host', url.host);
+    headers.set('x-real-ip', c.req.header('CF-Connecting-IP') || '');
 
     // Create upstream request
     const upstreamInit = {
@@ -66,22 +75,27 @@ app.all('/api/*', async (c) => {
 
     const response = await fetch(targetUrl.toString(), upstreamInit);
     
-    // Forward response with original status and headers
+    // Forward response with original status and enhanced headers
     const responseHeaders = new Headers(response.headers);
     
-    // Add defensive CORS headers for API responses
+    // Add comprehensive CORS headers
     responseHeaders.set('Access-Control-Allow-Origin', '*');
     responseHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS');
     responseHeaders.set('Access-Control-Allow-Headers', '*');
     responseHeaders.set('Access-Control-Allow-Credentials', 'true');
+    responseHeaders.set('Access-Control-Expose-Headers', '*');
     
-    // Handle SSE responses specially
-    if (isSSERequest || responseHeaders.get('content-type')?.includes('text/event-stream')) {
+    // Handle SSE and streaming responses specially
+    const contentType = responseHeaders.get('content-type') || '';
+    const isSSEStream = contentType.includes('text/event-stream') || contentType.includes('text/plain');
+    
+    if (isSSEStream) {
       responseHeaders.set('Cache-Control', 'no-cache');
       responseHeaders.set('Connection', 'keep-alive');
       responseHeaders.set('X-Accel-Buffering', 'no'); // Disable nginx buffering
     }
     
+    // Pass-through response body for proper streaming support
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -98,8 +112,146 @@ app.all('/api/*', async (c) => {
   }
 });
 
-// Admin SPA - serve the holographic control center for all /admin/* routes
-app.get('/admin/*', async (c) => {
+// Admin handler - Streamlit-first with holographic fallback
+async function handleAdmin(c) {
+  const streamlitUrl = c.env.STREAMLIT_URL;
+  const adminEmbed = c.env.ADMIN_EMBED;
+
+  // If STREAMLIT_URL is configured, handle Streamlit integration
+  if (streamlitUrl) {
+    try {
+      // Test if Streamlit is reachable
+      const healthCheck = await fetch(streamlitUrl, { 
+        method: 'HEAD',
+        signal: AbortSignal.timeout(3000) // 3 second timeout
+      });
+
+      if (healthCheck.ok) {
+        // Streamlit is reachable
+        if (adminEmbed === '1') {
+          // Embed Streamlit in iframe
+          return serveStreamlitEmbed(streamlitUrl);
+        } else {
+          // Default: redirect to Streamlit (recommended for WebSocket compatibility)
+          return c.redirect(streamlitUrl, 302);
+        }
+      }
+    } catch (error) {
+      console.log('Streamlit health check failed:', error.message);
+    }
+  }
+
+  // Fallback: serve holographic control center
+  return serveHolographicFallback(c);
+}
+
+function serveStreamlitEmbed(streamlitUrl) {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Equips - Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .embed-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .embed-header {
+            background: rgba(13, 13, 23, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .embed-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .embed-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        .embed-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .embed-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        .embed-frame {
+            flex: 1;
+            border: none;
+            width: 100%;
+        }
+        .fallback-notice {
+            text-align: center;
+            padding: 2rem;
+            color: #a0a0a0;
+        }
+    </style>
+</head>
+<body>
+    <div class="embed-container">
+        <div class="embed-header">
+            <h1 class="embed-title">Royal Equips - Admin Dashboard</h1>
+            <div class="embed-actions">
+                <a href="${streamlitUrl}" target="_blank" class="embed-btn">🗗 Open Direct</a>
+                <a href="/admin?fallback=1" class="embed-btn">🎮 Holographic Mode</a>
+            </div>
+        </div>
+        <iframe 
+            class="embed-frame" 
+            src="${streamlitUrl}" 
+            title="Royal Equips Admin Dashboard"
+            allow="camera; microphone; fullscreen"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups"
+        >
+            <div class="fallback-notice">
+                <p>Your browser doesn't support iframes or the Streamlit app couldn't load.</p>
+                <p><a href="${streamlitUrl}" class="embed-btn">Open Streamlit Directly</a></p>
+            </div>
+        </iframe>
+    </div>
+</body>
+</html>`;
+
+  return new Response(html, {
+    headers: {
+      'Content-Type': 'text/html;charset=UTF-8',
+      'Cache-Control': 'no-cache',
+      'X-Frame-Options': 'DENY' // Prevent this embed from being embedded elsewhere
+    }
+  });
+}
+
+function serveHolographicFallback(c) {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -897,6 +1049,9 @@ app.get('/admin/*', async (c) => {
         }
         
         function switchPage(pageId) {
+            // Cleanup current page
+            cleanupCurrentPage();
+            
             // Update navigation active state
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
@@ -911,18 +1066,40 @@ app.get('/admin/*', async (c) => {
             
             AppState.currentPage = pageId;
             
-            // Initialize page-specific features
-            if (pageId === 'overview') {
-                initHubCanvas();
-            } else if (pageId === 'agents') {
-                initAgentsPage();
+            // Initialize page-specific features (lazy initialization)
+            setTimeout(() => {
+                if (pageId === 'overview') {
+                    initHubCanvas();
+                    initEventsFeed();
+                } else if (pageId === 'agents') {
+                    initAgentsPage();
+                }
+            }, 100); // Small delay for smooth transition
+        }
+        
+        function cleanupCurrentPage() {
+            // Stop hub animation
+            if (AppState.hubAnimation) {
+                cancelAnimationFrame(AppState.hubAnimation);
+                AppState.hubAnimation = null;
+            }
+            
+            // Close event source if switching away from overview
+            if (AppState.currentPage === 'overview' && AppState.eventSource) {
+                AppState.eventSource.close();
+                AppState.eventSource = null;
             }
         }
         
         // === CENTRAL HUB CANVAS ANIMATION ===
         function initHubCanvas() {
             const canvas = document.getElementById('hubCanvas');
-            if (!canvas) return;
+            if (!canvas || AppState.currentPage !== 'overview') return;
+            
+            // Stop any existing animation
+            if (AppState.hubAnimation) {
+                cancelAnimationFrame(AppState.hubAnimation);
+            }
             
             const ctx = canvas.getContext('2d');
             const centerX = canvas.width / 2;
@@ -953,7 +1130,15 @@ app.get('/admin/*', async (c) => {
             }
             
             function animate() {
+                // Check if we should still be animating
                 if (AppState.currentPage !== 'overview') {
+                    AppState.hubAnimation = null;
+                    return;
+                }
+                
+                // Performance: only animate if page is visible
+                if (document.hidden) {
+                    AppState.hubAnimation = requestAnimationFrame(animate);
                     return;
                 }
                 
@@ -1008,7 +1193,7 @@ app.get('/admin/*', async (c) => {
                     ctx.stroke();
                 });
                 
-                requestAnimationFrame(animate);
+                AppState.hubAnimation = requestAnimationFrame(animate);
             }
             
             animate();
@@ -1021,6 +1206,7 @@ app.get('/admin/*', async (c) => {
                 const response = await fetch('/api/health');
                 const backendStatusEl = document.getElementById('backend-status');
                 if (response.ok) {
+                    const data = await response.json();
                     backendStatusEl.textContent = 'ONLINE';
                     backendStatusEl.style.color = 'var(--primary-cyan)';
                 } else {
@@ -1028,18 +1214,32 @@ app.get('/admin/*', async (c) => {
                     backendStatusEl.style.color = 'var(--primary-magenta)';
                 }
             } catch (error) {
-                document.getElementById('backend-status').textContent = 'ERROR';
-                document.getElementById('backend-status').style.color = 'var(--primary-magenta)';
+                const backendStatusEl = document.getElementById('backend-status');
+                backendStatusEl.textContent = 'ERROR';
+                backendStatusEl.style.color = 'var(--primary-magenta)';
             }
             
-            // Initialize live events feed
-            initEventsFeed();
+            // Initialize live events feed only for overview page
+            if (AppState.currentPage === 'overview') {
+                initEventsFeed();
+            }
         }
         
         function initEventsFeed() {
+            // Close existing connection
+            if (AppState.eventSource) {
+                AppState.eventSource.close();
+                AppState.eventSource = null;
+            }
+            
             try {
                 // Attempt to connect to SSE endpoint
                 AppState.eventSource = new EventSource('/api/events');
+                
+                AppState.eventSource.onopen = function(event) {
+                    console.log('Events feed connected');
+                    addEvent('Events feed connected', 'success');
+                };
                 
                 AppState.eventSource.onmessage = function(event) {
                     try {
@@ -1052,12 +1252,17 @@ app.get('/admin/*', async (c) => {
                 
                 AppState.eventSource.onerror = function(error) {
                     console.log('EventSource error:', error);
-                    // Fallback to simulated events
-                    startSimulatedEvents();
+                    AppState.eventSource.close();
+                    AppState.eventSource = null;
+                    
+                    // Show connection error and fallback to simulated events
+                    addEvent('Live events unavailable - using simulated feed', 'warning');
+                    setTimeout(startSimulatedEvents, 1000);
                 };
                 
             } catch (error) {
                 console.log('SSE not available, using simulated events');
+                addEvent('SSE not supported - using simulated feed', 'info');
                 startSimulatedEvents();
             }
         }
@@ -1203,40 +1408,40 @@ app.get('/admin/*', async (c) => {
             
             try {
                 // Send to backend via API proxy
-                const response = await fetch('/api/agents/' + AppState.currentSession + '/message', {
+                const response = await fetch('/api/agents/' + AppState.currentSession + '/messages', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ 
+                        message: message,
+                        session_id: AppState.currentSession 
+                    })
                 });
                 
                 if (response.ok) {
                     // Start SSE stream for response
                     startAgentStream(AppState.currentSession);
                 } else {
-                    // Fallback response
-                    setTimeout(() => {
-                        AppState.sessions[AppState.currentSession].push({
-                            role: 'assistant',
-                            content: 'I understand your message. This is a simulated response since the backend agent service is not available.'
-                        });
-                        renderChatMessages();
-                        
-                        if (AppState.isTTSEnabled) {
-                            speakText('I understand your message. This is a simulated response.');
-                        }
-                    }, 1000);
+                    throw new Error('API request failed with status: ' + response.status);
                 }
             } catch (error) {
                 console.error('Message send error:', error);
                 
-                // Fallback response
+                // Fallback response with more helpful message
+                const fallbackMessage = 'I apologize, but I\'m currently unable to connect to the AI service. ' +
+                    'This could be because the backend API is not configured or unavailable. ' +
+                    'Please check the PYTHON_API_URL configuration or try again later.';
+                
                 AppState.sessions[AppState.currentSession].push({
                     role: 'assistant',
-                    content: 'I apologize, but I\'m having trouble connecting to the backend service. This is a simulated response.'
+                    content: fallbackMessage
                 });
                 renderChatMessages();
+                
+                if (AppState.isTTSEnabled) {
+                    speakText('I apologize, but the AI service is currently unavailable.');
+                }
             }
             
             // Reset button
@@ -1248,13 +1453,30 @@ app.get('/admin/*', async (c) => {
             try {
                 const eventSource = new EventSource('/api/agents/' + sessionId + '/stream');
                 let assistantMessage = '';
+                let streamTimeout;
+                
+                // Set timeout for stream response
+                streamTimeout = setTimeout(() => {
+                    eventSource.close();
+                    console.warn('Agent stream timeout');
+                    
+                    if (!assistantMessage) {
+                        AppState.sessions[sessionId].push({
+                            role: 'assistant',
+                            content: 'I apologize for the delay. The AI service is taking longer than expected to respond.'
+                        });
+                        renderChatMessages();
+                    }
+                }, 30000); // 30 second timeout
                 
                 eventSource.onmessage = function(event) {
+                    clearTimeout(streamTimeout);
+                    
                     try {
                         const data = JSON.parse(event.data);
                         
-                        if (data.type === 'content') {
-                            assistantMessage += data.text;
+                        if (data.type === 'content' || data.type === 'text') {
+                            assistantMessage += (data.text || data.content || '');
                             
                             // Update or add assistant message
                             const messages = AppState.sessions[sessionId];
@@ -1268,25 +1490,65 @@ app.get('/admin/*', async (c) => {
                             }
                             
                             renderChatMessages();
-                        } else if (data.type === 'done') {
+                        } else if (data.type === 'done' || data.type === 'end') {
                             eventSource.close();
                             
                             if (AppState.isTTSEnabled && assistantMessage) {
                                 speakText(assistantMessage);
                             }
+                        } else if (data.type === 'error') {
+                            eventSource.close();
+                            console.error('Stream error:', data.message);
+                            
+                            if (!assistantMessage) {
+                                AppState.sessions[sessionId].push({
+                                    role: 'assistant',
+                                    content: 'I encountered an error while processing your request: ' + (data.message || 'Unknown error')
+                                });
+                                renderChatMessages();
+                            }
                         }
                     } catch (e) {
                         console.error('SSE parsing error:', e);
+                        // Treat unparseable data as plain text content
+                        assistantMessage += event.data;
+                        
+                        const messages = AppState.sessions[sessionId];
+                        if (messages.length > 0 && messages[messages.length - 1].role === 'assistant') {
+                            messages[messages.length - 1].content = assistantMessage;
+                        } else {
+                            messages.push({
+                                role: 'assistant',
+                                content: assistantMessage
+                            });
+                        }
+                        renderChatMessages();
                     }
                 };
                 
                 eventSource.onerror = function(error) {
+                    clearTimeout(streamTimeout);
                     console.error('Agent stream error:', error);
                     eventSource.close();
+                    
+                    if (!assistantMessage) {
+                        AppState.sessions[sessionId].push({
+                            role: 'assistant',
+                            content: 'I\'m sorry, but there was a connection error while streaming the response. Please try again.'
+                        });
+                        renderChatMessages();
+                    }
                 };
                 
             } catch (error) {
                 console.error('Failed to start agent stream:', error);
+                
+                // Immediate fallback
+                AppState.sessions[sessionId].push({
+                    role: 'assistant',
+                    content: 'I\'m unable to establish a streaming connection. Please check if the streaming endpoint is available.'
+                });
+                renderChatMessages();
             }
         }
         
@@ -1388,7 +1650,11 @@ app.get('/admin/*', async (c) => {
             
             initNavigation();
             initStatusMonitoring();
-            initHubCanvas();
+            
+            // Initialize overview page by default
+            if (AppState.currentPage === 'overview') {
+                initHubCanvas();
+            }
             
             // Add keyboard navigation
             document.addEventListener('keydown', function(event) {
@@ -1402,12 +1668,37 @@ app.get('/admin/*', async (c) => {
                 }
             });
             
+            // Handle page visibility changes for performance
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    // Page is hidden, reduce activity
+                    cleanupCurrentPage();
+                } else {
+                    // Page is visible, reinitialize if needed
+                    if (AppState.currentPage === 'overview') {
+                        setTimeout(() => {
+                            initHubCanvas();
+                            if (!AppState.eventSource) {
+                                initEventsFeed();
+                            }
+                        }, 500);
+                    }
+                }
+            });
+            
             // Cleanup on page unload
             window.addEventListener('beforeunload', function() {
+                cleanupCurrentPage();
                 if (AppState.eventSource) {
                     AppState.eventSource.close();
                 }
             });
+            
+            // Add reduced motion support
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+            if (prefersReducedMotion.matches) {
+                document.documentElement.style.setProperty('--animation-duration', '0.01s');
+            }
         });
     </script>
 </body>
@@ -1419,6 +1710,16 @@ app.get('/admin/*', async (c) => {
       'Cache-Control': 'no-cache'
     }
   });
+}
+
+// Admin SPA - serve Streamlit-first with holographic fallback
+app.get('/admin/*', async (c) => {
+  // Check for explicit fallback request
+  if (c.req.query('fallback') === '1') {
+    return serveHolographicFallback(c);
+  }
+  
+  return handleAdmin(c);
 });
 
 // Fallback route
