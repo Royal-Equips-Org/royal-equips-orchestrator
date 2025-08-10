@@ -18,5 +18,5 @@ def health():
 
 @app.get("/")
 def root():
-    """Root endpoint.""" 
+    """Root endpoint."""
     return {"message": "Royal Equips Orchestrator API", "status": "running"}

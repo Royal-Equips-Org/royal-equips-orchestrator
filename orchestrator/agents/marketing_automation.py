@@ -14,11 +14,10 @@ import asyncio
 import logging
 import os
 from datetime import datetime
-from typing import List, Dict
 
 import requests
 
-from ..core.agent_base import AgentBase
+from orchestrator.core.agent_base import AgentBase
 
 
 class MarketingAutomationAgent(AgentBase):
@@ -27,7 +26,7 @@ class MarketingAutomationAgent(AgentBase):
     def __init__(self, name: str = "marketing_automation") -> None:
         super().__init__(name)
         self.logger = logging.getLogger(self.name)
-        self.campaign_log: List[Dict[str, str]] = []
+        self.campaign_log: list[dict[str, str]] = []
 
     async def run(self) -> None:
         self.logger.info("Running marketing automation agent")

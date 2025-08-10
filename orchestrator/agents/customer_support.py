@@ -10,14 +10,13 @@ customer satisfaction.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 
-from ..core.agent_base import AgentBase
+from orchestrator.core.agent_base import AgentBase
 
 try:
     import openai  # type: ignore
@@ -31,7 +30,7 @@ class CustomerSupportAgent(AgentBase):
     def __init__(self, name: str = "customer_support") -> None:
         super().__init__(name)
         self.logger = logging.getLogger(self.name)
-        self.support_log: List[Dict[str, Any]] = []
+        self.support_log: list[dict[str, Any]] = []
 
     async def run(self) -> None:
         self.logger.info("Running customer support agent")
@@ -44,7 +43,7 @@ class CustomerSupportAgent(AgentBase):
         await asyncio.gather(*tasks)
         self._last_run = asyncio.get_event_loop().time()
 
-    def _fetch_new_tickets(self) -> List[Dict[str, Any]]:
+    def _fetch_new_tickets(self) -> list[dict[str, Any]]:
         """Retrieve unprocessed support tickets from Shopify or another service."""
         api_key = os.getenv("SHOPIFY_API_KEY")
         api_secret = os.getenv("SHOPIFY_API_SECRET")
@@ -63,7 +62,7 @@ class CustomerSupportAgent(AgentBase):
             self.logger.error("Error fetching support tickets: %s", e)
             return []
 
-    async def _handle_ticket(self, ticket: Dict[str, Any]) -> None:
+    async def _handle_ticket(self, ticket: dict[str, Any]) -> None:
         """Generate a response for the ticket and submit it back to Shopify."""
         question = ticket.get("message", "")
         if not question:
@@ -73,7 +72,7 @@ class CustomerSupportAgent(AgentBase):
         if answer:
             await asyncio.get_event_loop().run_in_executor(None, self._post_response, ticket["id"], answer)
 
-    async def _generate_response(self, question: str) -> Optional[str]:
+    async def _generate_response(self, question: str) -> str | None:
         """Use OpenAI to generate a response to the customer question."""
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key or openai is None:

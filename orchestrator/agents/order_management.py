@@ -12,12 +12,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import List, Dict
+from datetime import datetime
 
 import requests
 
-from ..core.agent_base import AgentBase
+from orchestrator.core.agent_base import AgentBase
 
 
 class OrderManagementAgent(AgentBase):
@@ -35,7 +34,7 @@ class OrderManagementAgent(AgentBase):
             await asyncio.get_event_loop().run_in_executor(None, self._process_order, order)
         self._last_run = asyncio.get_event_loop().time()
 
-    def _fetch_new_orders(self) -> List[Dict[str, any]]:
+    def _fetch_new_orders(self) -> list[dict[str, any]]:
         """Fetch orders that need to be processed."""
         api_key = os.getenv("SHOPIFY_API_KEY")
         api_secret = os.getenv("SHOPIFY_API_SECRET")
@@ -53,7 +52,7 @@ class OrderManagementAgent(AgentBase):
             self.logger.error("Error fetching orders: %s", e)
             return []
 
-    def _process_order(self, order: Dict[str, any]) -> None:
+    def _process_order(self, order: dict[str, any]) -> None:
         """Process an individual order: capture payment, fulfill, and notify customer."""
         order_id = order.get("id")
         if not order_id:

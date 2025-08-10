@@ -9,16 +9,16 @@ and runs the analytics export one time.
 import asyncio
 import logging
 
-from orchestrator.core.orchestrator import Orchestrator
 from orchestrator.agents import (
-    ProductResearchAgent,
-    InventoryForecastingAgent,
-    PricingOptimizerAgent,
-    MarketingAutomationAgent,
-    CustomerSupportAgent,
-    OrderManagementAgent,
     AnalyticsAgent,
+    CustomerSupportAgent,
+    InventoryForecastingAgent,
+    MarketingAutomationAgent,
+    OrderManagementAgent,
+    PricingOptimizerAgent,
+    ProductResearchAgent,
 )
+from orchestrator.core.orchestrator import Orchestrator
 
 
 async def main() -> None:

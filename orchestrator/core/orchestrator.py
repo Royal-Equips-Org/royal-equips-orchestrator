@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
-from .agent_base import AgentBase
-from .health_monitor import HealthMonitor
+from orchestrator.core.agent_base import AgentBase
+from orchestrator.core.health_monitor import HealthMonitor
 
 
 class Orchestrator:
@@ -28,13 +28,13 @@ class Orchestrator:
     explicitly via ``run_forever``.
     """
 
-    def __init__(self, loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop | None = None) -> None:
         self.loop = loop or asyncio.get_event_loop()
-        self.agents: Dict[str, AgentBase] = {}
-        self.schedules: Dict[str, float] = {}
+        self.agents: dict[str, AgentBase] = {}
+        self.schedules: dict[str, float] = {}
         self.logger = logging.getLogger(__name__)
         self.health_monitor = HealthMonitor(self)
-        self._tasks: Dict[str, asyncio.Task[Any]] = {}
+        self._tasks: dict[str, asyncio.Task[Any]] = {}
 
     def register_agent(self, agent: AgentBase, interval: float) -> None:
         """Register an agent to run at a given interval (in seconds)."""
@@ -79,7 +79,7 @@ class Orchestrator:
             await agent.shutdown()
         await self.health_monitor.shutdown()
 
-    async def health(self) -> Dict[str, Any]:
+    async def health(self) -> dict[str, Any]:
         """Return health information for all agents."""
         statuses = {}
         for name, agent in self.agents.items():

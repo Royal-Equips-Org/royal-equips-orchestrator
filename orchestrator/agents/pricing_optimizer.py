@@ -16,12 +16,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from typing import Dict, List, Optional
 
 import requests
 from bs4 import BeautifulSoup
 
-from ..core.agent_base import AgentBase
+from orchestrator.core.agent_base import AgentBase
 
 
 class PricingOptimizerAgent(AgentBase):
@@ -30,7 +29,7 @@ class PricingOptimizerAgent(AgentBase):
     def __init__(self, name: str = "pricing_optimizer") -> None:
         super().__init__(name)
         self.logger = logging.getLogger(self.name)
-        self.price_adjustments: Dict[str, float] = {}
+        self.price_adjustments: dict[str, float] = {}
 
     async def run(self) -> None:
         self.logger.info("Running pricing optimizer agent")
@@ -51,7 +50,7 @@ class PricingOptimizerAgent(AgentBase):
         # update last run
         self._last_run = loop.time()
 
-    def _fetch_competitor_prices(self) -> Dict[str, float]:
+    def _fetch_competitor_prices(self) -> dict[str, float]:
         """Scrape competitor sites to estimate prices for our product SKUs."""
         # Example: For demonstration we scrape Amazon search results for each product name.
         # A mapping of internal product title to search query. Extend this mapping
@@ -60,7 +59,7 @@ class PricingOptimizerAgent(AgentBase):
             "dash_cam": "dash+camera+car",
             "car_vacuum": "car+vacuum+portable",
         }
-        prices: Dict[str, float] = {}
+        prices: dict[str, float] = {}
         headers = {"User-Agent": "Mozilla/5.0"}
         for product, query in product_queries.items():
             url = f"https://www.amazon.com/s?k={query}"
@@ -77,7 +76,7 @@ class PricingOptimizerAgent(AgentBase):
                 self.logger.error("Error scraping %s: %s", url, e)
         return prices
 
-    def _fetch_shop_prices(self) -> Dict[str, float]:
+    def _fetch_shop_prices(self) -> dict[str, float]:
         """Fetch current prices from Shopify via GraphQL."""
         api_key = os.getenv("SHOPIFY_API_KEY")
         api_secret = os.getenv("SHOPIFY_API_SECRET")
@@ -106,7 +105,7 @@ class PricingOptimizerAgent(AgentBase):
         }
         """
         variables = {"first": 50}
-        prices: Dict[str, float] = {}
+        prices: dict[str, float] = {}
         try:
             resp = requests.post(url, json={"query": query, "variables": variables}, timeout=15)
             resp.raise_for_status()
