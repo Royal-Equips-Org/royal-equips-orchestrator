@@ -16,8 +16,9 @@ sys.path.insert(0, str(repo_root))
 
 CANDIDATES: List[str] = [
     os.getenv("API_APP_PATH", ""),              # explicit override if provided
-    "scripts.run_orchestrator:app",             # full orchestrator app (preferred)
+    "api.main:app",                             # full FastAPI backend (highest priority)
     "orchestrator.api:app",                     # minimal fallback API
+    "scripts.run_orchestrator:app",             # full orchestrator app
     "orchestrator.core.api:app",
     "orchestrator.main:app",
     "orchestrator.app:app",

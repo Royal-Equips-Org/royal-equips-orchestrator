@@ -11,10 +11,12 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# ✅ Correct repo paths
+# ✅ Copy all necessary application directories
+COPY api /app/api
 COPY orchestrator /app/orchestrator
 COPY scripts /app/scripts
-RUN chmod +x /app/scripts/*.sh || true
+COPY start.sh /app/start.sh
+RUN chmod +x /app/scripts/*.sh /app/start.sh || true
 
 # Runtime env
 ENV PYTHONUNBUFFERED=1 \
@@ -24,5 +26,5 @@ ENV PYTHONUNBUFFERED=1 \
 # Render will probe this; we bind to 0.0.0.0:$PORT
 EXPOSE ${PORT}
 
-# ✅ Use resilient launcher (auto-detects the ASGI app)
-CMD ["python", "scripts/launch_api.py"]
+# ✅ Use start.sh as primary with fallback to resilient launcher
+CMD ["./start.sh"]
