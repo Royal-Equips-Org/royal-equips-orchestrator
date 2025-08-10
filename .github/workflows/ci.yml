@@ -51,6 +51,13 @@ jobs:
       run: |
         python scripts/import_smoke_test.py
 
+    - name: Validate FastAPI deployment readiness
+      run: |
+        python scripts/ci_validate.py
+      env:
+        APP_TYPE: fastapi
+        APP_PATH: api.main:app
+
     - name: Run tests with pytest (if tests exist)
       run: |
         if [ -f "pytest.ini" ] || [ -f "pyproject.toml" ] || [ -d "tests" ]; then
