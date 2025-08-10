@@ -93,7 +93,8 @@ class TestControlCenterRouting(unittest.TestCase):
         # Verify that the command includes app.py (classic)
         mock_run.assert_called_once()
         call_args = mock_run.call_args[0][0]  # Get the command arguments
-        self.assertTrue(any('app.py' in str(arg) and 'holo_app.py' not in str(arg) for arg in call_args))
+        self.assertTrue(any('app.py' in str(arg) for arg in call_args))
+        self.assertFalse(any('holo_app.py' in str(arg) for arg in call_args))
         self.assertFalse(any('--theme.base' in str(arg) for arg in call_args))
     
     @mock.patch('run_control_center.subprocess.run')
