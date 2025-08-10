@@ -322,6 +322,24 @@ Access points:
 - **Command Center**: http://localhost:3000/admin/
 - **API Backend**: http://localhost:8000/health
 
+## Accessing the Command Center
+
+### Production Deployment via Render
+
+When deployed using the `render.yaml` blueprint, the system provides a **single Holographic Control Center** powered by Streamlit:
+
+1. **Deploy to Render** using the blueprint configuration in `render.yaml`
+2. **Access the Command Center**: Navigate to Render Dashboard → Services → `control-center` → click the public URL
+3. **Environment Variables**: The following variables are required and should be set as secrets in Render:
+   - `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOP_NAME` - Shopify integration
+   - `OPENAI_API_KEY` - AI-powered features
+   - `GITHUB_TOKEN` - GitHub status and operations
+   - `BIGQUERY_*` variables - Analytics export (optional)
+
+The system is pinned to use the **holographic variant** exclusively via the `CONTROL_CENTER_VARIANT=holographic` environment variable configured in the blueprint.
+
+**Note**: The React admin interface (`admin/` directory) is not deployed by the Render blueprint and is intended for local development only.
+
 ## Environment Variables
 
 The orchestrator relies on several environment variables. See
@@ -333,6 +351,8 @@ The orchestrator relies on several environment variables. See
 | `SHOPIFY_API_SECRET`| API secret/password for your Shopify app          |
 | `SHOP_NAME`         | Your store's subdomain (e.g. `my-shop`)           |
 | `OPENAI_API_KEY`    | API key for OpenAI’s Chat API (support agent)     |
+| `GITHUB_TOKEN`      | GitHub API token for holographic control center   |
+| `CONTROL_CENTER_VARIANT` | Set to `holographic` (pinned in Render blueprint) |
 | `DATABASE_URL`      | Optional connection string for persistent storage |
 
 ### Command Center Configuration
