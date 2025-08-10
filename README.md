@@ -9,23 +9,25 @@ modern orchestration patterns, the orchestrator coordinates specialized
 agents under a unified control plane and exposes a digital control
 center for monitoring and intervention.
 
-## 🌌 Elite Admin Control Center
+## 🚀 2050 Cyberpunk Command Center
 
-The system now includes a **futuristic, elite admin interface** accessible at `/admin` that provides:
+The system features an **ultimate futuristic command center** built with React + TypeScript:
 
-- **Multi-page dashboard** with glassmorphism and neon aesthetics
-- **Real-time system monitoring** and health checks
-- **Agent communication interface** with SSE streaming chat
-- **Responsive design** optimized for both desktop and mobile
-- **High-performance architecture** with code splitting and lazy loading
+- **Cyberpunk Aesthetic**: Electric blue, neon orange, matrix green color palette
+- **Holographic Visualizations**: Three.js powered 3D displays and interactive elements  
+- **Real-time Monitoring**: Live agent status, system metrics, performance analytics
+- **Voice Control**: AI-powered commands with OpenAI Whisper integration
+- **Multi-Agent Communication**: Unified chat interface and command execution
+- **Advanced Navigation**: Six-panel interface (Overview, Operations, Data, Commerce, Agents, Settings)
 
 ### Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ELITE ADMIN CONTROL CENTER                  │
-│  React + TypeScript + Vite  │  Glassmorphism + Neon UI      │
+│                    2050 CYBERPUNK COMMAND CENTER               │
+│  React + TypeScript + Three.js + D3.js + Framer Motion       │
 │  Pages: Overview │ Operations │ Data │ Commerce │ Agents      │
+│  Features: Voice Control │ Real-time WebSocket │ 3D Holo     │
 └─────────────────┬───────────────────────────────────────────────┘
                   │
                   ▼ HTTP/WebSocket
@@ -38,9 +40,9 @@ The system now includes a **futuristic, elite admin interface** accessible at `/
                   ▼ Proxy to PYTHON_API_URL
 ┌─────────────────────────────────────────────────────────────────┐
 │                     FASTAPI BACKEND                            │
-│  Agents: Session management │ SSE streaming │ Chat interface  │
-│  System: Health │ Metrics │ Jobs │ Events                     │
-│  CORS: Configured for Worker origin                           │
+│  WebSocket: Real-time data streams │ Agent communication     │
+│  System: Health │ Metrics │ Jobs │ Events │ Voice Processing │
+│  CORS: Configured for React origin                            │
 └─────────────────────────────────────────────────────────────────┘
                   │
                   ▼
@@ -86,12 +88,12 @@ The system now includes a **futuristic, elite admin interface** accessible at `/
 
    ```bash
    # Python backend dependencies
-   pip install -r requirements.txt sse-starlette
+   pip install -r requirements.txt
    
    # Cloudflare Worker dependencies
    npm install
    
-   # Admin SPA dependencies  
+   # React Command Center dependencies  
    cd admin && npm install && cd ..
    ```
 
@@ -114,19 +116,15 @@ The system now includes a **futuristic, elite admin interface** accessible at `/
    # Terminal 2: Start Cloudflare Worker (local)
    npx wrangler dev --local --port 8787
    
-   # Terminal 3: Start admin SPA dev server
+   # Terminal 3: Start React Command Center
    cd admin && npm run dev
-   
-   # Terminal 4: Alternative - Start original orchestrator
-   uvicorn orchestrator.api:app --reload --port 8002
    ```
 
 5. **Access the interfaces**
 
-   - **Elite Admin Control Center**: http://localhost:3000/admin/
+   - **2050 Cyberpunk Command Center**: http://localhost:3000/admin/
    - **Worker Proxy Health**: http://localhost:8787/health
    - **Backend API**: http://localhost:8000/health
-   - **Original Orchestrator**: http://localhost:8002/health
 
 ### Production Deployment
 
@@ -160,7 +158,7 @@ python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
 docker compose up --build
 ```
 
-#### Admin SPA Build & Deployment
+#### Command Center Build & Deployment
 
 ```bash
 cd admin
@@ -220,10 +218,11 @@ legacy APIs, something traditional integrations struggle with【571575397346020�
   captures payments, triggers fulfilment and handles returns via
   Shopify’s REST API.
 
-* **Digital Control Center** – A Streamlit dashboard visualizes
+* **Digital Command Center** – A React-powered cyberpunk interface
+  that provides real-time visualization of agent status, system metrics,
   trending keywords, demand forecasts, price adjustments, campaign
-  history, support activity and agent health. It provides manual
-  controls to run agents on demand.
+  history, support activity and order processing. Features voice control,
+  3D holographic displays, and manual agent execution controls.
 
 * **API Service** – A FastAPI application exposes endpoints to check
   health or trigger agents, enabling integration with other systems or
@@ -302,138 +301,26 @@ legacy APIs, something traditional integrations struggle with【571575397346020�
    uvicorn royal_equips_orchestrator.scripts.run_orchestrator:app --reload
    ```
 
-5. **Access the control center** (optional):
+5. **Access the command center**:
 
    ```bash
-   # Launch the holographic control center (default)
-   streamlit run orchestrator/control_center/holo_app.py
-   
-   # Or use the unified helper script (recommended)
-   python scripts/run_control_center.py
-   
-   # For classic dashboard, set the variant
-   CONTROL_CENTER_VARIANT=classic python scripts/run_control_center.py
+   # Access the React Command Center
+   cd admin && npm run dev
+   # Then visit: http://localhost:3000/admin/
    ```
-
-## Control Centers
-
-The Royal Equips Orchestrator provides two control center interfaces, with the **Holographic Control Center** as the default.
-
-### 🌌 Holographic Control Center (Default)
-
-A next-generation, futuristic interface with neon/cyberpunk styling, real-time data integration, voice control, and AI assistance.
-
-**Features:**
-- **Immersive UI**: Neon/cyberpunk color palette with glassmorphism effects and animated particle backgrounds
-- **Multi-panel Interface**: Six dedicated pages (Overview, Agents, Shopify Live, GitHub Ops, Copilot & Voice, Settings)
-- **Real-time Data**: Live integration with Shopify metrics and GitHub repository status
-- **AI Copilot**: Chat with ARIA (Autonomous Robotics Intelligence Assistant) for system control and insights
-- **Voice Control**: Microphone capture with OpenAI Whisper speech-to-text and browser-based text-to-speech
-- **Agent Management**: Visual control station for running and monitoring all AI agents
-
-**Launch the Holographic Control Center:**
-```bash
-# Using the unified helper script (recommended)
-python scripts/run_control_center.py
-
-# Using make
-make dashboard
-# or
-make holo
-
-# Using streamlit directly
-streamlit run orchestrator/control_center/holo_app.py
-```
-
-**Environment Variables for Enhanced Features:**
-```bash
-# Required for AI features
-OPENAI_API_KEY=your_openai_api_key
-
-# Required for GitHub integration
-GITHUB_TOKEN=your_github_personal_access_token
-
-# Optional holographic settings
-VOICE_ENABLED=true                    # Enable voice control
-POLL_SECONDS=30                      # Data refresh interval
-OPENAI_MODEL=gpt-4o-mini            # Chat model
-WHISPER_MODEL=whisper-1             # Speech-to-text model
-```
-
-### 📊 Classic Dashboard
-
-The original Streamlit control center with basic monitoring and controls. Available when you need a simpler interface.
-
-**Launch the Classic Dashboard:**
-```bash
-# Using the unified helper script with classic variant
-CONTROL_CENTER_VARIANT=classic python scripts/run_control_center.py
-
-# Using make
-make classic
-
-# Using streamlit directly
-streamlit run orchestrator/control_center/app.py
-```
 
 ## Docker Deployment
 
-The Docker setup supports both control centers via the `CONTROL_CENTER_VARIANT` environment variable, with **holographic as the default**:
+Launch the complete system with Docker:
 
 ```bash
-# Launch with Holographic Control Center (default)
-docker compose up
-
-# Launch with Classic Dashboard  
-CONTROL_CENTER_VARIANT=classic docker compose up
+# Launch orchestrator backend and React command center
+docker compose up --build
 ```
 
-### Local Development
-
-To run the Control Center locally:
-
-```bash
-# Using the unified helper script (recommended, defaults to holographic)
-python scripts/run_control_center.py
-
-# For classic variant
-CONTROL_CENTER_VARIANT=classic python scripts/run_control_center.py
-
-# Using Make targets
-make dashboard  # Starts holographic (default)
-make classic    # Starts classic
-
-# Direct streamlit commands
-streamlit run orchestrator/control_center/holo_app.py  # Holographic
-streamlit run orchestrator/control_center/app.py      # Classic
-```
-
-### Configuration
-
-The Control Center can be configured using environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CONTROL_CENTER_VARIANT` | `holo` | Which control center to launch (`holo` or `classic`) |
-| `STREAMLIT_SERVER_PORT` | `8501` | Port for the Streamlit server |
-| `STREAMLIT_SERVER_ADDRESS` | `localhost` | Address to bind the server to |
-| `STREAMLIT_SERVER_HEADLESS` | `false` | Run in headless mode (no browser) |
-
-### Render Deployment
-
-For Render deployments, the holographic control center is launched by default. The `render.yaml` includes a conditional that runs the appropriate interface based on the `CONTROL_CENTER_VARIANT` environment variable:
-
-- **Default**: Holographic Control Center
-- **Classic**: Set `CONTROL_CENTER_VARIANT=classic` to use the classic dashboard
-
-The control center service in `render.yaml` is already configured to handle both variants automatically.
-
-### Troubleshooting
-
-If you encounter import errors:
-- Ensure all `__init__.py` files are present in the orchestrator packages
-- Verify you're running from the project root directory
-- Check that dependencies are installed: `pip install -r requirements.txt`
+Access points:
+- **Command Center**: http://localhost:3000/admin/
+- **API Backend**: http://localhost:8000/health
 
 ## Environment Variables
 
@@ -447,6 +334,13 @@ The orchestrator relies on several environment variables. See
 | `SHOP_NAME`         | Your store's subdomain (e.g. `my-shop`)           |
 | `OPENAI_API_KEY`    | API key for OpenAI’s Chat API (support agent)     |
 | `DATABASE_URL`      | Optional connection string for persistent storage |
+
+### Command Center Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_API_URL` | `http://localhost:8000` | Backend API endpoint for React app |
+| `VITE_WEBSOCKET_URL` | `ws://localhost:8000/ws` | WebSocket endpoint for real-time features |
 
 ## Logging and Health Checks
 

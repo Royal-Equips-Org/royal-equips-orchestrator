@@ -13,27 +13,16 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
-  control-center:
-    build: .
-    container_name: royal-equips-control-center
-    command: >
-      sh -c "
-      if [ \"$${CONTROL_CENTER_VARIANT}\" = \"classic\" ]; then
-        streamlit run orchestrator/control_center/app.py --server.port 8501 --server.enableCORS false
-      else
-        streamlit run orchestrator/control_center/holo_app.py --server.port 8501 --server.enableCORS false --theme.base dark
-      fi
-      "
+  command-center:
+    build:
+      context: .
+      dockerfile: admin/Dockerfile
+    container_name: royal-equips-command-center
     environment:
-      SHOPIFY_API_KEY: "${SHOPIFY_API_KEY}"
-      SHOPIFY_API_SECRET: "${SHOPIFY_API_SECRET}"
-      SHOP_NAME: "${SHOP_NAME}"
-      OPENAI_API_KEY: "${OPENAI_API_KEY}"
-      GITHUB_TOKEN: "${GITHUB_TOKEN}"
-      VOICE_ENABLED: "${VOICE_ENABLED:-true}"
-      CONTROL_CENTER_VARIANT: "${CONTROL_CENTER_VARIANT:-holo}"
+      VITE_API_URL: "http://localhost:8000"
+      VITE_WEBSOCKET_URL: "ws://localhost:8000/ws"
     ports:
-      - "8501:8501"
+      - "3000:3000"
     depends_on:
       - orchestrator
     restart: unless-stopped
