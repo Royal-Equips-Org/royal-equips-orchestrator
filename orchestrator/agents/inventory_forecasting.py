@@ -22,17 +22,16 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import List, Optional
 
 import pandas as pd
 import requests
+
 try:
     from prophet import Prophet  # type: ignore
 except ImportError:
     Prophet = None  # allow module import even if prophet is missing
 
-from ..core.agent_base import AgentBase
+from orchestrator.core.agent_base import AgentBase
 
 
 class InventoryForecastingAgent(AgentBase):
@@ -42,7 +41,7 @@ class InventoryForecastingAgent(AgentBase):
         super().__init__(name)
         self.logger = logging.getLogger(self.name)
         self.horizon_days = horizon_days
-        self.forecast_df: Optional[pd.DataFrame] = None
+        self.forecast_df: pd.DataFrame | None = None
 
     async def run(self) -> None:
         self.logger.info("Running inventory forecasting agent")
@@ -72,7 +71,7 @@ class InventoryForecastingAgent(AgentBase):
         # Update last run timestamp
         self._last_run = loop.time()
 
-    def _fetch_sales_data(self) -> Optional[pd.DataFrame]:
+    def _fetch_sales_data(self) -> pd.DataFrame | None:
         """Fetch historical sales from Shopify GraphQL API."""
         api_key = os.getenv("SHOPIFY_API_KEY")
         api_secret = os.getenv("SHOPIFY_API_SECRET")
@@ -98,7 +97,7 @@ class InventoryForecastingAgent(AgentBase):
         }
         """
         variables = {"first": 100, "cursor": None}
-        sales: List[Tuple[str, float]] = []
+        sales: list[tuple[str, float]] = []
         while True:
             try:
                 resp = requests.post(url, json={"query": query, "variables": variables}, timeout=15)

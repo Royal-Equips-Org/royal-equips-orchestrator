@@ -9,15 +9,14 @@ intervals. Additional configuration and credentials are read from
 environment variables or configuration files.
 """
 
-from .product_research import ProductResearchAgent
-from .inventory_forecasting import InventoryForecastingAgent
-from .pricing_optimizer import PricingOptimizerAgent
-from .marketing_automation import MarketingAutomationAgent
-from .customer_support import CustomerSupportAgent
-from .order_management import OrderManagementAgent
-from .analytics import AnalyticsAgent
-from .recommendation import ProductRecommendationAgent
-
+from orchestrator.agents.analytics import AnalyticsAgent
+from orchestrator.agents.customer_support import CustomerSupportAgent
+from orchestrator.agents.inventory_forecasting import InventoryForecastingAgent
+from orchestrator.agents.marketing_automation import MarketingAutomationAgent
+from orchestrator.agents.order_management import OrderManagementAgent
+from orchestrator.agents.pricing_optimizer import PricingOptimizerAgent
+from orchestrator.agents.product_research import ProductResearchAgent
+from orchestrator.agents.recommendation import ProductRecommendationAgent
 
 __all__ = [
     "ProductResearchAgent",

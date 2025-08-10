@@ -4,10 +4,15 @@ This launcher attempts to load the ASGI app from multiple candidate locations,
 providing fallback options if the primary app location changes or fails to load.
 """
 
-import os
 import importlib
+import os
+import sys
+from pathlib import Path
 from typing import List
 
+# Add repository root to Python path
+repo_root = Path(__file__).parent.parent
+sys.path.insert(0, str(repo_root))
 
 CANDIDATES: List[str] = [
     os.getenv("API_APP_PATH", ""),              # explicit override if provided

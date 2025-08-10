@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import abc
 import asyncio
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class AgentBase(abc.ABC):
@@ -36,10 +36,10 @@ class AgentBase(abc.ABC):
 
     def __init__(self, name: str) -> None:
         self.name = name
-        self._last_run: Optional[float] = None
+        self._last_run: float | None = None
 
     @property
-    def last_run(self) -> Optional[float]:
+    def last_run(self) -> float | None:
         """Return the Unix timestamp of the last successful run."""
         return self._last_run
 
@@ -58,7 +58,7 @@ class AgentBase(abc.ABC):
         self._last_run = asyncio.get_event_loop().time()
         raise NotImplementedError
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Return a health status dictionary.
 
         Agents can override this to provide richer health information. By

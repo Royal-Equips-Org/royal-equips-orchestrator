@@ -13,23 +13,26 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Dict, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from orchestrator.core.orchestrator import Orchestrator
 
 
 class HealthMonitor:
     """Periodically collects health information from agents and restarts them."""
 
-    def __init__(self, orchestrator: 'Orchestrator', interval: float = 60.0) -> None:
+    def __init__(self, orchestrator: Orchestrator, interval: float = 60.0) -> None:
         self.orchestrator = orchestrator
         self.interval = interval
         self.logger = logging.getLogger(__name__)
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
 
     async def run(self) -> None:
         """Continuously run health checks and restart failed agents."""
         while True:
             await asyncio.sleep(self.interval)
-            statuses: Dict[str, Dict[str, float | str]] = await self.orchestrator.health()
+            statuses: dict[str, dict[str, float | str]] = await self.orchestrator.health()
             for name, status in statuses.items():
                 if status.get("status") not in {"ok", "never run"}:
                     # If agent reports unhealthy status we can attempt restart

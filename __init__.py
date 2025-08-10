@@ -6,17 +6,17 @@ without using the provided entry scripts. You can import the
 orchestrator and agents directly from here.
 """
 
-from .orchestrator.core.orchestrator import Orchestrator
-from .orchestrator.agents import (
-    ProductResearchAgent,
-    InventoryForecastingAgent,
-    PricingOptimizerAgent,
-    MarketingAutomationAgent,
-    CustomerSupportAgent,
-    OrderManagementAgent,
-    ProductRecommendationAgent,
+from orchestrator.agents import (
     AnalyticsAgent,
+    CustomerSupportAgent,
+    InventoryForecastingAgent,
+    MarketingAutomationAgent,
+    OrderManagementAgent,
+    PricingOptimizerAgent,
+    ProductRecommendationAgent,
+    ProductResearchAgent,
 )
+from orchestrator.core.orchestrator import Orchestrator
 
 __all__ = [
     "Orchestrator",

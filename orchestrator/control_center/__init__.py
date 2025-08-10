@@ -3,7 +3,7 @@
 This package provides two web-based dashboards for monitoring and controlling
 the orchestrator and its agents:
 
-- **Holographic Control Center (holo_app.py)**: The default, featuring a futuristic 
+- **Holographic Control Center (holo_app.py)**: The default, featuring a futuristic
   neon/cyberpunk interface with voice control, AI assistance, and advanced features.
 - **Classic Dashboard (app.py)**: The original interface with basic monitoring and controls.
 
@@ -17,6 +17,6 @@ Entry points:
 - streamlit run orchestrator/control_center/app.py (classic)
 """
 
-from .app import run_dashboard
+from orchestrator.control_center.app import run_dashboard
 
 __all__ = ["run_dashboard"]

@@ -23,19 +23,18 @@ import asyncio
 import logging
 import os
 from collections import defaultdict
-from typing import Dict, List, Optional
 
 import numpy as np
 import requests
 from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
 
-from ..core.agent_base import AgentBase
+from orchestrator.core.agent_base import AgentBase
 
 
 class ProductRecommendationAgent(AgentBase):
     """Generates product recommendations from customer purchase history."""
 
-    def __init__(self, name: str = "recommendation", num_recommendations: Optional[int] = None) -> None:
+    def __init__(self, name: str = "recommendation", num_recommendations: int | None = None) -> None:
         super().__init__(name)
         self.logger = logging.getLogger(self.name)
         # Determine number of recommendations either from argument or env var
@@ -48,7 +47,7 @@ class ProductRecommendationAgent(AgentBase):
             except ValueError:
                 self.num_recommendations = 5
         # Mapping of customer identifier to list of recommended product titles
-        self.recommendations: Dict[str, List[str]] = {}
+        self.recommendations: dict[str, list[str]] = {}
 
     async def run(self) -> None:
         """Fetch order history, compute recommendations and update internal state."""
@@ -67,7 +66,7 @@ class ProductRecommendationAgent(AgentBase):
         self._last_run = loop.time()
         self.logger.info("Generated recommendations for %d customers", len(self.recommendations))
 
-    def _fetch_purchase_history(self) -> Dict[str, List[str]]:
+    def _fetch_purchase_history(self) -> dict[str, list[str]]:
         """Retrieve purchase history from Shopify orders.
 
         Returns a mapping of customer ID/email to the list of product titles
@@ -100,8 +99,8 @@ class ProductRecommendationAgent(AgentBase):
           }
         }
         """
-        variables: Dict[str, Optional[str]] = {"first": 100, "cursor": None}
-        customer_products: Dict[str, List[str]] = defaultdict(list)
+        variables: dict[str, str | None] = {"first": 100, "cursor": None}
+        customer_products: dict[str, list[str]] = defaultdict(list)
         while True:
             try:
                 resp = requests.post(url, json={"query": query, "variables": variables}, timeout=15)
@@ -130,7 +129,7 @@ class ProductRecommendationAgent(AgentBase):
                 break
         return dict(customer_products)
 
-    def _compute_recommendations(self, customer_products: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    def _compute_recommendations(self, customer_products: dict[str, list[str]]) -> dict[str, list[str]]:
         """Compute recommendations for each customer using item similarity.
 
         The algorithm builds a customer–product matrix where rows
@@ -158,10 +157,10 @@ class ProductRecommendationAgent(AgentBase):
         # Transpose matrix to shape (num_products, num_customers)
         similarity = cosine_similarity(matrix.T)
         # Build recommendations
-        recommendations: Dict[str, List[str]] = {}
+        recommendations: dict[str, list[str]] = {}
         for i, cust in enumerate(customers):
             purchased = set(customer_products[cust])
-            scores: Dict[str, float] = defaultdict(float)
+            scores: dict[str, float] = defaultdict(float)
             for prod in purchased:
                 j = index[prod]
                 # similarity[j] is an array of similarities for this product to all others

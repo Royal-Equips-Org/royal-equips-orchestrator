@@ -14,9 +14,12 @@ import asyncio
 import logging
 import os
 from datetime import datetime
-from typing import Dict, Any
+from typing import TYPE_CHECKING, Any
 
-from ..core.agent_base import AgentBase
+from orchestrator.core.agent_base import AgentBase
+
+if TYPE_CHECKING:
+    from orchestrator.core.orchestrator import Orchestrator
 
 try:
     from google.cloud import bigquery  # type: ignore
@@ -27,7 +30,7 @@ except ImportError:
 class AnalyticsAgent(AgentBase):
     """Exports orchestrator metrics to BigQuery."""
 
-    def __init__(self, orchestrator: 'Orchestrator', name: str = "analytics") -> None:
+    def __init__(self, orchestrator: Orchestrator, name: str = "analytics") -> None:
         super().__init__(name)
         self.logger = logging.getLogger(self.name)
         self.orchestrator = orchestrator
@@ -52,7 +55,7 @@ class AnalyticsAgent(AgentBase):
         client = bigquery.Client(project=project_id)
         table_ref = client.dataset(dataset_id).table(table_id)
         # Build a row of metrics
-        metrics: Dict[str, Any] = {"timestamp": datetime.utcnow().isoformat()}
+        metrics: dict[str, Any] = {"timestamp": datetime.utcnow().isoformat()}
         # Trending keywords
         prod_agent = self.orchestrator.agents.get("product_research")
         if prod_agent and hasattr(prod_agent, "trending_products"):

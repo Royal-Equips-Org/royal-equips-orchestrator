@@ -17,11 +17,9 @@ instead connect to a REST API exposed by the orchestrator service.
 from __future__ import annotations
 
 import asyncio
-import os
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # Bootstrap for script execution: ensure project root is on sys.path
 # so absolute imports work when run as a script via streamlit
@@ -36,16 +34,15 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from orchestrator.core.orchestrator import Orchestrator
 from orchestrator.agents import (
-    ProductResearchAgent,
-    InventoryForecastingAgent,
-    PricingOptimizerAgent,
-    MarketingAutomationAgent,
     CustomerSupportAgent,
+    InventoryForecastingAgent,
+    MarketingAutomationAgent,
     OrderManagementAgent,
+    PricingOptimizerAgent,
+    ProductResearchAgent,
 )
-
+from orchestrator.core.orchestrator import Orchestrator
 
 # Create global orchestrator and register agents
 _orchestrator: Orchestrator | None = None
@@ -141,7 +138,7 @@ def run_dashboard() -> None:
     # Health status
     st.subheader("Agent Health Status")
     # Use asynchronous call to get health data
-    health_data: Dict[str, Any] = asyncio.run(orch.health())
+    health_data: dict[str, Any] = asyncio.run(orch.health())
     df_health = pd.DataFrame(health_data).T
     st.table(df_health)
 
