@@ -22,6 +22,8 @@ services:
         sync: false
       - key: BIGQUERY_TABLE
         sync: false
+      - key: GITHUB_TOKEN
+        sync: false
 
   # Streamlit control center
   - type: web
@@ -46,9 +48,11 @@ services:
         sync: false
       - key: BIGQUERY_TABLE
         sync: false
-      # Optional: Set to "classic" to use the classic dashboard instead of holographic (default)
-      - key: CONTROL_CENTER_VARIANT
+      - key: GITHUB_TOKEN
         sync: false
+      # Pin to holographic variant for single, full digital command center
+      - key: CONTROL_CENTER_VARIANT
+        value: holographic
 
   # Daily analytics export at 03:00 UTC
   - type: cron
