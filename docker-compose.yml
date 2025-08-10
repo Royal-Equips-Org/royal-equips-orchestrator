@@ -18,10 +18,10 @@ services:
     container_name: royal-equips-control-center
     command: >
       sh -c "
-      if [ \"$${CONTROL_CENTER_VARIANT}\" = \"holo\" ]; then
-        streamlit run orchestrator/control_center/holo_app.py --server.port 8501 --server.enableCORS false --theme.base dark
-      else
+      if [ \"$${CONTROL_CENTER_VARIANT}\" = \"classic\" ]; then
         streamlit run orchestrator/control_center/app.py --server.port 8501 --server.enableCORS false
+      else
+        streamlit run orchestrator/control_center/holo_app.py --server.port 8501 --server.enableCORS false --theme.base dark
       fi
       "
     environment:
@@ -31,7 +31,7 @@ services:
       OPENAI_API_KEY: "${OPENAI_API_KEY}"
       GITHUB_TOKEN: "${GITHUB_TOKEN}"
       VOICE_ENABLED: "${VOICE_ENABLED:-true}"
-      CONTROL_CENTER_VARIANT: "${CONTROL_CENTER_VARIANT:-standard}"
+      CONTROL_CENTER_VARIANT: "${CONTROL_CENTER_VARIANT:-holo}"
     ports:
       - "8501:8501"
     depends_on:

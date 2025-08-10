@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Helper script to launch the Streamlit Control Center.
 
-This script provides a standardized way to launch the control center
-with proper environment handling. It can be customized with environment
-variables for host, port, and other streamlit configuration.
+This script provides a unified way to launch either the holographic or classic
+control center based on the CONTROL_CENTER_VARIANT environment variable.
+It can be customized with environment variables for host, port, and other
+streamlit configuration.
 
 Usage:
     python scripts/run_control_center.py
 
 Environment Variables:
+    CONTROL_CENTER_VARIANT: Which control center to launch ("holo" [default] or "classic")
     STREAMLIT_SERVER_PORT: Port to run on (default: 8501)
     STREAMLIT_SERVER_ADDRESS: Address to bind to (default: localhost)
     STREAMLIT_SERVER_HEADLESS: Run in headless mode (default: false)
@@ -25,7 +27,16 @@ def main():
     # Get the project root directory
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    app_path = project_root / "orchestrator" / "control_center" / "app.py"
+    
+    # Determine which app to launch based on CONTROL_CENTER_VARIANT
+    variant = os.getenv("CONTROL_CENTER_VARIANT", "holo").lower()
+    
+    if variant == "classic":
+        app_path = project_root / "orchestrator" / "control_center" / "app.py"
+        print("🎛️  Launching Classic Control Center...")
+    else:
+        app_path = project_root / "orchestrator" / "control_center" / "holo_app.py"
+        print("🌌 Launching Holographic Control Center...")
     
     if not app_path.exists():
         print(f"Error: Control center app not found at {app_path}")
@@ -48,7 +59,12 @@ def main():
         cmd.append("--server.headless")
         cmd.append("true")
     
+    # Add dark theme for holographic mode
+    if variant != "classic":
+        cmd.extend(["--theme.base", "dark"])
+    
     print(f"Launching Control Center on {address}:{port}")
+    print(f"Variant: {variant}")
     print(f"Command: {' '.join(cmd)}")
     
     # Change to project root directory
