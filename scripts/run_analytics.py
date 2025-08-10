@@ -9,8 +9,8 @@ and runs the analytics export one time.
 import asyncio
 import logging
 
-from royal_equips_orchestrator import (
-    Orchestrator,
+from orchestrator.core.orchestrator import Orchestrator
+from orchestrator.agents import (
     ProductResearchAgent,
     InventoryForecastingAgent,
     PricingOptimizerAgent,

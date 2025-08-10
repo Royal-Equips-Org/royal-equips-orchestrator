@@ -1,0 +1,10 @@
+name = "royal-equips-orchestrator"
+main = "src/index.js"
+compatibility_date = "2023-12-01"
+
+[env.production]
+name = "royal-equips-orchestrator"
+
+# Variables for the production environment
+[env.production.vars]
+PYTHON_API_URL = "https://royal-equips-orchestrator.onrender.com"
