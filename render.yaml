@@ -30,7 +30,7 @@ services:
     name: control-center
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements-minimal.txt
+    buildCommand: pip install -r requirements.txt          # CHANGED
     startCommand: ./start.sh
     envVars:
       - key: PYTHON_VERSION
