@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable
 
-import streamlit as st
+# Streamlit dependency removed - replaced by Flask WebSocket
 
 logger = logging.getLogger(__name__)
 
