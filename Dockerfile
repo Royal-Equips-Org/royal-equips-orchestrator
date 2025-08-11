@@ -15,8 +15,6 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY api /app/api
 COPY orchestrator /app/orchestrator
 COPY scripts /app/scripts
-COPY templates /app/templates
-COPY static /app/static
 COPY start.sh /app/start.sh
 RUN chmod +x /app/scripts/*.sh /app/start.sh || true
 
