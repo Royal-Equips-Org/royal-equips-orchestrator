@@ -1,29 +1,36 @@
-# Streamlit Cleanup Documentation
+# Flask Migration and Streamlit Cleanup Documentation
 
 ## Overview
-This document details the cleanup of Streamlit code during the migration to the Flask-based Control Center implementation.
+This document details the complete migration from FastAPI/Streamlit to Flask as the primary backend framework for Royal Equips Orchestrator, including the cleanup of legacy Streamlit code.
 
-## Files Modified/Removed
+## Migration Summary
 
-### Modified Files
+### Primary Changes
+- **Backend Framework**: Migrated from FastAPI to Flask as primary framework  
+- **WebSocket Support**: Added Flask-SocketIO with eventlet for real-time features
+- **Control Center**: Replaced Streamlit dashboard with modern HTML/JS SPA  
+- **API Documentation**: Added Swagger UI at `/docs` using flasgger
+- **Deployment**: Updated to use gunicorn with eventlet workers
 
-#### `orchestrator/ai/assistant.py`
-- **Change**: Removed `import streamlit as st`
-- **Reason**: This module was importing Streamlit but not using it meaningfully in the context of the new Flask-based architecture
-- **Impact**: No functional impact since the assistant functionality is now integrated with the React Control Center via WebSocket
+### Files Modified/Removed
 
-### Files that Remain (Legacy Support)
+#### Core Application Files Modified
+- `app/__init__.py` - Added Swagger documentation initialization
+- `app/routes/docs.py` - **NEW** - Swagger API documentation endpoint  
+- `start.sh` - Updated to prioritize Flask over FastAPI, use eventlet workers
+- `Dockerfile` - Changed to eventlet worker class and correct WSGI entry point
+- `render.yaml` - Updated configuration for Flask deployment
+- `requirements-flask.txt` - Added missing Flask dependencies (flask-socketio, eventlet, flasgger, psutil, etc.)
 
-#### `orchestrator/control_center/__init__.py`
-- **Status**: Preserved but deprecated
-- **Contains**: References to Streamlit app (`streamlit run orchestrator/control_center/app.py`)
-- **Reason**: Kept for backwards compatibility but no longer used
-- **Future Action**: Can be safely removed in a future cleanup
+#### New Control Center Implementation  
+- `app/static/index.html` - **NEW** - Modern Control Center SPA with real-time WebSocket integration
+- Cyberpunk theme with live system metrics, agent status, and control functions
+- Real-time WebSocket streams for heartbeat, metrics, and control events
 
-#### `tests/test_streamlit_imports.py`
-- **Status**: Preserved 
-- **Reason**: Contains tests for orchestrator core functionality that's still relevant
-- **Note**: Despite the filename, this primarily tests agent and orchestrator imports
+#### Files that Remain (Legacy Support)
+- `orchestrator/control_center/__init__.py` - Deprecated but preserved for compatibility
+- `tests/test_streamlit_imports.py` - Preserved (tests core functionality)
+- `api/main.py` - FastAPI app remains functional but secondary
 
 ## Replaced Functionality
 

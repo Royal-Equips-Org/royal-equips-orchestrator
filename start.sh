@@ -89,8 +89,34 @@ start_flask() {
     local port="${3:-$PORT}"
     
     log "🌶️ Starting Flask application: $app_path"
-    export FLASK_APP="$app_path"
-    exec flask run --host "$host" --port "$port"
+    
+    # Try gunicorn with eventlet worker first (production)
+    if check_module gunicorn && check_module eventlet; then
+        log "Using gunicorn with eventlet worker for Flask app"
+        if [[ "$app_path" == *":"* ]]; then
+            # Module:function format - need to create WSGI app
+            exec gunicorn "wsgi:app" --bind "$host:$port" --worker-class eventlet --workers 1 --access-logfile - --error-logfile -
+        else
+            exec gunicorn "$app_path" --bind "$host:$port" --worker-class eventlet --workers 1 --access-logfile - --error-logfile -
+        fi
+    elif check_module eventlet; then
+        log "Using eventlet directly to run Flask app"
+        export FLASK_APP="$app_path"
+        exec python -c "
+import eventlet
+eventlet.monkey_patch()
+from flask import Flask
+from $app_path import create_app
+app = create_app()
+if __name__ == '__main__':
+    import eventlet.wsgi
+    eventlet.wsgi.server(eventlet.listen(('$host', $port)), app)
+"
+    else
+        log "Using standard Flask development server (not recommended for production)"
+        export FLASK_APP="$app_path"
+        exec flask run --host "$host" --port "$port"
+    fi
 }
 
 # Function to start Python module directly
@@ -114,7 +140,16 @@ detect_and_start() {
     log "Available frameworks: FastAPI=$has_fastapi, Streamlit=$has_streamlit, Flask=$has_flask"
     log "Available servers: uvicorn=$has_uvicorn, gunicorn=$has_gunicorn"
     
-    # FastAPI candidates (highest priority for production)
+    # Flask candidates (highest priority for production)
+    local flask_candidates=(
+        "app:create_app"
+        "app.py"
+        "main.py"
+        "server.py"
+        "web.py"
+    )
+
+    # FastAPI candidates 
     local fastapi_candidates=(
         "api.main:app"
         "orchestrator.api:app"
@@ -142,7 +177,32 @@ detect_and_start() {
         "web.py"
     )
     
-    # Try FastAPI first (production-ready)
+    # Try Flask first (production-ready with eventlet)
+    if [[ "$has_flask" -eq 1 ]]; then
+        log "🔍 Checking Flask candidates..."
+        
+        for candidate in "${flask_candidates[@]}"; do
+            if [[ "$candidate" =~ : ]]; then
+                # Module:function format
+                local module="${candidate%:*}"
+                local func="${candidate#*:}"
+                if python -c "import importlib; m=importlib.import_module('$module'); getattr(m, '$func')" >/dev/null 2>&1; then
+                    log "✅ Found Flask app: $candidate"
+                    start_flask "$candidate"
+                    return $?
+                fi
+            else
+                # File path format
+                if check_file_patterns "$candidate" "from flask import" "import flask" "Flask("; then
+                    log "✅ Found Flask file: $candidate"
+                    start_flask "$candidate"
+                    return $?
+                fi
+            fi
+        done
+    fi
+    
+    # Try FastAPI if Flask not found
     if [[ "$has_fastapi" -eq 1 ]]; then
         log "🔍 Checking FastAPI candidates..."
         
@@ -196,18 +256,8 @@ detect_and_start() {
                   -o -name "*.py" -print)
     fi
     
-    # Try Flask as fallback
-    if [[ "$has_flask" -eq 1 ]]; then
-        log "🔍 Checking Flask candidates..."
-        
-        for candidate in "${flask_candidates[@]}"; do
-            if check_file_patterns "$candidate" "from flask import" "import flask" "Flask("; then
-                log "✅ Found Flask app: $candidate"
-                start_flask "$candidate"
-                return $?
-            fi
-        done
-    fi
+    # Try Flask as fallback (remove duplicate section)
+    # (Flask is now handled as primary above)
     
     # Last resort: try to run any Python file with __main__ (excluding test scripts)
     log "🔍 Looking for Python scripts with __main__ (excluding tests)..."

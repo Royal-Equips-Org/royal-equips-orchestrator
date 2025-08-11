@@ -22,6 +22,7 @@ from flask_cors import CORS
 
 from app.config import get_config
 from app.sockets import init_socketio
+from app.routes.docs import init_swagger
 
 
 def create_app(config: Optional[str] = None) -> Flask:
@@ -56,6 +57,9 @@ def create_app(config: Optional[str] = None) -> Flask:
 
     # Initialize WebSocket support
     socketio_instance = init_socketio(app)
+    
+    # Initialize API documentation
+    init_swagger(app)
 
     # Register blueprints
     register_blueprints(app)
@@ -87,6 +91,7 @@ def register_blueprints(app: Flask) -> None:
     from app.routes.metrics import metrics_bp
     from app.routes.control import control_bp
     from app.routes.command_center import command_center_bp
+    from app.routes.docs import docs_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(health_bp)
@@ -94,6 +99,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(metrics_bp)
     app.register_blueprint(control_bp)
     app.register_blueprint(command_center_bp)
+    app.register_blueprint(docs_bp)
 
 
 def register_error_handlers(app: Flask) -> None:

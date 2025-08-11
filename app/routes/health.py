@@ -20,9 +20,15 @@ logger = logging.getLogger(__name__)
 def liveness():
     """
     Liveness probe - lightweight check that service is running.
-
-    This endpoint should always return quickly and only fail if the
-    service is fundamentally broken and should be restarted.
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Service is alive
+        schema:
+          type: string
+          example: "ok"
     """
     return "ok", 200, {"Content-Type": "text/plain"}
 

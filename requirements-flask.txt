@@ -1,7 +1,23 @@
-# Flask backend requirements (minimal production dependencies)
+# Flask backend requirements for Royal Equips Orchestrator
 flask>=3.0
 flask-cors>=6.0
+flask-socketio>=5.4
+eventlet>=0.33
+flasgger>=0.9.7.1
 gunicorn>=21.2
 requests>=2.31
 tenacity>=8.2
 python-dotenv>=1.0
+
+# System metrics and health
+psutil>=5.9
+
+# Optional Redis support for session storage
+redis>=5.0
+
+# Prometheus metrics support
+prometheus-client>=0.20
+
+# Testing framework
+pytest>=8.0
+pytest-flask>=1.3
