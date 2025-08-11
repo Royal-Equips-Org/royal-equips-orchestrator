@@ -6,9 +6,9 @@ SPA routing fallback support.
 """
 
 import logging
-import os
 from pathlib import Path
-from flask import Blueprint, send_from_directory, send_file
+
+from flask import Blueprint, send_file, send_from_directory
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ ADMIN_BUILD_DIR = Path(__file__).parent.parent.parent / "apps" / "control-center
 def serve_spa(path):
     """
     Serve the React SPA with client-side routing support.
-    
+
     - If path is empty or doesn't exist as a file, serve index.html
     - Otherwise serve the requested static file
     """
@@ -147,33 +147,33 @@ def serve_spa(path):
                     <div class="status">SYSTEM OPERATIONAL</div>
                     <div>Current Time: <span id="time"></span></div>
                 </div>
-                
+
                 <div class="grid">
                     <div class="card">
                         <h3 class="card-title">🎯 Agent Status</h3>
                         <p>All agents online and responsive</p>
                         <p>Monitoring: Shopify, GitHub, System</p>
                     </div>
-                    
+
                     <div class="card">
                         <h3 class="card-title">🛒 Shopify Operations</h3>
                         <p>API connections stable</p>
                         <p>Real-time sync active</p>
                     </div>
-                    
+
                     <div class="card">
                         <h3 class="card-title">🔧 GitHub Monitoring</h3>
                         <p>Repository tracking enabled</p>
                         <p>CI/CD pipelines active</p>
                     </div>
-                    
+
                     <div class="card">
                         <h3 class="card-title">📊 System Health</h3>
                         <p>All systems nominal</p>
                         <p>Performance optimized</p>
                     </div>
                 </div>
-                
+
                 <div class="links">
                     <a href="/healthz">Health Check</a>
                     <a href="/metrics">System Metrics</a>
@@ -183,7 +183,7 @@ def serve_spa(path):
             </body>
             </html>
             """, 200, {'Content-Type': 'text/html'}
-        
+
         # Handle assets paths - map /admin/ to assets/ for compatibility
         if path.startswith('admin/assets/'):
             actual_path = path.replace('admin/assets/', 'assets/')
@@ -191,7 +191,7 @@ def serve_spa(path):
             actual_path = path.replace('admin/', '')
         else:
             actual_path = path
-        
+
         # If no path or path doesn't exist as file, serve index.html for SPA routing
         if not actual_path or not (build_dir / actual_path).exists():
             index_file = build_dir / "index.html"
@@ -200,10 +200,10 @@ def serve_spa(path):
             else:
                 logger.error(f"index.html not found in {build_dir}")
                 return "Command Center unavailable", 503
-        
+
         # Serve the requested static file
         return send_from_directory(build_dir, actual_path)
-        
+
     except Exception as e:
         logger.error(f"Error serving command center: {e}")
         return f"Error loading command center: {str(e)}", 500
@@ -215,7 +215,7 @@ def command_center_health():
         (ADMIN_BUILD_DIR.exists() and (ADMIN_BUILD_DIR / "index.html").exists()) or
         (STATIC_DIR.exists() and (STATIC_DIR / "index.html").exists())
     )
-    
+
     return {
         "service": "Command Center",
         "status": "ok" if build_exists else "unavailable",

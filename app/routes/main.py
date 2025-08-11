@@ -16,7 +16,6 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for,
 )
 
 main_bp = Blueprint("main", __name__)

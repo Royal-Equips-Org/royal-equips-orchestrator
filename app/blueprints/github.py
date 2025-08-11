@@ -11,7 +11,9 @@ Provides API endpoints for:
 
 import logging
 from datetime import datetime
-from flask import Blueprint, request, jsonify
+
+from flask import Blueprint, jsonify, request
+
 from app.services.github_service import github_service
 
 logger = logging.getLogger(__name__)
@@ -68,7 +70,7 @@ def get_repository_info():
             "error": "GitHub service not configured",
             "message": "GITHUB_TOKEN environment variable required"
         }), 503
-    
+
     repo_info = github_service.get_repo_info()
     return jsonify(repo_info)
 
@@ -91,7 +93,7 @@ def get_repository_health():
             "health_score": 0,
             "health_status": "not_configured"
         }), 503
-    
+
     health = github_service.get_repository_health()
     return jsonify(health)
 
@@ -119,10 +121,10 @@ def get_recent_commits():
             "error": "GitHub service not configured",
             "commits": []
         }), 503
-    
+
     limit = request.args.get('limit', 10, type=int)
     limit = min(max(limit, 1), 50)  # Clamp between 1 and 50
-    
+
     commits = github_service.get_recent_commits(limit)
     return jsonify({
         "commits": commits,
@@ -155,10 +157,10 @@ def get_workflow_runs():
             "error": "GitHub service not configured",
             "workflows": []
         }), 503
-    
+
     limit = request.args.get('limit', 10, type=int)
     limit = min(max(limit, 1), 50)  # Clamp between 1 and 50
-    
+
     workflows = github_service.get_workflow_runs(limit)
     return jsonify({
         "workflow_runs": workflows,
@@ -191,10 +193,10 @@ def get_open_issues():
             "error": "GitHub service not configured",
             "issues": []
         }), 503
-    
+
     limit = request.args.get('limit', 10, type=int)
     limit = min(max(limit, 1), 50)  # Clamp between 1 and 50
-    
+
     issues = github_service.get_open_issues(limit)
     return jsonify({
         "issues": issues,
@@ -233,14 +235,14 @@ def get_pull_requests():
             "error": "GitHub service not configured",
             "pull_requests": []
         }), 503
-    
+
     state = request.args.get('state', 'open')
     limit = request.args.get('limit', 10, type=int)
     limit = min(max(limit, 1), 50)  # Clamp between 1 and 50
-    
+
     if state not in ['open', 'closed', 'all']:
         state = 'open'
-    
+
     prs = github_service.get_pull_requests(state, limit)
     return jsonify({
         "pull_requests": prs,
@@ -289,25 +291,25 @@ def create_issue():
         return jsonify({
             "error": "GitHub service not configured"
         }), 503
-    
+
     try:
         data = request.get_json()
         if not data or 'title' not in data:
             return jsonify({
                 "error": "Missing required field 'title' in request body"
             }), 400
-        
+
         title = data['title']
         body = data.get('body', '')
         labels = data.get('labels', [])
-        
+
         result = github_service.create_issue(title, body, labels)
-        
+
         if result['success']:
             return jsonify(result), 201
         else:
             return jsonify(result), 500
-            
+
     except Exception as e:
         logger.error(f"Error creating GitHub issue: {e}")
         return jsonify({
@@ -333,7 +335,7 @@ def get_deployment_status():
             "error": "GitHub service not configured",
             "status": "not_configured"
         }), 503
-    
+
     deployment_info = github_service.get_deployment_status()
     return jsonify(deployment_info)
 
@@ -356,7 +358,7 @@ def get_github_summary():
             "status": "not_configured",
             "authenticated": False
         }), 503
-    
+
     try:
         # Gather all GitHub information
         repo_info = github_service.get_repo_info()
@@ -366,7 +368,7 @@ def get_github_summary():
         issues = github_service.get_open_issues(5)
         prs = github_service.get_pull_requests('open', 5)
         deployment = github_service.get_deployment_status()
-        
+
         return jsonify({
             "status": "operational",
             "authenticated": True,
@@ -381,7 +383,7 @@ def get_github_summary():
             "deployment": deployment,
             "timestamp": datetime.utcnow().isoformat()
         })
-        
+
     except Exception as e:
         logger.error(f"Error getting GitHub summary: {e}")
         return jsonify({

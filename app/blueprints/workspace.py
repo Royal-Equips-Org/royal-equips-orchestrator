@@ -11,8 +11,14 @@ Provides API endpoints for:
 
 import logging
 from datetime import datetime
-from flask import Blueprint, request, jsonify
-from app.services.workspace_service import workspace_manager, WorkspaceType, EnvironmentType
+
+from flask import Blueprint, jsonify, request
+
+from app.services.workspace_service import (
+    EnvironmentType,
+    WorkspaceType,
+    workspace_manager,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +79,11 @@ def list_workspaces():
     """
     workspace_type = request.args.get('type')
     environment = request.args.get('environment')
-    
+
     # Convert string parameters to enums
     workspace_type_filter = None
     environment_filter = None
-    
+
     if workspace_type:
         try:
             workspace_type_filter = WorkspaceType(workspace_type.lower())
@@ -86,7 +92,7 @@ def list_workspaces():
                 "error": f"Invalid workspace type: {workspace_type}",
                 "valid_types": [t.value for t in WorkspaceType]
             }), 400
-    
+
     if environment:
         try:
             environment_filter = EnvironmentType(environment.lower())
@@ -95,9 +101,9 @@ def list_workspaces():
                 "error": f"Invalid environment: {environment}",
                 "valid_environments": [e.value for e in EnvironmentType]
             }), 400
-    
+
     workspaces = workspace_manager.list_workspaces(workspace_type_filter, environment_filter)
-    
+
     return jsonify({
         "workspaces": workspaces,
         "count": len(workspaces),
@@ -154,13 +160,13 @@ def create_workspace():
             return jsonify({
                 "error": "Missing required fields: 'name' and 'type'"
             }), 400
-        
+
         name = data['name']
         workspace_type_str = data['type'].lower()
         environment_str = data.get('environment', 'development').lower()
         description = data.get('description', '')
         config = data.get('config', {})
-        
+
         # Validate workspace type
         try:
             workspace_type = WorkspaceType(workspace_type_str)
@@ -169,7 +175,7 @@ def create_workspace():
                 "error": f"Invalid workspace type: {workspace_type_str}",
                 "valid_types": [t.value for t in WorkspaceType]
             }), 400
-        
+
         # Validate environment
         try:
             environment = EnvironmentType(environment_str)
@@ -178,7 +184,7 @@ def create_workspace():
                 "error": f"Invalid environment: {environment_str}",
                 "valid_environments": [e.value for e in EnvironmentType]
             }), 400
-        
+
         result = workspace_manager.create_workspace(
             name=name,
             workspace_type=workspace_type,
@@ -186,12 +192,12 @@ def create_workspace():
             description=description,
             config=config
         )
-        
+
         if result['success']:
             return jsonify(result), 201
         else:
             return jsonify(result), 500
-            
+
     except Exception as e:
         logger.error(f"Error creating workspace: {e}")
         return jsonify({
@@ -223,10 +229,10 @@ def get_workspace_details(workspace_id):
         return jsonify({
             "error": f"Workspace {workspace_id} not found"
         }), 404
-    
+
     status = workspace.get_status()
     status['is_active'] = workspace_id == workspace_manager.active_workspace_id
-    
+
     return jsonify({
         "workspace": status,
         "timestamp": datetime.utcnow().isoformat()
@@ -252,7 +258,7 @@ def activate_workspace(workspace_id):
         description: Workspace not found
     """
     result = workspace_manager.activate_workspace(workspace_id)
-    
+
     if result['success']:
         return jsonify(result)
     else:
@@ -281,7 +287,7 @@ def delete_workspace(workspace_id):
         description: Workspace not found
     """
     result = workspace_manager.delete_workspace(workspace_id)
-    
+
     if result['success']:
         return jsonify(result)
     else:
@@ -312,10 +318,10 @@ def get_active_workspace():
             "error": "No active workspace",
             "active_workspace": None
         }), 404
-    
+
     status = active_workspace.get_status()
     status['is_active'] = True
-    
+
     return jsonify({
         "active_workspace": status,
         "timestamp": datetime.utcnow().isoformat()
@@ -361,19 +367,19 @@ def start_operation():
             return jsonify({
                 "error": "Missing required fields: 'operation_type' and 'description'"
             }), 400
-        
+
         operation_type = data['operation_type']
         description = data['description']
         workspace_id = data.get('workspace_id')  # Optional
-        
+
         result = workspace_manager.start_operation(operation_type, description, workspace_id)
-        
+
         if result['success']:
             return jsonify(result), 201
         else:
             status_code = 404 if 'not found' in result['error'].lower() else 400
             return jsonify(result), status_code
-            
+
     except Exception as e:
         logger.error(f"Error starting operation: {e}")
         return jsonify({
@@ -416,15 +422,15 @@ def complete_operation(operation_id):
         data = request.get_json() or {}
         result = data.get('result', 'completed')
         workspace_id = data.get('workspace_id')  # Optional
-        
+
         completion_result = workspace_manager.complete_operation(operation_id, result, workspace_id)
-        
+
         if completion_result['success']:
             return jsonify(completion_result)
         else:
             status_code = 404 if 'not found' in completion_result['error'].lower() else 400
             return jsonify(completion_result), status_code
-            
+
     except Exception as e:
         logger.error(f"Error completing operation: {e}")
         return jsonify({
@@ -450,7 +456,7 @@ def get_environments():
     """
     environment = request.args.get('environment')
     env_info = workspace_manager.get_environment_info(environment)
-    
+
     return jsonify({
         "environment_info": env_info,
         "timestamp": datetime.utcnow().isoformat()

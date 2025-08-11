@@ -9,10 +9,12 @@ Provides API endpoints for:
 - Assistant configuration management
 """
 
-import logging
 import asyncio
+import logging
 from datetime import datetime
-from flask import Blueprint, request, jsonify, Response, stream_template
+
+from flask import Blueprint, Response, jsonify, request
+
 from app.services.ai_assistant import control_center_assistant
 
 logger = logging.getLogger(__name__)
@@ -44,7 +46,7 @@ def get_assistant_status():
               type: string
     """
     stats = control_center_assistant.get_conversation_stats()
-    
+
     return jsonify({
         "enabled": stats['enabled'],
         "model": stats['model'],
@@ -90,28 +92,28 @@ def chat_with_assistant():
             "message": "OpenAI API key required to enable AI assistant",
             "response": "AI Assistant is currently unavailable. Please configure OpenAI API key."
         }), 503
-    
+
     try:
         data = request.get_json()
         if not data or 'message' not in data:
             return jsonify({
                 "error": "Missing required field 'message' in request body"
             }), 400
-        
+
         user_message = data['message']
         include_status = data.get('include_system_status', True)
-        
+
         # Get response asynchronously
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        
+
         try:
             response = loop.run_until_complete(
                 control_center_assistant.get_response(user_message, include_status)
             )
         finally:
             loop.close()
-        
+
         if response['success']:
             return jsonify({
                 "success": True,
@@ -128,7 +130,7 @@ def chat_with_assistant():
                 "error": response['error'],
                 "response": response['response']
             }), 500
-            
+
     except Exception as e:
         logger.error(f"Error in assistant chat: {e}")
         return jsonify({
@@ -176,27 +178,27 @@ def stream_chat():
         return jsonify({
             "error": "AI Assistant not configured"
         }), 503
-    
+
     try:
         data = request.get_json()
         if not data or 'message' not in data:
             return jsonify({
                 "error": "Missing required field 'message' in request body"
             }), 400
-        
+
         user_message = data['message']
         include_status = data.get('include_system_status', True)
-        
+
         def generate():
             """Generate streaming response."""
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             try:
                 async def stream():
                     async for chunk in control_center_assistant.get_streaming_response(user_message, include_status):
                         yield f"data: {jsonify(chunk).get_data(as_text=True)}\n\n"
-                
+
                 # Run the async generator
                 async_gen = stream()
                 while True:
@@ -205,15 +207,15 @@ def stream_chat():
                         yield chunk
                     except StopAsyncIteration:
                         break
-                        
+
             except Exception as e:
                 logger.error(f"Streaming error: {e}")
                 yield f"data: {jsonify({'type': 'error', 'data': str(e)}).get_data(as_text=True)}\n\n"
             finally:
                 loop.close()
-        
+
         return Response(generate(), mimetype='text/event-stream')
-        
+
     except Exception as e:
         logger.error(f"Error setting up streaming chat: {e}")
         return jsonify({
@@ -239,19 +241,19 @@ def get_executive_summary():
             "error": "AI Assistant not configured",
             "summary": "Executive summary unavailable - AI assistant requires OpenAI API key"
         }), 503
-    
+
     try:
         # Get executive summary asynchronously
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        
+
         try:
             summary_data = loop.run_until_complete(
                 control_center_assistant.get_executive_summary()
             )
         finally:
             loop.close()
-        
+
         if summary_data['success']:
             return jsonify({
                 "success": True,
@@ -265,7 +267,7 @@ def get_executive_summary():
                 "error": summary_data['error'],
                 "summary": "Executive summary could not be generated at this time."
             }), 500
-            
+
     except Exception as e:
         logger.error(f"Error generating executive summary: {e}")
         return jsonify({
@@ -291,7 +293,7 @@ def clear_conversation():
         return jsonify({
             "error": "AI Assistant not configured"
         }), 503
-    
+
     try:
         result = control_center_assistant.clear_conversation()
         return jsonify(result)
@@ -344,29 +346,29 @@ def get_quick_insights():
             "error": "AI Assistant not configured",
             "insights": []
         }), 503
-    
+
     try:
         # Request quick insights from the assistant
-        quick_prompt = """Provide 3-5 quick, actionable insights about the current Royal Equips platform status. 
+        quick_prompt = """Provide 3-5 quick, actionable insights about the current Royal Equips platform status.
         Focus on:
         1. System health highlights
         2. Key operational metrics
         3. Any immediate attention items
         4. Performance observations
-        
+
         Format as bullet points, keep each insight under 100 characters."""
-        
+
         # Get response asynchronously
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        
+
         try:
             response = loop.run_until_complete(
                 control_center_assistant.get_response(quick_prompt, include_system_status=True)
             )
         finally:
             loop.close()
-        
+
         if response['success']:
             # Parse insights from response
             insights = []
@@ -376,7 +378,7 @@ def get_quick_insights():
                     insights.append(line[1:].strip())
                 elif line and not line.startswith('#'):
                     insights.append(line)
-            
+
             return jsonify({
                 "success": True,
                 "insights": insights[:5],  # Limit to 5 insights
@@ -388,7 +390,7 @@ def get_quick_insights():
                 "error": response['error'],
                 "insights": []
             }), 500
-            
+
     except Exception as e:
         logger.error(f"Error getting quick insights: {e}")
         return jsonify({
