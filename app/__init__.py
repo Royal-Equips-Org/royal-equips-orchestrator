@@ -4,7 +4,9 @@ Flask application factory for Royal Equips Orchestrator.
 This module provides a production-ready Flask application with:
 - Agent endpoints with streaming support
 - System health and metrics endpoints
-- Command center access
+- Command center SPA serving
+- WebSocket real-time streams
+- Control endpoints (god-mode, emergency-stop)
 - Circuit breaker patterns and fallbacks
 - Structured logging and error handling
 - CORS configuration
@@ -19,6 +21,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from app.config import get_config
+from app.sockets import init_socketio
 
 
 def create_app(config: Optional[str] = None) -> Flask:
@@ -51,6 +54,9 @@ def create_app(config: Optional[str] = None) -> Flask:
     # Store startup time for uptime calculation
     app.startup_time = datetime.now()
 
+    # Initialize WebSocket support
+    socketio_instance = init_socketio(app)
+
     # Register blueprints
     register_blueprints(app)
 
@@ -79,11 +85,15 @@ def register_blueprints(app: Flask) -> None:
     from app.routes.health import health_bp
     from app.routes.main import main_bp
     from app.routes.metrics import metrics_bp
+    from app.routes.control import control_bp
+    from app.routes.command_center import command_center_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(agents_bp, url_prefix="/agents")
     app.register_blueprint(metrics_bp)
+    app.register_blueprint(control_bp)
+    app.register_blueprint(command_center_bp)
 
 
 def register_error_handlers(app: Flask) -> None:

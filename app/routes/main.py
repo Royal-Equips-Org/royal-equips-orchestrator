@@ -38,7 +38,7 @@ def root():
             {
                 "service": "Royal Equips Orchestrator",
                 "status": "ok",
-                "version": "2.0.0",  # Flask version
+                "version": "2.0.0",
                 "backend": "flask",
                 "endpoints": {
                     "health": "/healthz",
@@ -51,10 +51,10 @@ def root():
         )
 
 
-@main_bp.route("/command-center")
-def command_center():
-    """Redirect to the configured Command Center URL."""
-    command_center_url = current_app.config.get("COMMAND_CENTER_URL", "/docs")
+@main_bp.route("/command-center-redirect")
+def command_center_redirect():
+    """Legacy redirect endpoint."""
+    command_center_url = current_app.config.get("COMMAND_CENTER_URL", "/command-center")
     return redirect(command_center_url, code=307)
 
 
