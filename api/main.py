@@ -349,7 +349,7 @@ async def stream_agent_response(session_id: str):
                         }
                     except asyncio.CancelledError:
                         logger.info(f"Stream cancelled for session: {session_id}")
-                        return
+                        raise
                     except Exception as stream_error:
                         logger.error(f"Stream error for word '{word}': {stream_error}")
                         # Continue with next word instead of failing completely
