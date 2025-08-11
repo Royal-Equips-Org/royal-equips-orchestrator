@@ -114,37 +114,78 @@ startup_time = datetime.now()
 # Custom exception handlers for friendly error pages
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):
-    """Handle 404 errors with a friendly HTML page."""
-    return templates.TemplateResponse(
-        "errors/404.html", 
-        {"request": request, "app_name": settings.app_name},
-        status_code=404
-    )
+    """Handle 404 errors with a friendly HTML page or JSON response."""
+    if templates:
+        try:
+            return templates.TemplateResponse(
+                "errors/404.html", 
+                {"request": request, "app_name": settings.app_name},
+                status_code=404
+            )
+        except Exception:
+            # Fallback if template fails
+            pass
+    
+    # JSON fallback for API requests or template failures
+    return {"error": "Not Found", "status_code": 404, "detail": "The requested resource was not found"}
 
 @app.exception_handler(500)
 async def server_error_handler(request: Request, exc: HTTPException):
-    """Handle 500 errors with a friendly HTML page."""
-    return templates.TemplateResponse(
-        "errors/500.html",
-        {"request": request, "app_name": settings.app_name},
-        status_code=500
-    )
+    """Handle 500 errors with a friendly HTML page or JSON response."""
+    if templates:
+        try:
+            return templates.TemplateResponse(
+                "errors/500.html",
+                {"request": request, "app_name": settings.app_name},
+                status_code=500
+            )
+        except Exception:
+            # Fallback if template fails
+            pass
+    
+    # JSON fallback for API requests or template failures
+    return {"error": "Internal Server Error", "status_code": 500, "detail": "An internal error occurred"}
 
 @app.get("/")
 async def root(request: Request):
     """Root endpoint with landing page and one-click Command Center access."""
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "app_name": settings.app_name
+    if templates:
+        try:
+            return templates.TemplateResponse(
+                "index.html",
+                {
+                    "request": request,
+                    "app_name": settings.app_name
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed: {e}")
+            # Fallback to simple JSON response
+            pass
+    
+    # JSON fallback when templates aren't available or fail
+    return {
+        "service": "Royal Equips Orchestrator",
+        "status": "ok", 
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "metrics": "/metrics", 
+            "command_center": "/command-center",
+            "api_docs": "/docs"
         }
-    )
+    }
 
 @app.get("/health")
 async def health():
     """Health check endpoint - returns plain text 'ok' for monitoring systems."""
     return PlainTextResponse("ok")
+
+@app.get("/favicon.ico")
+@app.head("/favicon.ico")
+async def favicon():
+    """Handle favicon requests to prevent 404 errors in browser logs."""
+    return PlainTextResponse("", status_code=204)
 
 @app.get("/command-center")
 async def command_center():
@@ -270,41 +311,49 @@ async def stream_agent_response(session_id: str):
         """Generate streaming response from agent."""
         logger.info(f"Starting stream for session: {session_id}")
         
-        # Check if we have OpenAI API key for real responses
-        openai_key = os.getenv("OPENAI_API_KEY")
-        
-        if openai_key:
-            # TODO: Implement actual OpenAI streaming
-            # For now, simulate intelligent responses
-            responses = [
-                "I understand you need assistance with your Royal Equips operations.",
-                " Let me analyze the current system status and provide you with actionable insights.",
-                " Based on the metrics, I recommend focusing on inventory optimization",
-                " and implementing the new pricing strategies we discussed.",
-                " Would you like me to initiate those processes for you?"
-            ]
-        else:
-            # Canned responses for demo
-            responses = [
-                "Welcome to the Royal Equips Elite Agent Interface.",
-                " I am your AI assistant, ready to help optimize your e-commerce empire.",
-                " Current status: All systems operational.",
-                " How may I assist you with your operations today?"
-            ]
-        
         try:
+            # Check if we have OpenAI API key for real responses
+            openai_key = os.getenv("OPENAI_API_KEY")
+            
+            if openai_key:
+                # TODO: Implement actual OpenAI streaming
+                # For now, simulate intelligent responses
+                responses = [
+                    "I understand you need assistance with your Royal Equips operations.",
+                    " Let me analyze the current system status and provide you with actionable insights.",
+                    " Based on the metrics, I recommend focusing on inventory optimization",
+                    " and implementing the new pricing strategies we discussed.",
+                    " Would you like me to initiate those processes for you?"
+                ]
+            else:
+                # Canned responses for demo
+                responses = [
+                    "Welcome to the Royal Equips Elite Agent Interface.",
+                    " I am your AI assistant, ready to help optimize your e-commerce empire.",
+                    " Current status: All systems operational.",
+                    " How may I assist you with your operations today?"
+                ]
+            
             # Stream response word by word with realistic delays
             for response_chunk in responses:
                 for word in response_chunk.split():
-                    await asyncio.sleep(0.1)  # Simulate typing speed
-                    yield {
-                        "event": "message",
-                        "data": json.dumps({
-                            "type": "delta",
-                            "content": word + " ",
-                            "session_id": session_id
-                        })
-                    }
+                    try:
+                        await asyncio.sleep(0.1)  # Simulate typing speed
+                        yield {
+                            "event": "message",
+                            "data": json.dumps({
+                                "type": "delta",
+                                "content": word + " ",
+                                "session_id": session_id
+                            })
+                        }
+                    except asyncio.CancelledError:
+                        logger.info(f"Stream cancelled for session: {session_id}")
+                        return
+                    except Exception as stream_error:
+                        logger.error(f"Stream error for word '{word}': {stream_error}")
+                        # Continue with next word instead of failing completely
+                        continue
             
             # Send completion signal
             yield {
@@ -321,7 +370,8 @@ async def stream_agent_response(session_id: str):
                 "event": "error",
                 "data": json.dumps({
                     "error": "Stream generation failed",
-                    "details": str(e)
+                    "details": str(e),
+                    "session_id": session_id
                 })
             }
     

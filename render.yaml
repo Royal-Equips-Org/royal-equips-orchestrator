@@ -25,9 +25,9 @@ services:
       - key: GITHUB_TOKEN
         sync: false
 
-  # FastAPI control center (lightweight runtime)
+  # FastAPI command center (lightweight runtime)
   - type: web
-    name: control-center
+    name: command-center
     runtime: python
     plan: free
     buildCommand: pip install -r requirements-minimal.txt
@@ -55,9 +55,9 @@ services:
         sync: false
       - key: GITHUB_TOKEN
         sync: false
-      # Pin to holographic variant for single, full digital command center
-      - key: CONTROL_CENTER_VARIANT
-        value: holographic
+      # Configuration for command center
+      - key: COMMAND_CENTER_URL
+        value: /docs
 
   # Daily analytics export at 03:00 UTC
   - type: cron

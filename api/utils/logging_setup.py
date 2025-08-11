@@ -20,6 +20,8 @@ class HealthLogFilter(logging.Filter):
     - /healthz  
     - /livez
     - /readyz
+    - /favicon.ico
+    - HEAD / (root HEAD requests)
     """
     
     def __init__(self, health_patterns: List[str] = None):
@@ -35,14 +37,21 @@ class HealthLogFilter(logging.Filter):
         # Default health check patterns - match exact paths or paths with query params
         if health_patterns is None:
             health_patterns = [
-                r'GET\s+/health(?:\s|\?|$)',   # /health at end of path or with query params
-                r'POST\s+/health(?:\s|\?|$)',  # Handle different HTTP methods
-                r'GET\s+/healthz(?:\s|\?|$)',  # /healthz
+                r'GET\s+/health(?:\s|\?|$)',     # /health at end of path or with query params
+                r'HEAD\s+/health(?:\s|\?|$)',    # HEAD requests to health
+                r'POST\s+/health(?:\s|\?|$)',    # Handle different HTTP methods
+                r'GET\s+/healthz(?:\s|\?|$)',    # /healthz
+                r'HEAD\s+/healthz(?:\s|\?|$)',
                 r'POST\s+/healthz(?:\s|\?|$)',
-                r'GET\s+/livez(?:\s|\?|$)',    # /livez
+                r'GET\s+/livez(?:\s|\?|$)',      # /livez
+                r'HEAD\s+/livez(?:\s|\?|$)',
                 r'POST\s+/livez(?:\s|\?|$)',
-                r'GET\s+/readyz(?:\s|\?|$)',   # /readyz
+                r'GET\s+/readyz(?:\s|\?|$)',     # /readyz
+                r'HEAD\s+/readyz(?:\s|\?|$)',
                 r'POST\s+/readyz(?:\s|\?|$)',
+                r'GET\s+/favicon\.ico(?:\s|\?|$)',  # Favicon requests
+                r'HEAD\s+/favicon\.ico(?:\s|\?|$)',
+                r'HEAD\s+/\s',                   # HEAD requests to root
             ]
         
         # Compile patterns for efficient matching
@@ -107,14 +116,26 @@ def setup_logging() -> None:
     This function configures:
     1. Health log filtering for access logs
     2. General application logging levels
+    3. Environment-controlled log suppression
     """
-    # Apply health log filter to uvicorn access logger
-    setup_health_log_filter("uvicorn.access")
+    # Import here to avoid circular dependencies
+    from api.config import settings
+    
+    # Apply health log filter to uvicorn access logger if enabled
+    if settings.suppress_health_logs:
+        setup_health_log_filter("uvicorn.access")
+        
+    # Configure log levels based on settings
+    log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
     
     # Ensure other loggers have appropriate levels
-    logging.getLogger("uvicorn").setLevel(logging.INFO)
-    logging.getLogger("uvicorn.error").setLevel(logging.INFO)
+    logging.getLogger("uvicorn").setLevel(log_level)
+    logging.getLogger("uvicorn.error").setLevel(log_level)
+    
+    # Disable access logging completely if requested
+    if settings.disable_access_log:
+        logging.getLogger("uvicorn.access").setLevel(logging.CRITICAL)
     
     # Set application logger level  
     app_logger = logging.getLogger("api.main")
-    app_logger.setLevel(logging.INFO)
+    app_logger.setLevel(log_level)

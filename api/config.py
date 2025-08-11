@@ -20,6 +20,11 @@ class Settings:
     # Application Configuration
     debug: bool = False
     
+    # Logging Configuration
+    suppress_health_logs: bool = True
+    disable_access_log: bool = False
+    log_level: str = "info"
+    
     def __post_init__(self):
         """Load settings from environment variables after initialization."""
         # Command Center URL - can be internal path or external URL
@@ -33,6 +38,16 @@ class Settings:
         # Debug mode
         if env_debug := os.getenv("DEBUG"):
             self.debug = env_debug.lower() in ("true", "1", "yes", "on")
+            
+        # Logging control
+        if env_suppress := os.getenv("SUPPRESS_HEALTH_LOGS"):
+            self.suppress_health_logs = env_suppress.lower() in ("true", "1", "yes", "on")
+        
+        if env_disable := os.getenv("DISABLE_ACCESS_LOG"):
+            self.disable_access_log = env_disable.lower() in ("true", "1", "yes", "on")
+        
+        if env_level := os.getenv("LOG_LEVEL"):
+            self.log_level = env_level.lower()
 
 
 # Global settings instance
