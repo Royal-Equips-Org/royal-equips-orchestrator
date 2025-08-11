@@ -21,7 +21,7 @@ interface WebSocketHook {
 
 export const useWebSocket = (options: UseWebSocketOptions = {}): WebSocketHook => {
   const {
-    url = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8000',
+    url = import.meta.env.VITE_WEBSOCKET_URL || window.location.origin,
     autoConnect = true,
     onConnect,
     onDisconnect,

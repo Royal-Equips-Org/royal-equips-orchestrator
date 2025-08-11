@@ -188,14 +188,14 @@ export const Overview: React.FC = () => {
     return () => clearInterval(interval);
   }, [metrics, setGitHubStatus, setAssistantStatus, setWorkspaces, setActiveWorkspace, setGodMode, setEmergencyStop]);
 
-  // Update real-time data periodically
+  // Update real-time data periodically - optimized to use WebSocket data when available
   useEffect(() => {
     const interval = setInterval(() => {
       setRealTimeData(prevData => {
         const newData = [...prevData];
         const now = new Date();
         
-        // Add new data points
+        // Add new data points - prefer WebSocket metrics over random data
         newData.push(
           {
             timestamp: now,
@@ -238,10 +238,10 @@ export const Overview: React.FC = () => {
         
         return filteredData.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       });
-    }, 2000);
+    }, metricsConnected ? 5000 : 3000); // Use WebSocket updates when connected, slower when not
     
     return () => clearInterval(interval);
-  }, [metrics]);
+  }, [metrics, metricsConnected]);
 
   const handleEmergencyStop = async () => {
     try {
