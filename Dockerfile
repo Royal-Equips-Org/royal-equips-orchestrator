@@ -11,8 +11,14 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
+# Install Flask and production dependencies
+RUN pip install --no-cache-dir flask flask-cors gunicorn
+
+# Copy Flask application
+COPY app /app/app
+COPY wsgi.py /app/wsgi.py
+
 # ✅ Copy all necessary application directories
-COPY api /app/api
 COPY orchestrator /app/orchestrator
 COPY scripts /app/scripts
 COPY start.sh /app/start.sh
@@ -21,14 +27,15 @@ RUN chmod +x /app/scripts/*.sh /app/start.sh || true
 # Runtime env
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    PORT=8000
+    PORT=10000 \
+    FLASK_ENV=production
 
 # Render will probe this; we bind to 0.0.0.0:$PORT
 EXPOSE ${PORT}
 
 # Health check for container health monitoring
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:${PORT}/healthz || exit 1
 
-# ✅ Use start.sh as primary with fallback to resilient launcher
-CMD ["./start.sh"]
+# Use Gunicorn for production WSGI deployment
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--workers", "2", "--worker-class", "sync", "--access-logfile", "-", "wsgi:app"]
