@@ -27,11 +27,38 @@ _control_state = {
 def toggle_god_mode():
     """
     Toggle God Mode on/off.
-    
-    Expected JSON payload:
-    {
-        "enabled": true/false
-    }
+    ---
+    tags:
+      - Control
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              description: Whether to enable or disable God Mode
+          required:
+            - enabled
+    responses:
+      202:
+        description: God Mode toggle accepted
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "accepted"
+            god_mode:
+              type: boolean
+            message:
+              type: string
+            timestamp:
+              type: string
+      400:
+        description: Invalid request body
     """
     try:
         data = request.get_json()
