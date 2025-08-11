@@ -34,5 +34,5 @@ EXPOSE ${PORT}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/healthz || exit 1
 
-# Use Gunicorn for production WSGI deployment
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--workers", "2", "--worker-class", "sync", "--access-logfile", "-", "wsgi:app"]
+# Use Gunicorn with eventlet worker for production Flask + SocketIO deployment
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--workers", "1", "--worker-class", "eventlet", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]

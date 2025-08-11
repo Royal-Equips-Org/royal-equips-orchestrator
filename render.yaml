@@ -8,6 +8,10 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /healthz
     envVars:
+      - key: APP_TYPE
+        value: flask
+      - key: APP_PATH
+        value: wsgi:app
       - key: FLASK_ENV
         value: production
       - key: PORT
