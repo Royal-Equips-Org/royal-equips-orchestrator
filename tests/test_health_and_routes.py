@@ -1,9 +1,7 @@
-"""Tests for the updated FastAPI application with Command Center functionality."""
+"""Tests for the Flask application health endpoints and routing functionality."""
 
 import pytest
-from fastapi.testclient import TestClient
-from api.main import app
-from api.config import settings
+from app import create_app
 
 
 class TestHealthAndRoutes:
@@ -11,12 +9,45 @@ class TestHealthAndRoutes:
 
     @pytest.fixture
     def client(self):
-        """Create a test client for the FastAPI application."""
-        return TestClient(app)
+        """Create a test client for the Flask application."""
+        app = create_app('testing')
+        app.config['TESTING'] = True
+        with app.test_client() as client:
+            yield client
 
     def test_health_returns_plain_ok(self, client):
-        """Test that /health returns plain text 'ok' as required."""
+        """Test that /healthz returns plain text 'ok' as required."""
+        response = client.get("/healthz")
+        assert response.status_code == 200
+        assert response.get_data(as_text=True).strip() == "ok"
+
+    def test_legacy_health_endpoint(self, client):
+        """Test that /health redirects or works."""
         response = client.get("/health")
+        assert response.status_code in [200, 302]  # Allow redirect
+
+    def test_readiness_endpoint(self, client):
+        """Test that /readyz returns JSON status.""" 
+        response = client.get("/readyz")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "ready" in data
+        assert "status" in data
+
+    def test_metrics_endpoint(self, client):
+        """Test that /metrics returns JSON metrics."""
+        response = client.get("/metrics")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "ok" in data
+        assert "uptime_seconds" in data
+
+    def test_command_center_endpoint(self, client):
+        """Test that /command-center returns HTML."""
+        response = client.get("/command-center/")
+        assert response.status_code == 200
+        assert "text/html" in response.content_type
+        assert b"Royal Equips Control Center" in response.data
         
         assert response.status_code == 200
         assert response.text == "ok"
