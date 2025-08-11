@@ -42,6 +42,9 @@ def init_socketio(app):
     register_system_handlers()
     register_shopify_handlers()
     register_logs_handlers()
+    register_github_handlers()
+    register_assistant_handlers()
+    register_workspace_handlers()
     
     # Start background tasks
     start_background_tasks()
@@ -208,6 +211,8 @@ def start_background_tasks():
     threading.Thread(target=emit_system_heartbeat, daemon=True).start()
     threading.Thread(target=emit_system_metrics, daemon=True).start() 
     threading.Thread(target=emit_shopify_rate_limits, daemon=True).start()
+    threading.Thread(target=emit_github_updates, daemon=True).start()
+    threading.Thread(target=emit_workspace_updates, daemon=True).start()
     
     logger.info("Background data emission tasks started for all namespaces")
 
@@ -409,3 +414,179 @@ def get_current_status() -> Dict[str, Any]:
             'uptime': get_uptime_seconds()
         }
     }
+
+
+# =============================================================================
+# NEW WEBSOCKET HANDLERS FOR ENHANCED SERVICES
+# =============================================================================
+
+def register_github_handlers():
+    """Register GitHub namespace handlers for /ws/github."""
+    
+    @socketio.on('connect', namespace='/ws/github')
+    def github_connect():
+        """Handle GitHub namespace connection."""
+        logger.info("Client connected to GitHub WebSocket namespace")
+        
+        # Send initial GitHub status
+        try:
+            from app.services.github_service import github_service
+            status_data = {
+                'authenticated': github_service.is_authenticated(),
+                'repo_owner': github_service.repo_owner,
+                'repo_name': github_service.repo_name,
+                'status': 'operational' if github_service.is_authenticated() else 'not_configured',
+                'timestamp': datetime.now().isoformat()
+            }
+            emit('github_status', status_data)
+        except Exception as e:
+            logger.error(f"Failed to send initial GitHub status: {e}")
+    
+    @socketio.on('disconnect', namespace='/ws/github')
+    def github_disconnect():
+        """Handle GitHub namespace disconnection."""
+        logger.info("Client disconnected from GitHub WebSocket namespace")
+
+
+def register_assistant_handlers():
+    """Register AI Assistant namespace handlers for /ws/assistant."""
+    
+    @socketio.on('connect', namespace='/ws/assistant')
+    def assistant_connect():
+        """Handle AI Assistant namespace connection."""
+        logger.info("Client connected to AI Assistant WebSocket namespace")
+        
+        # Send initial assistant status
+        try:
+            from app.services.ai_assistant import control_center_assistant
+            stats = control_center_assistant.get_conversation_stats()
+            emit('assistant_status', {
+                'enabled': stats['enabled'],
+                'model': stats['model'],
+                'conversation_length': stats['conversation_length'],
+                'status': 'operational' if stats['enabled'] else 'not_configured',
+                'timestamp': datetime.now().isoformat()
+            })
+        except Exception as e:
+            logger.error(f"Failed to send initial assistant status: {e}")
+    
+    @socketio.on('disconnect', namespace='/ws/assistant')
+    def assistant_disconnect():
+        """Handle AI Assistant namespace disconnection."""
+        logger.info("Client disconnected from AI Assistant WebSocket namespace")
+
+
+def register_workspace_handlers():
+    """Register Workspace namespace handlers for /ws/workspace."""
+    
+    @socketio.on('connect', namespace='/ws/workspace')
+    def workspace_connect():
+        """Handle Workspace namespace connection."""
+        logger.info("Client connected to Workspace WebSocket namespace")
+        
+        # Send initial workspace overview
+        try:
+            from app.services.workspace_service import workspace_manager
+            overview = workspace_manager.get_system_overview()
+            emit('workspace_overview', overview)
+        except Exception as e:
+            logger.error(f"Failed to send initial workspace overview: {e}")
+    
+    @socketio.on('disconnect', namespace='/ws/workspace')
+    def workspace_disconnect():
+        """Handle Workspace namespace disconnection."""
+        logger.info("Client disconnected from Workspace WebSocket namespace")
+
+
+def broadcast_github_event(event_type: str, data: Dict[str, Any]):
+    """Broadcast GitHub events to /ws/github namespace."""
+    if socketio:
+        try:
+            socketio.emit('github_event', {
+                'event_type': event_type,
+                'data': data,
+                'timestamp': datetime.now().isoformat()
+            }, namespace='/ws/github')
+            logger.info(f"Broadcasted GitHub event: {event_type}")
+        except Exception as e:
+            logger.error(f"Failed to broadcast GitHub event: {e}")
+
+
+def broadcast_assistant_event(event_type: str, data: Dict[str, Any]):
+    """Broadcast AI Assistant events to /ws/assistant namespace."""
+    if socketio:
+        try:
+            socketio.emit('assistant_event', {
+                'event_type': event_type,
+                'data': data,
+                'timestamp': datetime.now().isoformat()
+            }, namespace='/ws/assistant')
+            logger.info(f"Broadcasted assistant event: {event_type}")
+        except Exception as e:
+            logger.error(f"Failed to broadcast assistant event: {e}")
+
+
+def broadcast_workspace_event(event_type: str, data: Dict[str, Any]):
+    """Broadcast workspace events to /ws/workspace namespace."""
+    if socketio:
+        try:
+            socketio.emit('workspace_event', {
+                'event_type': event_type,
+                'data': data,
+                'timestamp': datetime.now().isoformat()
+            }, namespace='/ws/workspace')
+            logger.info(f"Broadcasted workspace event: {event_type}")
+        except Exception as e:
+            logger.error(f"Failed to broadcast workspace event: {e}")
+
+
+def emit_github_updates():
+    """Background task to emit GitHub updates periodically."""
+    while True:
+        try:
+            if socketio:
+                from app.services.github_service import github_service
+                if github_service.is_authenticated():
+                    # Get repository health
+                    health = github_service.get_repository_health()
+                    socketio.emit('github_health', health, namespace='/ws/github')
+                    
+                    # Get recent activity summary every 5 minutes
+                    recent_commits = github_service.get_recent_commits(3)
+                    workflow_runs = github_service.get_workflow_runs(3)
+                    
+                    activity_data = {
+                        'commits': recent_commits,
+                        'workflows': workflow_runs,
+                        'timestamp': datetime.now().isoformat()
+                    }
+                    socketio.emit('github_activity', activity_data, namespace='/ws/github')
+                
+            time.sleep(300)  # 5 minutes
+        except Exception as e:
+            logger.error(f"GitHub updates emission failed: {e}")
+            time.sleep(300)
+
+
+def emit_workspace_updates():
+    """Background task to emit workspace updates periodically."""
+    while True:
+        try:
+            if socketio:
+                from app.services.workspace_service import workspace_manager
+                
+                # Get workspace overview
+                overview = workspace_manager.get_system_overview()
+                socketio.emit('workspace_overview', overview, namespace='/ws/workspace')
+                
+                # Get active workspace details
+                active_workspace = workspace_manager.get_active_workspace()
+                if active_workspace:
+                    status = active_workspace.get_status()
+                    status['is_active'] = True
+                    socketio.emit('active_workspace', status, namespace='/ws/workspace')
+                
+            time.sleep(30)  # 30 seconds
+        except Exception as e:
+            logger.error(f"Workspace updates emission failed: {e}")
+            time.sleep(30)

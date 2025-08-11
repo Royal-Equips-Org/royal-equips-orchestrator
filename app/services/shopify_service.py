@@ -292,3 +292,6 @@ class ShopifyService:
             'has_previous': False,
             'count': len(response.get('products', response.get('collections', response.get('orders', []))))
         }
+
+# Global Shopify service instance
+shopify_service = ShopifyService()
