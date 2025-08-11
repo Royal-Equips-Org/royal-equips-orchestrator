@@ -10,7 +10,7 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify
 
-from app.services.health_service import HealthService
+from app.services.health_service import get_health_service
 
 health_bp = Blueprint("health", __name__)
 logger = logging.getLogger(__name__)
@@ -41,10 +41,10 @@ def readiness():
     This endpoint checks critical dependencies and returns 200 only
     if the service can handle requests properly.
     """
-    health_service = HealthService()
+    health_service_instance = get_health_service()
 
     try:
-        result = health_service.check_readiness()
+        result = health_service_instance.check_readiness()
 
         if result["ready"]:
             return jsonify(result), 200

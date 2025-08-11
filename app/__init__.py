@@ -93,6 +93,9 @@ def register_blueprints(app: Flask) -> None:
     from app.routes.command_center import command_center_bp
     from app.routes.docs import docs_bp
     from app.blueprints.shopify import shopify_bp
+    from app.blueprints.github import github_bp
+    from app.blueprints.ai_assistant import assistant_bp
+    from app.blueprints.workspace import workspace_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(health_bp)
@@ -102,6 +105,9 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(command_center_bp)
     app.register_blueprint(docs_bp)
     app.register_blueprint(shopify_bp)
+    app.register_blueprint(github_bp)
+    app.register_blueprint(assistant_bp)
+    app.register_blueprint(workspace_bp)
 
 
 def register_error_handlers(app: Flask) -> None:

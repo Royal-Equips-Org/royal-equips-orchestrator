@@ -124,6 +124,8 @@ class HealthService:
             self._check_shopify_connection(),
             self._check_bigquery_connection(),
             self._check_github_connection(),
+            self._check_ai_assistant(),
+            self._check_workspace_service(),
         ]
 
         for check in dependency_checks:
@@ -298,3 +300,95 @@ class HealthService:
                 "circuit_state": self.circuit_breakers["github"].state.value,
                 "required": False,
             }
+
+    def _check_ai_assistant(self) -> Dict[str, Any]:
+        """Check AI Assistant service health."""
+        try:
+            from app.services.ai_assistant import control_center_assistant
+            
+            # Check if assistant is enabled
+            if not control_center_assistant.is_enabled():
+                return {
+                    "name": "ai_assistant",
+                    "healthy": True,
+                    "message": "AI Assistant not configured (optional)",
+                    "required": False,
+                }
+            
+            # Get conversation stats to verify service is working
+            stats = control_center_assistant.get_conversation_stats()
+            
+            return {
+                "name": "ai_assistant",
+                "healthy": True,
+                "message": "AI Assistant service operational",
+                "model": stats.get('model', 'unknown'),
+                "conversations": stats.get('conversation_length', 0),
+                "required": False,
+            }
+            
+        except Exception as e:
+            return {
+                "name": "ai_assistant",
+                "healthy": False,
+                "message": f"AI Assistant check failed: {str(e)}",
+                "required": False,
+            }
+    
+    def _check_workspace_service(self) -> Dict[str, Any]:
+        """Check workspace management service health."""
+        try:
+            from app.services.workspace_service import workspace_manager
+            
+            # Get system overview to verify service is working
+            overview = workspace_manager.get_system_overview()
+            
+            return {
+                "name": "workspace_service",
+                "healthy": True,
+                "message": "Workspace service operational",
+                "total_workspaces": overview['workspace_manager']['total_workspaces'],
+                "active_workspace": overview['workspace_manager']['active_workspace_id'] is not None,
+                "active_operations": overview['active_operations'],
+                "required": True,  # Core service for multi-operational capabilities
+            }
+            
+        except Exception as e:
+            return {
+                "name": "workspace_service",
+                "healthy": False,
+                "message": f"Workspace service check failed: {str(e)}",
+                "required": True,
+            }
+
+    def get_comprehensive_health(self) -> Dict[str, Any]:
+        """Get comprehensive health status including all services."""
+        readiness = self.check_readiness()
+        
+        # Add enhanced GitHub service health
+        github_health = None
+        try:
+            from app.services.github_service import github_service
+            if github_service.is_authenticated():
+                github_health = github_service.get_repository_health()
+        except Exception as e:
+            logger.error(f"Failed to get GitHub repository health: {e}")
+        
+        return {
+            'system_readiness': readiness,
+            'github_repository_health': github_health,
+            'timestamp': datetime.now().isoformat(),
+            'version': '2.0.0',
+            'environment': current_app.config.get('FLASK_ENV', 'development')
+        }
+
+
+# Global health service instance
+health_service = None
+
+def get_health_service():
+    """Get or create the global health service instance."""
+    global health_service
+    if health_service is None:
+        health_service = HealthService()
+    return health_service
