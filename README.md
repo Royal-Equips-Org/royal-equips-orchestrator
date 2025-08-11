@@ -4,10 +4,9 @@ Royal Equips Orchestrator is an enterprise‑grade automation platform designed
 for high‑growth e‑commerce businesses. It provides a modular, multi‑agent
 system that automates every aspect of running a Shopify store in the
 car‑tech and accessories niche, from trend discovery through dynamic
-pricing to post‑purchase support. Inspired by research on agentic AI and
-modern orchestration patterns, the orchestrator coordinates specialized
-agents under a unified control plane and exposes a digital control
-center for monitoring and intervention.
+pricing to post‑purchase support.
+
+**Version 2.0** - Now powered by **Flask + Gunicorn** for enhanced production reliability and WSGI compatibility.
 
 ## 🚀 2050 Cyberpunk Command Center
 
@@ -20,7 +19,7 @@ The system features an **ultimate futuristic command center** built with React +
 - **Multi-Agent Communication**: Unified chat interface and command execution
 - **Advanced Navigation**: Six-panel interface (Overview, Operations, Data, Commerce, Agents, Settings)
 
-### Architecture
+### Updated Architecture (v2.0)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -37,17 +36,17 @@ The system features an **ultimate futuristic command center** built with React +
 │  Hono Framework  │  Environment-aware deployment             │
 └─────────────────┬───────────────────────────────────────────────┘
                   │
-                  ▼ Proxy to PYTHON_API_URL
+                  ▼ Proxy to FLASK_API_URL
 ┌─────────────────────────────────────────────────────────────────┐
-│                     FASTAPI BACKEND                            │
-│  WebSocket: Real-time data streams │ Agent communication     │
-│  System: Health │ Metrics │ Jobs │ Events │ Voice Processing │
-│  CORS: Configured for React origin                            │
+│                     FLASK BACKEND (NEW!)                      │
+│  WSGI: Gunicorn production server │ Circuit breakers         │
+│  Health: /healthz, /readyz │ Metrics │ Events │ Agent APIs   │
+│  Features: SSE Streaming │ Fallback patterns │ Monitoring    │
 └─────────────────────────────────────────────────────────────────┘
                   │
                   ▼
    ┌────────────────────────────────────────────┐
-   │           Orchestrator (async)             │
+   │           Orchestrator (preserved)         │
    │  • registers agents & schedules runs       │
    │  • exposes health information              │
    │  • monitors agents and restarts on failure│
@@ -87,11 +86,12 @@ The system features an **ultimate futuristic command center** built with React +
 2. **Install dependencies**
 
    ```bash
-   # Minimal FastAPI backend dependencies (for basic deployment)
-   pip install -r requirements-minimal.txt
-   
-   # OR Full feature set (for complete development)
+   # Core Flask backend dependencies  
    pip install -r requirements.txt
+   pip install flask flask-cors gunicorn
+   
+   # Development tools
+   pip install pytest ruff black
    
    # Cloudflare Worker dependencies
    npm install
@@ -99,25 +99,30 @@ The system features an **ultimate futuristic command center** built with React +
    # React Command Center dependencies  
    cd admin && npm install && cd ..
    ```
+   ```
 
 3. **Environment configuration**
 
    ```bash
    cp .env.example .env
-   # Edit .env with your secrets:
+   # Edit .env with your configuration:
+   # - FLASK_ENV=development (development/testing/production)
+   # - PORT=10000 (default Flask application port)
    # - SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME
-   # - OPENAI_API_KEY (optional, for real AI responses)
-   # - PYTHON_API_URL (for Worker proxy configuration)
+   # - OPENAI_API_KEY (optional, for real AI responses)  
+   # - COMMAND_CENTER_URL=/docs (command center redirect)
+   # - ENABLE_METRICS=true (enable metrics collection)
+   # - ENABLE_STREAMING=true (enable SSE streaming)
    ```
 
 4. **Development servers**
 
    ```bash
-   # Option 1: Use the universal start script (recommended)
-   APP_TYPE=fastapi APP_PATH=api.main:app ./start.sh
+   # Option 1: Direct Flask development server (recommended for development)
+   python wsgi.py
    
-   # Option 2: Start backend directly with uvicorn
-   uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+   # Option 2: Using Gunicorn (production-like)
+   gunicorn --bind 0.0.0.0:10000 --workers 1 --reload wsgi:app
    
    # Terminal 2: Start Cloudflare Worker (local)
    npx wrangler dev --local --port 8787
@@ -130,13 +135,58 @@ The system features an **ultimate futuristic command center** built with React +
 
    - **2050 Cyberpunk Command Center**: http://localhost:3000/admin/
    - **Worker Proxy Health**: http://localhost:8787/health
-   - **Backend API**: http://localhost:8000/health
+   - **Flask Backend API**: http://localhost:10000/healthz
+   - **Flask API Docs**: http://localhost:10000/docs
 
 ### Production Deployment
 
+#### Flask Backend Deployment
+
+The Flask application is designed for production deployment with Gunicorn:
+
+```bash
+# Production deployment with Gunicorn WSGI server
+gunicorn --bind 0.0.0.0:10000 --workers 2 --worker-class sync wsgi:app
+
+# Or using Docker (recommended)
+docker build -t royal-equips-orchestrator .
+docker run -p 10000:10000 -e FLASK_ENV=production royal-equips-orchestrator
+
+# Or using docker-compose
+docker compose up --build
+```
+
+#### Health Check Endpoints
+
+The Flask application provides comprehensive health monitoring:
+
+- `GET /healthz` - Lightweight liveness probe (returns "ok")
+- `GET /readyz` - Comprehensive readiness check with dependency verification  
+- `GET /health` - Legacy endpoint for backward compatibility
+- `GET /metrics` - System metrics (requests, errors, uptime, sessions)
+
+#### Render Deployment
+
+Updated render.yaml configuration for Flask:
+
+```bash
+# Deploy to Render (automatically triggered via GitHub)
+git push origin main
+
+# Manual deployment trigger
+curl -X POST https://api.render.com/v1/services/YOUR_SERVICE_ID/deploys \
+  -H "Authorization: Bearer $RENDER_API_KEY"
+```
+
+**Environment Variables for Render:**
+- `FLASK_ENV=production`
+- `PORT=10000` 
+- External API keys (Shopify, OpenAI, GitHub, BigQuery)
+- Feature flags (ENABLE_METRICS, ENABLE_STREAMING)
+
 #### Cloudflare Worker Deployment
 
-The Worker now supports explicit environment targeting to eliminate deployment warnings:
+The Worker proxy configuration remains the same but now points to Flask backend:
 
 ```bash
 # Deploy to staging
@@ -145,23 +195,9 @@ npx wrangler deploy -e staging
 # Deploy to production  
 npx wrangler deploy -e production
 
-# Check deployment status
-npx wrangler deployments list
-```
-
-**Environment Variables per Environment:**
-
-- **Staging**: `PYTHON_API_URL` points to staging backend
-- **Production**: `PYTHON_API_URL` points to production backend
-
-#### Backend Deployment
-
-```bash
-# Production deployment with enhanced backend
-python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
-
-# Or using Docker
-docker compose up --build
+# Update Worker environment to point to Flask backend
+npx wrangler secret put PYTHON_API_URL -e production
+# Enter: https://your-flask-backend.onrender.com
 ```
 
 #### Command Center Build & Deployment
