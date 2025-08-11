@@ -19,10 +19,11 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, PlainTextResponse
+from fastapi.responses import RedirectResponse, PlainTextResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
@@ -31,6 +32,11 @@ from sse_starlette import EventSourceResponse
 # Import our configuration and logging utilities
 from api.config import settings
 from api.utils.logging_setup import setup_logging
+
+# Compute paths relative to repository root
+ROOT_DIR = Path(__file__).parent.parent.absolute()
+TEMPLATES_DIR = ROOT_DIR / "templates"
+STATIC_DIR = ROOT_DIR / "static"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -100,9 +106,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files and templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# Mount static files and templates conditionally
+templates = None
+if TEMPLATES_DIR.exists():
+    try:
+        templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+        logger.info(f"Templates loaded from {TEMPLATES_DIR}")
+    except Exception as e:
+        logger.warning(f"Failed to load templates from {TEMPLATES_DIR}: {e}")
+        templates = None
+else:
+    logger.warning(f"Templates directory {TEMPLATES_DIR} does not exist - using fallback responses")
+
+if STATIC_DIR.exists():
+    try:
+        app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+        logger.info(f"Static files mounted from {STATIC_DIR}")
+    except Exception as e:
+        logger.warning(f"Failed to mount static files from {STATIC_DIR}: {e}")
+else:
+    logger.warning(f"Static directory {STATIC_DIR} does not exist - /static/ routes will return 404")
 
 # Store startup time for uptime calculation
 startup_time = datetime.now()
@@ -110,34 +133,82 @@ startup_time = datetime.now()
 # Custom exception handlers for friendly error pages
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):
-    """Handle 404 errors with a friendly HTML page."""
-    return templates.TemplateResponse(
-        "errors/404.html", 
-        {"request": request, "app_name": settings.app_name},
-        status_code=404
+    """Handle 404 errors with a friendly HTML page or JSON fallback."""
+    if templates and (TEMPLATES_DIR / "errors" / "404.html").exists():
+        try:
+            return templates.TemplateResponse(
+                request=request,
+                name="errors/404.html", 
+                context={"request": request, "app_name": settings.app_name},
+                status_code=404
+            )
+        except Exception as e:
+            logger.warning(f"Failed to render 404 template: {e}")
+    
+    # Fallback to JSON response
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Not Found", 
+            "message": "The requested resource was not found",
+            "app_name": settings.app_name
+        }
     )
 
 @app.exception_handler(500)
 async def server_error_handler(request: Request, exc: HTTPException):
-    """Handle 500 errors with a friendly HTML page."""
-    return templates.TemplateResponse(
-        "errors/500.html",
-        {"request": request, "app_name": settings.app_name},
-        status_code=500
+    """Handle 500 errors with a friendly HTML page or JSON fallback."""
+    if templates and (TEMPLATES_DIR / "errors" / "500.html").exists():
+        try:
+            return templates.TemplateResponse(
+                request=request,
+                name="errors/500.html",
+                context={"request": request, "app_name": settings.app_name},
+                status_code=500
+            )
+        except Exception as e:
+            logger.warning(f"Failed to render 500 template: {e}")
+    
+    # Fallback to JSON response
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal Server Error",
+            "message": "Something went wrong on our end",
+            "app_name": settings.app_name
+        }
     )
 
 @app.get("/")
 async def root(request: Request):
     """Root endpoint with landing page and one-click Command Center access."""
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "app_name": settings.app_name
+    if templates and (TEMPLATES_DIR / "index.html").exists():
+        try:
+            return templates.TemplateResponse(
+                request=request,
+                name="index.html",
+                context={
+                    "request": request,
+                    "app_name": settings.app_name
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to render index template: {e}")
+    
+    # Fallback to JSON response
+    return JSONResponse(content={
+        "app_name": settings.app_name,
+        "message": "Welcome to Royal Equips Orchestrator Backend",
+        "description": "Elite backend API for multi-agent e-commerce orchestration",
+        "links": {
+            "health": "/health",
+            "command_center": "/command-center", 
+            "metrics": "/metrics",
+            "agents": "/agents/session"
         }
-    )
+    })
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     """Health check endpoint - returns plain text 'ok' for monitoring systems."""
     return PlainTextResponse("ok")
