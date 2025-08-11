@@ -243,7 +243,6 @@ def main():
         
         # Check common Streamlit patterns
         streamlit_candidates = [
-            "orchestrator/control_center/app.py",
             "streamlit_app.py",
             "app.py",
         ]
