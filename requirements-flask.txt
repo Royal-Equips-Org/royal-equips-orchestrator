@@ -9,6 +9,9 @@ requests>=2.31
 tenacity>=8.2
 python-dotenv>=1.0
 
+# AI Assistant support
+openai>=1.0
+
 # System metrics and health
 psutil>=5.9
 
