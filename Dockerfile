@@ -26,5 +26,9 @@ ENV PYTHONUNBUFFERED=1 \
 # Render will probe this; we bind to 0.0.0.0:$PORT
 EXPOSE ${PORT}
 
+# Health check for container health monitoring
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
 # ✅ Use start.sh as primary with fallback to resilient launcher
 CMD ["./start.sh"]
