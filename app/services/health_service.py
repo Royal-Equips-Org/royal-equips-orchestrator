@@ -180,19 +180,28 @@ class HealthService:
                 }
 
             def test_shopify():
-                # Simple connectivity test (replace with actual Shopify API call)
-                # For now, just verify configuration exists
-                shop_name = current_app.config.get("SHOP_NAME")
-                if not shop_name:
-                    raise Exception("Shop name not configured")
-                return True
+                # Test actual Shopify service connection
+                try:
+                    from app.services.shopify_service import ShopifyService
+                    service = ShopifyService()
+                    
+                    if not service.is_configured():
+                        raise Exception("Shopify service not configured")
+                    
+                    # Try to get shop info as a connectivity test
+                    shop_info = service.get_shop_info()
+                    return shop_info
+                    
+                except Exception as e:
+                    raise Exception(f"Shopify service test failed: {e}")
 
-            self.circuit_breakers["shopify"].call(test_shopify)
+            result = self.circuit_breakers["shopify"].call(test_shopify)
 
             return {
                 "name": "shopify_api",
                 "healthy": True,
                 "message": "Shopify API connection healthy",
+                "shop_name": result.get('shop_name') if isinstance(result, dict) else None,
                 "circuit_state": self.circuit_breakers["shopify"].state.value,
                 "required": False,
             }
