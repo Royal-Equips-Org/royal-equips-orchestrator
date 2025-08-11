@@ -15,35 +15,12 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 
-def test_control_center_script_import():
-    """Test that the control center can be run as a script without ImportError."""
-    project_root = Path(__file__).parent.parent
-    app_path = project_root / "orchestrator" / "control_center" / "app.py"
-
-    # Run the script and check it doesn't fail with ImportError
-    result = subprocess.run(
-        [sys.executable, str(app_path)],
-        cwd=project_root,
-        capture_output=True,
-        text=True,
-        timeout=10  # Don't let it run too long
-    )
-
-    # The script should start without ImportError
-    # We expect it to exit successfully or with a warning about running via streamlit
-    assert "ImportError" not in result.stderr, f"ImportError found: {result.stderr}"
-    assert "attempted relative import with no known parent package" not in result.stderr
-
-
-def test_control_center_module_import():
-    """Test that the control center can be imported as a module."""
-    try:
-        from orchestrator.control_center import run_dashboard
-        from orchestrator.control_center.app import get_orchestrator
-        assert callable(run_dashboard)
-        assert callable(get_orchestrator)
-    except ImportError as e:
-        raise AssertionError(f"Failed to import control center module: {e}")
+def test_control_center_deprecated():
+    """Test that acknowledges the old Streamlit control center has been removed."""
+    # The old orchestrator/control_center Streamlit app has been deprecated
+    # and replaced with the Flask-based command center at /command-center/
+    # This test is kept for reference but no longer validates the old implementation
+    pass
 
 
 def test_orchestrator_core_imports():
@@ -79,8 +56,7 @@ def test_agents_imports():
 
 
 if __name__ == "__main__":
-    test_control_center_script_import()
-    test_control_center_module_import()
+    test_control_center_deprecated()
     test_orchestrator_core_imports()
     test_agents_imports()
     print("All tests passed!")
