@@ -1,0 +1,127 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: aria-postgres
+    environment:
+      POSTGRES_DB: aria_command_center
+      POSTGRES_USER: aria_user
+      POSTGRES_PASSWORD: aria_secure_password_123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aria_user -d aria_command_center"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Redis Cache & Pub/Sub
+  redis:
+    image: redis:7-alpine
+    container_name: aria-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # Flask API Backend
+  api:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.api
+    container_name: aria-api
+    environment:
+      # Database
+      POSTGRES_URL: postgresql://aria_user:aria_secure_password_123@postgres:5432/aria_command_center
+      REDIS_URL: redis://redis:6379/0
+      
+      # Security
+      JWT_SECRET: "aria_jwt_secret_key_change_in_production"
+      SECRET_KEY: "flask_secret_key_change_in_production"
+      
+      # Integrations (add your actual credentials)
+      SHOPIFY_API_KEY: "${SHOPIFY_API_KEY:-demo_key}"
+      SHOPIFY_API_SECRET: "${SHOPIFY_API_SECRET:-demo_secret}"
+      SHOPIFY_ACCESS_TOKEN: "${SHOPIFY_ACCESS_TOKEN:-demo_token}"
+      SHOPIFY_SHOP_DOMAIN: "${SHOPIFY_SHOP_DOMAIN:-demo.myshopify.com}"
+      
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      
+      # AI
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      
+      # CORS
+      ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000"
+      
+      # Flask settings
+      FLASK_ENV: production
+      FLASK_DEBUG: "false"
+    ports:
+      - "10000:10000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # React Frontend
+  web:
+    build:
+      context: ./apps/control-center
+      dockerfile: ../../infra/Dockerfile.web
+    container_name: aria-web
+    environment:
+      VITE_API_BASE_URL: http://localhost:10000
+      VITE_WS_URL: http://localhost:10000
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Celery Worker
+  worker:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.api
+    container_name: aria-worker
+    command: celery -A apps.api.celery_app worker --loglevel=info
+    environment:
+      POSTGRES_URL: postgresql://aria_user:aria_secure_password_123@postgres:5432/aria_command_center
+      REDIS_URL: redis://redis:6379/0
+      SHOPIFY_API_KEY: "${SHOPIFY_API_KEY:-demo_key}"
+      SHOPIFY_API_SECRET: "${SHOPIFY_API_SECRET:-demo_secret}"
+      SHOPIFY_ACCESS_TOKEN: "${SHOPIFY_ACCESS_TOKEN:-demo_token}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

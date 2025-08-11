@@ -1,0 +1,241 @@
+name: 🔒 Security & Quality Gates
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 2 * * *'  # Daily security scan at 2 AM
+
+jobs:
+  # Python Security & Quality
+  python-security:
+    name: 🐍 Python Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety ruff mypy
+
+      - name: Run Bandit (SAST)
+        run: |
+          bandit -r app/ apps/api/ -f json -o bandit-report.json || true
+          bandit -r app/ apps/api/ --severity-level medium
+
+      - name: Run Safety (dependency vulnerabilities)
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  # JavaScript/TypeScript Security & Quality
+  javascript-security:
+    name: 🟨 JavaScript Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/control-center/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/control-center
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: apps/control-center
+        run: npm run lint
+
+      - name: Run TypeScript check
+        working-directory: apps/control-center
+        run: npm run type-check
+
+      - name: Audit npm dependencies
+        working-directory: apps/control-center
+        run: npm audit --audit-level moderate
+
+  # CodeQL Analysis
+  codeql:
+    name: 🔍 CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['python', 'javascript']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+
+  # Container & Infrastructure Security
+  trivy-scan:
+    name: 🐳 Trivy Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy vulnerability scanner (config)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Secret Scanning
+  gitleaks:
+    name: 🕵️ Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # OWASP ZAP DAST
+  zap-scan:
+    name: 🕷️ OWASP ZAP DAST
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start test services
+        run: |
+          docker-compose -f infra/docker-compose.yaml up -d api
+          sleep 30
+
+      - name: Wait for API to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:10000/health; do sleep 2; done'
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:10000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -j -l WARN'
+
+      - name: Stop test services
+        if: always()
+        run: docker-compose -f infra/docker-compose.yaml down
+
+  # Commit Message Validation
+  commit-lint:
+    name: 📝 Commit Lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install commitlint
+        run: |
+          npm install -g @commitlint/config-conventional @commitlint/cli
+
+      - name: Validate current commit (last commit)
+        if: github.event_name == 'push'
+        run: npx commitlint --from HEAD~1 --to HEAD --verbose
+
+      - name: Validate PR commits
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to HEAD --verbose
+
+  # Security Gate Summary
+  security-gate:
+    name: 🚦 Security Gate
+    runs-on: ubuntu-latest
+    needs: [python-security, javascript-security, codeql, trivy-scan, gitleaks, commit-lint]
+    if: always()
+    steps:
+      - name: Check security results
+        run: |
+          echo "Security scan results:"
+          echo "Python Security: ${{ needs.python-security.result }}"
+          echo "JavaScript Security: ${{ needs.javascript-security.result }}"
+          echo "CodeQL: ${{ needs.codeql.result }}"
+          echo "Trivy: ${{ needs.trivy-scan.result }}"
+          echo "Gitleaks: ${{ needs.gitleaks.result }}"
+          echo "Commit Lint: ${{ needs.commit-lint.result }}"
+          
+          if [[ "${{ needs.gitleaks.result }}" == "failure" ]]; then
+            echo "❌ Security gate FAILED: Secrets detected!"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.trivy-scan.result }}" == "failure" ]]; then
+            echo "❌ Security gate FAILED: Critical vulnerabilities found!"
+            exit 1
+          fi
+          
+          echo "✅ Security gate PASSED"
