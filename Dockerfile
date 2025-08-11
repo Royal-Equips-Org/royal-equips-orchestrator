@@ -7,12 +7,9 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Dependencies first for caching
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
-
-# Install Flask and production dependencies
-RUN pip install --no-cache-dir flask flask-cors gunicorn
+# Install Flask dependencies (minimal for production)
+COPY requirements-flask.txt /app/requirements-flask.txt
+RUN pip install --no-cache-dir -r /app/requirements-flask.txt
 
 # Copy Flask application
 COPY app /app/app
