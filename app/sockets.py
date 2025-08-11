@@ -177,7 +177,7 @@ def start_background_tasks():
                 time.sleep(2)
             except Exception as e:
                 logger.error(f"System heartbeat emission failed: {e}")
-                time.sleep(5)
+                time.sleep(2)  # Reduced from 5 seconds to 2 seconds
     
     def emit_system_metrics():
         """Emit system metrics every 3 seconds to /ws/system."""
@@ -193,7 +193,7 @@ def start_background_tasks():
                 time.sleep(3)
             except Exception as e:
                 logger.error(f"System metrics emission failed: {e}")
-                time.sleep(5)
+                time.sleep(3)  # Reduced from 5 seconds to 3 seconds
     
     def emit_shopify_rate_limits():
         """Emit Shopify rate limits every 10 seconds to /ws/shopify."""
