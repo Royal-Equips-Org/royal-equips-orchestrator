@@ -103,7 +103,10 @@ app.add_middleware(
 # Mount static files and templates
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+if os.path.isdir("templates"):
+    templates = Jinja2Templates(directory="templates")
+else:
+    templates = None
 
 # Store startup time for uptime calculation
 startup_time = datetime.now()
