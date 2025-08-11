@@ -127,7 +127,10 @@ async def not_found_handler(request: Request, exc: HTTPException):
             pass
     
     # JSON fallback for API requests or template failures
-    return {"error": "Not Found", "status_code": 404, "detail": "The requested resource was not found"}
+    return JSONResponse(
+        status_code=404,
+        content={"error": "Not Found", "status_code": 404, "detail": "The requested resource was not found"}
+    )
 
 @app.exception_handler(500)
 async def server_error_handler(request: Request, exc: HTTPException):
