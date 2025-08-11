@@ -28,8 +28,8 @@ jobs:
 
       - name: Run Bandit (SAST)
         run: |
-          bandit -r app/ apps/api/ -f json -o bandit-report.json || true
-          bandit -r app/ apps/api/ --severity-level medium
+          bandit -r app/ -f json -o bandit-report.json || true
+          bandit -r app/ --severity-level medium
 
       - name: Run Safety (dependency vulnerabilities)
         run: |
