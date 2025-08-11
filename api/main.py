@@ -144,7 +144,10 @@ async def server_error_handler(request: Request, exc: HTTPException):
             pass
     
     # JSON fallback for API requests or template failures
-    return {"error": "Internal Server Error", "status_code": 500, "detail": "An internal error occurred"}
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal Server Error", "status_code": 500, "detail": "An internal error occurred"}
+    )
 
 @app.get("/")
 async def root(request: Request):
