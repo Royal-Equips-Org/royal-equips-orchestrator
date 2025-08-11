@@ -34,4 +34,5 @@ openai>=1.0
 streamlit-webrtc>=0.47
 PyGithub>=1.59
 typing-extensions>=4.8
-sse-starlette
+sse-starlette>=0.10
+aiofiles>=23.2
