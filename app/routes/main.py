@@ -61,13 +61,13 @@ def command_center_redirect():
 @main_bp.route("/control-center")
 def control_center():
     """Alias for command center - redirects to /command-center."""
-    return redirect(url_for("main.command_center"), code=307)
+    return redirect("/command-center", code=307)
 
 
 @main_bp.route("/dashboard")
 def dashboard():
     """Alias for command center - redirects to /command-center."""
-    return redirect(url_for("main.command_center"), code=307)
+    return redirect("/command-center", code=307)
 
 
 @main_bp.route("/favicon.ico")
