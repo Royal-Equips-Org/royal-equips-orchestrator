@@ -11,10 +11,9 @@ Provides intelligent assistant capabilities with full knowledge of:
 
 import logging
 import os
-import json
-import asyncio
-from typing import Dict, List, Optional, Any, AsyncGenerator
 from datetime import datetime, timezone
+from typing import Any, AsyncGenerator, Dict
+
 try:
     import openai
     HAS_OPENAI = True
@@ -46,8 +45,8 @@ except ImportError:
     stop_after_attempt = wait_exponential = lambda *args, **kwargs: None
 
 from app.services.github_service import github_service
-from app.services.shopify_service import shopify_service
 from app.services.health_service import health_service
+from app.services.shopify_service import shopify_service
 
 logger = logging.getLogger(__name__)
 
@@ -60,31 +59,31 @@ class ControlCenterAssistant:
     Elite AI assistant with comprehensive knowledge of the Royal Equips platform.
     Designed for executive-level insights and operational excellence.
     """
-    
+
     def __init__(self):
         """Initialize the AI assistant with OpenAI integration."""
         self.api_key = os.getenv('OPENAI_API_KEY')
-        
+
         if not self.api_key:
             logger.warning("OpenAI API key not configured - AI assistant disabled")
             self._enabled = False
         else:
             self._enabled = True
             self.client = OpenAI(api_key=self.api_key)
-            
+
         self.model = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
-        
+
         # System context about the Royal Equips platform
         self.system_context = self._build_system_context()
-        
+
         # Conversation history for context
         self._conversation_history = []
         self._max_history_length = 20
-    
+
     def is_enabled(self) -> bool:
         """Check if AI assistant is properly configured and enabled."""
         return self._enabled
-    
+
     def _build_system_context(self) -> str:
         """Build comprehensive system context for the AI assistant."""
         return """You are the elite Control Center Assistant for Royal Equips Orchestrator - a sophisticated multi-agent e-commerce automation platform.
@@ -150,13 +149,13 @@ You can access real-time data about all platform components and should provide i
                 'shopify_status': shopify_service.get_connection_status() if shopify_service.is_configured() else {'status': 'not_configured'},
                 'platform_status': 'operational'
             }
-            
+
             # Add more context as needed
             return status
         except Exception as e:
             logger.error(f"Error gathering system status: {e}")
             return {'error': str(e), 'timestamp': datetime.now(timezone.utc).isoformat()}
-    
+
     def _format_system_status_for_ai(self, status: Dict[str, Any]) -> str:
         """Format system status for AI context."""
         try:
@@ -176,7 +175,7 @@ Health Metrics:
             return formatted.strip()
         except Exception as e:
             return f"Error formatting status: {str(e)}"
-    
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10)
@@ -184,11 +183,11 @@ Health Metrics:
     async def get_response(self, user_message: str, include_system_status: bool = True) -> Dict[str, Any]:
         """
         Get AI assistant response to user message.
-        
+
         Args:
             user_message: The user's message or question
             include_system_status: Whether to include current system status in context
-            
+
         Returns:
             Dict containing response, status, and metadata
         """
@@ -198,27 +197,27 @@ Health Metrics:
                 'error': 'AI Assistant not configured - OpenAI API key required',
                 'response': 'AI Assistant is currently unavailable. Please configure OpenAI API key.'
             }
-        
+
         try:
             # Gather current system status if requested
             system_status = {}
             status_context = ""
-            
+
             if include_system_status:
                 system_status = await self._get_current_system_status()
                 status_context = self._format_system_status_for_ai(system_status)
-            
+
             # Build conversation messages
             messages = [
                 {"role": "system", "content": f"{self.system_context}\n\n{status_context}"}
             ]
-            
+
             # Add conversation history for context
             messages.extend(self._conversation_history[-self._max_history_length:])
-            
+
             # Add current user message
             messages.append({"role": "user", "content": user_message})
-            
+
             # Get AI response
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -227,17 +226,17 @@ Health Metrics:
                 temperature=0.7,
                 stream=False
             )
-            
+
             assistant_response = response.choices[0].message.content
-            
+
             # Update conversation history
             self._conversation_history.append({"role": "user", "content": user_message})
             self._conversation_history.append({"role": "assistant", "content": assistant_response})
-            
+
             # Trim history if needed
             if len(self._conversation_history) > self._max_history_length * 2:
                 self._conversation_history = self._conversation_history[-self._max_history_length:]
-            
+
             return {
                 'success': True,
                 'response': assistant_response,
@@ -247,7 +246,7 @@ Health Metrics:
                 'system_status_included': include_system_status,
                 'conversation_length': len(self._conversation_history) // 2
             }
-            
+
         except Exception as e:
             logger.error(f"AI Assistant error: {e}")
             return {
@@ -256,15 +255,15 @@ Health Metrics:
                 'response': f'I apologize, but I encountered an error: {str(e)}. Please try again or contact system administrator.',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-    
+
     async def get_streaming_response(self, user_message: str, include_system_status: bool = True) -> AsyncGenerator[Dict[str, Any], None]:
         """
         Get streaming AI assistant response for real-time interaction.
-        
+
         Args:
             user_message: The user's message or question
             include_system_status: Whether to include current system status in context
-            
+
         Yields:
             Dict chunks containing streaming response data
         """
@@ -274,27 +273,27 @@ Health Metrics:
                 'data': 'AI Assistant not configured - OpenAI API key required'
             }
             return
-        
+
         try:
             # Gather current system status if requested
             system_status = {}
             status_context = ""
-            
+
             if include_system_status:
                 system_status = await self._get_current_system_status()
                 status_context = self._format_system_status_for_ai(system_status)
-            
+
             # Build conversation messages
             messages = [
                 {"role": "system", "content": f"{self.system_context}\n\n{status_context}"}
             ]
-            
+
             # Add conversation history for context
             messages.extend(self._conversation_history[-self._max_history_length:])
-            
+
             # Add current user message
             messages.append({"role": "user", "content": user_message})
-            
+
             # Get streaming AI response
             stream = self.client.chat.completions.create(
                 model=self.model,
@@ -303,28 +302,28 @@ Health Metrics:
                 temperature=0.7,
                 stream=True
             )
-            
+
             full_response = ""
-            
+
             for chunk in stream:
                 if chunk.choices[0].delta.content is not None:
                     content = chunk.choices[0].delta.content
                     full_response += content
-                    
+
                     yield {
                         'type': 'chunk',
                         'data': content,
                         'timestamp': datetime.now(timezone.utc).isoformat()
                     }
-            
+
             # Update conversation history
             self._conversation_history.append({"role": "user", "content": user_message})
             self._conversation_history.append({"role": "assistant", "content": full_response})
-            
+
             # Trim history if needed
             if len(self._conversation_history) > self._max_history_length * 2:
                 self._conversation_history = self._conversation_history[-self._max_history_length:]
-            
+
             yield {
                 'type': 'complete',
                 'data': {
@@ -335,7 +334,7 @@ Health Metrics:
                 },
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"AI Assistant streaming error: {e}")
             yield {
@@ -343,7 +342,7 @@ Health Metrics:
                 'data': f'I encountered an error: {str(e)}. Please try again.',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-    
+
     def clear_conversation(self) -> Dict[str, Any]:
         """Clear conversation history."""
         self._conversation_history.clear()
@@ -352,7 +351,7 @@ Health Metrics:
             'message': 'Conversation history cleared',
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
-    
+
     def get_conversation_stats(self) -> Dict[str, Any]:
         """Get conversation statistics."""
         return {
@@ -362,7 +361,7 @@ Health Metrics:
             'max_history_length': self._max_history_length,
             'last_interaction': self._conversation_history[-1]['timestamp'] if self._conversation_history else None
         }
-    
+
     async def get_executive_summary(self) -> Dict[str, Any]:
         """Get executive summary of current platform status and recommendations."""
         if not self._enabled:
@@ -370,10 +369,10 @@ Health Metrics:
                 'success': False,
                 'error': 'AI Assistant not available'
             }
-        
+
         try:
             system_status = await self._get_current_system_status()
-            
+
             executive_prompt = """Provide a concise executive summary of the Royal Equips platform status. Include:
 1. Overall platform health and operational status
 2. Key metrics and performance indicators
@@ -382,9 +381,9 @@ Health Metrics:
 5. Action items for executive review
 
 Format this as a professional executive brief suitable for a business leader."""
-            
+
             response = await self.get_response(executive_prompt, include_system_status=True)
-            
+
             if response['success']:
                 return {
                     'success': True,
@@ -394,7 +393,7 @@ Format this as a professional executive brief suitable for a business leader."""
                 }
             else:
                 return response
-                
+
         except Exception as e:
             logger.error(f"Error generating executive summary: {e}")
             return {

@@ -3,13 +3,15 @@ Control API endpoints for Royal Equips Orchestrator.
 
 Provides control functions like:
 - God Mode toggle
-- Emergency Stop 
+- Emergency Stop
 - System controls
 """
 
 import logging
 from datetime import datetime
-from flask import Blueprint, request, jsonify
+
+from flask import Blueprint, jsonify, request
+
 from app.sockets import broadcast_control_event
 
 logger = logging.getLogger(__name__)
@@ -66,27 +68,27 @@ def toggle_god_mode():
             return jsonify({
                 "error": "Missing 'enabled' field in request body"
             }), 400
-        
+
         enabled = bool(data["enabled"])
         _control_state["god_mode"] = enabled
         _control_state["last_updated"] = datetime.now().isoformat()
-        
+
         # Broadcast the change via WebSocket
         broadcast_control_event("god_mode", {
             "enabled": enabled,
             "message": f"God Mode {'activated' if enabled else 'deactivated'}",
             "user": "system"  # TODO: Get from auth context
         })
-        
+
         logger.info(f"God Mode {'enabled' if enabled else 'disabled'}")
-        
+
         return jsonify({
             "status": "accepted",
             "god_mode": enabled,
             "message": f"God Mode {'activated' if enabled else 'deactivated'}",
             "timestamp": _control_state["last_updated"]
         }), 202
-        
+
     except Exception as e:
         logger.error(f"Failed to toggle god mode: {e}")
         return jsonify({
@@ -98,7 +100,7 @@ def toggle_god_mode():
 def emergency_stop():
     """
     Trigger emergency stop.
-    
+
     Optionally accepts JSON payload:
     {
         "reason": "string description of why emergency stop was triggered"
@@ -107,10 +109,10 @@ def emergency_stop():
     try:
         data = request.get_json() or {}
         reason = data.get("reason", "Manual emergency stop triggered")
-        
+
         _control_state["emergency_stop"] = True
         _control_state["last_updated"] = datetime.now().isoformat()
-        
+
         # Broadcast emergency stop via WebSocket
         broadcast_control_event("emergency_stop", {
             "reason": reason,
@@ -122,17 +124,17 @@ def emergency_stop():
                 "Manual intervention required"
             ]
         })
-        
+
         logger.warning(f"Emergency stop triggered: {reason}")
-        
+
         return jsonify({
-            "status": "accepted", 
+            "status": "accepted",
             "emergency_stop": True,
             "reason": reason,
             "message": "Emergency stop activated - all operations halted",
             "timestamp": _control_state["last_updated"]
         }), 202
-        
+
     except Exception as e:
         logger.error(f"Failed to trigger emergency stop: {e}")
         return jsonify({
@@ -144,7 +146,7 @@ def emergency_stop():
 def reset_emergency():
     """
     Reset emergency stop state.
-    
+
     Optionally accepts JSON payload:
     {
         "confirm": true,
@@ -153,27 +155,27 @@ def reset_emergency():
     """
     try:
         data = request.get_json() or {}
-        
+
         if not data.get("confirm", False):
             return jsonify({
                 "error": "Emergency reset requires confirmation",
                 "message": "Include 'confirm': true in request body"
             }), 400
-        
+
         reason = data.get("reason", "Emergency state reset")
-        
+
         _control_state["emergency_stop"] = False
         _control_state["last_updated"] = datetime.now().isoformat()
-        
+
         # Broadcast reset via WebSocket
         broadcast_control_event("emergency_reset", {
             "reason": reason,
             "message": "Emergency stop deactivated - normal operations resuming",
             "user": "system"  # TODO: Get from auth context
         })
-        
+
         logger.info(f"Emergency stop reset: {reason}")
-        
+
         return jsonify({
             "status": "accepted",
             "emergency_stop": False,
@@ -181,11 +183,11 @@ def reset_emergency():
             "message": "Emergency stop deactivated",
             "timestamp": _control_state["last_updated"]
         }), 202
-        
+
     except Exception as e:
         logger.error(f"Failed to reset emergency stop: {e}")
         return jsonify({
-            "error": "Failed to reset emergency stop", 
+            "error": "Failed to reset emergency stop",
             "message": str(e)
         }), 500
 

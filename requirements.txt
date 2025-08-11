@@ -1,37 +1,36 @@
-# Core API + Orchestrator deps
-fastapi>=0.110
-uvicorn>=0.27
+# Flask backend requirements for Royal Equips Orchestrator
+flask>=3.0
+flask-cors>=6.0
+flask-socketio>=5.4
+eventlet>=0.33
+flasgger>=0.9.7.1
 gunicorn>=21.2
-pydantic>=1.10
-sqlalchemy>=2.0
-pandas>=2.0
-numpy>=1.25
-prophet>=1.1
-scikit-learn>=1.4
 requests>=2.31
-beautifulsoup4>=4.12
-plotly>=5.18
-streamlit>=1.32
-jinja2>=3.1
 tenacity>=8.2
 python-dotenv>=1.0
-aiohttp>=3.8
-async-timeout>=4.0
 
-# Shopify API client
-shopifyapi>=12.3  # or "shopify" if that's what you import
+# AI Assistant support
+openai>=1.0
 
-# BigQuery support
-google-cloud-bigquery>=3.20
-pandas-gbq>=0.22
+# System metrics and health
+psutil>=5.9
+
+# Optional Redis support for session storage
+redis>=5.0
+
+# Prometheus metrics support
+prometheus-client>=0.20
+
+# GitHub integration
+PyGithub>=1.59
+
+# Shopify API client (if needed - can be removed if not used)
+# shopifyapi>=12.3
 
 # Security scan tools (used by cron jobs)
 bandit>=1.7
 pip-audit>=2.6
 
-# Holographic Control Center dependencies
-openai>=1.0
-streamlit-webrtc>=0.47
-PyGithub>=1.59
-typing-extensions>=4.8
-sse-starlette
+# Testing framework
+pytest>=8.0
+pytest-flask>=1.3
