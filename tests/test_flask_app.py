@@ -62,22 +62,21 @@ class TestFlaskHealthAndRoutes:
         assert 'uptime_seconds' in data
         assert 'version' in data
 
-    def test_root_endpoint_json_fallback(self, client):
-        """Test root endpoint returns JSON when templates unavailable."""
+    def test_root_endpoint_html_response(self, client):
+        """Test root endpoint returns HTML when templates are available."""
         response = client.get('/')
         
         assert response.status_code == 200
-        data = response.get_json()
-        assert data['service'] == 'Royal Equips Orchestrator'
-        assert data['backend'] == 'flask'
-        assert 'endpoints' in data
+        assert 'text/html' in response.content_type
+        assert b'Royal Equips Orchestrator' in response.data
+        assert b'Command Center' in response.data
 
     def test_command_center_redirect(self, client):
         """Test command center redirect functionality."""
         response = client.get('/command-center', follow_redirects=False)
         
-        assert response.status_code == 307
-        assert '/docs' in response.location
+        assert response.status_code == 308  # Permanent redirect to add trailing slash
+        assert '/command-center/' in response.location
 
     def test_control_center_alias(self, client):
         """Test control center alias redirects properly."""
@@ -113,9 +112,8 @@ class TestFlaskHealthAndRoutes:
         response = client.get('/docs')
         
         assert response.status_code == 200
-        data = response.get_json()
-        assert data['backend'] == 'flask'
-        assert 'endpoints' in data
+        assert 'text/html' in response.content_type
+        assert b'Flasgger' in response.data or b'swagger' in response.data.lower()
 
 
 class TestFlaskAgentEndpoints:
