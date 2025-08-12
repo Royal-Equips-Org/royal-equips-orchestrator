@@ -21,9 +21,9 @@ install:
 	.venv/bin/pip install -r requirements.txt
 
 run api:
-	@echo "Starting FastAPI server..."
+	@echo "Starting Flask server..."
 	@export $(grep -v '^#' .env | xargs) && \
-	.venv/bin/uvicorn scripts.launch_api:app --reload
+	.venv/bin/python wsgi.py
 
 dashboard holo:
 	@echo "Starting Holographic Control Center..."

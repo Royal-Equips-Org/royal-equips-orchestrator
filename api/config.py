@@ -1,5 +1,6 @@
 """
-Configuration module for Royal Equips Orchestrator FastAPI application.
+Legacy FastAPI configuration retained for backward compatibility. 
+Default production runtime is Flask (wsgi:app).
 
 This module provides centralized configuration management using environment variables
 with sensible defaults for development and production environments.

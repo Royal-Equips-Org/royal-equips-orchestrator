@@ -1,4 +1,5 @@
-"""Resilient API launcher for Royal Equips Orchestrator.
+"""Legacy ASGI launcher retained for backward compatibility. 
+Prefer launching Flask via wsgi:app.
 
 This launcher attempts to load the ASGI app from multiple candidate locations,
 providing fallback options if the primary app location changes or fails to load.
