@@ -40,7 +40,14 @@ export PORT=8000
 
 ## Application Types
 
-### FastAPI (Recommended for Production)
+### Flask (Recommended for Production)
+- **Detection**: Files containing `from flask import`, `import flask`, or `Flask(`
+- **Startup**: Uses `gunicorn` with eventlet workers or `flask run` command
+- **Examples**: 
+  - `APP_TYPE=flask APP_PATH=wsgi:app`
+  - `APP_TYPE=flask APP_PATH=app.py`
+
+### FastAPI (Legacy/Optional)
 - **Detection**: Files containing `from fastapi import`, `import fastapi`, or `FastAPI(`
 - **Startup**: Uses `uvicorn` or `gunicorn` with uvicorn workers
 - **Examples**: 
@@ -54,12 +61,6 @@ export PORT=8000
   - `APP_TYPE=streamlit APP_PATH=dashboard.py`
   - `APP_TYPE=streamlit APP_PATH=orchestrator/control_center/app.py`
 
-### Flask (Web Applications)
-- **Detection**: Files containing `from flask import`, `import flask`, or `Flask(`
-- **Startup**: Uses `flask run` command
-- **Examples**:
-  - `APP_TYPE=flask APP_PATH=app.py`
-
 ### Python (Direct Execution)
 - **Detection**: Files containing `if __name__ == "__main__"`
 - **Startup**: Uses `python` command
@@ -70,16 +71,17 @@ export PORT=8000
 
 The auto-detection follows this priority order:
 
-1. **FastAPI applications** (highest priority for production stability)
+1. **Flask applications** (highest priority for production stability)
+   - Checks module-style candidates: `wsgi:app`, `app:create_app`
+   - Scans files for Flask imports and patterns
+   
+2. **FastAPI applications** (legacy support)
    - Checks module-style candidates: `api.main:app`, `orchestrator.api:app`
    - Scans files for FastAPI imports and patterns
    
-2. **Streamlit applications**
+3. **Streamlit applications**
    - Checks common Streamlit file locations
    - Performs heuristic search for streamlit imports
-   
-3. **Flask applications**
-   - Checks common Flask file patterns
    
 4. **Python scripts** (lowest priority)
    - Looks for scripts with `__main__` sections
@@ -136,15 +138,20 @@ CMD ["/app/start.sh"]
 
 ### Environment-Specific Configuration
 ```bash
-# Production (FastAPI with uvicorn)
-export APP_TYPE=fastapi
-export APP_PATH=api.main:app
-export PORT=8000
+# Production (Flask with gunicorn)
+export APP_TYPE=flask
+export APP_PATH=wsgi:app
+export PORT=10000
 
 # Development (Streamlit dashboard)  
 export APP_TYPE=streamlit
 export APP_PATH=dashboard.py
 export PORT=8501
+
+# Legacy FastAPI (backward compatibility)
+export APP_TYPE=fastapi  
+export APP_PATH=api.main:app
+export PORT=8000
 
 # Auto-detection (recommended)
 export APP_TYPE=auto

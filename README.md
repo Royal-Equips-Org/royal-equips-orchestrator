@@ -266,7 +266,7 @@ legacy APIs, something traditional integrations struggle with【571575397346020�
   history, support activity and order processing. Features voice control,
   3D holographic displays, and manual agent execution controls.
 
-* **API Service** – A FastAPI application exposes endpoints to check
+* **API Service** – A Flask application exposes endpoints to check
   health or trigger agents, enabling integration with other systems or
   automation pipelines.
 
@@ -330,7 +330,7 @@ legacy APIs, something traditional integrations struggle with【571575397346020�
    ```
 
    This will start two services:
-   * `orchestrator` – FastAPI application on `localhost:8000`.
+   * `orchestrator` – Flask application on `localhost:10000`.
    * `control-center` – Holographic Control Center on `localhost:8501`.
 
 4. **Run locally without Docker**:
@@ -340,7 +340,7 @@ legacy APIs, something traditional integrations struggle with【571575397346020�
    . venv/bin/activate
    pip install --upgrade pip -r requirements.txt
    export $(grep -v '^#' .env | xargs)
-   uvicorn royal_equips_orchestrator.scripts.run_orchestrator:app --reload
+   python wsgi.py
    ```
 
 5. **Access the command center**:
@@ -362,7 +362,7 @@ docker compose up --build
 
 Access points:
 - **Command Center**: http://localhost:3000/admin/
-- **API Backend**: http://localhost:8000/health
+- **API Backend**: http://localhost:10000/healthz
 
 ## Accessing the Command Center
 
@@ -370,15 +370,15 @@ Access points:
 
 When deployed using the `render.yaml` blueprint, the system provides:
 
-1. **orchestrator-api**: Docker-based FastAPI service
-2. **control-center**: Python runtime service (uses FastAPI with minimal deps)
+1. **orchestrator-api**: Docker-based Flask service
+2. **control-center**: Python runtime service (uses Flask with minimal deps)
 
 **Deployment Process**:
 1. **Deploy to Render** using the blueprint configuration in `render.yaml`
 2. **Access the API**: Navigate to Render Dashboard → Services → `control-center` → click the public URL
 3. **Environment Variables**: The following variables are configured in the blueprint:
-   - `APP_TYPE=fastapi` - Specifies FastAPI mode
-   - `APP_PATH=api.main:app` - Specifies the app entry point
+   - `APP_TYPE=flask` - Specifies Flask mode
+   - `APP_PATH=wsgi:app` - Specifies the app entry point
    - Service-specific secrets: `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOP_NAME`, `OPENAI_API_KEY`, etc.
 
 **Important**: The `control-center` service uses `requirements-minimal.txt` to ensure fast builds and reliable deployment on Render's Python runtime.
@@ -390,8 +390,8 @@ The orchestrator relies on several environment variables. See
 
 | Variable            | Purpose                                            |
 |--------------------|----------------------------------------------------|
-| `APP_TYPE`         | Application type (`fastapi`, `streamlit`, `auto`)  |
-| `APP_PATH`         | Application entry point (e.g. `api.main:app`)     |
+| `APP_TYPE`         | Application type (`flask`, `fastapi`, `streamlit`, `auto`)  |
+| `APP_PATH`         | Application entry point (e.g. `wsgi:app`)     |
 | `SHOPIFY_API_KEY`   | API key for your custom Shopify app               |
 | `SHOPIFY_API_SECRET`| API secret/password for your Shopify app          |
 | `SHOP_NAME`         | Your store's subdomain (e.g. `my-shop`)           |
