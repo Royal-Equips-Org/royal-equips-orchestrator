@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "royal-eq-mcp": {
+      "command": "royal-mcp",
+      "args": [],
+      "env": {
+        "SHOPIFY_GRAPHQL_ENDPOINT": "https://your-shop.myshopify.com/admin/api/2024-01/graphql.json",
+        "SHOPIFY_GRAPHQL_TOKEN": "shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "BIGQUERY_PROJECT_ID": "royal-commerce-ai",
+        "SUPABASE_URL": "https://your-project.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "ORCHESTRATOR_BASE_URL": "https://your-orchestrator.herokuapp.com",
+        "ORCHESTRATOR_HMAC_KEY": "your-secret-hmac-key-here",
+        "REPO_ROOT": "/workspaces/royal-equips-orchestrator"
+      }
+    }
+  }
+}

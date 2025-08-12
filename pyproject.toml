@@ -10,6 +10,9 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 
+[project.scripts]
+royal-mcp = "royal_mcp:main"
+
 dependencies = [
     "flask>=3.0",
     "flask-cors>=6.0",
@@ -28,6 +31,13 @@ dependencies = [
     "bandit>=1.7",
     "pip-audit>=2.6",
     "jinja2>=3.1",
+    # Royal EQ MCP dependencies
+    "modelcontextprotocol>=1.0.0",
+    "httpx>=0.26.0",
+    "pydantic>=2.5.0",
+    "google-cloud-bigquery>=3.13.0",
+    "supabase>=2.0.0",
+    "gitpython>=3.1.40",
 ]
 
 [project.optional-dependencies]
