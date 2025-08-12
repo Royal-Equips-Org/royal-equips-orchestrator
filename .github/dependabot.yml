@@ -5,7 +5,42 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
     schedule:
       interval: "weekly"
+    reviewers:
+      - "Skidaw23"
+    assignees:
+      - "Skidaw23"
+
+  # Node.js dependencies for Cloudflare Workers
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "Skidaw23"
+    assignees:
+      - "Skidaw23"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "Skidaw23"
+    assignees:
+      - "Skidaw23"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "Skidaw23"
+    assignees:
+      - "Skidaw23"

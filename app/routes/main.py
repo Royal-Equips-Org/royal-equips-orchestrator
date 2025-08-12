@@ -16,6 +16,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    url_for,
 )
 
 main_bp = Blueprint("main", __name__)
@@ -60,10 +61,11 @@ def command_center_redirect():
 @main_bp.route("/control-center")
 def control_center():
     """Alias for command center - redirects to /command-center."""
-
-    return redirect(url_for("command_center.serve_spa"), code=307)
-
-    return redirect("/command-center", code=307)
+    try:
+        return redirect(url_for("command_center.serve_spa"), code=307)
+    except Exception:
+        # Fallback to static path if endpoint does not exist
+        return redirect("/command-center", code=307)
 
 
 
