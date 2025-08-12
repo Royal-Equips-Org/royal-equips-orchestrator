@@ -67,7 +67,11 @@ def control_center():
 @main_bp.route("/dashboard")
 def dashboard():
     """Alias for command center - redirects to /command-center."""
-    return redirect(url_for("command_center.serve_spa"), code=307)
+    try:
+        return redirect(url_for("command_center.serve_spa"), code=307)
+    except Exception:
+        # Fallback to static path if endpoint does not exist
+        return redirect("/command-center", code=307)
 
 
 @main_bp.route("/favicon.ico")
