@@ -3,6 +3,8 @@
 import os
 import sys
 from pathlib import Path
+import pytest
+from unittest.mock import patch, Mock, AsyncMock, MagicMock
 
 
 def test_package_structure():
@@ -95,6 +97,163 @@ def test_environment_validation():
     
     assert "def validate_environment" in content, "validate_environment function should exist in server.py"
     assert "required_vars" in content, "Should check for required environment variables"
+
+
+@pytest.mark.integration
+class TestMCPServerIntegration:
+    """Integration test cases for MCP server workflow."""
+    
+    @patch.dict('sys.modules', {
+        'mcp': MagicMock(),
+        'mcp.server': MagicMock(), 
+        'mcp.server.stdio': MagicMock(),
+        'mcp.types': MagicMock(),
+    })
+    def test_server_initialization_with_all_connectors(self, mock_env_vars):
+        """Test server initializes with all expected connectors."""
+        with patch('royal_mcp.server.ShopifyConnector') as MockShopify, \
+             patch('royal_mcp.server.BigQueryConnector') as MockBigQuery, \
+             patch('royal_mcp.server.SupabaseConnector') as MockSupabase, \
+             patch('royal_mcp.server.RepoConnector') as MockRepo, \
+             patch('royal_mcp.server.OrchestratorConnector') as MockOrchestrator:
+            
+            from royal_mcp.server import RoyalMCPServer
+            
+            server = RoyalMCPServer()
+            
+            # Verify all connectors were instantiated
+            MockShopify.assert_called_once()
+            MockBigQuery.assert_called_once()
+            MockSupabase.assert_called_once() 
+            MockRepo.assert_called_once()
+            MockOrchestrator.assert_called_once()
+            
+            # Verify server state
+            assert len(server.connectors) == 5
+            expected_connectors = ['shopify', 'bigquery', 'supabase', 'repo', 'orchestrator']
+            for connector_name in expected_connectors:
+                assert connector_name in server.connectors
+
+    @patch.dict('sys.modules', {
+        'mcp': MagicMock(),
+        'mcp.server': MagicMock(),
+        'mcp.server.stdio': MagicMock(), 
+        'mcp.types': MagicMock(),
+    })
+    def test_tool_discovery_workflow(self, mock_env_vars):
+        """Test the complete tool discovery workflow."""
+        # Mock tools from different connectors
+        shopify_tool = Mock()
+        shopify_tool.name = "query_products"
+        shopify_tool.description = "Query Shopify products"
+        
+        bigquery_tool = Mock()
+        bigquery_tool.name = "execute_query"
+        bigquery_tool.description = "Execute BigQuery query"
+        
+        # Mock connectors
+        mock_shopify = Mock()
+        mock_shopify.get_tools.return_value = [shopify_tool]
+        
+        mock_bigquery = Mock()
+        mock_bigquery.get_tools.return_value = [bigquery_tool]
+        
+        mock_supabase = Mock()
+        mock_supabase.get_tools.return_value = []
+        
+        mock_repo = Mock()
+        mock_repo.get_tools.return_value = []
+        
+        mock_orchestrator = Mock()
+        mock_orchestrator.get_tools.return_value = []
+        
+        with patch('royal_mcp.server.ShopifyConnector', return_value=mock_shopify), \
+             patch('royal_mcp.server.BigQueryConnector', return_value=mock_bigquery), \
+             patch('royal_mcp.server.SupabaseConnector', return_value=mock_supabase), \
+             patch('royal_mcp.server.RepoConnector', return_value=mock_repo), \
+             patch('royal_mcp.server.OrchestratorConnector', return_value=mock_orchestrator):
+            
+            from royal_mcp.server import RoyalMCPServer
+            
+            server = RoyalMCPServer()
+            
+            # Verify tools were discovered from all connectors
+            mock_shopify.get_tools.assert_called_once()
+            mock_bigquery.get_tools.assert_called_once()
+            mock_supabase.get_tools.assert_called_once()
+            mock_repo.get_tools.assert_called_once() 
+            mock_orchestrator.get_tools.assert_called_once()
+
+    @patch.dict('sys.modules', {
+        'mcp': MagicMock(),
+        'mcp.server': MagicMock(),
+        'mcp.server.stdio': MagicMock(),
+        'mcp.types': MagicMock(),
+    })
+    def test_partial_connector_failure_resilience(self, mock_env_vars):
+        """Test server resilience when some connectors fail to initialize."""
+        failure_connectors = ['bigquery', 'supabase']  # These will fail
+        success_connectors = ['shopify', 'repo', 'orchestrator']  # These will succeed
+        
+        with patch('royal_mcp.server.ShopifyConnector') as MockShopify, \
+             patch('royal_mcp.server.BigQueryConnector', side_effect=Exception("BigQuery init failed")), \
+             patch('royal_mcp.server.SupabaseConnector', side_effect=Exception("Supabase init failed")), \
+             patch('royal_mcp.server.RepoConnector') as MockRepo, \
+             patch('royal_mcp.server.OrchestratorConnector') as MockOrchestrator:
+            
+            from royal_mcp.server import RoyalMCPServer
+            
+            server = RoyalMCPServer()
+            
+            # Should only have successful connectors
+            assert len(server.connectors) == len(success_connectors)
+            
+            for connector_name in success_connectors:
+                assert connector_name in server.connectors
+                
+            for connector_name in failure_connectors:
+                assert connector_name not in server.connectors
+
+
+@pytest.mark.integration  
+class TestEnvironmentValidationIntegration:
+    """Integration tests for environment validation scenarios."""
+    
+    @patch.dict('sys.modules', {
+        'mcp': MagicMock(),
+        'mcp.server': MagicMock(),
+        'mcp.server.stdio': MagicMock(),
+        'mcp.types': MagicMock(),
+    })
+    def test_complete_environment_validation(self, mock_env_vars):
+        """Test complete environment validation with all required variables."""
+        from royal_mcp.server import validate_environment
+        
+        # All required variables are present in mock_env_vars fixture
+        assert validate_environment() is True
+
+    @patch.dict('sys.modules', {
+        'mcp': MagicMock(),
+        'mcp.server': MagicMock(), 
+        'mcp.server.stdio': MagicMock(),
+        'mcp.types': MagicMock(),
+    })
+    def test_missing_critical_environment_variables(self):
+        """Test validation fails appropriately with missing variables."""
+        import os
+        from royal_mcp.server import validate_environment
+        
+        # Test with completely empty environment
+        with patch.dict(os.environ, {}, clear=True):
+            assert validate_environment() is False
+            
+        # Test with partial environment (missing critical ones)
+        partial_env = {
+            "SHOPIFY_GRAPHQL_ENDPOINT": "https://test.myshopify.com/admin/api/graphql.json",
+            # Missing SHOPIFY_GRAPHQL_TOKEN and others
+        }
+        with patch.dict(os.environ, partial_env, clear=True):
+            assert validate_environment() is False
 
 
 if __name__ == "__main__":

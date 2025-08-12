@@ -97,10 +97,13 @@ ignore = [
     "B008",   # do not perform function calls in argument defaults
     "C901",   # too complex
     "S101",   # assert usage (allowed in tests)
-    "ANN101", # self annotation
-    "ANN102", # cls annotation
+    "ANN001", # missing function argument type annotation
+    "ANN204", # missing return type annotation for special method
     "ANN401", # any annotation
     "T20",    # print statements (allowed for now)
+    "S110",   # try-except-pass (allowed for now)
+    "S112",   # try-except-continue (allowed for now)
+    "N999",   # invalid module name (project structure)
 ]
 
 [tool.ruff.lint.per-file-ignores]

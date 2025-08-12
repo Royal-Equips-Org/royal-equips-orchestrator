@@ -19,6 +19,36 @@ The system features an **ultimate futuristic command center** built with React +
 - **Multi-Agent Communication**: Unified chat interface and command execution
 - **Advanced Navigation**: Six-panel interface (Overview, Operations, Data, Commerce, Agents, Settings)
 
+## 🏗️ Royal EQ MCP Server
+
+This repository includes a comprehensive **Model Context Protocol (MCP) server** that enables:
+
+- **Multi-Platform Integration**: Shopify GraphQL, BigQuery, Supabase, Git repositories, and orchestrator APIs
+- **Enterprise Security**: HMAC authentication, circuit breakers, rate limiting
+- **Self-Healing Architecture**: Auto-retry, connection pooling, graceful degradation  
+- **Comprehensive Testing**: Unit tests, integration tests, contract compliance
+- **Production Ready**: Logging, metrics, health checks, and monitoring
+
+### MCP Server Quick Start
+
+```bash
+# Install MCP server dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+export SHOPIFY_GRAPHQL_ENDPOINT="https://your-shop.myshopify.com/admin/api/2024-01/graphql.json"
+export SHOPIFY_GRAPHQL_TOKEN="your-shopify-token"
+export BIGQUERY_PROJECT_ID="your-bigquery-project"
+export SUPABASE_URL="https://your-project.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="your-supabase-key"
+export ORCHESTRATOR_BASE_URL="http://localhost:5000"
+export ORCHESTRATOR_HMAC_KEY="your-hmac-key"
+export REPO_ROOT="/path/to/your/repo"
+
+# Run the MCP server
+python -m royal_mcp
+```
+
 ### Updated Architecture (v2.0)
 
 ```
@@ -83,51 +113,89 @@ The system features an **ultimate futuristic command center** built with React +
    cd royal-equips-orchestrator
    ```
 
-2. **Install dependencies**
+2. **Setup development environment**
 
    ```bash
-   # Core Flask backend dependencies  
+   # Using the enhanced Makefile
+   make setup
+   
+   # Or manually:
+   python3 -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   pip install --upgrade pip
    pip install -r requirements.txt
-   pip install flask flask-cors gunicorn
-   
-   # Development tools
-   pip install pytest ruff black
-   
-   # Cloudflare Worker dependencies
-   npm install
-   
-   # React Command Center dependencies  
-   cd admin && npm install && cd ..
-   ```
+   pip install -e ".[dev]"  # Install with dev dependencies
    ```
 
 3. **Environment configuration**
 
    ```bash
    cp .env.example .env
-   # Edit .env with your configuration:
-   # - FLASK_ENV=development (development/testing/production)
-   # - PORT=10000 (default Flask application port)
-   # - SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME
-   # - OPENAI_API_KEY (optional, for real AI responses)  
-   # - COMMAND_CENTER_URL=/docs (command center redirect)
-   # - ENABLE_METRICS=true (enable metrics collection)
-   # - ENABLE_STREAMING=true (enable SSE streaming)
+   # Edit .env with your configuration
    ```
 
-4. **Development servers**
+4. **Run quality checks** 
 
    ```bash
-   # Option 1: Direct Flask development server (recommended for development)
-   python wsgi.py
+   # Run the complete CI pipeline locally
+   make ci
    
-   # Option 2: Using Gunicorn (production-like)
-   gunicorn --bind 0.0.0.0:10000 --workers 1 --reload wsgi:app
+   # Or individual commands:
+   make format     # Format code with black and ruff
+   make lint       # Run ruff linting
+   make typecheck  # Run mypy type checking
+   make test       # Run pytest tests
+   make coverage   # Run tests with coverage
+   make scan       # Run security scans (bandit, vulture)
+   ```
+
+5. **Run the applications**
+
+   ```bash
+   # Start Flask backend server
+   make run
    
-   # Terminal 2: Start Cloudflare Worker (local)
+   # Start Holographic Control Center
+   make dashboard
+   
+   # Start Cloudflare Worker (local)
    npx wrangler dev --local --port 8787
-   
-   # Terminal 3: Start React Command Center
+   ```
+
+### MCP Server Development
+
+The Royal EQ MCP server provides enterprise-grade connectors for multiple platforms:
+
+```bash
+# Test the MCP server
+python -m pytest tests/mcp/ -v
+
+# Run a specific connector test
+python -m pytest tests/mcp/test_shopify_connector.py -v
+
+# Test with coverage
+make coverage
+
+# Run integration tests
+python -m pytest tests/mcp/test_integration.py -m integration -v
+```
+
+### Pre-commit Hooks
+
+Set up pre-commit hooks to ensure code quality:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+This will run the following checks on every commit:
+- Code formatting (black, ruff)
+- Type checking (mypy)  
+- Security scanning (bandit)
+- Basic test validation
+
+## Production Deployment
    cd admin && npm run dev
    ```
 

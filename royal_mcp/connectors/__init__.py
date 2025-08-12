@@ -12,8 +12,8 @@ from .supabase import SupabaseConnector
 
 __all__ = [
     "BigQueryConnector",
-    "OrchestratorConnector", 
+    "OrchestratorConnector",
     "RepoConnector",
     "ShopifyConnector",
-    "SupabaseConnector"
+    "SupabaseConnector",
 ]
