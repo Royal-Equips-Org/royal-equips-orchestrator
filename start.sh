@@ -20,7 +20,7 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
-log "Starting application detection (APP_TYPE=$APP_TYPE, PORT=$PORT)"
+log "Starting application detection (APP_TYPE=$APP_TYPE, PORT=$PORT, Flask-first priority)"
 
 # Function to check if a Python module is available
 check_module() {
@@ -142,6 +142,7 @@ detect_and_start() {
     
     # Flask candidates (highest priority for production)
     local flask_candidates=(
+        "wsgi:app"
         "app:create_app"
         "app.py"
         "main.py"
@@ -149,7 +150,7 @@ detect_and_start() {
         "web.py"
     )
 
-    # FastAPI candidates 
+    # FastAPI candidates (legacy support)
     local fastapi_candidates=(
         "api.main:app"
         "orchestrator.api:app"
@@ -167,14 +168,6 @@ detect_and_start() {
         "streamlit_app.py"
         "st_app.py"
         "dashboard.py"
-    )
-    
-    # Flask candidates
-    local flask_candidates=(
-        "app.py"
-        "main.py"
-        "server.py"
-        "web.py"
     )
     
     # Try Flask first (production-ready with eventlet)
@@ -202,7 +195,7 @@ detect_and_start() {
         done
     fi
     
-    # Try FastAPI if Flask not found
+    # Try FastAPI as legacy fallback if Flask not found
     if [[ "$has_fastapi" -eq 1 ]]; then
         log "🔍 Checking FastAPI candidates..."
         

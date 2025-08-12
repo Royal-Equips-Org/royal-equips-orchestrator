@@ -11,33 +11,23 @@ requires-python = ">=3.8"
 license = {text = "MIT"}
 
 dependencies = [
-    "fastapi>=0.110",
-    "uvicorn>=0.27", 
+    "flask>=3.0",
+    "flask-cors>=6.0",
+    "flask-socketio>=5.4",
+    "eventlet>=0.33",
+    "flasgger>=0.9.7.1",
     "gunicorn>=21.2",
-    "pydantic>=1.10",
-    "sqlalchemy>=2.0",
-    "pandas>=2.0",
-    "numpy>=1.25",
-    "prophet>=1.1",
-    "scikit-learn>=1.4",
     "requests>=2.31",
-    "beautifulsoup4>=4.12",
-    "plotly>=5.18",
-    "streamlit>=1.32",
-    "jinja2>=3.1",
     "tenacity>=8.2",
     "python-dotenv>=1.0",
-    "aiohttp>=3.8",
-    "async-timeout>=4.0",
-    "shopifyapi>=12.3",
-    "google-cloud-bigquery>=3.20",
-    "pandas-gbq>=0.22",
+    "openai>=1.0",
+    "psutil>=5.9",
+    "redis>=5.0",
+    "prometheus-client>=0.20",
+    "PyGithub>=1.59",
     "bandit>=1.7",
     "pip-audit>=2.6",
-    "openai>=1.0",
-    "streamlit-webrtc>=0.47",
-    "PyGithub>=1.59",
-    "typing-extensions>=4.8",
+    "jinja2>=3.1",
 ]
 
 [project.optional-dependencies]
@@ -78,10 +68,8 @@ multi_line_output = 3
 line_length = 88
 known_first_party = ["orchestrator"]
 known_third_party = [
-    "fastapi", "uvicorn", "pydantic", "sqlalchemy", "pandas", "numpy",
-    "prophet", "sklearn", "requests", "bs4", "plotly", "streamlit",
-    "jinja2", "tenacity", "dotenv", "aiohttp", "openai", "github",
-    "google", "shopify"
+    "flask", "gunicorn", "requests", "jinja2", "tenacity", "dotenv", 
+    "openai", "github", "redis", "prometheus_client", "bandit", "pytest"
 ]
 
 [tool.mypy]

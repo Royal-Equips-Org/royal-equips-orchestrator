@@ -5,7 +5,9 @@ Provides interactive API documentation at /docs.
 """
 
 import logging
+
 from flask import Blueprint
+
 try:
     from flasgger import Swagger
     HAS_FLASGGER = True
@@ -22,7 +24,7 @@ def init_swagger(app):
     if not HAS_FLASGGER:
         logger.warning("Flasgger not available, skipping Swagger initialization")
         return None
-    
+
     swagger_config = {
         "headers": [],
         "specs": [
@@ -37,7 +39,7 @@ def init_swagger(app):
         "swagger_ui": True,
         "specs_route": "/docs"
     }
-    
+
     swagger_template = {
         "swagger": "2.0",
         "info": {
@@ -54,7 +56,7 @@ def init_swagger(app):
         "consumes": ["application/json"],
         "produces": ["application/json", "text/plain"]
     }
-    
+
     swagger = Swagger(app, config=swagger_config, template=swagger_template)
     logger.info("Swagger API documentation initialized at /docs")
     return swagger

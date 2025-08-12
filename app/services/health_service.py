@@ -186,14 +186,14 @@ class HealthService:
                 try:
                     from app.services.shopify_service import ShopifyService
                     service = ShopifyService()
-                    
+
                     if not service.is_configured():
                         raise Exception("Shopify service not configured")
-                    
+
                     # Try to get shop info as a connectivity test
                     shop_info = service.get_shop_info()
                     return shop_info
-                    
+
                 except Exception as e:
                     raise Exception(f"Shopify service test failed: {e}")
 
@@ -305,7 +305,7 @@ class HealthService:
         """Check AI Assistant service health."""
         try:
             from app.services.ai_assistant import control_center_assistant
-            
+
             # Check if assistant is enabled
             if not control_center_assistant.is_enabled():
                 return {
@@ -314,10 +314,10 @@ class HealthService:
                     "message": "AI Assistant not configured (optional)",
                     "required": False,
                 }
-            
+
             # Get conversation stats to verify service is working
             stats = control_center_assistant.get_conversation_stats()
-            
+
             return {
                 "name": "ai_assistant",
                 "healthy": True,
@@ -326,7 +326,7 @@ class HealthService:
                 "conversations": stats.get('conversation_length', 0),
                 "required": False,
             }
-            
+
         except Exception as e:
             return {
                 "name": "ai_assistant",
@@ -334,15 +334,15 @@ class HealthService:
                 "message": f"AI Assistant check failed: {str(e)}",
                 "required": False,
             }
-    
+
     def _check_workspace_service(self) -> Dict[str, Any]:
         """Check workspace management service health."""
         try:
             from app.services.workspace_service import workspace_manager
-            
+
             # Get system overview to verify service is working
             overview = workspace_manager.get_system_overview()
-            
+
             return {
                 "name": "workspace_service",
                 "healthy": True,
@@ -352,7 +352,7 @@ class HealthService:
                 "active_operations": overview['active_operations'],
                 "required": True,  # Core service for multi-operational capabilities
             }
-            
+
         except Exception as e:
             return {
                 "name": "workspace_service",
@@ -364,7 +364,7 @@ class HealthService:
     def get_comprehensive_health(self) -> Dict[str, Any]:
         """Get comprehensive health status including all services."""
         readiness = self.check_readiness()
-        
+
         # Add enhanced GitHub service health
         github_health = None
         try:
@@ -373,7 +373,7 @@ class HealthService:
                 github_health = github_service.get_repository_health()
         except Exception as e:
             logger.error(f"Failed to get GitHub repository health: {e}")
-        
+
         return {
             'system_readiness': readiness,
             'github_repository_health': github_health,

@@ -15,14 +15,15 @@ This module provides a production-ready Flask application with:
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from flask import Flask
 from flask_cors import CORS
 
 from app.config import get_config
-from app.sockets import init_socketio
 from app.routes.docs import init_swagger
+from app.sockets import init_socketio
 
 
 def create_app(config: Optional[str] = None) -> Flask:
@@ -35,7 +36,13 @@ def create_app(config: Optional[str] = None) -> Flask:
     Returns:
         Configured Flask application
     """
-    app = Flask(__name__)
+    # Set correct paths for templates and static files relative to project root
+    template_dir = Path(__file__).parent.parent / "templates" 
+    static_dir = Path(__file__).parent.parent / "static"
+    
+    app = Flask(__name__, 
+                template_folder=str(template_dir),
+                static_folder=str(static_dir))
 
     # Load configuration
     app.config.from_object(get_config(config))
@@ -56,8 +63,8 @@ def create_app(config: Optional[str] = None) -> Flask:
     app.startup_time = datetime.now()
 
     # Initialize WebSocket support
-    socketio_instance = init_socketio(app)
-    
+    init_socketio(app)
+
     # Initialize API documentation
     init_swagger(app)
 
@@ -85,17 +92,17 @@ def setup_logging(app: Flask) -> None:
 
 def register_blueprints(app: Flask) -> None:
     """Register application blueprints."""
+    from app.blueprints.ai_assistant import assistant_bp
+    from app.blueprints.github import github_bp
+    from app.blueprints.shopify import shopify_bp
+    from app.blueprints.workspace import workspace_bp
     from app.routes.agents import agents_bp
+    from app.routes.command_center import command_center_bp
+    from app.routes.control import control_bp
+    from app.routes.docs import docs_bp
     from app.routes.health import health_bp
     from app.routes.main import main_bp
     from app.routes.metrics import metrics_bp
-    from app.routes.control import control_bp
-    from app.routes.command_center import command_center_bp
-    from app.routes.docs import docs_bp
-    from app.blueprints.shopify import shopify_bp
-    from app.blueprints.github import github_bp
-    from app.blueprints.ai_assistant import assistant_bp
-    from app.blueprints.workspace import workspace_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(health_bp)

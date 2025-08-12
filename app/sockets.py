@@ -10,17 +10,17 @@ Provides real-time updates across namespaces:
 import logging
 import threading
 import time
-from datetime import datetime
-from typing import Dict, Any, List
 from collections import deque
+from datetime import datetime
+from typing import Any, Dict
+
 # import psutil  # Will be added when available
 try:
     import psutil
 except ImportError:
     psutil = None
 
-from flask_socketio import SocketIO, emit, disconnect
-from flask import current_app
+from flask_socketio import SocketIO, emit
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def init_socketio(app):
         logger=False,
         engineio_logger=False
     )
-    
+
     # Register namespace handlers
     register_system_handlers()
     register_shopify_handlers()
@@ -49,10 +49,10 @@ def init_socketio(app):
     register_github_handlers()
     register_assistant_handlers()
     register_workspace_handlers()
-    
+
     # Start background tasks
     start_background_tasks()
-    
+
     logger.info("SocketIO initialized with namespaced real-time data streams")
     return socketio
 
@@ -60,7 +60,7 @@ def init_socketio(app):
 # System namespace (/ws/system) handlers
 def register_system_handlers():
     """Register system namespace event handlers."""
-    
+
     @socketio.on('connect', namespace='/ws/system')
     def handle_system_connect():
         """Handle client connection to system namespace."""
@@ -71,17 +71,17 @@ def register_system_handlers():
             'timestamp': datetime.now().isoformat(),
             'message': 'Connected to Royal Equips System Monitor'
         })
-        
+
         # Send initial status
         emit('service_up', get_service_status())
         emit('heartbeat', get_heartbeat_data())
         emit('metrics', get_system_metrics())
-    
+
     @socketio.on('disconnect', namespace='/ws/system')
     def handle_system_disconnect():
         """Handle client disconnection from system namespace."""
         logger.info('Client disconnected from /ws/system')
-    
+
     @socketio.on('request_status', namespace='/ws/system')
     def handle_system_status_request():
         """Handle manual system status request."""
@@ -92,7 +92,7 @@ def register_system_handlers():
 # Shopify namespace (/ws/shopify) handlers
 def register_shopify_handlers():
     """Register Shopify namespace event handlers."""
-    
+
     @socketio.on('connect', namespace='/ws/shopify')
     def handle_shopify_connect():
         """Handle client connection to Shopify namespace."""
@@ -103,15 +103,15 @@ def register_shopify_handlers():
             'timestamp': datetime.now().isoformat(),
             'message': 'Connected to Royal Equips Shopify Monitor'
         })
-        
+
         # Send initial Shopify status
         emit('rate_limit', get_shopify_rate_limit_status())
-    
+
     @socketio.on('disconnect', namespace='/ws/shopify')
     def handle_shopify_disconnect():
         """Handle client disconnection from Shopify namespace."""
         logger.info('Client disconnected from /ws/shopify')
-    
+
     @socketio.on('request_jobs', namespace='/ws/shopify')
     def handle_jobs_request():
         """Handle request for active jobs."""
@@ -127,10 +127,10 @@ def register_shopify_handlers():
             logger.warning("Shopify jobs module not available")
 
 
-# Logs namespace (/ws/logs) handlers  
+# Logs namespace (/ws/logs) handlers
 def register_logs_handlers():
     """Register logs namespace event handlers."""
-    
+
     @socketio.on('connect', namespace='/ws/logs')
     def handle_logs_connect():
         """Handle client connection to logs namespace."""
@@ -141,36 +141,36 @@ def register_logs_handlers():
             'timestamp': datetime.now().isoformat(),
             'message': 'Connected to Royal Equips Live Logs'
         })
-        
+
         # Send recent log history
         with _log_buffer_lock:
             history = list(_log_buffer)[-50:]  # Send last 50 log entries
-            
+
         for log_entry in history:
             emit('log_line', log_entry)
-    
+
     @socketio.on('disconnect', namespace='/ws/logs')
     def handle_logs_disconnect():
         """Handle client disconnection from logs namespace."""
         logger.info('Client disconnected from /ws/logs')
-    
+
     @socketio.on('request_history', namespace='/ws/logs')
     def handle_logs_history_request(data=None):
         """Handle request for log history."""
         limit = 100
         if data and isinstance(data, dict):
             limit = min(data.get('limit', 100), 500)
-            
+
         with _log_buffer_lock:
             history = list(_log_buffer)[-limit:]
-            
+
         for log_entry in history:
             emit('log_line', log_entry)
 
 
 def start_background_tasks():
     """Start background tasks for real-time data emission across namespaces."""
-    
+
     def emit_system_heartbeat():
         """Emit system heartbeat every 2 seconds to /ws/system."""
         while True:
@@ -182,7 +182,7 @@ def start_background_tasks():
             except Exception as e:
                 logger.error(f"System heartbeat emission failed: {e}")
                 time.sleep(2)  # Reduced from 5 seconds to 2 seconds
-    
+
     def emit_system_metrics():
         """Emit system metrics every 3 seconds to /ws/system."""
         while True:
@@ -190,7 +190,7 @@ def start_background_tasks():
                 if socketio:
                     metrics_data = get_system_metrics()
                     socketio.emit('metrics', metrics_data, namespace='/ws/system')
-                    
+
                     # Also emit service status periodically
                     service_status = get_service_status()
                     socketio.emit('service_up', service_status, namespace='/ws/system')
@@ -198,7 +198,7 @@ def start_background_tasks():
             except Exception as e:
                 logger.error(f"System metrics emission failed: {e}")
                 time.sleep(3)  # Reduced from 5 seconds to 3 seconds
-    
+
     def emit_shopify_rate_limits():
         """Emit Shopify rate limits every 10 seconds to /ws/shopify."""
         while True:
@@ -210,14 +210,14 @@ def start_background_tasks():
             except Exception as e:
                 logger.error(f"Shopify rate limit emission failed: {e}")
                 time.sleep(10)
-    
+
     # Start background threads
     threading.Thread(target=emit_system_heartbeat, daemon=True).start()
-    threading.Thread(target=emit_system_metrics, daemon=True).start() 
+    threading.Thread(target=emit_system_metrics, daemon=True).start()
     threading.Thread(target=emit_shopify_rate_limits, daemon=True).start()
     threading.Thread(target=emit_github_updates, daemon=True).start()
     threading.Thread(target=emit_workspace_updates, daemon=True).start()
-    
+
     logger.info("Background data emission tasks started for all namespaces")
 
 
@@ -239,7 +239,7 @@ def get_service_status() -> Dict[str, Any]:
         'socket': 'ok' if socketio else 'error',
         'shopify': 'ok'  # Will be updated by Shopify service
     }
-    
+
     # Check if Shopify is configured
     try:
         from app.services.shopify_service import ShopifyService
@@ -249,7 +249,7 @@ def get_service_status() -> Dict[str, Any]:
         # Could add auth check here but might be expensive
     except Exception:
         components['shopify'] = 'error'
-    
+
     return {
         'components': components,
         'overall_status': 'ok' if all(status in ['ok', 'not_configured'] for status in components.values()) else 'degraded',
@@ -266,7 +266,7 @@ def get_shopify_rate_limit_status() -> Dict[str, Any]:
             return service.get_rate_limit_status()
     except Exception:
         pass
-    
+
     return {
         'used': 0,
         'bucket': 40,
@@ -285,10 +285,10 @@ def add_log_entry(level: str, message: str, context: Dict[str, Any] = None):
         'message': message,
         'context': context or {}
     }
-    
+
     with _log_buffer_lock:
         _log_buffer.append(log_entry)
-    
+
     # Emit to logs namespace
     if socketio:
         try:
@@ -306,7 +306,7 @@ def broadcast_control_event(event_type: str, data: Dict[str, Any]):
                 'data': data,
                 'timestamp': datetime.now().isoformat()
             }, namespace='/ws/system')
-            
+
             # Also log the event
             add_log_entry('INFO', f"Control event: {event_type}", data)
         except Exception as e:
@@ -319,8 +319,8 @@ def get_uptime_seconds() -> float:
         from flask import current_app
         if hasattr(current_app, 'startup_time'):
             return (datetime.now() - current_app.startup_time).total_seconds()
-    except:
-        pass
+    except Exception:
+        pass  # Uptime calculation errors are not critical
     return 0.0
 
 def get_system_metrics() -> Dict[str, Any]:
@@ -329,7 +329,7 @@ def get_system_metrics() -> Dict[str, Any]:
         cpu_percent = psutil.cpu_percent(interval=None)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
-        
+
         return {
             'timestamp': datetime.now().isoformat(),
             'cpu': {
@@ -363,7 +363,7 @@ def get_system_metrics() -> Dict[str, Any]:
 def get_mock_agent_status() -> Dict[str, Any]:
     """Get mock agent status for demonstration (legacy)."""
     import random
-    
+
     agents = [
         {
             'id': 'product-research',
@@ -387,7 +387,7 @@ def get_mock_agent_status() -> Dict[str, Any]:
         },
         {
             'id': 'inventory-forecast',
-            'name': 'Inventory Forecasting Agent', 
+            'name': 'Inventory Forecasting Agent',
             'status': random.choice(['active', 'idle', 'processing']),
             'cpu_percent': random.uniform(15, 50),
             'memory_mb': random.uniform(100, 400),
@@ -396,7 +396,7 @@ def get_mock_agent_status() -> Dict[str, Any]:
             'last_activity': datetime.now().isoformat()
         }
     ]
-    
+
     return {
         'timestamp': datetime.now().isoformat(),
         'agents': agents,
@@ -426,12 +426,12 @@ def get_current_status() -> Dict[str, Any]:
 
 def register_github_handlers():
     """Register GitHub namespace handlers for /ws/github."""
-    
+
     @socketio.on('connect', namespace='/ws/github')
     def github_connect():
         """Handle GitHub namespace connection."""
         logger.info("Client connected to GitHub WebSocket namespace")
-        
+
         # Send initial GitHub status
         try:
             from app.services.github_service import github_service
@@ -445,7 +445,7 @@ def register_github_handlers():
             emit('github_status', status_data)
         except Exception as e:
             logger.error(f"Failed to send initial GitHub status: {e}")
-    
+
     @socketio.on('disconnect', namespace='/ws/github')
     def github_disconnect():
         """Handle GitHub namespace disconnection."""
@@ -454,12 +454,12 @@ def register_github_handlers():
 
 def register_assistant_handlers():
     """Register AI Assistant namespace handlers for /ws/assistant."""
-    
+
     @socketio.on('connect', namespace='/ws/assistant')
     def assistant_connect():
         """Handle AI Assistant namespace connection."""
         logger.info("Client connected to AI Assistant WebSocket namespace")
-        
+
         # Send initial assistant status
         try:
             from app.services.ai_assistant import control_center_assistant
@@ -473,7 +473,7 @@ def register_assistant_handlers():
             })
         except Exception as e:
             logger.error(f"Failed to send initial assistant status: {e}")
-    
+
     @socketio.on('disconnect', namespace='/ws/assistant')
     def assistant_disconnect():
         """Handle AI Assistant namespace disconnection."""
@@ -482,12 +482,12 @@ def register_assistant_handlers():
 
 def register_workspace_handlers():
     """Register Workspace namespace handlers for /ws/workspace."""
-    
+
     @socketio.on('connect', namespace='/ws/workspace')
     def workspace_connect():
         """Handle Workspace namespace connection."""
         logger.info("Client connected to Workspace WebSocket namespace")
-        
+
         # Send initial workspace overview
         try:
             from app.services.workspace_service import workspace_manager
@@ -495,7 +495,7 @@ def register_workspace_handlers():
             emit('workspace_overview', overview)
         except Exception as e:
             logger.error(f"Failed to send initial workspace overview: {e}")
-    
+
     @socketio.on('disconnect', namespace='/ws/workspace')
     def workspace_disconnect():
         """Handle Workspace namespace disconnection."""
@@ -554,18 +554,18 @@ def emit_github_updates():
                     # Get repository health
                     health = github_service.get_repository_health()
                     socketio.emit('github_health', health, namespace='/ws/github')
-                    
+
                     # Get recent activity summary every 5 minutes
                     recent_commits = github_service.get_recent_commits(3)
                     workflow_runs = github_service.get_workflow_runs(3)
-                    
+
                     activity_data = {
                         'commits': recent_commits,
                         'workflows': workflow_runs,
                         'timestamp': datetime.now().isoformat()
                     }
                     socketio.emit('github_activity', activity_data, namespace='/ws/github')
-                
+
             time.sleep(300)  # 5 minutes
         except Exception as e:
             logger.error(f"GitHub updates emission failed: {e}")
@@ -578,18 +578,18 @@ def emit_workspace_updates():
         try:
             if socketio:
                 from app.services.workspace_service import workspace_manager
-                
+
                 # Get workspace overview
                 overview = workspace_manager.get_system_overview()
                 socketio.emit('workspace_overview', overview, namespace='/ws/workspace')
-                
+
                 # Get active workspace details
                 active_workspace = workspace_manager.get_active_workspace()
                 if active_workspace:
                     status = active_workspace.get_status()
                     status['is_active'] = True
                     socketio.emit('active_workspace', status, namespace='/ws/workspace')
-                
+
             time.sleep(30)  # 30 seconds
         except Exception as e:
             logger.error(f"Workspace updates emission failed: {e}")
