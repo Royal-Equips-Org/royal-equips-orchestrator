@@ -149,7 +149,8 @@ markers = [
     "unit: Unit tests",
     "integration: Integration tests", 
     "slow: Slow tests",
-    "external: Tests requiring external services"
+    "external: Tests requiring external services",
+    "asyncio: Async tests"
 ]
 
 [tool.coverage.run]
