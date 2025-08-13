@@ -1,51 +1,18 @@
-"""Legacy ASGI launcher retained for backward compatibility. 
-Prefer launching Flask via wsgi:app.
+"""Legacy ASGI launcher - DEPRECATED
+Use wsgi:app for Flask deployment instead.
 
-This launcher attempts to load the ASGI app from multiple candidate locations,
-providing fallback options if the primary app location changes or fails to load.
+This file is kept for backward compatibility only.
 """
 
-import importlib
-import os
 import sys
-from pathlib import Path
-from typing import List
+import os
 
-# Add repository root to Python path
-repo_root = Path(__file__).parent.parent
-sys.path.insert(0, str(repo_root))
-
-CANDIDATES: List[str] = [
-    os.getenv("API_APP_PATH", ""),              # explicit override if provided
-    "api.main:app",                             # full FastAPI backend (highest priority)
-    "orchestrator.api:app",                     # minimal fallback API
-    "scripts.run_orchestrator:app",             # full orchestrator app
-    "orchestrator.core.api:app",
-    "orchestrator.main:app",
-    "orchestrator.app:app",
-    "orchestrator.server:app",
-]
-CANDIDATES = [c for c in CANDIDATES if c]
-
-
-def load_app(candidates: List[str]):
-    """Load ASGI app from the first working candidate."""
-    last_err = None
-    for target in candidates:
-        try:
-            mod_path, attr = target.split(":")
-            mod = importlib.import_module(mod_path)
-            app = getattr(mod, attr)
-            print(f"[launcher] Loaded ASGI app from {target}", flush=True)
-            return app
-        except Exception as e:
-            print(f"[launcher] Failed {target}: {e}", flush=True)
-            last_err = e
-    raise RuntimeError(f"No ASGI app found. Last error: {last_err}")
-
+def main():
+    """Legacy launcher that redirects to Flask app."""
+    print("DEPRECATED: Use 'python -m flask --app wsgi:app run' or 'gunicorn wsgi:app' instead")
+    print("This legacy ASGI launcher is no longer supported.")
+    print("The current application uses Flask (WSGI), not FastAPI (ASGI).")
+    sys.exit(1)
 
 if __name__ == "__main__":
-    app = load_app(CANDIDATES)
-    import uvicorn
-    port = int(os.getenv("PORT", "8000"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    main()

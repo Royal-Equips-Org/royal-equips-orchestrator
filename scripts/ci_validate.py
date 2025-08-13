@@ -226,9 +226,25 @@ def main():
     elif app_type == 'auto':
         log("INFO", "Auto-detection mode - validating known good configurations...")
         
-        # Check common FastAPI patterns
+        # Check Flask patterns (current production setup)
+        flask_candidates = [
+            "wsgi:app",
+            "app:create_app"
+        ]
+        
+        flask_valid = []
+        for candidate in flask_candidates:
+            result = validate_flask_app(candidate)
+            if result['valid']:
+                flask_valid.append(candidate)
+                log("INFO", f"✅ Flask candidate valid: {candidate}")
+            else:
+                log("WARN", f"❌ Flask candidate failed: {candidate} - {result.get('error', 'Unknown error')}")
+        
+        # Legacy FastAPI check (deprecated)
+        # Note: FastAPI endpoints have been removed in favor of Flask
         fastapi_candidates = [
-            "api.main:app",
+            # "api.main:app",  # Removed - no longer exists
             "orchestrator.api:app"
         ]
         
