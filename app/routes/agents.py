@@ -5,6 +5,7 @@ Maintains compatibility with existing FastAPI agent functionality
 including session management, messaging, and streaming responses.
 """
 
+import importlib
 import json
 import logging
 import time
@@ -193,6 +194,136 @@ def stream_agent_response():
     )
 
 
+@agents_bp.route("/status", methods=["GET"])
+def get_agents_status():
+    """Get status of all registered agents in the orchestrator."""
+    try:
+        # Try to import agents with graceful error handling
+        available_agents = {}
+        
+        # Define agent configurations
+        agent_configs = {
+            "product_research": {
+                "name": "Product Research Agent",
+                "description": "News scraping and trend discovery",
+                "module": "orchestrator.agents.product_research"
+            },
+            "inventory_forecasting": {
+                "name": "Inventory Forecasting Agent", 
+                "description": "Prophet + Shopify integration for demand prediction",
+                "module": "orchestrator.agents.inventory_forecasting"
+            },
+            "pricing_optimizer": {
+                "name": "Pricing Optimizer Agent",
+                "description": "Competitor analysis and dynamic pricing",
+                "module": "orchestrator.agents.pricing_optimizer"
+            },
+            "marketing_automation": {
+                "name": "Marketing Automation Agent",
+                "description": "Email campaigns and content generation",
+                "module": "orchestrator.agents.marketing_automation"
+            },
+            "customer_support": {
+                "name": "Customer Support Agent",
+                "description": "OpenAI-powered chat responses",
+                "module": "orchestrator.agents.customer_support"
+            },
+            "order_management": {
+                "name": "Order Management Agent",
+                "description": "Fulfillment and returns processing",
+                "module": "orchestrator.agents.order_management"
+            },
+            "product_recommendation": {
+                "name": "Product Recommendation Agent",
+                "description": "AI-powered product suggestions",
+                "module": "orchestrator.agents.recommendation"
+            },
+            "analytics": {
+                "name": "Analytics Agent",
+                "description": "Performance metrics and insights",
+                "module": "orchestrator.agents.analytics"
+            }
+        }
+        
+        # Check each agent's availability
+        for agent_id, config in agent_configs.items():
+            try:
+                # Try to import the agent module
+                import importlib
+                importlib.import_module(config["module"])
+                
+                # Determine status based on dependencies
+                status = "operational"
+                enabled = True
+                
+                # Special cases for agents with external dependencies
+                if agent_id == "customer_support":
+                    if not current_app.config.get("OPENAI_API_KEY"):
+                        status = "needs_config"
+                        enabled = False
+                elif agent_id == "order_management":
+                    if not current_app.config.get("SHOPIFY_API_KEY"):
+                        status = "needs_config" 
+                        enabled = False
+                elif agent_id == "inventory_forecasting":
+                    # Check if pandas/prophet are available
+                    try:
+                        import pandas
+                        import prophet
+                    except ImportError:
+                        status = "missing_deps"
+                        enabled = False
+                        
+            except ImportError as e:
+                status = "import_error"
+                enabled = False
+                logger.warning(f"Failed to import agent {agent_id}: {e}")
+                
+            available_agents[agent_id] = {
+                "name": config["name"],
+                "status": status,
+                "description": config["description"],
+                "last_run": None,
+                "next_run": None,
+                "enabled": enabled,
+                "execution_status": _get_execution_status(agent_id)
+            }
+
+        # Count statuses
+        total_agents = len(available_agents)
+        operational_count = sum(1 for agent in available_agents.values() if agent["status"] == "operational")
+        needs_config_count = sum(1 for agent in available_agents.values() if agent["status"] == "needs_config")
+        missing_deps_count = sum(1 for agent in available_agents.values() if agent["status"] == "missing_deps")
+        import_error_count = sum(1 for agent in available_agents.values() if agent["status"] == "import_error")
+        
+        return jsonify({
+            "agents": available_agents,
+            "summary": {
+                "total": total_agents,
+                "operational": operational_count,
+                "needs_configuration": needs_config_count,
+                "missing_dependencies": missing_deps_count,
+                "import_errors": import_error_count,
+                "offline": 0,
+                "last_updated": datetime.now().isoformat()
+            }
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Failed to get agent status: {e}")
+        return jsonify({"error": "Failed to get agent status", "message": str(e)}), 500
+
+
+def _get_execution_status(agent_id: str) -> str:
+    """Get current execution status of an agent."""
+    try:
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
+        return orchestrator.get_agent_status(agent_id)
+    except Exception:
+        return 'unknown'
+
+
 @agents_bp.route("/sessions", methods=["GET"])
 def list_agent_sessions():
     """List all active agent sessions."""
@@ -230,3 +361,69 @@ def get_session_messages(session_id: str):
     except Exception as e:
         logger.error(f"Failed to get session messages: {e}")
         return jsonify({"error": "Failed to get messages", "message": str(e)}), 500
+
+
+@agents_bp.route("/run/<agent_id>", methods=["POST"])
+def run_agent(agent_id: str):
+    """Trigger a manual run of a specific agent."""
+    try:
+        # Validate agent_id
+        valid_agents = [
+            "product_research", "inventory_forecasting", "pricing_optimizer",
+            "marketing_automation", "customer_support", "order_management", 
+            "product_recommendation", "analytics"
+        ]
+        
+        if agent_id not in valid_agents:
+            return jsonify({"error": "Invalid agent ID", "valid_agents": valid_agents}), 400
+
+        # Use orchestrator bridge to start the agent
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
+        
+        execution_record = orchestrator.start_agent(agent_id)
+
+        return jsonify({
+            "status": "started",
+            "agent_id": agent_id,
+            "execution_id": execution_record['execution_id'],
+            "estimated_duration_seconds": execution_record['estimated_duration'],
+            "message": f"Agent {agent_id} execution initiated",
+            "timestamp": execution_record['started_at']
+        }), 202
+
+    except Exception as e:
+        logger.error(f"Failed to run agent {agent_id}: {e}")
+        return jsonify({"error": "Failed to run agent", "message": str(e)}), 500
+
+
+@agents_bp.route("/stop/<agent_id>", methods=["POST"]) 
+def stop_agent(agent_id: str):
+    """Stop a running agent."""
+    try:
+        # Validate agent_id
+        valid_agents = [
+            "product_research", "inventory_forecasting", "pricing_optimizer", 
+            "marketing_automation", "customer_support", "order_management",
+            "product_recommendation", "analytics"
+        ]
+        
+        if agent_id not in valid_agents:
+            return jsonify({"error": "Invalid agent ID", "valid_agents": valid_agents}), 400
+
+        # Use orchestrator bridge to stop the agent
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
+        
+        stopped = orchestrator.stop_agent(agent_id)
+
+        return jsonify({
+            "status": "stopped" if stopped else "not_running",
+            "agent_id": agent_id,
+            "message": f"Agent {agent_id} {'stopped successfully' if stopped else 'was not running'}",
+            "timestamp": datetime.now().isoformat()
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Failed to stop agent {agent_id}: {e}")
+        return jsonify({"error": "Failed to stop agent", "message": str(e)}), 500
