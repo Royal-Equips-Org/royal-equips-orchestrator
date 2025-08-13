@@ -20,4 +20,4 @@ venv/
 
 # Node.js and Cloudflare Workers
 .wrangler/
-*.log
+*.log.env
