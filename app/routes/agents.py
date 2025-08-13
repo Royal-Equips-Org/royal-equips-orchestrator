@@ -285,7 +285,8 @@ def get_agents_status():
                 "description": config["description"],
                 "last_run": None,
                 "next_run": None,
-                "enabled": enabled
+                "enabled": enabled,
+                "execution_status": _get_execution_status(agent_id)
             }
 
         # Count statuses
@@ -311,6 +312,16 @@ def get_agents_status():
     except Exception as e:
         logger.error(f"Failed to get agent status: {e}")
         return jsonify({"error": "Failed to get agent status", "message": str(e)}), 500
+
+
+def _get_execution_status(agent_id: str) -> str:
+    """Get current execution status of an agent."""
+    try:
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
+        return orchestrator.get_agent_status(agent_id)
+    except Exception:
+        return 'unknown'
 
 
 @agents_bp.route("/sessions", methods=["GET"])
@@ -366,43 +377,19 @@ def run_agent(agent_id: str):
         if agent_id not in valid_agents:
             return jsonify({"error": "Invalid agent ID", "valid_agents": valid_agents}), 400
 
-        # For now, simulate agent execution
-        # TODO: Connect to actual orchestrator system
-        execution_id = str(uuid.uuid4())
+        # Use orchestrator bridge to start the agent
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
         
-        # Simulate different execution times based on agent type
-        estimated_duration = {
-            "product_research": 30,
-            "inventory_forecasting": 60, 
-            "pricing_optimizer": 45,
-            "marketing_automation": 20,
-            "customer_support": 10,
-            "order_management": 15,
-            "product_recommendation": 25,
-            "analytics": 35
-        }.get(agent_id, 30)
-
-        # Emit agent execution event via WebSocket
-        try:
-            from app.sockets import socketio
-            if socketio:
-                socketio.emit('agent_execution', {
-                    'agent_id': agent_id,
-                    'execution_id': execution_id,
-                    'status': 'started',
-                    'estimated_duration': estimated_duration,
-                    'timestamp': datetime.now().isoformat()
-                }, namespace='/ws/system')
-        except Exception as ws_error:
-            logger.warning(f"Failed to emit agent execution event: {ws_error}")
+        execution_record = orchestrator.start_agent(agent_id)
 
         return jsonify({
             "status": "started",
             "agent_id": agent_id,
-            "execution_id": execution_id,
-            "estimated_duration_seconds": estimated_duration,
+            "execution_id": execution_record['execution_id'],
+            "estimated_duration_seconds": execution_record['estimated_duration'],
             "message": f"Agent {agent_id} execution initiated",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": execution_record['started_at']
         }), 202
 
     except Exception as e:
@@ -424,25 +411,16 @@ def stop_agent(agent_id: str):
         if agent_id not in valid_agents:
             return jsonify({"error": "Invalid agent ID", "valid_agents": valid_agents}), 400
 
-        # For now, simulate agent stopping
-        # TODO: Connect to actual orchestrator system to stop agents
+        # Use orchestrator bridge to stop the agent
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
         
-        # Emit agent stop event via WebSocket
-        try:
-            from app.sockets import socketio
-            if socketio:
-                socketio.emit('agent_execution', {
-                    'agent_id': agent_id,
-                    'status': 'stopped',
-                    'timestamp': datetime.now().isoformat()
-                }, namespace='/ws/system')
-        except Exception as ws_error:
-            logger.warning(f"Failed to emit agent stop event: {ws_error}")
+        stopped = orchestrator.stop_agent(agent_id)
 
         return jsonify({
-            "status": "stopped",
+            "status": "stopped" if stopped else "not_running",
             "agent_id": agent_id,
-            "message": f"Agent {agent_id} stopped successfully",
+            "message": f"Agent {agent_id} {'stopped successfully' if stopped else 'was not running'}",
             "timestamp": datetime.now().isoformat()
         }), 200
 
