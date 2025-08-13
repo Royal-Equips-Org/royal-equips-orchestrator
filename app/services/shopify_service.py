@@ -62,19 +62,33 @@ class ShopifyService:
     Provides methods for products, collections, inventory, orders
     with built-in rate limiting and error handling.
     """
+    _instance = None
+    _initialized = False
+    _logged_warning = False  # Track if we've already logged the warning
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ShopifyService, cls).__new__(cls)
+        return cls._instance
 
     def __init__(self):
+        if self._initialized:
+            return
+            
         self.api_key = os.getenv('SHOPIFY_API_KEY')
         self.api_secret = os.getenv('SHOPIFY_API_SECRET')
         self.shop_name = os.getenv('SHOP_NAME')
 
         if not all([self.api_key, self.api_secret, self.shop_name]):
-            logger.warning("Shopify credentials not fully configured")
+            # Only log once per application startup
+            if not ShopifyService._logged_warning:
+                logger.info("Shopify credentials not configured - service running in mock mode")
+                ShopifyService._logged_warning = True
             self._configured = False
         else:
             self._configured = True
 
-        self.base_url = f"https://{self.shop_name}.myshopify.com/admin/api/2024-01"
+        self.base_url = f"https://{self.shop_name}.myshopify.com/admin/api/2024-01" if self.shop_name else ""
         self.session = requests.Session()
         self.session.auth = (self.api_key, self.api_secret or '')
 
@@ -82,6 +96,8 @@ class ShopifyService:
         self._rate_limit_used = 0
         self._rate_limit_bucket = 40  # Default Shopify bucket size
         self._last_rate_limit_check = datetime.now()
+        
+        self._initialized = True
 
     def is_configured(self) -> bool:
         """Check if service is properly configured."""

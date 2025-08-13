@@ -62,12 +62,11 @@ def init_swagger(app):
     return swagger
 
 
-@docs_bp.route("/docs")
+@docs_bp.route("/api-documentation")  
 def docs_redirect():
     """
     Redirect to Swagger UI documentation.
-    This is handled by Flasgger automatically, but we keep this
-    for explicit routing and potential customization.
+    This provides an alternative endpoint since /docs is handled by Flasgger.
     """
-    # This will be handled by Flasgger's automatic routing
-    pass
+    from flask import redirect
+    return redirect("/docs", code=307)
