@@ -686,7 +686,7 @@
   {
     "timestamp": "2025-08-14T00:05:28.408746",
     "confidence_score": 62.0,
-    "sentiment_score": -5.551115123125783e-17,
+    "sentiment_score": 0.0,
     "volatility": 0.5,
     "hour_of_day": 0,
     "day_of_week": 3,
