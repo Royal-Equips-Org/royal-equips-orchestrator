@@ -283,7 +283,7 @@ class TestPredictiveForecaster:
         # Add data that should trigger alerts
         for i in range(10):
             self.forecaster.record_observation(
-                confidence_score=80.0 - (i * 3),  # Declining confidence
+                confidence_score=80.0 - (i * self.CONFIDENCE_DECLINE_RATE),  # Declining confidence
                 sentiment_score=0.3 - (i * 0.05),  # Declining sentiment
                 volatility=0.2 + (i * 0.05),  # Increasing volatility
                 market_context={'declining_scenario': True}
