@@ -453,7 +453,8 @@
                 current_price: parseFloat(testPrice),
                 competitor_prices: {
                     'amazon': parseFloat(testPrice) * 0.9,
-                    'ebay': parseFloat(testPrice) * 0.95
+                    'amazon': parseFloat(testPrice) * AMAZON_MULTIPLIER,
+                    'ebay': parseFloat(testPrice) * EBAY_MULTIPLIER
                 }
             };
 
