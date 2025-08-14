@@ -100,7 +100,8 @@ class TestMLRuleOptimizer:
                 conversion_rate_change=0.01,
                 customer_satisfaction_score=75.0 + (i % 20),
                 market_response_time=250.0 + (i * 2),
-                success_score=60.0 + (i % 30) + (5 if i % 7 == 0 else 0)
+                # success_score cycles every 30, with a bonus every 7th data point
+                success_score=60.0 + (i % SUCCESS_SCORE_CYCLE) + (SUCCESS_SCORE_BONUS if i % SUCCESS_SCORE_BONUS_INTERVAL == 0 else 0)
             )
             self.optimizer.record_performance(performance)
         
