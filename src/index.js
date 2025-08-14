@@ -1331,6 +1331,361 @@ function serveHolographicFallback(c) {
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
         }
         
+        /* === DATA ANALYTICS DASHBOARD STYLES === */
+        .analytics-dashboard {
+            padding: 2rem;
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .analytics-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .analytics-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent,
+                rgba(75, 195, 255, 0.05),
+                transparent);
+            animation: shimmer 5s infinite;
+        }
+        
+        .analytics-panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-electric);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Customer Segmentation Rings */
+        .segment-rings {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .segment-ring {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: ringPulse 3s ease-in-out infinite;
+        }
+        
+        .segment-ring.premium {
+            border-color: var(--primary-magenta);
+            background: radial-gradient(circle, rgba(233, 30, 99, 0.2), transparent);
+        }
+        
+        .segment-ring.standard {
+            border-color: var(--primary-electric);
+            background: radial-gradient(circle, rgba(75, 195, 255, 0.2), transparent);
+        }
+        
+        .segment-ring.basic {
+            border-color: var(--primary-neon-green);
+            background: radial-gradient(circle, rgba(45, 255, 136, 0.2), transparent);
+        }
+        
+        @keyframes ringPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .ring-center {
+            text-align: center;
+        }
+        
+        .segment-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .segment-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Data Flow Streams */
+        .data-streams {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .stream-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: rgba(0, 229, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 229, 255, 0.15);
+        }
+        
+        .stream-source {
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 120px;
+        }
+        
+        .stream-flow {
+            flex: 1;
+            height: 4px;
+            background: rgba(0, 229, 255, 0.2);
+            border-radius: 2px;
+            position: relative;
+            margin: 0 1rem;
+            overflow: hidden;
+        }
+        
+        .flow-line {
+            width: 100%;
+            height: 100%;
+            background: var(--primary-electric);
+            border-radius: 2px;
+        }
+        
+        .flow-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 100%;
+            background: var(--primary-neon-green);
+            border-radius: 2px;
+            animation: flowAnimation 2s linear infinite;
+        }
+        
+        @keyframes flowAnimation {
+            0% { left: -20px; }
+            100% { left: 100%; }
+        }
+        
+        .stream-rate {
+            font-weight: 600;
+            color: var(--primary-electric);
+            min-width: 80px;
+            text-align: right;
+        }
+        
+        /* Prediction Metrics */
+        .prediction-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .prediction-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(156, 39, 176, 0.08);
+            border: 1px solid rgba(156, 39, 176, 0.2);
+            border-radius: 10px;
+        }
+        
+        .prediction-icon {
+            font-size: 1.5rem;
+            margin-top: 0.2rem;
+        }
+        
+        .prediction-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+        
+        .prediction-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-neon-green);
+            margin-bottom: 0.3rem;
+        }
+        
+        .confidence-level {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Behavior Heatmap */
+        .behavior-heatmap {
+            text-align: center;
+        }
+        
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .heatmap-cell {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            animation: heatmapPulse 2s ease-in-out infinite;
+        }
+        
+        .heatmap-cell.high {
+            background: var(--primary-magenta);
+            box-shadow: 0 0 15px rgba(233, 30, 99, 0.5);
+        }
+        
+        .heatmap-cell.medium {
+            background: var(--primary-neon-orange);
+            box-shadow: 0 0 10px rgba(255, 107, 53, 0.4);
+        }
+        
+        .heatmap-cell.low {
+            background: var(--primary-neon-green);
+            box-shadow: 0 0 8px rgba(45, 255, 136, 0.3);
+        }
+        
+        @keyframes heatmapPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        
+        .heatmap-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* ML Model Performance */
+        .ml-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .ml-model {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(45, 255, 136, 0.05);
+            border: 1px solid rgba(45, 255, 136, 0.15);
+            border-radius: 10px;
+        }
+        
+        .model-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 150px;
+        }
+        
+        .model-accuracy {
+            flex: 1;
+            height: 20px;
+            background: rgba(45, 255, 136, 0.1);
+            border-radius: 10px;
+            margin-left: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .accuracy-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-neon-green), var(--primary-electric));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        
+        .accuracy-value {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        /* Data Quality Indicators */
+        .quality-indicators {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .quality-metric {
+            text-align: center;
+        }
+        
+        .quality-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            position: relative;
+            animation: qualityPulse 2s ease-in-out infinite;
+        }
+        
+        .quality-circle.excellent {
+            border-color: var(--security-safe);
+            background: radial-gradient(circle, rgba(45, 255, 136, 0.2), transparent);
+        }
+        
+        .quality-circle.good {
+            border-color: var(--security-warning);
+            background: radial-gradient(circle, rgba(255, 193, 7, 0.2), transparent);
+        }
+        
+        @keyframes qualityPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(45, 255, 136, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(45, 255, 136, 0.5); }
+        }
+        
+        .quality-percentage {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .quality-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
         /* === AGENTS PAGE === */
         .agents-workspace {
             display: grid;
