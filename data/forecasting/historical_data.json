@@ -1,0 +1,362 @@
+[
+  {
+    "timestamp": "2025-08-14T00:02:44.016009",
+    "confidence_score": 80.0,
+    "sentiment_score": 0.1,
+    "volatility": 0.3,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.016211",
+    "confidence_score": 80.5,
+    "sentiment_score": 0.11,
+    "volatility": 0.305,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.016444",
+    "confidence_score": 76.0,
+    "sentiment_score": 0.12000000000000001,
+    "volatility": 0.31,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.016756",
+    "confidence_score": 76.5,
+    "sentiment_score": 0.13,
+    "volatility": 0.315,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.017049",
+    "confidence_score": 77.0,
+    "sentiment_score": 0.14,
+    "volatility": 0.32,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.017338",
+    "confidence_score": 77.5,
+    "sentiment_score": 0.15000000000000002,
+    "volatility": 0.325,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.017615",
+    "confidence_score": 78.0,
+    "sentiment_score": 0.16,
+    "volatility": 0.32999999999999996,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.017904",
+    "confidence_score": 83.5,
+    "sentiment_score": 0.17,
+    "volatility": 0.33499999999999996,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.018180",
+    "confidence_score": 84.0,
+    "sentiment_score": 0.18,
+    "volatility": 0.33999999999999997,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.018480",
+    "confidence_score": 79.5,
+    "sentiment_score": -0.10999999999999999,
+    "volatility": 0.345,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.018773",
+    "confidence_score": 80.0,
+    "sentiment_score": 0.2,
+    "volatility": 0.35,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.019180",
+    "confidence_score": 80.5,
+    "sentiment_score": 0.21000000000000002,
+    "volatility": 0.355,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.019488",
+    "confidence_score": 81.0,
+    "sentiment_score": 0.22,
+    "volatility": 0.36,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.019805",
+    "confidence_score": 81.5,
+    "sentiment_score": 0.23,
+    "volatility": 0.365,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.020155",
+    "confidence_score": 87.0,
+    "sentiment_score": 0.24000000000000002,
+    "volatility": 0.5700000000000001,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.020486",
+    "confidence_score": 87.5,
+    "sentiment_score": 0.25,
+    "volatility": 0.375,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.020848",
+    "confidence_score": 83.0,
+    "sentiment_score": 0.26,
+    "volatility": 0.38,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.021244",
+    "confidence_score": 83.5,
+    "sentiment_score": 0.27,
+    "volatility": 0.385,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.024592",
+    "confidence_score": 84.0,
+    "sentiment_score": 0.28,
+    "volatility": 0.39,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.025023",
+    "confidence_score": 84.5,
+    "sentiment_score": -0.009999999999999953,
+    "volatility": 0.395,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.025450",
+    "confidence_score": 85.0,
+    "sentiment_score": 0.30000000000000004,
+    "volatility": 0.4,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.025875",
+    "confidence_score": 90.5,
+    "sentiment_score": 0.31,
+    "volatility": 0.40499999999999997,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.026423",
+    "confidence_score": 91.0,
+    "sentiment_score": 0.32,
+    "volatility": 0.41,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.027000",
+    "confidence_score": 86.5,
+    "sentiment_score": 0.33,
+    "volatility": 0.415,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.027442",
+    "confidence_score": 87.0,
+    "sentiment_score": 0.33999999999999997,
+    "volatility": 0.42,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.027887",
+    "confidence_score": 87.5,
+    "sentiment_score": 0.35,
+    "volatility": 0.425,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.028345",
+    "confidence_score": 88.0,
+    "sentiment_score": 0.36,
+    "volatility": 0.43,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.028798",
+    "confidence_score": 88.5,
+    "sentiment_score": 0.37,
+    "volatility": 0.435,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.029276",
+    "confidence_score": 94.0,
+    "sentiment_score": 0.38,
+    "volatility": 0.44,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:02:44.029743",
+    "confidence_score": 94.5,
+    "sentiment_score": 0.09000000000000002,
+    "volatility": 0.645,
+    "hour_of_day": 0,
+    "day_of_week": 3,
+    "month": 8,
+    "market_context": {
+      "simulated": true
+    }
+  }
+]

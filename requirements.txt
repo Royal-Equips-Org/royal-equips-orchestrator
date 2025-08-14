@@ -12,6 +12,19 @@ python-dotenv>=1.0
 # AI Assistant support
 openai>=1.0
 
+# Machine Learning and Data Science
+scikit-learn>=1.3.0
+pandas>=2.0.0
+numpy>=1.24.0
+joblib>=1.3.0
+
+# Sentiment Analysis and NLP
+textblob>=0.17.1
+vaderSentiment>=3.3.2
+
+# Time Series Forecasting
+prophet>=1.1.4
+
 # System metrics and health
 psutil>=5.9
 
