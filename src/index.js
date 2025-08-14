@@ -1047,6 +1047,290 @@ function serveHolographicFallback(c) {
             transform: scale(1.05);
         }
         
+        /* === OPERATIONS CENTER STYLES === */
+        .operations-dashboard {
+            padding: 2rem;
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        .ops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .ops-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ops-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent,
+                rgba(0, 229, 255, 0.05),
+                transparent);
+            animation: shimmer 4s infinite;
+        }
+        
+        .ops-panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-electric);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* System Performance Metrics */
+        .metric-display {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            min-width: 100px;
+        }
+        
+        .metric-value-bar {
+            flex: 1;
+            height: 25px;
+            background: rgba(0, 229, 255, 0.1);
+            border-radius: 12px;
+            margin: 0 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        
+        .cpu-bar {
+            background: linear-gradient(90deg, var(--primary-electric), var(--primary-cyan));
+        }
+        
+        .memory-bar {
+            background: linear-gradient(90deg, var(--primary-neon-orange), var(--primary-magenta));
+        }
+        
+        .disk-bar {
+            background: linear-gradient(90deg, var(--primary-neon-green), var(--primary-electric));
+        }
+        
+        .metric-percentage {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        /* Network Status */
+        .network-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        
+        .network-metric {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem;
+            background: rgba(75, 195, 255, 0.1);
+            border: 1px solid rgba(75, 195, 255, 0.2);
+            border-radius: 10px;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .network-icon {
+            font-size: 1.5rem;
+        }
+        
+        .network-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-electric);
+        }
+        
+        .network-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Process List */
+        .process-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .process-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            background: rgba(45, 255, 136, 0.05);
+            border: 1px solid rgba(45, 255, 136, 0.15);
+            border-radius: 8px;
+        }
+        
+        .process-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .process-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .process-status.running {
+            background: rgba(45, 255, 136, 0.2);
+            color: var(--security-safe);
+            border: 1px solid var(--security-safe);
+        }
+        
+        .process-status.paused {
+            background: rgba(255, 193, 7, 0.2);
+            color: var(--security-warning);
+            border: 1px solid var(--security-warning);
+        }
+        
+        /* Alert List */
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+        }
+        
+        .alert-success {
+            background: rgba(45, 255, 136, 0.1);
+            border: 1px solid rgba(45, 255, 136, 0.3);
+        }
+        
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        
+        .alert-info {
+            background: rgba(75, 195, 255, 0.1);
+            border: 1px solid rgba(75, 195, 255, 0.3);
+        }
+        
+        .alert-icon {
+            font-size: 1.2rem;
+            margin-top: 0.2rem;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+        
+        .alert-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Chart Panel */
+        .chart-container {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 229, 255, 0.05);
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .performance-chart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Control Panel */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .control-btn {
+            padding: 0.8rem 1rem;
+            background: var(--glass-bg-light);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .control-btn:hover {
+            background: var(--glass-bg);
+            box-shadow: 0 0 15px var(--glow-cyan);
+            transform: translateY(-2px);
+        }
+        
+        .restart-btn:hover {
+            box-shadow: 0 0 15px var(--glow-electric);
+        }
+        
+        .backup-btn:hover {
+            box-shadow: 0 0 15px var(--glow-neon);
+        }
+        
+        .optimize-btn:hover {
+            box-shadow: 0 0 15px var(--glow-magenta);
+        }
+        
+        .maintenance-btn:hover {
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+        }
+        
         /* === AGENTS PAGE === */
         .agents-workspace {
             display: grid;
@@ -1453,43 +1737,302 @@ function serveHolographicFallback(c) {
             <!-- Operations Page -->
             <div class="page" id="operations" role="tabpanel" aria-labelledby="operations-title">
                 <h2 id="operations-title" class="page-title">OPERATIONS CENTER</h2>
-                <div class="placeholder-grid">
-                    <div class="placeholder-card">
-                        <div class="placeholder-icon">⚡</div>
-                        <h3 class="placeholder-title">Job Queue</h3>
-                        <p class="placeholder-desc">Monitor and manage background jobs and tasks</p>
-                    </div>
-                    <div class="placeholder-card">
-                        <div class="placeholder-icon">📊</div>
-                        <h3 class="placeholder-title">Performance Metrics</h3>
-                        <p class="placeholder-desc">Real-time system performance and analytics</p>
-                    </div>
-                    <div class="placeholder-card">
-                        <div class="placeholder-icon">🚨</div>
-                        <h3 class="placeholder-title">Alerts & Monitoring</h3>
-                        <p class="placeholder-desc">System health alerts and incident management</p>
+                <div class="operations-dashboard">
+                    <div class="ops-grid">
+                        <!-- Real-time System Metrics -->
+                        <div class="ops-panel cpu-panel">
+                            <h3 class="ops-panel-title">⚡ System Performance</h3>
+                            <div class="metric-display">
+                                <div class="metric-item">
+                                    <div class="metric-label">CPU Usage</div>
+                                    <div class="metric-value-bar">
+                                        <div class="progress-bar cpu-bar" style="width: 67%"></div>
+                                        <span class="metric-percentage">67%</span>
+                                    </div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Memory Usage</div>
+                                    <div class="metric-value-bar">
+                                        <div class="progress-bar memory-bar" style="width: 84%"></div>
+                                        <span class="metric-percentage">84%</span>
+                                    </div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Disk I/O</div>
+                                    <div class="metric-value-bar">
+                                        <div class="progress-bar disk-bar" style="width: 23%"></div>
+                                        <span class="metric-percentage">23%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Network Monitoring -->
+                        <div class="ops-panel network-panel">
+                            <h3 class="ops-panel-title">📡 Network Status</h3>
+                            <div class="network-stats">
+                                <div class="network-metric">
+                                    <div class="network-icon">↗️</div>
+                                    <div class="network-details">
+                                        <div class="network-value">2.4 GB/s</div>
+                                        <div class="network-label">Upload</div>
+                                    </div>
+                                </div>
+                                <div class="network-metric">
+                                    <div class="network-icon">↙️</div>
+                                    <div class="network-details">
+                                        <div class="network-value">1.8 GB/s</div>
+                                        <div class="network-label">Download</div>
+                                    </div>
+                                </div>
+                                <div class="network-metric">
+                                    <div class="network-icon">🌐</div>
+                                    <div class="network-details">
+                                        <div class="network-value">99.9%</div>
+                                        <div class="network-label">Uptime</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Active Processes -->
+                        <div class="ops-panel processes-panel">
+                            <h3 class="ops-panel-title">🔄 Active Processes</h3>
+                            <div class="process-list">
+                                <div class="process-item">
+                                    <div class="process-name">ML Analytics Engine</div>
+                                    <div class="process-status running">RUNNING</div>
+                                </div>
+                                <div class="process-item">
+                                    <div class="process-name">Data Sync Service</div>
+                                    <div class="process-status running">RUNNING</div>
+                                </div>
+                                <div class="process-item">
+                                    <div class="process-name">Security Monitor</div>
+                                    <div class="process-status running">RUNNING</div>
+                                </div>
+                                <div class="process-item">
+                                    <div class="process-name">Backup Service</div>
+                                    <div class="process-status paused">PAUSED</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Security Alerts -->
+                        <div class="ops-panel alerts-panel">
+                            <h3 class="ops-panel-title">🚨 Security Alerts</h3>
+                            <div class="alert-list">
+                                <div class="alert-item alert-success">
+                                    <div class="alert-icon">✅</div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">Firewall Status</div>
+                                        <div class="alert-desc">All systems secure</div>
+                                    </div>
+                                </div>
+                                <div class="alert-item alert-warning">
+                                    <div class="alert-icon">⚠️</div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">High CPU Usage</div>
+                                        <div class="alert-desc">Above 65% threshold</div>
+                                    </div>
+                                </div>
+                                <div class="alert-item alert-info">
+                                    <div class="alert-icon">ℹ️</div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">System Update</div>
+                                        <div class="alert-desc">Available v2.1.4</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Live Analytics Chart -->
+                        <div class="ops-panel chart-panel">
+                            <h3 class="ops-panel-title">📈 Performance Trends</h3>
+                            <div class="chart-container">
+                                <canvas id="performanceChart" class="performance-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- System Control -->
+                        <div class="ops-panel control-panel">
+                            <h3 class="ops-panel-title">⚙️ System Control</h3>
+                            <div class="control-buttons">
+                                <button class="control-btn restart-btn">🔄 Restart Services</button>
+                                <button class="control-btn backup-btn">💾 Create Backup</button>
+                                <button class="control-btn optimize-btn">⚡ Optimize Performance</button>
+                                <button class="control-btn maintenance-btn">🔧 Maintenance Mode</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Data Page -->
+            <!-- Data Analytics Page -->
             <div class="page" id="data" role="tabpanel" aria-labelledby="data-title">
-                <h2 id="data-title" class="page-title">DATA MANAGEMENT</h2>
-                <div class="placeholder-grid">
-                    <div class="placeholder-card">
-                        <div class="placeholder-icon">💾</div>
-                        <h3 class="placeholder-title">Database Status</h3>
-                        <p class="placeholder-desc">Monitor database health and connections</p>
-                    </div>
-                    <div class="placeholder-card">
-                        <div class="placeholder-icon">🔄</div>
-                        <h3 class="placeholder-title">Data Sync</h3>
-                        <p class="placeholder-desc">Synchronization status across systems</p>
-                    </div>
-                    <div class="placeholder-card">
-                        <div class="placeholder-icon">📈</div>
-                        <h3 class="placeholder-title">Analytics</h3>
-                        <p class="placeholder-desc">Business intelligence and reporting</p>
+                <h2 id="data-title" class="page-title">DATA ANALYTICS & INTELLIGENCE</h2>
+                <div class="analytics-dashboard">
+                    <div class="analytics-grid">
+                        <!-- Customer Segmentation -->
+                        <div class="analytics-panel customer-panel">
+                            <h3 class="analytics-panel-title">👥 Customer Segmentation</h3>
+                            <div class="segment-rings">
+                                <div class="segment-ring premium">
+                                    <div class="ring-center">
+                                        <div class="segment-value">23%</div>
+                                        <div class="segment-label">Premium</div>
+                                    </div>
+                                </div>
+                                <div class="segment-ring standard">
+                                    <div class="ring-center">
+                                        <div class="segment-value">45%</div>
+                                        <div class="segment-label">Standard</div>
+                                    </div>
+                                </div>
+                                <div class="segment-ring basic">
+                                    <div class="ring-center">
+                                        <div class="segment-value">32%</div>
+                                        <div class="segment-label">Basic</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Real-time Data Flow -->
+                        <div class="analytics-panel dataflow-panel">
+                            <h3 class="analytics-panel-title">🔄 Data Flow Monitor</h3>
+                            <div class="data-streams">
+                                <div class="stream-item">
+                                    <div class="stream-source">API Gateway</div>
+                                    <div class="stream-flow">
+                                        <div class="flow-line"></div>
+                                        <div class="flow-particles"></div>
+                                    </div>
+                                    <div class="stream-rate">2.4K/sec</div>
+                                </div>
+                                <div class="stream-item">
+                                    <div class="stream-source">Database</div>
+                                    <div class="stream-flow">
+                                        <div class="flow-line"></div>
+                                        <div class="flow-particles"></div>
+                                    </div>
+                                    <div class="stream-rate">1.8K/sec</div>
+                                </div>
+                                <div class="stream-item">
+                                    <div class="stream-source">ML Engine</div>
+                                    <div class="stream-flow">
+                                        <div class="flow-line"></div>
+                                        <div class="flow-particles"></div>
+                                    </div>
+                                    <div class="stream-rate">856/sec</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Predictive Analytics -->
+                        <div class="analytics-panel prediction-panel">
+                            <h3 class="analytics-panel-title">🔮 Predictive Analytics</h3>
+                            <div class="prediction-metrics">
+                                <div class="prediction-item">
+                                    <div class="prediction-icon">📈</div>
+                                    <div class="prediction-content">
+                                        <div class="prediction-title">Revenue Forecast</div>
+                                        <div class="prediction-value">+18.5% next quarter</div>
+                                        <div class="confidence-level">Confidence: 89%</div>
+                                    </div>
+                                </div>
+                                <div class="prediction-item">
+                                    <div class="prediction-icon">👥</div>
+                                    <div class="prediction-content">
+                                        <div class="prediction-title">Customer Growth</div>
+                                        <div class="prediction-value">+2.3K new customers</div>
+                                        <div class="confidence-level">Confidence: 76%</div>
+                                    </div>
+                                </div>
+                                <div class="prediction-item">
+                                    <div class="prediction-icon">🛒</div>
+                                    <div class="prediction-content">
+                                        <div class="prediction-title">Conversion Rate</div>
+                                        <div class="prediction-value">4.2% estimated</div>
+                                        <div class="confidence-level">Confidence: 92%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Behavioral Insights -->
+                        <div class="analytics-panel behavior-panel">
+                            <h3 class="analytics-panel-title">🧠 Behavioral Insights</h3>
+                            <div class="behavior-heatmap">
+                                <div class="heatmap-grid">
+                                    <div class="heatmap-cell high"></div>
+                                    <div class="heatmap-cell medium"></div>
+                                    <div class="heatmap-cell high"></div>
+                                    <div class="heatmap-cell low"></div>
+                                    <div class="heatmap-cell medium"></div>
+                                    <div class="heatmap-cell high"></div>
+                                    <div class="heatmap-cell high"></div>
+                                    <div class="heatmap-cell medium"></div>
+                                    <div class="heatmap-cell low"></div>
+                                </div>
+                                <div class="heatmap-labels">
+                                    <div class="heatmap-label">User Engagement Heat Map</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ML Model Performance -->
+                        <div class="analytics-panel ml-panel">
+                            <h3 class="analytics-panel-title">🤖 ML Model Performance</h3>
+                            <div class="ml-metrics">
+                                <div class="ml-model">
+                                    <div class="model-name">Recommendation Engine</div>
+                                    <div class="model-accuracy">
+                                        <div class="accuracy-bar" style="width: 94%"></div>
+                                        <span class="accuracy-value">94.2%</span>
+                                    </div>
+                                </div>
+                                <div class="ml-model">
+                                    <div class="model-name">Fraud Detection</div>
+                                    <div class="model-accuracy">
+                                        <div class="accuracy-bar" style="width: 98%"></div>
+                                        <span class="accuracy-value">98.7%</span>
+                                    </div>
+                                </div>
+                                <div class="ml-model">
+                                    <div class="model-name">Price Optimization</div>
+                                    <div class="model-accuracy">
+                                        <div class="accuracy-bar" style="width: 87%"></div>
+                                        <span class="accuracy-value">87.3%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Data Quality Monitor -->
+                        <div class="analytics-panel quality-panel">
+                            <h3 class="analytics-panel-title">✅ Data Quality</h3>
+                            <div class="quality-indicators">
+                                <div class="quality-metric">
+                                    <div class="quality-circle excellent">
+                                        <div class="quality-percentage">99.2%</div>
+                                    </div>
+                                    <div class="quality-label">Completeness</div>
+                                </div>
+                                <div class="quality-metric">
+                                    <div class="quality-circle good">
+                                        <div class="quality-percentage">87.4%</div>
+                                    </div>
+                                    <div class="quality-label">Accuracy</div>
+                                </div>
+                                <div class="quality-metric">
+                                    <div class="quality-circle excellent">
+                                        <div class="quality-percentage">95.8%</div>
+                                    </div>
+                                    <div class="quality-label">Consistency</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
