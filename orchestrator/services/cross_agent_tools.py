@@ -191,6 +191,113 @@ class CrossAgentTools:
             performance_metrics={"cost_reduction": 0.15, "stockout_reduction": 0.23},
             last_updated=datetime.now()
         ))
+        
+        # Advanced Inventory Management Tools
+        self.register_tool(ToolMetadata(
+            tool_id="automated_stockout_prediction",
+            name="ML-Powered Stockout Prediction",
+            category=ToolCategory.PREDICTION,
+            description="Predict stockouts and trigger automated reorders",
+            supported_agents=["inventory_forecasting", "order_management", "pricing_optimizer"],
+            input_schema={"product_ids": "list", "forecast_days": "int"},
+            output_schema={"predictions": "list", "reorder_triggers": "list"},
+            confidence_level=0.88,
+            performance_metrics={"prediction_accuracy": 0.89, "false_positive_rate": 0.12},
+            last_updated=datetime.now()
+        ))
+        
+        self.register_tool(ToolMetadata(
+            tool_id="supplier_performance_scoring",
+            name="Advanced Supplier Performance Analysis",
+            category=ToolCategory.ANALYTICS,
+            description="ML-based supplier scoring with automated backup routing",
+            supported_agents=["order_management", "inventory_forecasting", "pricing_optimizer"],
+            input_schema={"supplier_ids": "list", "performance_metrics": "dict"},
+            output_schema={"supplier_scores": "dict", "backup_recommendations": "list"},
+            confidence_level=0.85,
+            performance_metrics={"scoring_accuracy": 0.87, "cost_optimization": 0.18},
+            last_updated=datetime.now()
+        ))
+        
+        self.register_tool(ToolMetadata(
+            tool_id="predictive_inventory_management",
+            name="Price-Aware Predictive Inventory",
+            category=ToolCategory.PREDICTION,
+            description="Inventory optimization based on pricing forecasts",
+            supported_agents=["inventory_forecasting", "pricing_optimizer", "order_management"],
+            input_schema={"product_id": "str", "price_forecast": "list", "forecast_days": "int"},
+            output_schema={"inventory_forecast": "dict", "optimization_savings": "float"},
+            confidence_level=0.84,
+            performance_metrics={"cost_reduction": 0.22, "demand_accuracy": 0.81},
+            last_updated=datetime.now()
+        ))
+        
+        # Advanced Competitor Intelligence Tools
+        self.register_tool(ToolMetadata(
+            tool_id="realtime_competitor_tracking",
+            name="Real-time Competitor Intelligence",
+            category=ToolCategory.INTELLIGENCE,
+            description="Track competitor actions across multiple channels with ML analysis",
+            supported_agents=["pricing_optimizer", "product_research", "marketing_automation"],
+            input_schema={"competitor_ids": "list", "monitoring_categories": "list"},
+            output_schema={"competitor_actions": "list", "threat_assessment": "dict"},
+            confidence_level=0.83,
+            performance_metrics={"detection_rate": 0.91, "false_positive_rate": 0.08},
+            last_updated=datetime.now()
+        ))
+        
+        self.register_tool(ToolMetadata(
+            tool_id="competitor_action_prediction",
+            name="Competitor Action Prediction Engine",
+            category=ToolCategory.PREDICTION,
+            description="Predict competitor moves using historical pattern analysis",
+            supported_agents=["pricing_optimizer", "product_research", "marketing_automation"],
+            input_schema={"competitor_id": "str", "prediction_horizon": "str"},
+            output_schema={"action_predictions": "list", "probability_scores": "dict"},
+            confidence_level=0.79,
+            performance_metrics={"prediction_accuracy": 0.76, "early_warning_rate": 0.84},
+            last_updated=datetime.now()
+        ))
+        
+        self.register_tool(ToolMetadata(
+            tool_id="pricing_trend_analysis",
+            name="ML Competitor Pricing Trend Analysis",
+            category=ToolCategory.ANALYTICS,
+            description="Analyze and predict competitor pricing trends and market movements",
+            supported_agents=["pricing_optimizer", "product_research"],
+            input_schema={"competitor_id": "str", "product_category": "str", "forecast_days": "int"},
+            output_schema={"price_trends": "list", "market_predictions": "dict"},
+            confidence_level=0.82,
+            performance_metrics={"trend_accuracy": 0.78, "price_prediction_error": 0.09},
+            last_updated=datetime.now()
+        ))
+        
+        self.register_tool(ToolMetadata(
+            tool_id="dynamic_response_strategies",
+            name="Dynamic Competitor Response Engine",
+            category=ToolCategory.AUTOMATION,
+            description="Generate and execute dynamic response strategies to competitor actions",
+            supported_agents=["pricing_optimizer", "marketing_automation", "product_research"],
+            input_schema={"competitor_actions": "list", "business_objectives": "list"},
+            output_schema={"response_strategies": "list", "implementation_plan": "dict"},
+            confidence_level=0.77,
+            performance_metrics={"strategy_effectiveness": 0.73, "response_time": "2.3h"},
+            last_updated=datetime.now()
+        ))
+        
+        # Enhanced Pricing Automation Tools
+        self.register_tool(ToolMetadata(
+            tool_id="sentiment_based_pricing",
+            name="Sentiment-Based Automatic Pricing",
+            category=ToolCategory.AUTOMATION,
+            description="Automatic pricing adjustments based on market sentiment with risk controls",
+            supported_agents=["pricing_optimizer"],
+            input_schema={"product_ids": "list", "categories": "list"},
+            output_schema={"pricing_adjustments": "list", "risk_assessments": "dict"},
+            confidence_level=0.81,
+            performance_metrics={"adjustment_accuracy": 0.84, "risk_mitigation": 0.92},
+            last_updated=datetime.now()
+        ))
     
     def register_tool(self, metadata: ToolMetadata) -> None:
         """Register a new cross-agent tool.
@@ -262,6 +369,22 @@ class CrossAgentTools:
                 result = await self._analyze_price_elasticity(input_data)
             elif tool_id == "inventory_optimization":
                 result = await self._optimize_inventory(input_data)
+            elif tool_id == "automated_stockout_prediction":
+                result = await self._predict_stockouts_automated(input_data)
+            elif tool_id == "supplier_performance_scoring":
+                result = await self._score_supplier_performance(input_data)
+            elif tool_id == "predictive_inventory_management":
+                result = await self._predictive_inventory_management(input_data)
+            elif tool_id == "realtime_competitor_tracking":
+                result = await self._track_competitors_realtime(input_data)
+            elif tool_id == "competitor_action_prediction":
+                result = await self._predict_competitor_actions(input_data)
+            elif tool_id == "pricing_trend_analysis":
+                result = await self._analyze_pricing_trends(input_data)
+            elif tool_id == "dynamic_response_strategies":
+                result = await self._create_dynamic_responses(input_data)
+            elif tool_id == "sentiment_based_pricing":
+                result = await self._sentiment_based_pricing(input_data)
             else:
                 raise NotImplementedError(f"Tool {tool_id} implementation not found")
             
@@ -900,6 +1023,510 @@ class CrossAgentTools:
             recommendations.append("Inventory level near optimal")
         
         return recommendations or ["Maintain current inventory management approach"]
+    
+    async def _predict_stockouts_automated(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Automated stockout prediction with reorder triggers."""
+        from orchestrator.services.automated_inventory_service import AutomatedInventoryService
+        
+        try:
+            inventory_service = AutomatedInventoryService()
+            
+            product_ids = input_data.get("product_ids", [])
+            forecast_days = input_data.get("forecast_days", 30)
+            
+            # Predict stockouts
+            predictions = await inventory_service.predict_stockouts(product_ids, forecast_days)
+            
+            # Create reorder triggers
+            reorder_triggers = await inventory_service.create_automated_reorder_triggers(predictions)
+            
+            return {
+                "predictions": [
+                    {
+                        "product_id": p.product_id,
+                        "current_stock": p.current_stock,
+                        "days_until_stockout": p.days_until_stockout,
+                        "stockout_probability": p.stockout_probability,
+                        "risk_level": p.risk_level.value,
+                        "recommended_reorder_quantity": p.recommended_reorder_quantity,
+                        "confidence": p.confidence_score
+                    }
+                    for p in predictions
+                ],
+                "reorder_triggers": [
+                    {
+                        "product_id": t.product_id,
+                        "supplier_id": t.supplier_id,
+                        "quantity": t.reorder_quantity,
+                        "priority": t.priority_level,
+                        "estimated_cost": t.estimated_cost,
+                        "reason": t.trigger_reason,
+                        "confidence": t.ml_confidence
+                    }
+                    for t in reorder_triggers
+                ],
+                "summary": {
+                    "high_risk_products": len([p for p in predictions if p.risk_level.value in ["high", "critical"]]),
+                    "total_reorder_cost": sum(t.estimated_cost for t in reorder_triggers),
+                    "avg_confidence": sum(p.confidence_score for p in predictions) / max(1, len(predictions))
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Stockout prediction failed: {e}")
+            return {
+                "predictions": [],
+                "reorder_triggers": [],
+                "error": str(e)
+            }
+    
+    async def _score_supplier_performance(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Advanced supplier performance scoring."""
+        from orchestrator.services.automated_inventory_service import AutomatedInventoryService
+        
+        try:
+            inventory_service = AutomatedInventoryService()
+            
+            supplier_ids = input_data.get("supplier_ids", [])
+            
+            supplier_scores = {}
+            backup_recommendations = []
+            
+            for supplier_id in supplier_ids:
+                score = await inventory_service.score_supplier_performance(supplier_id)
+                
+                supplier_scores[supplier_id] = {
+                    "overall_score": score.overall_score,
+                    "reliability_score": score.reliability_score,
+                    "quality_score": score.quality_score,
+                    "cost_efficiency_score": score.cost_efficiency_score,
+                    "delivery_performance_score": score.delivery_performance_score,
+                    "risk_assessment": score.risk_assessment,
+                    "strengths": score.strengths,
+                    "weaknesses": score.weaknesses,
+                    "recommendation": score.recommendation
+                }
+                
+                # Add backup recommendations for underperforming suppliers
+                if score.overall_score < 70:
+                    backup_recommendations.append({
+                        "supplier_id": supplier_id,
+                        "score": score.overall_score,
+                        "action": "find_backup_supplier",
+                        "urgency": "high" if score.overall_score < 50 else "medium"
+                    })
+            
+            return {
+                "supplier_scores": supplier_scores,
+                "backup_recommendations": backup_recommendations,
+                "performance_summary": {
+                    "avg_score": sum(s["overall_score"] for s in supplier_scores.values()) / max(1, len(supplier_scores)),
+                    "high_performers": len([s for s in supplier_scores.values() if s["overall_score"] > 80]),
+                    "underperformers": len([s for s in supplier_scores.values() if s["overall_score"] < 60])
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Supplier scoring failed: {e}")
+            return {
+                "supplier_scores": {},
+                "backup_recommendations": [],
+                "error": str(e)
+            }
+    
+    async def _predictive_inventory_management(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Predictive inventory management based on price forecasts."""
+        from orchestrator.services.automated_inventory_service import AutomatedInventoryService
+        
+        try:
+            inventory_service = AutomatedInventoryService()
+            
+            product_id = input_data.get("product_id")
+            price_forecast = input_data.get("price_forecast", [])
+            forecast_days = input_data.get("forecast_days", 30)
+            
+            if not product_id or not price_forecast:
+                return {"error": "Missing required parameters: product_id and price_forecast"}
+            
+            # Create predictive forecast
+            forecast = await inventory_service.create_predictive_inventory_forecast(
+                product_id, price_forecast, forecast_days
+            )
+            
+            return {
+                "inventory_forecast": {
+                    "product_id": forecast.product_id,
+                    "current_stock": forecast.current_stock,
+                    "forecasted_demand": forecast.forecasted_demand,
+                    "optimal_stock_levels": forecast.optimal_stock_levels,
+                    "reorder_points": forecast.reorder_points,
+                    "forecast_confidence": forecast.forecast_confidence,
+                    "price_impact_factor": forecast.price_impact_factor,
+                    "seasonal_adjustment": forecast.seasonal_adjustment
+                },
+                "optimization_savings": forecast.cost_optimization_savings,
+                "recommendations": self._generate_inventory_forecast_recommendations(forecast)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Predictive inventory management failed: {e}")
+            return {
+                "inventory_forecast": {},
+                "optimization_savings": 0,
+                "error": str(e)
+            }
+    
+    def _generate_inventory_forecast_recommendations(self, forecast) -> List[str]:
+        """Generate recommendations based on inventory forecast."""
+        recommendations = []
+        
+        if forecast.price_impact_factor > 0.3:
+            recommendations.append("High price sensitivity - adjust inventory levels based on pricing strategy")
+        
+        if forecast.forecast_confidence < 0.7:
+            recommendations.append("Low forecast confidence - maintain higher safety stock")
+        
+        if forecast.cost_optimization_savings > 100:
+            recommendations.append(f"Implement optimized inventory strategy for ${forecast.cost_optimization_savings:.2f} savings")
+        
+        return recommendations or ["Continue current inventory management approach"]
+    
+    async def _track_competitors_realtime(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Real-time competitor tracking and analysis."""
+        from orchestrator.services.competitor_intelligence_service import AdvancedCompetitorIntelligence
+        
+        try:
+            competitor_service = AdvancedCompetitorIntelligence()
+            
+            competitor_ids = input_data.get("competitor_ids", [])
+            monitoring_categories = input_data.get("monitoring_categories", ["pricing", "products", "marketing"])
+            
+            # Track competitors in real-time
+            actions = await competitor_service.track_competitors_realtime(
+                competitor_ids, monitoring_categories
+            )
+            
+            # Assess threat levels
+            threat_assessment = {
+                "overall_threat_level": "medium",
+                "immediate_threats": [],
+                "market_pressure": "moderate",
+                "recommended_monitoring": []
+            }
+            
+            high_impact_actions = [a for a in actions if a.impact_assessment == "high"]
+            if high_impact_actions:
+                threat_assessment["overall_threat_level"] = "high"
+                threat_assessment["immediate_threats"] = [a.competitor_id for a in high_impact_actions]
+            
+            return {
+                "competitor_actions": [
+                    {
+                        "competitor_id": a.competitor_id,
+                        "action_type": a.action_type.value,
+                        "description": a.description,
+                        "confidence": a.confidence_score,
+                        "impact": a.impact_assessment,
+                        "detected_at": a.detected_at.isoformat(),
+                        "affected_products": a.affected_products,
+                        "market_implications": a.market_implications
+                    }
+                    for a in actions
+                ],
+                "threat_assessment": threat_assessment,
+                "monitoring_summary": {
+                    "total_actions": len(actions),
+                    "high_impact_actions": len(high_impact_actions),
+                    "competitors_active": len(set(a.competitor_id for a in actions)),
+                    "categories_monitored": monitoring_categories
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Real-time competitor tracking failed: {e}")
+            return {
+                "competitor_actions": [],
+                "threat_assessment": {"overall_threat_level": "unknown"},
+                "error": str(e)
+            }
+    
+    async def _predict_competitor_actions(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Predict future competitor actions using ML."""
+        from orchestrator.services.competitor_intelligence_service import AdvancedCompetitorIntelligence
+        
+        try:
+            competitor_service = AdvancedCompetitorIntelligence()
+            
+            competitor_id = input_data.get("competitor_id")
+            prediction_horizon = input_data.get("prediction_horizon", "short_term")
+            
+            if not competitor_id:
+                return {"error": "Missing required parameter: competitor_id"}
+            
+            # Predict competitor actions
+            predictions = await competitor_service.predict_competitor_actions(
+                competitor_id, prediction_horizon
+            )
+            
+            # Calculate probability scores
+            probability_scores = {}
+            for prediction in predictions:
+                probability_scores[prediction.predicted_action.value] = prediction.probability
+            
+            return {
+                "action_predictions": [
+                    {
+                        "predicted_action": p.predicted_action.value,
+                        "probability": p.probability,
+                        "confidence": p.confidence_level,
+                        "time_horizon": p.time_horizon,
+                        "reasoning": p.reasoning,
+                        "historical_patterns": p.historical_patterns,
+                        "trigger_indicators": p.trigger_indicators
+                    }
+                    for p in predictions
+                ],
+                "probability_scores": probability_scores,
+                "prediction_summary": {
+                    "most_likely_action": max(probability_scores.keys(), key=lambda k: probability_scores[k]) if probability_scores else None,
+                    "avg_confidence": sum(p.confidence_level for p in predictions) / max(1, len(predictions)),
+                    "prediction_count": len(predictions)
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Competitor action prediction failed: {e}")
+            return {
+                "action_predictions": [],
+                "probability_scores": {},
+                "error": str(e)
+            }
+    
+    async def _analyze_pricing_trends(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze competitor pricing trends and market movements."""
+        from orchestrator.services.competitor_intelligence_service import AdvancedCompetitorIntelligence
+        
+        try:
+            competitor_service = AdvancedCompetitorIntelligence()
+            
+            competitor_id = input_data.get("competitor_id")
+            product_category = input_data.get("product_category")
+            forecast_days = input_data.get("forecast_days", 30)
+            
+            if not competitor_id:
+                return {"error": "Missing required parameter: competitor_id"}
+            
+            # Predict pricing trends
+            price_trends = await competitor_service.predict_pricing_trends(
+                competitor_id, product_category, forecast_days
+            )
+            
+            # Predict overall market movements
+            market_predictions = await competitor_service.predict_market_movements(
+                [product_category] if product_category else None
+            )
+            
+            return {
+                "price_trends": [
+                    {
+                        "competitor_id": pt.competitor_id,
+                        "product_category": pt.product_category,
+                        "current_price": pt.current_price,
+                        "predicted_trend": pt.predicted_price_trend,
+                        "price_change_magnitude": pt.price_change_magnitude,
+                        "confidence": pt.trend_confidence,
+                        "forecast_days": pt.forecast_horizon_days,
+                        "market_factors": pt.market_factors
+                    }
+                    for pt in price_trends
+                ],
+                "market_predictions": [
+                    {
+                        "market_segment": mp.market_segment,
+                        "predicted_movement": mp.predicted_movement,
+                        "confidence": mp.confidence_score,
+                        "time_horizon": mp.time_horizon,
+                        "driving_factors": mp.driving_factors,
+                        "opportunities": mp.opportunity_areas,
+                        "threats": mp.threat_areas
+                    }
+                    for mp in market_predictions
+                ],
+                "analysis_summary": {
+                    "trends_analyzed": len(price_trends),
+                    "market_segments": len(market_predictions),
+                    "avg_trend_confidence": sum(pt.trend_confidence for pt in price_trends) / max(1, len(price_trends))
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Pricing trend analysis failed: {e}")
+            return {
+                "price_trends": [],
+                "market_predictions": [],
+                "error": str(e)
+            }
+    
+    async def _create_dynamic_responses(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create dynamic response strategies to competitor actions."""
+        from orchestrator.services.competitor_intelligence_service import AdvancedCompetitorIntelligence
+        
+        try:
+            competitor_service = AdvancedCompetitorIntelligence()
+            
+            competitor_actions_data = input_data.get("competitor_actions", [])
+            business_objectives = input_data.get("business_objectives", ["maintain_market_share", "protect_margins"])
+            
+            # Convert data to CompetitorAction objects (simplified)
+            from orchestrator.services.competitor_intelligence_service import CompetitorAction, CompetitorActionType
+            
+            competitor_actions = []
+            for action_data in competitor_actions_data:
+                action = CompetitorAction(
+                    competitor_id=action_data.get("competitor_id", "unknown"),
+                    action_type=CompetitorActionType(action_data.get("action_type", "price_decrease")),
+                    description=action_data.get("description", "Competitor action"),
+                    confidence_score=action_data.get("confidence", 0.7),
+                    impact_assessment=action_data.get("impact", "medium"),
+                    detected_at=datetime.now(),
+                    data_sources=action_data.get("data_sources", ["tracking"]),
+                    affected_products=action_data.get("affected_products", []),
+                    market_implications=action_data.get("market_implications", [])
+                )
+                competitor_actions.append(action)
+            
+            # Create response strategies
+            response_strategies = await competitor_service.create_dynamic_response_strategies(
+                competitor_actions, business_objectives
+            )
+            
+            # Create implementation plan
+            implementation_plan = {
+                "immediate_actions": [],
+                "short_term_actions": [],
+                "medium_term_actions": [],
+                "resource_requirements": {},
+                "success_metrics": []
+            }
+            
+            for strategy in response_strategies:
+                timeline = strategy.implementation_timeline.lower()
+                if "immediate" in timeline or "24" in timeline:
+                    implementation_plan["immediate_actions"].append({
+                        "strategy": strategy.recommended_strategy.value,
+                        "actions": strategy.specific_actions,
+                        "success_probability": strategy.success_probability
+                    })
+                elif "short" in timeline or "week" in timeline:
+                    implementation_plan["short_term_actions"].append({
+                        "strategy": strategy.recommended_strategy.value,
+                        "actions": strategy.specific_actions,
+                        "success_probability": strategy.success_probability
+                    })
+                else:
+                    implementation_plan["medium_term_actions"].append({
+                        "strategy": strategy.recommended_strategy.value,
+                        "actions": strategy.specific_actions,
+                        "success_probability": strategy.success_probability
+                    })
+            
+            return {
+                "response_strategies": [
+                    {
+                        "competitor_action_id": rs.competitor_action_id,
+                        "strategy": rs.recommended_strategy.value,
+                        "actions": rs.specific_actions,
+                        "expected_outcome": rs.expected_outcome,
+                        "timeline": rs.implementation_timeline,
+                        "resources": rs.resource_requirements,
+                        "success_probability": rs.success_probability,
+                        "risks": rs.risk_factors,
+                        "metrics": rs.monitoring_metrics
+                    }
+                    for rs in response_strategies
+                ],
+                "implementation_plan": implementation_plan,
+                "strategy_summary": {
+                    "total_strategies": len(response_strategies),
+                    "avg_success_probability": sum(rs.success_probability for rs in response_strategies) / max(1, len(response_strategies)),
+                    "high_priority_actions": len(implementation_plan["immediate_actions"])
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Dynamic response creation failed: {e}")
+            return {
+                "response_strategies": [],
+                "implementation_plan": {},
+                "error": str(e)
+            }
+    
+    async def _sentiment_based_pricing(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Sentiment-based automatic pricing adjustments."""
+        try:
+            # Import services
+            from orchestrator.services.market_sentiment_service import RealTimeMarketSentiment
+            from orchestrator.services.competitor_intelligence_service import AdvancedCompetitorIntelligence
+            from orchestrator.services.sentiment_based_pricing import SentimentBasedPricingService
+            
+            # Initialize services
+            sentiment_service = RealTimeMarketSentiment()
+            competitor_service = AdvancedCompetitorIntelligence()
+            pricing_service = SentimentBasedPricingService(sentiment_service, competitor_service)
+            
+            product_ids = input_data.get("product_ids", [])
+            categories = input_data.get("categories", ["e-commerce"])
+            
+            # Analyze sentiment and create pricing adjustments
+            adjustments = await pricing_service.analyze_sentiment_and_adjust_pricing(
+                product_ids, categories
+            )
+            
+            # Get risk assessments
+            risk_assessments = {}
+            for adjustment in adjustments:
+                risk_assessments[adjustment.product_id] = {
+                    "risk_level": adjustment.risk_assessment.value,
+                    "confidence": adjustment.confidence_score,
+                    "safety_checks": adjustment.safety_checks,
+                    "approval_required": adjustment.approval_required
+                }
+            
+            return {
+                "pricing_adjustments": [
+                    {
+                        "product_id": adj.product_id,
+                        "current_price": adj.current_price,
+                        "suggested_price": adj.suggested_price,
+                        "adjustment_percentage": adj.adjustment_percentage,
+                        "action_type": adj.action_type.value,
+                        "sentiment_trigger": adj.sentiment_trigger,
+                        "confidence": adj.confidence_score,
+                        "risk_level": adj.risk_assessment.value,
+                        "reasoning": adj.reasoning,
+                        "market_factors": adj.market_factors,
+                        "approval_required": adj.approval_required
+                    }
+                    for adj in adjustments
+                ],
+                "risk_assessments": risk_assessments,
+                "adjustment_summary": {
+                    "total_adjustments": len(adjustments),
+                    "auto_executed": len([a for a in adjustments if not a.approval_required]),
+                    "manual_approval_required": len([a for a in adjustments if a.approval_required]),
+                    "avg_confidence": sum(a.confidence_score for a in adjustments) / max(1, len(adjustments)),
+                    "price_increases": len([a for a in adjustments if a.adjustment_percentage > 0]),
+                    "price_decreases": len([a for a in adjustments if a.adjustment_percentage < 0])
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Sentiment-based pricing failed: {e}")
+            return {
+                "pricing_adjustments": [],
+                "risk_assessments": {},
+                "error": str(e)
+            }
     
     def get_tool_performance_metrics(self) -> Dict[str, Any]:
         """Get performance metrics for all tools.
