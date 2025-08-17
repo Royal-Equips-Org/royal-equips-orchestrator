@@ -91,32 +91,72 @@ def setup_logging(app: Flask) -> None:
 
 
 def register_blueprints(app: Flask) -> None:
-    """Register application blueprints."""
-    from app.blueprints.ai_assistant import assistant_bp
-    from app.blueprints.github import github_bp
-    from app.blueprints.shopify import shopify_bp
-    from app.blueprints.workspace import workspace_bp
-    from app.routes.agents import agents_bp
-    from app.routes.command_center import command_center_bp
-    from app.routes.control import control_bp
-    from app.routes.docs import docs_bp
-    from app.routes.edge_functions import edge_functions_bp
-    from app.routes.health import health_bp
-    from app.routes.main import main_bp
-    from app.routes.metrics import metrics_bp
-
-    app.register_blueprint(main_bp)
-    app.register_blueprint(health_bp)
-    app.register_blueprint(agents_bp, url_prefix="/agents")
-    app.register_blueprint(metrics_bp)
-    app.register_blueprint(control_bp)
-    app.register_blueprint(command_center_bp)
-    app.register_blueprint(docs_bp)
-    app.register_blueprint(shopify_bp)
-    app.register_blueprint(github_bp)
-    app.register_blueprint(assistant_bp)
-    app.register_blueprint(workspace_bp)
-    app.register_blueprint(edge_functions_bp)
+    """Register application blueprints with auto-fixing capabilities."""
+    from app.utils.auto_fix import resilient_import
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # Define blueprints with their import paths and registration details
+    blueprints_config = [
+        ('app.routes.main', 'main_bp', None),
+        ('app.routes.health', 'health_bp', None),
+        ('app.routes.agents', 'agents_bp', '/agents'),
+        ('app.routes.metrics', 'metrics_bp', None),
+        ('app.routes.control', 'control_bp', None),
+        ('app.routes.command_center', 'command_center_bp', None),
+        ('app.routes.docs', 'docs_bp', None),
+        ('app.routes.auto_fix', 'auto_fix_bp', None),
+        ('app.blueprints.shopify', 'shopify_bp', None),
+        ('app.blueprints.github', 'github_bp', None),
+        ('app.blueprints.ai_assistant', 'assistant_bp', None),
+        ('app.blueprints.workspace', 'workspace_bp', None),
+        ('app.routes.edge_functions', 'edge_functions_bp', None),
+    ]
+    
+    registered_count = 0
+    failed_count = 0
+    
+    for module_path, blueprint_name, url_prefix in blueprints_config:
+        try:
+            # Use resilient import to load the module
+            module = resilient_import(module_path)
+            
+            if module and hasattr(module, blueprint_name):
+                blueprint = getattr(module, blueprint_name)
+                
+                if url_prefix:
+                    app.register_blueprint(blueprint, url_prefix=url_prefix)
+                    logger.info(f"Registered blueprint {blueprint_name} with prefix {url_prefix}")
+                else:
+                    app.register_blueprint(blueprint)
+                    logger.info(f"Registered blueprint {blueprint_name}")
+                
+                registered_count += 1
+            else:
+                logger.warning(f"Blueprint {blueprint_name} not found in module {module_path}")
+                failed_count += 1
+                
+        except Exception as e:
+            logger.error(f"Failed to register blueprint {blueprint_name} from {module_path}: {e}")
+            failed_count += 1
+    
+    logger.info(f"Blueprint registration complete: {registered_count} successful, {failed_count} failed")
+    
+    # Perform a health check after blueprint registration
+    from app.utils.auto_fix import health_check
+    health_report = health_check()
+    
+    if health_report['overall_status'] != 'healthy':
+        logger.warning(f"System health check shows status: {health_report['overall_status']}")
+        if health_report['errors_detected']:
+            for error in health_report['errors_detected']:
+                logger.error(f"Health check error: {error}")
+        if health_report['fixes_applied']:
+            for fix in health_report['fixes_applied']:
+                logger.info(f"Auto-fix applied: {fix}")
+    else:
+        logger.info("System health check passed")
 
 
 def register_error_handlers(app: Flask) -> None:

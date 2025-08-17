@@ -13,7 +13,22 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
-import aiohttp
+# Safe import of aiohttp with auto-fixing capabilities
+try:
+    from app.utils.auto_fix import safe_import
+    success, aiohttp = safe_import('aiohttp')
+    if not success:
+        logger = logging.getLogger(__name__)
+        logger.warning("aiohttp not available - some edge function features will be limited")
+        aiohttp = None
+except ImportError:
+    # Fallback if auto_fix is not available
+    try:
+        import aiohttp
+    except ImportError:
+        aiohttp = None
+        logging.getLogger(__name__).warning("aiohttp not available - some edge function features will be limited")
+
 import requests
 from flask import Blueprint, jsonify, request, current_app
 from flask_socketio import emit
@@ -258,26 +273,85 @@ async def check_all_edge_functions_health():
     """Asynchronously check health of all edge functions."""
     results = {}
     
-    async with aiohttp.ClientSession() as session:
-        tasks = []
-        
-        for func_name, func_config in EDGE_FUNCTIONS.items():
-            task = check_single_function_health(session, func_name, func_config)
-            tasks.append(task)
-        
-        # Execute all health checks concurrently
-        health_results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for i, (func_name, _) in enumerate(EDGE_FUNCTIONS.items()):
-            result = health_results[i]
-            if isinstance(result, Exception):
+    # Check if aiohttp is available
+    if aiohttp is None:
+        logger.warning("aiohttp not available - using synchronous health checks")
+        return check_all_edge_functions_health_sync()
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            
+            for func_name, func_config in EDGE_FUNCTIONS.items():
+                task = check_single_function_health(session, func_name, func_config)
+                tasks.append(task)
+            
+            # Execute all health checks concurrently
+            health_results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for i, (func_name, _) in enumerate(EDGE_FUNCTIONS.items()):
+                result = health_results[i]
+                if isinstance(result, Exception):
+                    results[func_name] = {
+                        'status': 'error',
+                        'error': str(result),
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+                else:
+                    results[func_name] = result
+    except Exception as e:
+        logger.error(f"Error in async health check: {e}")
+        # Fallback to sync health checks
+        return check_all_edge_functions_health_sync()
+    
+    # Update global state
+    last_health_check.update(results)
+    
+    return results
+
+def check_all_edge_functions_health_sync():
+    """Synchronous fallback for health checks when aiohttp is not available."""
+    results = {}
+    
+    for func_name, func_config in EDGE_FUNCTIONS.items():
+        try:
+            start_time = datetime.utcnow()
+            
+            # Use requests for synchronous health check
+            response = requests.get(
+                f"{func_config['url']}/health",
+                timeout=10
+            )
+            
+            end_time = datetime.utcnow()
+            response_time = (end_time - start_time).total_seconds() * 1000
+            
+            if response.status_code == 200:
+                try:
+                    health_data = response.json()
+                except json.JSONDecodeError:
+                    health_data = {}
+                
                 results[func_name] = {
-                    'status': 'error',
-                    'error': str(result),
-                    'timestamp': datetime.utcnow().isoformat()
+                    'status': 'healthy',
+                    'response_time': response_time,
+                    'timestamp': end_time.isoformat(),
+                    'data': health_data
                 }
             else:
-                results[func_name] = result
+                results[func_name] = {
+                    'status': 'unhealthy',
+                    'response_time': response_time,
+                    'timestamp': end_time.isoformat(),
+                    'status_code': response.status_code
+                }
+                
+        except Exception as e:
+            results[func_name] = {
+                'status': 'error',
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            }
     
     # Update global state
     last_health_check.update(results)
@@ -286,6 +360,10 @@ async def check_all_edge_functions_health():
 
 async def check_single_function_health(session, func_name, func_config):
     """Check health of a single edge function."""
+    if aiohttp is None:
+        logger.warning("aiohttp not available for async health check")
+        return {'status': 'error', 'error': 'aiohttp not available'}
+    
     try:
         start_time = datetime.utcnow()
         
