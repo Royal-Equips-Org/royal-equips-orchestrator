@@ -100,6 +100,7 @@ def register_blueprints(app: Flask) -> None:
     from app.routes.command_center import command_center_bp
     from app.routes.control import control_bp
     from app.routes.docs import docs_bp
+    from app.routes.edge_functions import edge_functions_bp
     from app.routes.health import health_bp
     from app.routes.main import main_bp
     from app.routes.metrics import metrics_bp
@@ -115,6 +116,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(github_bp)
     app.register_blueprint(assistant_bp)
     app.register_blueprint(workspace_bp)
+    app.register_blueprint(edge_functions_bp)
 
 
 def register_error_handlers(app: Flask) -> None:

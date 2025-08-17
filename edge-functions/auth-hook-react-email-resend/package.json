@@ -1,0 +1,14 @@
+{
+  "name": "auth-hook-react-email-resend",
+  "version": "1.0.0",
+  "description": "Authentication hook with branded email delivery via Resend",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {},
+  "keywords": ["auth", "email", "resend", "otp", "verification"],
+  "author": "Royal Equips",
+  "license": "MIT"
+}
