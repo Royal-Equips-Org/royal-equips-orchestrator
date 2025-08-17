@@ -13,11 +13,10 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
+import aiohttp
 import requests
 from flask import Blueprint, jsonify, request, current_app
 from flask_socketio import emit
-
-from app.sockets import socketio
 
 logger = logging.getLogger(__name__)
 
@@ -116,11 +115,16 @@ async def trigger_health_check():
     try:
         results = await check_all_edge_functions_health()
         
-        # Emit real-time update
-        socketio.emit('edge_functions_health', {
-            'results': results,
-            'timestamp': datetime.utcnow().isoformat()
-        }, namespace='/edge-functions')
+        # Emit real-time update (if socketio is available)
+        try:
+            from app.sockets import socketio
+            if socketio:
+                socketio.emit('edge_functions_health', {
+                    'results': results,
+                    'timestamp': datetime.utcnow().isoformat()
+                }, namespace='/edge-functions')
+        except ImportError:
+            logger.debug("SocketIO not available for health check updates")
         
         return jsonify({
             'success': True,
@@ -202,13 +206,18 @@ def deploy_edge_function():
         # Trigger deployment (this would integrate with Wrangler CLI or API)
         deployment_result = trigger_edge_function_deployment(func_name, environment)
         
-        # Emit real-time update
-        socketio.emit('edge_function_deployed', {
-            'function': func_name,
-            'environment': environment,
-            'result': deployment_result,
-            'timestamp': datetime.utcnow().isoformat()
-        }, namespace='/edge-functions')
+        # Emit real-time update (if socketio is available)
+        try:
+            from app.sockets import socketio
+            if socketio:
+                socketio.emit('edge_function_deployed', {
+                    'function': func_name,
+                    'environment': environment,
+                    'result': deployment_result,
+                    'timestamp': datetime.utcnow().isoformat()
+                }, namespace='/edge-functions')
+        except ImportError:
+            logger.debug("SocketIO not available for deployment updates")
         
         return jsonify({
             'success': True,
@@ -368,12 +377,17 @@ def start_edge_functions_monitoring():
                 # Check health every 30 seconds
                 asyncio.run(check_all_edge_functions_health())
                 
-                # Emit updates to connected clients
-                socketio.emit('edge_functions_update', {
-                    'stats': edge_function_stats,
-                    'health': last_health_check,
-                    'timestamp': datetime.utcnow().isoformat()
-                }, namespace='/edge-functions')
+                # Emit updates to connected clients (if socketio is available)
+                try:
+                    from app.sockets import socketio
+                    if socketio:
+                        socketio.emit('edge_functions_update', {
+                            'stats': edge_function_stats,
+                            'health': last_health_check,
+                            'timestamp': datetime.utcnow().isoformat()
+                        }, namespace='/edge-functions')
+                except ImportError:
+                    logger.debug("SocketIO not available for edge functions updates")
                 
                 # Sleep for 30 seconds
                 import time
@@ -390,33 +404,40 @@ def start_edge_functions_monitoring():
     thread.daemon = True
     thread.start()
 
-# WebSocket events for real-time updates
-@socketio.on('connect', namespace='/edge-functions')
-def handle_edge_functions_connect():
-    """Handle client connection to edge functions namespace."""
-    emit('connected', {
-        'message': 'Connected to edge functions monitoring',
-        'functions': EDGE_FUNCTIONS,
-        'timestamp': datetime.utcnow().isoformat()
-    })
+def register_edge_functions_websocket_handlers():
+    """Register WebSocket handlers for edge functions namespace."""
+    from app.sockets import socketio
+    
+    if socketio is None:
+        logger.warning("SocketIO not initialized, skipping edge functions WebSocket handlers")
+        return
+    
+    @socketio.on('connect', namespace='/edge-functions')
+    def handle_edge_functions_connect():
+        """Handle client connection to edge functions namespace."""
+        emit('connected', {
+            'message': 'Connected to edge functions monitoring',
+            'functions': EDGE_FUNCTIONS,
+            'timestamp': datetime.utcnow().isoformat()
+        })
 
-@socketio.on('request_status', namespace='/edge-functions')
-def handle_status_request():
-    """Handle status request from client."""
-    emit('status_update', {
-        'stats': edge_function_stats,
-        'health': last_health_check,
-        'timestamp': datetime.utcnow().isoformat()
-    })
+    @socketio.on('request_status', namespace='/edge-functions')
+    def handle_status_request():
+        """Handle status request from client."""
+        emit('status_update', {
+            'stats': edge_function_stats,
+            'health': last_health_check,
+            'timestamp': datetime.utcnow().isoformat()
+        })
 
-@socketio.on('trigger_health_check', namespace='/edge-functions')
-def handle_health_check_trigger():
-    """Handle health check trigger from client."""
-    threading.Thread(target=check_all_edge_functions_health, daemon=True).start()
-    emit('health_check_triggered', {
-        'message': 'Health check initiated',
-        'timestamp': datetime.utcnow().isoformat()
-    })
+    @socketio.on('trigger_health_check', namespace='/edge-functions')
+    def handle_health_check_trigger():
+        """Handle health check trigger from client."""
+        threading.Thread(target=check_all_edge_functions_health, daemon=True).start()
+        emit('health_check_triggered', {
+            'message': 'Health check initiated',
+            'timestamp': datetime.utcnow().isoformat()
+        })
 
 # Initialize monitoring when module loads
 try:
