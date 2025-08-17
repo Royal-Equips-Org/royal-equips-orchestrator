@@ -49,6 +49,7 @@ def init_socketio(app):
     register_github_handlers()
     register_assistant_handlers()
     register_workspace_handlers()
+    register_edge_functions_handlers()
 
     # Start background tasks
     start_background_tasks()
@@ -500,6 +501,18 @@ def register_workspace_handlers():
     def workspace_disconnect():
         """Handle Workspace namespace disconnection."""
         logger.info("Client disconnected from Workspace WebSocket namespace")
+
+
+def register_edge_functions_handlers():
+    """Register Edge Functions namespace handlers for /edge-functions."""
+    try:
+        from app.routes.edge_functions import register_edge_functions_websocket_handlers
+        register_edge_functions_websocket_handlers()
+        logger.info("Edge Functions WebSocket handlers registered")
+    except ImportError as e:
+        logger.warning(f"Could not register edge functions handlers: {e}")
+    except Exception as e:
+        logger.error(f"Failed to register edge functions handlers: {e}")
 
 
 def broadcast_github_event(event_type: str, data: Dict[str, Any]):

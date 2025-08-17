@@ -98,7 +98,12 @@ def ensure_template_exists(template_path: Path, app_name: str) -> bool:
         if template_path.exists() and template_path.stat().st_size > 0:
             return True
             
-        logger.warning(f"Template missing or empty: {template_path}")
+        # Only log warning if we're not in the expected production container path pattern
+        # to reduce noise during normal container operations
+        if "/app/templates/" not in str(template_path):
+            logger.warning(f"Template missing or empty: {template_path}")
+        else:
+            logger.debug(f"Template missing or empty (normal during container init): {template_path}")
         
         # Create fallback template
         if template_path.name == "index.html":
