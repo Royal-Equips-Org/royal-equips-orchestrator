@@ -105,6 +105,7 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.metrics', 'metrics_bp', None),
         ('app.routes.control', 'control_bp', None),
         ('app.routes.command_center', 'command_center_bp', None),
+        ('app.routes.aria', 'aria_bp', None),
         ('app.routes.docs', 'docs_bp', None),
         ('app.routes.auto_fix', 'auto_fix_bp', None),
         ('app.blueprints.shopify', 'shopify_bp', None),
