@@ -1,14 +1,17 @@
 """
-Command Center blueprint for serving the React SPA.
+Command Center blueprint for serving the React SPA and empire management.
 
 Serves the built React application at /command-center with proper
-SPA routing fallback support.
+SPA routing fallback support, plus provides enhanced empire status
+data for the control center dashboard.
 """
 
 import logging
 from pathlib import Path
+from datetime import datetime
 
-from flask import Blueprint, send_file, send_from_directory
+from flask import Blueprint, send_file, send_from_directory, jsonify
+from app.services.health_service import get_health_service
 
 logger = logging.getLogger(__name__)
 
@@ -223,3 +226,231 @@ def command_center_health():
         "admin_build_dir": str(ADMIN_BUILD_DIR),
         "static_dir": str(STATIC_DIR)
     }, 200 if build_exists else 503
+
+
+@command_center_bp.route("/api/empire-status")
+def get_empire_status_for_dashboard():
+    """
+    Get comprehensive empire status for the command center dashboard.
+    
+    This endpoint provides enhanced empire data specifically formatted
+    for the React control center interface, including real-time metrics,
+    security status, and evolution readiness.
+    """
+    try:
+        health_service = get_health_service()
+        
+        # Get empire health (will use cache if recent)
+        empire_health = health_service.check_empire_health()
+        
+        # Get recommendations with priority categorization
+        all_recommendations = health_service.get_empire_recommendations()
+        
+        # Categorize recommendations by priority
+        recommendations_by_priority = {
+            'IMMEDIATE': [],
+            'HIGH': [],
+            'MEDIUM': [],
+            'STRATEGIC': []
+        }
+        
+        for rec in all_recommendations:
+            priority = rec.get('priority', 'MEDIUM')
+            if priority in recommendations_by_priority:
+                recommendations_by_priority[priority].append(rec)
+        
+        # Get scan results for detailed metrics
+        scan_results = health_service.get_empire_scan_results()
+        
+        # Build comprehensive dashboard data
+        dashboard_data = {
+            'empire_overview': {
+                'status': empire_health.get('empire_status', 'UNKNOWN'),
+                'health_grade': empire_health.get('overall_health', 'UNKNOWN'),
+                'readiness_score': empire_health.get('empire_readiness_score', 0),
+                'evolution_phase': empire_health.get('evolution_readiness', 'UNKNOWN'),
+                'last_scan': empire_health.get('last_scan'),
+                'next_scan_due': empire_health.get('next_scan_due')
+            },
+            'security_metrics': {
+                'security_score': empire_health.get('security_score', 0),
+                'critical_issues': empire_health.get('critical_issues', 0),
+                'threat_level': 'LOW',  # Default safe value
+                'security_status': 'MONITORING'
+            },
+            'performance_metrics': {
+                'performance_score': empire_health.get('performance_score', 0),
+                'code_quality_score': empire_health.get('code_quality_score', 0),
+                'system_efficiency': round((empire_health.get('performance_score', 0) + empire_health.get('code_quality_score', 0)) / 2, 1)
+            },
+            'recommendations_summary': {
+                'total_count': len(all_recommendations),
+                'by_priority': {
+                    priority: len(recs) for priority, recs in recommendations_by_priority.items()
+                },
+                'critical_actions': recommendations_by_priority['IMMEDIATE'][:3],  # Top 3 immediate actions
+                'next_steps': recommendations_by_priority['HIGH'][:5]  # Top 5 high priority items
+            },
+            'system_capabilities': {
+                'autonomous_monitoring': True,
+                'threat_detection': True,
+                'auto_healing': empire_health.get('empire_readiness_score', 0) > 80,
+                'evolution_ready': empire_health.get('empire_readiness_score', 0) > 85,
+                'self_optimization': True
+            },
+            'operational_status': {
+                'agents_operational': True,  # Default assumption
+                'security_systems_active': True,
+                'monitoring_active': True,
+                'evolution_engine_status': 'ANALYZING' if empire_health.get('empire_readiness_score', 0) > 70 else 'PREPARING'
+            },
+            'timestamp': datetime.now().isoformat(),
+            'dashboard_version': '2.0.0'
+        }
+        
+        # Enhance with detailed scan data if available
+        if scan_results:
+            phases = scan_results.get('phases', {})
+            
+            # Add security details
+            if 'security' in phases:
+                security_data = phases['security']
+                dashboard_data['security_metrics'].update({
+                    'vulnerabilities_found': len(security_data.get('vulnerabilities_found', [])),
+                    'risk_level': security_data.get('risk_level', 'UNKNOWN'),
+                    'patterns_detected': security_data.get('patterns_detected', {})
+                })
+                
+                # Determine threat level based on risk
+                risk_level = security_data.get('risk_level', 'LOW')
+                if risk_level == 'CRITICAL':
+                    dashboard_data['security_metrics']['threat_level'] = 'CRITICAL'
+                    dashboard_data['security_metrics']['security_status'] = 'ALERT'
+                elif risk_level == 'HIGH':
+                    dashboard_data['security_metrics']['threat_level'] = 'HIGH'
+                    dashboard_data['security_metrics']['security_status'] = 'WARNING'
+                elif risk_level == 'MEDIUM':
+                    dashboard_data['security_metrics']['threat_level'] = 'MEDIUM'
+                    dashboard_data['security_metrics']['security_status'] = 'MONITORING'
+            
+            # Add code health details
+            if 'code_health' in phases:
+                code_health = phases['code_health']
+                dashboard_data['performance_metrics'].update({
+                    'files_analyzed': code_health.get('files_analyzed', 0),
+                    'total_lines': code_health.get('total_lines', 0),
+                    'docstring_coverage': code_health.get('docstring_coverage', 0),
+                    'test_coverage_estimate': code_health.get('test_coverage_estimate', 0)
+                })
+        
+        return jsonify({
+            'success': True,
+            'empire_dashboard': dashboard_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Empire dashboard status failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'fallback_data': {
+                'empire_overview': {
+                    'status': 'ERROR',
+                    'health_grade': 'UNKNOWN',
+                    'readiness_score': 0,
+                    'evolution_phase': 'ERROR_RECOVERY'
+                },
+                'message': 'Empire status temporarily unavailable'
+            }
+        }), 500
+
+
+@command_center_bp.route("/api/empire-alerts")
+def get_empire_alerts():
+    """
+    Get current empire alerts and notifications for the dashboard.
+    
+    Returns critical issues, security alerts, and system notifications
+    that require immediate attention in the control center.
+    """
+    try:
+        health_service = get_health_service()
+        
+        # Get current recommendations to identify alerts
+        recommendations = health_service.get_empire_recommendations()
+        
+        alerts = []
+        notifications = []
+        
+        for rec in recommendations:
+            if rec.get('priority') == 'IMMEDIATE':
+                alerts.append({
+                    'type': 'CRITICAL',
+                    'title': rec.get('title', 'Critical Issue'),
+                    'message': rec.get('description', 'Immediate attention required'),
+                    'category': rec.get('category', 'SYSTEM'),
+                    'timestamp': datetime.now().isoformat(),
+                    'action_required': True,
+                    'actions': rec.get('action_items', [])[:3]  # Top 3 actions
+                })
+            elif rec.get('priority') == 'HIGH':
+                notifications.append({
+                    'type': 'WARNING',
+                    'title': rec.get('title', 'System Notice'),
+                    'message': rec.get('description', 'Attention recommended'),
+                    'category': rec.get('category', 'SYSTEM'),
+                    'timestamp': datetime.now().isoformat(),
+                    'action_required': False,
+                    'actions': rec.get('action_items', [])[:2]  # Top 2 actions
+                })
+        
+        # Add system status notifications
+        empire_health = health_service.check_empire_health()
+        readiness_score = empire_health.get('empire_readiness_score', 0)
+        
+        if readiness_score >= 90:
+            notifications.append({
+                'type': 'SUCCESS',
+                'title': 'Empire Evolution Ready',
+                'message': f'System readiness score: {readiness_score}/100. Ready for autonomous expansion.',
+                'category': 'EMPIRE_EVOLUTION',
+                'timestamp': datetime.now().isoformat(),
+                'action_required': False
+            })
+        elif readiness_score >= 80:
+            notifications.append({
+                'type': 'INFO',
+                'title': 'Optimization Recommended',
+                'message': f'System readiness score: {readiness_score}/100. Consider optimization before expansion.',
+                'category': 'OPTIMIZATION',
+                'timestamp': datetime.now().isoformat(),
+                'action_required': False
+            })
+        
+        return jsonify({
+            'success': True,
+            'alerts': alerts,
+            'notifications': notifications,
+            'summary': {
+                'critical_alerts': len(alerts),
+                'total_notifications': len(notifications),
+                'system_status': 'OPERATIONAL' if len(alerts) == 0 else 'ATTENTION_REQUIRED'
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Empire alerts retrieval failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'alerts': [],
+            'notifications': [{
+                'type': 'ERROR',
+                'title': 'System Error',
+                'message': 'Unable to retrieve empire alerts',
+                'category': 'SYSTEM_ERROR',
+                'timestamp': datetime.now().isoformat(),
+                'action_required': True
+            }]
+        }), 500
