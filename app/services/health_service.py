@@ -10,10 +10,11 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List, Optional
 
 import requests
 from flask import current_app
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -73,35 +74,38 @@ class CircuitBreaker:
 
 
 class HealthService:
-    """Health monitoring service with dependency checks."""
+    """Health monitoring service with dependency checks and empire-level analysis."""
 
     def __init__(self):
         self.circuit_breakers = {
             "shopify": CircuitBreaker(
                 failure_threshold=current_app.config.get(
                     "CIRCUIT_BREAKER_FAILURE_THRESHOLD", 5
-                ),
+                ) if current_app else 5,
                 recovery_timeout=current_app.config.get(
                     "CIRCUIT_BREAKER_RECOVERY_TIMEOUT", 60
-                ),
+                ) if current_app else 60,
             ),
             "bigquery": CircuitBreaker(
                 failure_threshold=current_app.config.get(
                     "CIRCUIT_BREAKER_FAILURE_THRESHOLD", 5
-                ),
+                ) if current_app else 5,
                 recovery_timeout=current_app.config.get(
                     "CIRCUIT_BREAKER_RECOVERY_TIMEOUT", 60
-                ),
+                ) if current_app else 60,
             ),
             "github": CircuitBreaker(
                 failure_threshold=current_app.config.get(
                     "CIRCUIT_BREAKER_FAILURE_THRESHOLD", 5
-                ),
+                ) if current_app else 5,
                 recovery_timeout=current_app.config.get(
                     "CIRCUIT_BREAKER_RECOVERY_TIMEOUT", 60
-                ),
+                ) if current_app else 60,
             ),
         }
+        self._empire_health_cache = {}
+        self._last_empire_scan = None
+        self._empire_scan_interval = timedelta(hours=6)  # Scan every 6 hours
 
     def check_readiness(self) -> Dict[str, Any]:
         """
@@ -392,3 +396,146 @@ def get_health_service():
     if health_service is None:
         health_service = HealthService()
     return health_service
+
+
+# Empire health methods added to HealthService
+def _add_empire_health_methods():
+    """Add empire health checking methods to HealthService class."""
+    
+    def check_empire_health(self, force_scan: bool = False) -> Dict[str, Any]:
+        """
+        Check overall empire health including security and evolution status.
+        
+        Args:
+            force_scan: Force a new empire scan even if cache is valid
+            
+        Returns:
+            Comprehensive empire health report
+        """
+        try:
+            from app.services.empire_scanner import get_empire_scanner
+            
+            current_time = datetime.now()
+            
+            # Check if we need a new scan
+            needs_scan = (
+                force_scan or 
+                self._last_empire_scan is None or
+                current_time - self._last_empire_scan > self._empire_scan_interval
+            )
+            
+            if needs_scan:
+                logger.info("🔍 Running Empire Health Scan...")
+                scanner = get_empire_scanner()
+                scan_results = scanner.run_full_empire_scan()
+                self._empire_health_cache = scan_results
+                self._last_empire_scan = current_time
+            else:
+                scan_results = self._empire_health_cache
+            
+            # Build empire health summary
+            empire_health = {
+                "empire_status": "OPERATIONAL",
+                "last_scan": self._last_empire_scan.isoformat() if self._last_empire_scan else None,
+                "next_scan_due": (self._last_empire_scan + self._empire_scan_interval).isoformat() if self._last_empire_scan else None,
+                "empire_readiness_score": scan_results.get('summary', {}).get('empire_readiness_score', 0),
+                "overall_health": scan_results.get('summary', {}).get('overall_empire_health', 'UNKNOWN'),
+                "critical_issues": scan_results.get('summary', {}).get('critical_issues', 0),
+                "total_recommendations": scan_results.get('summary', {}).get('total_recommendations', 0),
+                "security_score": scan_results.get('phases', {}).get('security', {}).get('security_score', 0),
+                "performance_score": scan_results.get('phases', {}).get('performance', {}).get('performance_score', 0),
+                "code_quality_score": scan_results.get('phases', {}).get('code_health', {}).get('code_quality_score', 0),
+                "scan_available": bool(scan_results)
+            }
+            
+            # Determine if empire is ready for evolution
+            readiness_score = empire_health["empire_readiness_score"]
+            if readiness_score >= 90:
+                empire_health["evolution_readiness"] = "READY_FOR_EXPANSION"
+            elif readiness_score >= 80:
+                empire_health["evolution_readiness"] = "OPTIMIZATION_RECOMMENDED"
+            elif readiness_score >= 70:
+                empire_health["evolution_readiness"] = "IMPROVEMENTS_NEEDED"
+            else:
+                empire_health["evolution_readiness"] = "CRITICAL_ISSUES_DETECTED"
+            
+            return empire_health
+            
+        except Exception as e:
+            logger.error(f"Empire health check failed: {e}")
+            return {
+                "empire_status": "HEALTH_CHECK_FAILED",
+                "error": str(e),
+                "empire_readiness_score": 0,
+                "overall_health": "UNKNOWN",
+                "scan_available": False
+            }
+    
+    def get_empire_recommendations(self) -> List[Dict[str, Any]]:
+        """Get current empire evolution recommendations."""
+        try:
+            if not self._empire_health_cache:
+                # Trigger a scan if no cache exists
+                self.check_empire_health(force_scan=True)
+            
+            return self._empire_health_cache.get('recommendations', [])
+            
+        except Exception as e:
+            logger.error(f"Failed to get empire recommendations: {e}")
+            return []
+    
+    def get_empire_scan_results(self) -> Optional[Dict[str, Any]]:
+        """Get the latest empire scan results."""
+        return self._empire_health_cache
+    
+    def trigger_empire_evolution_check(self) -> Dict[str, Any]:
+        """Trigger immediate empire evolution readiness check."""
+        logger.info("🚀 Triggering Empire Evolution Readiness Check...")
+        
+        try:
+            # Force a comprehensive scan
+            empire_health = self.check_empire_health(force_scan=True)
+            
+            evolution_status = {
+                "check_timestamp": datetime.now().isoformat(),
+                "empire_health": empire_health,
+                "evolution_recommendations": self.get_empire_recommendations(),
+                "readiness_assessment": {
+                    "security_ready": empire_health.get("security_score", 0) >= 85,
+                    "performance_ready": empire_health.get("performance_score", 0) >= 80,
+                    "code_quality_ready": empire_health.get("code_quality_score", 0) >= 75,
+                    "overall_ready": empire_health.get("empire_readiness_score", 0) >= 85
+                }
+            }
+            
+            # Determine next evolution phase
+            readiness = evolution_status["readiness_assessment"]
+            if all(readiness.values()):
+                evolution_status["recommended_phase"] = "AUTONOMOUS_EXPANSION"
+                evolution_status["phase_description"] = "Empire is ready for autonomous scaling and evolution"
+            elif readiness["overall_ready"]:
+                evolution_status["recommended_phase"] = "OPTIMIZATION_PHASE"
+                evolution_status["phase_description"] = "Focus on performance and security optimization"
+            else:
+                evolution_status["recommended_phase"] = "STABILIZATION_PHASE"
+                evolution_status["phase_description"] = "Address critical issues before evolution"
+            
+            return evolution_status
+            
+        except Exception as e:
+            logger.error(f"Empire evolution check failed: {e}")
+            return {
+                "check_timestamp": datetime.now().isoformat(),
+                "error": str(e),
+                "recommended_phase": "ERROR_RECOVERY",
+                "phase_description": "System error - manual intervention required"
+            }
+    
+    # Add methods to HealthService class
+    HealthService.check_empire_health = check_empire_health
+    HealthService.get_empire_recommendations = get_empire_recommendations
+    HealthService.get_empire_scan_results = get_empire_scan_results
+    HealthService.trigger_empire_evolution_check = trigger_empire_evolution_check
+
+# Execute the method addition
+_add_empire_health_methods()
