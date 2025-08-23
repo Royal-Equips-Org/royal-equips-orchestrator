@@ -75,7 +75,7 @@ jobs:
     steps:
     - name: Deploy to Render
       if: ${{ secrets.RENDER_API_KEY && secrets.RENDER_SERVICE_ID }}
-      uses: johnbeynon/render-deploy-action@v0.0.8
+      uses: johnbeynon/render-deploy-action@v0.0.9
       with:
         service-id: ${{ secrets.RENDER_SERVICE_ID }}
         api-key: ${{ secrets.RENDER_API_KEY }}
