@@ -23,16 +23,17 @@ sys.path.insert(0, str(repo_root))
 
 from fastapi import FastAPI, HTTPException, Response
 
-from orchestrator.agents import (
-    AnalyticsAgent,
-    CustomerSupportAgent,
-    InventoryForecastingAgent,
-    MarketingAutomationAgent,
-    OrderManagementAgent,
-    PricingOptimizerAgent,
-    ProductRecommendationAgent,
-    ProductResearchAgent,
-)
+from orchestrator.agents import ProductResearchAgent
+# Note: Other agents temporarily disabled due to missing dependencies
+# from orchestrator.agents import (
+#     AnalyticsAgent,
+#     CustomerSupportAgent,
+#     InventoryForecastingAgent,
+#     MarketingAutomationAgent,
+#     OrderManagementAgent,
+#     PricingOptimizerAgent,
+#     ProductRecommendationAgent,
+# )
 from orchestrator.core.orchestrator import Orchestrator
 
 # Install logging filters at module import time
@@ -48,15 +49,17 @@ logger = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
 orch = Orchestrator(loop=loop)
 
-# Agent registrations
+# Phase 1: Register ProductResearchAgent to run every hour (3600 seconds)
 orch.register_agent(ProductResearchAgent(), interval=3600)
-orch.register_agent(InventoryForecastingAgent(), interval=86400)
-orch.register_agent(PricingOptimizerAgent(), interval=7200)
-orch.register_agent(MarketingAutomationAgent(), interval=43200)
-orch.register_agent(CustomerSupportAgent(), interval=300)
-orch.register_agent(OrderManagementAgent(), interval=600)
-orch.register_agent(ProductRecommendationAgent(), interval=21600)  # adjust interval as needed
-orch.register_agent(AnalyticsAgent(orch), interval=86400)  # export analytics daily
+
+# Phase 2+ agents (disabled until dependencies are available):
+# orch.register_agent(InventoryForecastingAgent(), interval=86400)
+# orch.register_agent(PricingOptimizerAgent(), interval=7200)
+# orch.register_agent(MarketingAutomationAgent(), interval=43200)
+# orch.register_agent(CustomerSupportAgent(), interval=300)
+# orch.register_agent(OrderManagementAgent(), interval=600)
+# orch.register_agent(ProductRecommendationAgent(), interval=21600)
+# orch.register_agent(AnalyticsAgent(orch), interval=86400)
 
 # Start orchestrator background loop
 loop.create_task(orch.run_forever())
