@@ -91,7 +91,37 @@ check_imports() {
     fi
 }
 
-# Run smoke test if possible
+# Run security checks
+run_security_checks() {
+    echo "🔒 Running security checks..."
+    
+    # Check for Gitleaks
+    if command_exists gitleaks; then
+        echo "🕵️  Scanning for secrets with Gitleaks..."
+        if ! gitleaks protect --staged --verbose; then
+            echo "❌ SECURITY ALERT: Secrets detected!"
+            echo "   Please remove hardcoded secrets and use environment variables."
+            echo "   See .env.example for proper secret management patterns."
+            exit 1
+        else
+            echo "✅ No secrets detected"
+        fi
+    else
+        echo "⚠️  Gitleaks not installed - skipping secret detection"
+        echo "   Install gitleaks for enhanced security: https://github.com/gitleaks/gitleaks"
+    fi
+    
+    # Run bandit for Python security issues if available
+    if command_exists bandit; then
+        echo "🛡️  Running Bandit security scan..."
+        if ! bandit -r app/ -f json -o /tmp/bandit-report.json --quiet; then
+            echo "⚠️  Security issues found in code"
+            bandit -r app/ --severity-level medium
+        else
+            echo "✅ No security issues found"
+        fi
+    fi
+}
 run_smoke_test() {
     echo "🔥 Running quick smoke test..."
     
@@ -123,6 +153,7 @@ run_smoke_test() {
 # Main execution
 main() {
     install_tools
+    run_security_checks  # Security first!
     format_code
     lint_code
     check_imports

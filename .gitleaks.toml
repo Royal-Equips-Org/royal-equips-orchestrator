@@ -1,0 +1,40 @@
+# Gitleaks configuration for Royal Equips Orchestrator
+# Focuses on preventing new secrets while allowing documented examples
+
+title = "Royal Equips Orchestrator Security Scan"
+
+[extend]
+# Use default rules but with custom allowlist
+useDefault = true
+
+[[rules]]
+description = "Supabase Service Role Key"
+id = "supabase-service-key"
+regex = '''(?i)supabase_service_role_key.*eyJ[A-Za-z0-9+/=]{40,}'''
+keywords = ["supabase", "service", "role", "key"]
+
+[[rules]]
+description = "Generic JWT Token"
+id = "jwt-token"
+regex = '''eyJ[A-Za-z0-9+/=]{40,}'''
+keywords = ["jwt", "token", "eyJ"]
+
+[allowlist]
+description = "Allow documentation examples and safe placeholders"
+paths = [
+    '''(?i)\.example$''',
+    '''(?i)\.template$''',
+    '''(?i)\.sample$''',
+]
+
+# Allow specific safe patterns
+regexes = [
+    '''your-[a-z-]+-key-here''',
+    '''shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx''',
+    '''example:example''',
+    '''your_aws_access_key_here''',
+    '''AKIAXXXXXXXXXXXXXXXX''',
+]
+
+# Allow example commit hashes and safe examples in documentation
+regexTarget = "match"
