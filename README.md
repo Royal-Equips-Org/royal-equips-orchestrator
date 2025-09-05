@@ -1,561 +1,426 @@
-# Royal Equips Orchestrator
+# Gitleaks
 
-Royal Equips Orchestrator is an enterprise‑grade automation platform designed
-for high‑growth e‑commerce businesses. It provides a modular, multi‑agent
-system that automates every aspect of running a Shopify store in the
-car‑tech and accessories niche, from trend discovery through dynamic
-pricing to post‑purchase support.
+```
+┌─○───┐
+│ │╲  │
+│ │ ○ │
+│ ○ ░ │
+└─░───┘
+```
 
-**Version 2.0** - Now powered by **Flask + Gunicorn** for enhanced production reliability and WSGI compatibility.
+<p align="left">
+  <p align="left">
+	  <a href="https://github.com/zricethezav/gitleaks/actions/workflows/test.yml">
+		  <img alt="Github Test" src="https://github.com/zricethezav/gitleaks/actions/workflows/test.yml/badge.svg">
+	  </a>
+	  <a href="https://hub.docker.com/r/zricethezav/gitleaks">
+		  <img src="https://img.shields.io/docker/pulls/zricethezav/gitleaks.svg" />
+	  </a>
+	  <a href="https://github.com/zricethezav/gitleaks-action">
+        	<img alt="gitleaks badge" src="https://img.shields.io/badge/protected%20by-gitleaks-blue">
+    	 </a>
+	  <a href="https://twitter.com/intent/follow?screen_name=zricethezav">
+		  <img src="https://img.shields.io/twitter/follow/zricethezav?label=Follow%20zricethezav&style=social&color=blue" alt="Follow @zricethezav" />
+	  </a>
+  </p>
+</p>
 
-## 🚀 2050 Cyberpunk Command Center
+### Join our Discord! [![Discord](https://img.shields.io/discord/1102689410522284044.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/8Hzbrnkr7E)
 
-The system features an **ultimate futuristic command center** built with React + TypeScript:
+Gitleaks is a SAST tool for **detecting** and **preventing** hardcoded secrets like passwords, api keys, and tokens in git repos. Gitleaks is an **easy-to-use, all-in-one solution** for detecting secrets, past or present, in your code.
 
-- **Cyberpunk Aesthetic**: Electric blue, neon orange, matrix green color palette
-- **Holographic Visualizations**: Three.js powered 3D displays and interactive elements  
-- **Real-time Monitoring**: Live agent status, system metrics, performance analytics
-- **Voice Control**: AI-powered commands with OpenAI Whisper integration
-- **Multi-Agent Communication**: Unified chat interface and command execution
-- **Advanced Navigation**: Six-panel interface (Overview, Operations, Data, Commerce, Agents, Settings)
+```
+➜  ~/code(master) gitleaks detect --source . -v
 
-## 🏗️ Royal EQ MCP Server
+    ○
+    │╲
+    │ ○
+    ○ ░
+    ░    gitleaks
 
-This repository includes a comprehensive **Model Context Protocol (MCP) server** that enables:
 
-- **Multi-Platform Integration**: Shopify GraphQL, BigQuery, Supabase, Git repositories, and orchestrator APIs
-- **Enterprise Security**: HMAC authentication, circuit breakers, rate limiting
-- **Self-Healing Architecture**: Auto-retry, connection pooling, graceful degradation  
-- **Comprehensive Testing**: Unit tests, integration tests, contract compliance
-- **Production Ready**: Logging, metrics, health checks, and monitoring
+Finding:     "export BUNDLE_ENTERPRISE__CONTRIBSYS__COM=example:example",
+Secret:      example:example
+RuleID:      sidekiq-secret
+Entropy:     2.609850
+File:        cmd/generate/config/rules/sidekiq.go
+Line:        23
+Commit:      cd5226711335c68be1e720b318b7bc3135a30eb2
+Author:      John
+Email:       john@users.noreply.github.com
+Date:        2022-08-03T12:31:40Z
+Fingerprint: cd5226711335c68be1e720b318b7bc3135a30eb2:cmd/generate/config/rules/sidekiq.go:sidekiq-secret:23
+```
 
-### MCP Server Quick Start
+## Getting Started
+
+Gitleaks can be installed using Homebrew, Docker, or Go. Gitleaks is also available in binary form for many popular platforms and OS types on the [releases page](https://github.com/zricethezav/gitleaks/releases). In addition, Gitleaks can be implemented as a pre-commit hook directly in your repo or as a GitHub action using [Gitleaks-Action](https://github.com/gitleaks/gitleaks-action).
+
+### Installing
 
 ```bash
-# Install MCP server dependencies
-pip install -r requirements.txt
+# MacOS
+brew install gitleaks
 
-# Set up environment variables
-export SHOPIFY_GRAPHQL_ENDPOINT="https://your-shop.myshopify.com/admin/api/2024-01/graphql.json"
-export SHOPIFY_GRAPHQL_TOKEN="your-shopify-token"
-export BIGQUERY_PROJECT_ID="your-bigquery-project"
-export SUPABASE_URL="https://your-project.supabase.co"
-export SUPABASE_SERVICE_ROLE_KEY="your-supabase-key"
-export ORCHESTRATOR_BASE_URL="http://localhost:5000"
-export ORCHESTRATOR_HMAC_KEY="your-hmac-key"
-export REPO_ROOT="/path/to/your/repo"
+# Docker (DockerHub)
+docker pull zricethezav/gitleaks:latest
+docker run -v ${path_to_host_folder_to_scan}:/path zricethezav/gitleaks:latest [COMMAND] --source="/path" [OPTIONS]
 
-# Run the MCP server
-python -m royal_mcp
+# Docker (ghcr.io)
+docker pull ghcr.io/gitleaks/gitleaks:latest
+docker run -v ${path_to_host_folder_to_scan}:/path ghcr.io/gitleaks/gitleaks:latest [COMMAND] --source="/path" [OPTIONS]
+
+# From Source
+git clone https://github.com/gitleaks/gitleaks.git
+cd gitleaks
+make build
 ```
 
-### Updated Architecture (v2.0)
+### GitHub Action
+
+Check out the official [Gitleaks GitHub Action](https://github.com/gitleaks/gitleaks-action)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    2050 CYBERPUNK COMMAND CENTER               │
-│  React + TypeScript + Three.js + D3.js + Framer Motion       │
-│  Pages: Overview │ Operations │ Data │ Commerce │ Agents      │
-│  Features: Voice Control │ Real-time WebSocket │ 3D Holo     │
-└─────────────────┬───────────────────────────────────────────────┘
-                  │
-                  ▼ HTTP/WebSocket
-┌─────────────────────────────────────────────────────────────────┐
-│                    CLOUDFLARE WORKER PROXY                     │
-│  Routes: /health │ /api/* (proxy) │ /admin/* (SPA)           │
-│  Hono Framework  │  Environment-aware deployment             │
-└─────────────────┬───────────────────────────────────────────────┘
-                  │
-                  ▼ Proxy to FLASK_API_URL
-┌─────────────────────────────────────────────────────────────────┐
-│                     FLASK BACKEND (NEW!)                      │
-│  WSGI: Gunicorn production server │ Circuit breakers         │
-│  Health: /healthz, /readyz │ Metrics │ Events │ Agent APIs   │
-│  Features: SSE Streaming │ Fallback patterns │ Monitoring    │
-└─────────────────────────────────────────────────────────────────┘
-                  │
-                  ▼
-   ┌────────────────────────────────────────────┐
-   │           Orchestrator (preserved)         │
-   │  • registers agents & schedules runs       │
-   │  • exposes health information              │
-   │  • monitors agents and restarts on failure│
-   └────────────────────────────────────────────┘
-          ▲               ▲            ▲
-          │               │            │
-┌───────────────────────┐  │  ┌─────────────────────────┐
-│ Product Research     │  │  │ Inventory Forecasting  │
-│ (news scraping)      │  │  │ (Prophet + Shopify)    │
-└───────────────────────┘  │  └─────────────────────────┘
-          │               │            │
-          │               │            │
-          ▼               ▼            ▼
-┌───────────────────────┐     ┌─────────────────────────┐
-│ Pricing Optimizer     │     │ Marketing Automation    │
-│ (competitor scrape)   │     │ (email campaigns)       │
-└───────────────────────┘     └─────────────────────────┘
-          │                        │
-          ▼                        ▼
-┌───────────────────────┐     ┌──────────────────────────┐
-│ Customer Support      │     │ Order Management         │
-│ (OpenAI Chat)         │     │ (fulfilment, returns)     │
-└───────────────────────┘     └──────────────────────────┘
+name: gitleaks
+on: [pull_request, push, workflow_dispatch]
+jobs:
+  scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
 ```
 
-## Quick Start
+### Pre-Commit
 
-### Development Setup
+1. Install pre-commit from https://pre-commit.com/#install
+2. Create a `.pre-commit-config.yaml` file at the root of your repository with the following content:
 
-1. **Clone the repository**
-
-   ```bash
-   git clone git@github.com:Skidaw23/royal-equips-orchestrator.git
-   cd royal-equips-orchestrator
+   ```
+   repos:
+     - repo: https://github.com/gitleaks/gitleaks
+       rev: v8.16.1
+       hooks:
+         - id: gitleaks
    ```
 
-2. **Setup development environment**
+   for a [native execution of GitLeaks](https://github.com/zricethezav/gitleaks/releases) or use the [`gitleaks-docker` pre-commit ID](https://github.com/zricethezav/gitleaks/blob/master/.pre-commit-hooks.yaml) for executing GitLeaks using the [official Docker images](#docker)
 
-   ```bash
-   # Using the enhanced Makefile
-   make setup
-   
-   # Or manually:
-   python3 -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   pip install -e ".[dev]"  # Install with dev dependencies
-   ```
-
-3. **Environment configuration**
-
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. **Run quality checks** 
-
-   ```bash
-   # Run the complete CI pipeline locally
-   make ci
-   
-   # Or individual commands:
-   make format     # Format code with black and ruff
-   make lint       # Run ruff linting
-   make typecheck  # Run mypy type checking
-   make test       # Run pytest tests
-   make coverage   # Run tests with coverage
-   make scan       # Run security scans (bandit, vulture)
-   ```
-
-5. **Run the applications**
-
-   ```bash
-   # Start Flask backend server
-   make run
-   
-   # Start Holographic Control Center
-   make dashboard
-   
-   # Start Cloudflare Worker (local)
-   npx wrangler dev --local --port 8787
-   ```
-
-### MCP Server Development
-
-The Royal EQ MCP server provides enterprise-grade connectors for multiple platforms:
-
-```bash
-# Test the MCP server
-python -m pytest tests/mcp/ -v
-
-# Run a specific connector test
-python -m pytest tests/mcp/test_shopify_connector.py -v
-
-# Test with coverage
-make coverage
-
-# Run integration tests
-python -m pytest tests/mcp/test_integration.py -m integration -v
-```
-
-### Pre-commit Hooks
-
-Set up pre-commit hooks to ensure code quality:
-
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-This will run the following checks on every commit:
-- Code formatting (black, ruff)
-- Type checking (mypy)  
-- Security scanning (bandit)
-- Basic test validation
-
-## Production Deployment
-   cd admin && npm run dev
-   ```
-
-5. **Access the interfaces**
-
-   - **2050 Cyberpunk Command Center**: http://localhost:3000/admin/
-   - **Worker Proxy Health**: http://localhost:8787/health
-   - **Flask Backend API**: http://localhost:10000/healthz
-   - **Flask API Docs**: http://localhost:10000/docs
-
-### Production Deployment
-
-#### Flask Backend Deployment
-
-The Flask application is designed for production deployment with Gunicorn:
-
-```bash
-# Production deployment with Gunicorn WSGI server
-gunicorn --bind 0.0.0.0:10000 --workers 2 --worker-class sync wsgi:app
-
-# Or using Docker (recommended)
-docker build -t royal-equips-orchestrator .
-docker run -p 10000:10000 -e FLASK_ENV=production royal-equips-orchestrator
-
-# Or using docker-compose
-docker compose up --build
-```
-
-#### Health Check Endpoints
-
-The Flask application provides comprehensive health monitoring:
-
-- `GET /healthz` - Lightweight liveness probe (returns "ok")
-- `GET /readyz` - Comprehensive readiness check with dependency verification  
-- `GET /health` - Legacy endpoint for backward compatibility
-- `GET /metrics` - System metrics (requests, errors, uptime, sessions)
-
-#### Render Deployment
-
-Updated render.yaml configuration for Flask:
-
-```bash
-# Deploy to Render (automatically triggered via GitHub)
-git push origin main
-
-# Manual deployment trigger
-curl -X POST https://api.render.com/v1/services/YOUR_SERVICE_ID/deploys \
-  -H "Authorization: Bearer $RENDER_API_KEY"
-```
-
-**Environment Variables for Render:**
-- `FLASK_ENV=production`
-- `PORT=10000` 
-- External API keys (Shopify, OpenAI, GitHub, BigQuery)
-- Feature flags (ENABLE_METRICS, ENABLE_STREAMING)
-
-#### Cloudflare Worker Deployment
-
-The Worker proxy configuration remains the same but now points to Flask backend:
-
-```bash
-# Deploy to staging
-npx wrangler deploy -e staging
-
-# Deploy to production  
-npx wrangler deploy -e production
-
-# Update Worker environment to point to Flask backend
-npx wrangler secret put PYTHON_API_URL -e production
-# Enter: https://your-flask-backend.onrender.com
-```
-
-#### Command Center Build & Deployment
-
-```bash
-cd admin
-
-# Build for production
-npm run build
-
-# Preview production build locally
-npm run preview
-
-# Deploy static assets to CDN/hosting platform
-# Built files are in admin/dist/ directory
-```
-
-## Why AI Agents?
-
-Traditional automation scripts are brittle and require constant human
-supervision. Agentic AI operates autonomously: it learns from data,
-perceives its environment and takes context‑aware actions without
-continuous prompts【296456843594602†L371-L375】. By forecasting demand to prevent
-stock‑outs, analyzing customer behavior and competitor pricing, and
-adjusting prices in real time【296456843594602†L371-L375】, AI agents can dramatically
-improve cash flow and agility. Multi‑agent orchestration makes it
-possible to coordinate specialized agents across disparate systems and
-legacy APIs, something traditional integrations struggle with【571575397346020†L49-L75】.
-
-## Features
-
-* **Modular Multi‑Agent Architecture** – The orchestrator manages
-  agents for product research, demand forecasting, pricing optimization,
-  marketing automation, customer support and order management. Each
-  agent encapsulates domain‑specific logic and runs on its own schedule.
-
-* **Self‑Healing & Fault Tolerance** – A health monitor periodically
-  checks agent status and restarts tasks on failure. Loosely coupled
-  agents make the system fault‑tolerant and extensible【571575397346020†L109-L117】.
-
-* **Demand Forecasting** – Integrates with Shopify via GraphQL to
-  retrieve historical order data and uses Prophet to predict future
-  sales. Accurate forecasting helps prevent stock‑outs and excess
-  inventory【296456843594602†L371-L375】.
-
-* **Dynamic Pricing** – Scrapes competitor prices and updates
-  Shopify product variants via GraphQL mutations. Pricing strategies
-  adjust margins automatically to stay competitive while protecting
-  profitability.
-
-* **Marketing Automation** – Generates email campaigns based on
-  trending products and inventory insights. Supports Shopify Email or
-  custom SMTP providers.
-
-* **AI‑Powered Customer Support** – Handles support tickets using
-  OpenAI’s Chat API. Produces context‑aware responses that reduce
-  response times and scale support without additional headcount.
-
-* **Order Management & Fulfilment** – Monitors unfulfilled orders,
-  captures payments, triggers fulfilment and handles returns via
-  Shopify’s REST API.
-
-* **Digital Command Center** – A React-powered cyberpunk interface
-  that provides real-time visualization of agent status, system metrics,
-  trending keywords, demand forecasts, price adjustments, campaign
-  history, support activity and order processing. Features voice control,
-  3D holographic displays, and manual agent execution controls.
-
-* **API Service** – A Flask application exposes endpoints to check
-  health or trigger agents, enabling integration with other systems or
-  automation pipelines.
-
-* **Containerized Deployment** – A production‑ready `Dockerfile` and
-  `docker‑compose.yml` simplify local development, testing and cloud
-  deployments. Environment variables are managed via `.env` files.
-
-## Architecture
+3. Auto-update the config to the latest repos' versions by executing `pre-commit autoupdate`
+4. Install with `pre-commit install`
+5. Now you're all set!
 
 ```
-┌───────────────────────┐     ┌─────────────────────────┐
-│  Product Research     │──┐  │  Inventory Forecasting  │
-│  (news scraping)      │  │  │  (Prophet + Shopify)    │
-└───────────────────────┘  │  └─────────────────────────┘
-          │               │            │
-          │               │            │
-          ▼               ▼            ▼
-   ┌────────────────────────────────────────────┐
-   │           Orchestrator (async)             │
-   │  • registers agents & schedules runs       │
-   │  • exposes health information              │
-   │  • monitors agents and restarts on failure│
-   └────────────────────────────────────────────┘
-          ▲               ▲            ▲
-          │               │            │
-┌───────────────────────┐  │  ┌─────────────────────────┐
-│ Pricing Optimizer     │──┘  │ Marketing Automation    │
-│ (competitor scrape)   │     │ (email campaigns)       │
-└───────────────────────┘     └─────────────────────────┘
-          │                        │
-          ▼                        ▼
-┌───────────────────────┐     ┌──────────────────────────┐
-│ Customer Support      │     │ Order Management         │
-│ (OpenAI Chat)         │     │ (fulfilment, returns)     │
-└───────────────────────┘     └──────────────────────────┘
-          │                        │
-          └──────────► Control Center ◄──────────────┘
+➜ git commit -m "this commit contains a secret"
+Detect hardcoded secrets.................................................Failed
 ```
 
-## Quick Start
+Note: to disable the gitleaks pre-commit hook you can prepend `SKIP=gitleaks` to the commit command
+and it will skip running gitleaks
 
-1. **Clone the repository**
-
-   ```bash
-   git clone git@github.com:Skidaw23/royal-equips-orchestrator.git
-   cd royal-equips-orchestrator
-   ```
-
-2. **Create a `.env` file** by copying `.env.example` and filling
-   in your secrets:
-
-   ```bash
-   cp .env.example .env
-   # edit .env with your Shopify and OpenAI credentials
-   ```
-
-3. **Run with Docker Compose** (recommended for production/testing):
-
-   ```bash
-   docker compose up --build
-   ```
-
-   This will start two services:
-   * `orchestrator` – Flask application on `localhost:10000`.
-   * `control-center` – Holographic Control Center on `localhost:8501`.
-
-4. **Run locally without Docker**:
-
-   ```bash
-   python3 -m venv venv
-   . venv/bin/activate
-   pip install --upgrade pip -r requirements.txt
-   export $(grep -v '^#' .env | xargs)
-   python wsgi.py
-   ```
-
-5. **Access the command center**:
-
-   ```bash
-   # Access the React Command Center
-   cd admin && npm run dev
-   # Then visit: http://localhost:3000/admin/
-   ```
-
-## Docker Deployment
-
-Launch the complete system with Docker:
-
-```bash
-# Launch orchestrator backend and React command center
-docker compose up --build
+```
+➜ SKIP=gitleaks git commit -m "skip gitleaks check"
+Detect hardcoded secrets................................................Skipped
 ```
 
-Access points:
-- **Command Center**: http://localhost:3000/admin/
-- **API Backend**: http://localhost:10000/healthz
+## Usage
 
-## Accessing the Command Center
+```
+Usage:
+  gitleaks [command]
 
-### Production Deployment via Render
+Available Commands:
+  completion  generate the autocompletion script for the specified shell
+  detect      detect secrets in code
+  help        Help about any command
+  protect     protect secrets in code
+  version     display gitleaks version
 
-When deployed using the `render.yaml` blueprint, the system provides:
+Flags:
+  -b, --baseline-path string       path to baseline with issues that can be ignored
+  -c, --config string              config file path
+                                   order of precedence:
+                                   1. --config/-c
+                                   2. env var GITLEAKS_CONFIG
+                                   3. (--source/-s)/.gitleaks.toml
+                                   If none of the three options are used, then gitleaks will use the default config
+      --exit-code int              exit code when leaks have been encountered (default 1)
+  -h, --help                       help for gitleaks
+  -l, --log-level string           log level (trace, debug, info, warn, error, fatal) (default "info")
+      --max-target-megabytes int   files larger than this will be skipped
+      --no-color                   turn off color for verbose output
+      --no-banner                  suppress banner
+      --redact                     redact secrets from logs and stdout
+  -f, --report-format string       output format (json, csv, junit, sarif) (default "json")
+  -r, --report-path string         report file
+  -s, --source string              path to source (default ".")
+  -v, --verbose                    show verbose output from scan
 
-1. **orchestrator-api**: Docker-based Flask service
-2. **control-center**: Python runtime service (uses Flask with minimal deps)
+Use "gitleaks [command] --help" for more information about a command.
+```
 
-**Deployment Process**:
-1. **Deploy to Render** using the blueprint configuration in `render.yaml`
-2. **Access the API**: Navigate to Render Dashboard → Services → `control-center` → click the public URL
-3. **Environment Variables**: The following variables are configured in the blueprint:
-   - `APP_TYPE=flask` - Specifies Flask mode
-   - `APP_PATH=wsgi:app` - Specifies the app entry point
-   - Service-specific secrets: `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOP_NAME`, `OPENAI_API_KEY`, etc.
+### Commands
 
-**Important**: The `control-center` service uses `requirements-minimal.txt` to ensure fast builds and reliable deployment on Render's Python runtime.
+There are two commands you will use to detect secrets; `detect` and `protect`.
 
-## Environment Variables
+#### Detect
 
-The orchestrator relies on several environment variables. See
-`.env.example` for a full list. The critical ones are:
+The `detect` command is used to scan repos, directories, and files. This command can be used on developer machines and in CI environments.
 
-| Variable            | Purpose                                            |
-|--------------------|----------------------------------------------------|
-| `APP_TYPE`         | Application type (`flask`, `fastapi`, `streamlit`, `auto`)  |
-| `APP_PATH`         | Application entry point (e.g. `wsgi:app`)     |
-| `SHOPIFY_API_KEY`   | API key for your custom Shopify app               |
-| `SHOPIFY_API_SECRET`| API secret/password for your Shopify app          |
-| `SHOP_NAME`         | Your store's subdomain (e.g. `my-shop`)           |
-| `OPENAI_API_KEY`    | API key for OpenAI’s Chat API (support agent)     |
-| `GITHUB_TOKEN`      | GitHub API token for operations                   |
-| `DATABASE_URL`      | Optional connection string for persistent storage |
+When running `detect` on a git repository, gitleaks will parse the output of a `git log -p` command (you can see how this executed
+[here](https://github.com/zricethezav/gitleaks/blob/7240e16769b92d2a1b137c17d6bf9d55a8562899/git/git.go#L17-L25)).
+[`git log -p` generates patches](https://git-scm.com/docs/git-log#_generating_patch_text_with_p) which gitleaks will use to detect secrets.
+You can configure what commits `git log` will range over by using the `--log-opts` flag. `--log-opts` accepts any option for `git log -p`.
+For example, if you wanted to run gitleaks on a range of commits you could use the following command: `gitleaks detect --source . --log-opts="--all commitA..commitB"`.
+See the `git log` [documentation](https://git-scm.com/docs/git-log) for more information.
 
-### Command Center Configuration
+You can scan files and directories by using the `--no-git` option.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VITE_API_URL` | `http://localhost:8000` | Backend API endpoint for React app |
-| `VITE_WEBSOCKET_URL` | `ws://localhost:8000/ws` | WebSocket endpoint for real-time features |
+If you want to run only specific rules you can do so by using the `--enable-rule` option (with a rule ID as a parameter), this flag can be used multiple times. For example: `--enable-rule=atlassian-api-token` will only apply that rule. You can find a list of rules [here](config/gitleaks.toml).
 
-## Logging and Health Checks
+#### Protect
 
-The orchestrator includes intelligent log filtering to reduce noise from
-health check probes and other routine requests, especially important when
-deployed on platforms like Render that frequently hit health endpoints.
+The `protect` command is used to scan uncommitted changes in a git repo. This command should be used on developer machines in accordance with
+[shifting left on security](https://cloud.google.com/architecture/devops/devops-tech-shifting-left-on-security).
+When running `protect` on a git repository, gitleaks will parse the output of a `git diff` command (you can see how this executed
+[here](https://github.com/zricethezav/gitleaks/blob/7240e16769b92d2a1b137c17d6bf9d55a8562899/git/git.go#L48-L49)). You can set the
+`--staged` flag to check for changes in commits that have been `git add`ed. The `--staged` flag should be used when running Gitleaks
+as a pre-commit.
 
-### Health Check Logging Behavior
+**NOTE**: the `protect` command can only be used on git repos, running `protect` on files or directories will result in an error message.
 
-By default, Render's health checks continuously hit `/health`, which can
-quickly fill logs with repetitive "GET /health 200 OK" entries. The
-orchestrator automatically suppresses these access log entries while
-preserving error logs and normal traffic logs.
+### Creating a baseline
 
-### Environment Variables for Logging Control
+When scanning large repositories or repositories with a long history, it can be convenient to use a baseline. When using a baseline,
+gitleaks will ignore any old findings that are present in the baseline. A baseline can be any gitleaks report. To create a gitleaks report, run gitleaks with the `--report-path` parameter.
 
-| Variable               | Default | Purpose                                          |
-|------------------------|---------|--------------------------------------------------|
-| `SUPPRESS_HEALTH_LOGS` | `true`  | When `true`, suppresses access logs for `/health`, `HEAD /`, and `/favicon.ico` requests |
-| `DISABLE_ACCESS_LOG`   | `false` | When `true`, completely disables uvicorn access logging |
-| `LOG_LEVEL`            | `info`  | Sets log level for uvicorn (`debug`, `info`, `warning`, `error`, `critical`) |
+```
+gitleaks detect --report-path gitleaks-report.json # This will save the report in a file called gitleaks-report.json
+```
 
-### Minimal Noise-Reduction Routes
+Once as baseline is created it can be applied when running the detect command again:
 
-To prevent common 404 errors that add noise to logs, the orchestrator provides:
+```
+gitleaks detect --baseline-path gitleaks-report.json --report-path findings.json
+```
 
-- **GET /** - Returns basic service status: `{"service": "orchestrator", "status": "ok", "version": "..."}`
-- **GET|HEAD /favicon.ico** - Returns 204 No Content to prevent browser favicon requests from generating 404s
+After running the detect command with the --baseline-path parameter, report output (findings.json) will only contain new issues.
 
-These routes are provided purely to reduce log noise and are not intended
-as application features. The main health check endpoint remains `/health`.
+### Verify Findings
 
-### Deployment Considerations
+You can verify a finding found by gitleaks using a `git log` command.
+Example output:
 
-The log filtering system works automatically with Render's deployment pattern
-using import strings (e.g., `scripts.run_orchestrator:app`). The filters are
-installed at module import time, so no changes to startup commands are needed.
+```
+Finding:     aws_secret="your_aws_access_key_here"
+RuleID:      aws-access-token
+Secret       your_aws_access_key_here
+Entropy:     3.65
+File:        checks_test.go
+Line:        37
+Commit:      ec2fc9d6cb0954fb3b57201cf6133c48d8ca0d29
+Author:      Zachary Rice
+Email:       z@email.com
+Date:        2018-01-28T17:39:00Z
+Fingerprint: ec2fc9d6cb0954fb3b57201cf6133c48d8ca0d29:checks_test.go:aws-access-token:37
+```
 
-Error logs from uvicorn are never suppressed, ensuring that real issues
-remain visible in your monitoring systems.
+We can use the following format to verify the leak:
 
-## Scaling & Evolution
+```
+git log -L {StartLine,EndLine}:{File} {Commit}
+```
 
-The orchestrator is designed to scale horizontally. Agents are
-loosely coupled and can be distributed across multiple workers with
-async message queues like RabbitMQ or Redis. New agents can be added
-simply by subclassing `AgentBase` and registering them in the
-orchestrator. Future work could include auto‑evolution strategies such
-as periodically retraining models on new data, or dynamically
-discovering and incorporating new market signals.
+So in this example it would look like:
 
-## Security & Privacy
+```
+git log -L 37,37:checks_test.go ec2fc9d6cb0954fb3b57201cf6133c48d8ca0d29
+```
 
-Do **not** commit your `.env` file or any secrets to version control.
-All credentials should be supplied via environment variables or secret
-stores. The orchestrator uses HTTPS when communicating with Shopify
-and OpenAI. Additional layers such as request signing, audit logging,
-and rate limiting can be added depending on deployment requirements.
+Which gives us:
 
-### Continuous Security
+```
+commit ec2fc9d6cb0954fb3b57201cf6133c48d8ca0d29
+Author: zricethezav <thisispublicanyways@gmail.com>
+Date:   Sun Jan 28 17:39:00 2018 -0500
 
-Security is treated as a first‑class citizen in this repository. In addition
-to coding best practices and dependency management, the project includes
-automated security scans:
+    [update] entropy check
 
-* **Runtime security job** – The `render.yaml` blueprint defines a
-  `security-scan` cron job that executes `scripts/run_security_checks.py`
-  every day at 02:00 UTC. The script dynamically installs the latest
-  versions of the static analysis tool Bandit and the dependency
-  vulnerability scanner pip‑audit, runs them against the source code and
-  `requirements.txt`, and emits a consolidated JSON report. Non‑zero exit
-  codes signal potential security issues.
-* **Security report** – Scan results are written to `security_report.json`
-  and printed to the Render log stream. This enables continuous
-  monitoring and allows you to configure alerts via Render’s log
-  subscriptions.
-* **Environment isolation** – The security tools are only installed
-  in the short‑lived container that executes the scan. They are not part
-  of the runtime image used by the web services.
+diff --git a/checks_test.go b/checks_test.go
+--- a/checks_test.go
++++ b/checks_test.go
+@@ -28,0 +37,1 @@
++               "aws_secret= \"your_aws_access_key_here\"":          true,
 
-Remember to review the security reports and address findings promptly.
+```
 
-## License
+## Pre-Commit hook
 
-This project is provided under the MIT License. See `LICENSE` for
-details.
+You can run Gitleaks as a pre-commit hook by copying the example `pre-commit.py` script into
+your `.git/hooks/` directory.
+
+## Configuration
+
+Gitleaks offers a configuration format you can follow to write your own secret detection rules:
+
+```toml
+# Title for the gitleaks configuration file.
+title = "Gitleaks title"
+
+# Extend the base (this) configuration. When you extend a configuration
+# the base rules take precedence over the extended rules. I.e., if there are
+# duplicate rules in both the base configuration and the extended configuration
+# the base rules will override the extended rules.
+# Another thing to know with extending configurations is you can chain together
+# multiple configuration files to a depth of 2. Allowlist arrays are appended
+# and can contain duplicates.
+# useDefault and path can NOT be used at the same time. Choose one.
+[extend]
+# useDefault will extend the base configuration with the default gitleaks config:
+# https://github.com/zricethezav/gitleaks/blob/master/config/gitleaks.toml
+useDefault = true
+# or you can supply a path to a configuration. Path is relative to where gitleaks
+# was invoked, not the location of the base config.
+path = "common_config.toml"
+
+# An array of tables that contain information that define instructions
+# on how to detect secrets
+[[rules]]
+
+# Unique identifier for this rule
+id = "awesome-rule-1"
+
+# Short human readable description of the rule.
+description = "awesome rule 1"
+
+# Golang regular expression used to detect secrets. Note Golang's regex engine
+# does not support lookaheads.
+regex = '''one-go-style-regex-for-this-rule'''
+
+# Golang regular expression used to match paths. This can be used as a standalone rule or it can be used
+# in conjunction with a valid `regex` entry.
+path = '''a-file-path-regex'''
+
+# Array of strings used for metadata and reporting purposes.
+tags = ["tag","another tag"]
+
+# Int used to extract secret from regex match and used as the group that will have
+# its entropy checked if `entropy` is set.
+secretGroup = 3
+
+# Float representing the minimum shannon entropy a regex group must have to be considered a secret.
+entropy = 3.5
+
+# Keywords are used for pre-regex check filtering. Rules that contain
+# keywords will perform a quick string compare check to make sure the
+# keyword(s) are in the content being scanned. Ideally these values should
+# either be part of the idenitifer or unique strings specific to the rule's regex
+# (introduced in v8.6.0)
+keywords = [
+  "auth",
+  "password",
+  "token",
+]
+
+# You can include an allowlist table for a single rule to reduce false positives or ignore commits
+# with known/rotated secrets
+[rules.allowlist]
+description = "ignore commit A"
+commits = [ "commit-A", "commit-B"]
+paths = [
+  '''go\.mod''',
+  '''go\.sum'''
+]
+# note: (rule) regexTarget defaults to check the _Secret_ in the finding.
+# if regexTarget is not specified then _Secret_ will be used.
+# Acceptable values for regexTarget are "match" and "line"
+regexTarget = "match"
+regexes = [
+  '''process''',
+  '''getenv''',
+]
+# note: stopwords targets the extracted secret, not the entire regex match
+# like 'regexes' does. (stopwords introduced in 8.8.0)
+stopwords = [
+  '''client''',
+  '''endpoint''',
+]
+
+
+# This is a global allowlist which has a higher order of precedence than rule-specific allowlists.
+# If a commit listed in the `commits` field below is encountered then that commit will be skipped and no
+# secrets will be detected for said commit. The same logic applies for regexes and paths.
+[allowlist]
+description = "global allow list"
+commits = [ "commit-A", "commit-B", "commit-C"]
+paths = [
+  '''gitleaks\.toml''',
+  '''(.*?)(jpg|gif|doc)'''
+]
+
+# note: (global) regexTarget defaults to check the _Secret_ in the finding.
+# if regexTarget is not specified then _Secret_ will be used.
+# Acceptable values for regexTarget are "match" and "line"
+regexTarget = "match"
+
+regexes = [
+  '''219-09-9999''',
+  '''078-05-1120''',
+  '''(9[0-9]{2}|666)-\d{2}-\d{4}''',
+]
+# note: stopwords targets the extracted secret, not the entire regex match
+# like 'regexes' does. (stopwords introduced in 8.8.0)
+stopwords = [
+  '''client''',
+  '''endpoint''',
+]
+```
+
+Refer to the default [gitleaks config](https://github.com/zricethezav/gitleaks/blob/master/config/gitleaks.toml) for examples or follow the [contributing guidelines](https://github.com/gitleaks/gitleaks/blob/master/CONTRIBUTING.md) if you would like to contribute to the default configuration. Additionally, you can check out [this gitleaks blog post](https://blog.gitleaks.io/stop-leaking-secrets-configuration-2-3-aeed293b1fbf) which covers advanced configuration setups.
+
+### Additional Configuration
+
+#### gitleaks:allow
+
+If you are knowingly committing a test secret that gitleaks will catch you can add a `gitleaks:allow` comment to that line which will instruct gitleaks
+to ignore that secret. Ex:
+
+```
+class CustomClass:
+    discord_client_secret = '8dyfuiRyq=vVc3RRr_edRk-fK__JItpZ'  #gitleaks:allow
+
+```
+
+#### .gitleaksignore
+
+You can ignore specific findings by creating a `.gitleaksignore` file at the root of your repo. In release v8.10.0 Gitleaks added a `Fingerprint` value to the Gitleaks report. Each leak, or finding, has a Fingerprint that uniquely identifies a secret. Add this fingerprint to the `.gitleaksignore` file to ignore that specific secret. See Gitleaks' [.gitleaksignore](https://github.com/zricethezav/gitleaks/blob/master/.gitleaksignore) for an example. Note: this feature is experimental and is subject to change in the future.
+
+## Sponsorships
+<p align="left">
+	<h3><a href="https://coderabbit.ai/?utm_source=oss&utm_medium=sponsorship&utm_campaign=gitleaks">coderabbit.ai</h3>
+	  <a href="https://coderabbit.ai/?utm_source=oss&utm_medium=sponsorship&utm_campaign=gitleaks">
+		  <img alt="CodeRabbit.ai Sponsorship" src="https://github.com/gitleaks/gitleaks/assets/15034943/76c30a85-887b-47ca-9956-17a8e55c6c41" width=200>
+	  </a>
+</p>
+<p align="left">
+	  <a href="https://www.tines.com/?utm_source=oss&utm_medium=sponsorship&utm_campaign=gitleaks">
+		  <img alt="Tines Sponsorship" src="https://user-images.githubusercontent.com/15034943/146411864-4878f936-b4f7-49a0-b625-f9f40c704bfa.png" width=200>
+	  </a>
+  </p>
+
+
+## Exit Codes
+
+You can always set the exit code when leaks are encountered with the --exit-code flag. Default exit codes below:
+
+```
+0 - no leaks present
+1 - leaks or error encountered
+126 - unknown flag
+```

@@ -8,6 +8,12 @@ __pycache__/
 *.pyd
 *.swp
 
+# Security scanning artifacts
+gitleaks
+gitleaks.tar.gz
+results.sarif
+clean-results.json
+
 # Build artifacts and dependencies
 src/
 *.egg-info/
