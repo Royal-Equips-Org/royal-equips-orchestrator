@@ -79,7 +79,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
 
 # Supabase
 export SUPABASE_URL="https://your-project.supabase.co"
-export SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+export SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key-here"
 
 # Royal Equips Orchestrator
 export ORCHESTRATOR_BASE_URL="https://your-orchestrator.herokuapp.com"
@@ -104,7 +104,7 @@ Add to your GitHub Copilot MCP configuration file:
         "SHOPIFY_GRAPHQL_TOKEN": "shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         "BIGQUERY_PROJECT_ID": "royal-commerce-ai",
         "SUPABASE_URL": "https://your-project.supabase.co",
-        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "SUPABASE_SERVICE_ROLE_KEY": "your-supabase-service-role-key-here",
         "ORCHESTRATOR_BASE_URL": "https://your-orchestrator.herokuapp.com",
         "ORCHESTRATOR_HMAC_KEY": "your-secret-hmac-key-here",
         "REPO_ROOT": "/workspaces/royal-equips-orchestrator"
