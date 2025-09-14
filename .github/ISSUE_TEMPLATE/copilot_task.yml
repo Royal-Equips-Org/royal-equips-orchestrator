@@ -1,0 +1,23 @@
+﻿name: Copilot Task
+description: Structured task for Copilot Builder
+title: "[Copilot] "
+labels: ["copilot","automation"]
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should be built or fixed?
+      placeholder: e.g., Implement order_router -> fulfillment pipeline with retries
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      placeholder: List concrete checks CI or runtime must satisfy
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope & Constraints
+      placeholder: Touch only platform/agents/order_router.py and fulfillment.py; add tests
