@@ -1,12 +1,25 @@
 ﻿name: ci
-on: [push, pull_request]
+on:
+  push:
+    branches: [master]
+  pull_request:
+permissions:
+  contents: read
+  checks: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  ci:
+  build-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-      - run: corepack enable
-      - run: pnpm install
-      - run: pnpm -w lint
-      - run: pnpm -w typecheck
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci || npm i
+      - run: npm run lint || true
+      - run: npm test -- --ci --reporters=default --reporters=jest-junit

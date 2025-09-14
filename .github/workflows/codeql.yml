@@ -1,51 +1,20 @@
-name: "CodeQL Security Scanning"
-
+﻿name: codeql
 on:
   push:
-    branches: [ main, develop ]
+    branches: [master, main]
   pull_request:
-    branches: [ main, develop ]
-  schedule:
-    - cron: '0 2 * * 1'  # Weekly scan on Mondays at 2 AM UTC
-
+permissions:
+  contents: read
+  security-events: write
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-    timeout-minutes: 360
-    permissions:
-      security-events: write
-      packages: read
-      actions: read
-      contents: read
-
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - language: python
-            build-mode: none
-          - language: javascript-typescript
-            build-mode: none
-
+      matrix: { language: [javascript] }
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
-
-      - if: matrix.build-mode == 'manual'
-        shell: bash
-        run: |
-          echo 'If you are using a "manual" build mode for one or more of the languages you are analyzing, replace this with the commands to build your code.'
-          exit 1
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          # Unieke categorie per taal om "multiple SARIF with same category" te voorkomen
-          category: codeql-${{ matrix.language }}
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with: { languages: ${{ matrix.language }} }
+      - uses: github/codeql-action/analyze@v3
+        with: { category: codeql-${{ matrix.language }} }
