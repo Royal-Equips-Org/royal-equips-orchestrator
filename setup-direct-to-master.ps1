@@ -1,21 +1,20 @@
-#requires -Version 7
+#requires -Version 5
 $ErrorActionPreference = "Stop"
 
-# -------- CONFIG --------
-$ORG="Royal-Equips-Org"
-$REPO="Royal-Equips-Orchestrator"
-$BRANCH="master"        # zet op 'main' als jouw default branch zo heet
-$NODE_VERSION="20"
+# ---- CONFIG ----
+$ORG   = "Royal-Equips-Org"
+$REPO  = "Royal-Equips-Orchestrator"
+$BRANCH= "master"     # zet op 'main' als dat je default is
+$NODE  = "20"
 
-# -------- SAFETY --------
+# ---- SAFETY ----
 git rev-parse --is-inside-work-tree *> $null
 git fetch origin --prune
 try { git checkout -B $BRANCH "origin/$BRANCH" } catch { git checkout -B $BRANCH }
 git pull --ff-only || $true
 
-# -------- GITHUB SETTINGS --------
+# ---- GH REPO SETTINGS ----
 gh api -X PATCH -H "Accept: application/vnd.github+json" "/repos/$ORG/$REPO" -f allow_auto_merge=true *> $null
-
 gh api -X PUT -H "Accept: application/vnd.github+json" `
   "/repos/$ORG/$REPO/branches/$BRANCH/protection" `
   -f enforce_admins=true `
@@ -26,17 +25,17 @@ gh api -X PUT -H "Accept: application/vnd.github+json" `
   -F required_status_checks='{"strict":false,"contexts":["ci","codeql","trivy"]}' `
   -F restrictions='null' *> $null
 
-# -------- FS LAYOUT --------
+# ---- FS LAYOUT ----
 New-Item -ItemType Directory -Force -Path ".github/workflows" | Out-Null
 New-Item -ItemType Directory -Force -Path ".husky/_" | Out-Null
 
-# -------- package.json + Husky --------
+# ---- package.json + Husky ----
 if (Test-Path package.json) {
   node -e @"
 const fs=require('fs');
 const f='package.json';
 const j=JSON.parse(fs.readFileSync(f,'utf8'));
-j.engines=j.engines||{}; j.engines.node='$NODE_VERSION';
+j.engines=j.engines||{}; j.engines.node='$NODE';
 j.scripts=j.scripts||{};
 j.scripts['husky:install']='husky install';
 j.scripts['husky:verify']="node -e \"require('fs').accessSync('.husky/pre-commit')\"";
@@ -50,7 +49,7 @@ fs.writeFileSync(f, JSON.stringify(j,null,2));
   "name": "royal-equips-orchestrator",
   "private": true,
   "type": "module",
-  "engines": { "node": "$NODE_VERSION" },
+  "engines": { "node": "$NODE" },
   "scripts": {
     "husky:install": "husky install",
     "husky:verify": "node -e \"require('fs').accessSync('.husky/pre-commit')\"",
@@ -59,26 +58,22 @@ fs.writeFileSync(f, JSON.stringify(j,null,2));
   },
   "devDependencies": {}
 }
-"@ | Set-Content -NoNewline -Encoding UTF8 package.json
+"@ | Set-Content -Encoding UTF8 package.json
 }
 
-@"
+@'
 #!/usr/bin/env sh
-. "\$(dirname "\$0")/_/husky.sh"
+. "$(dirname "$0")/_/husky.sh"
 npm run lint
 npm test --silent
-"@ | Set-Content -NoNewline -Encoding UTF8 .husky/pre-commit
-# minimale husky shim
-@"
+'@ | Set-Content -Encoding UTF8 .husky/pre-commit
+@'
 #!/usr/bin/env sh
-# shellcheck shell=sh
-if [ -z "\$husky_skip_init" ]; then
-  :
-fi
-"@ | Set-Content -NoNewline -Encoding UTF8 .husky/_/husky.sh
+# minimal shim
+'@ | Set-Content -Encoding UTF8 .husky/_/husky.sh
 
-# -------- Codacy --------
-@"
+# ---- Codacy (optioneel strict) ----
+@'
 engines:
   eslint:
     enabled: true
@@ -98,36 +93,40 @@ patterns:
       languages: [javascript, typescript]
       severity: error
       regex: "child_process\\.(exec|execSync)\\("
-"@ | Set-Content -NoNewline -Encoding UTF8 .codacy.yml
+'@ | Set-Content -Encoding UTF8 .codacy.yml
 
-# -------- CI --------
-@"
+# ---- CI ----
+$ci = @'
 name: ci
 on:
   push:
-    branches: [$BRANCH]
+    branches: [__BRANCH__]
   pull_request:
 permissions:
   contents: read
   checks: write
 concurrency:
-  group: `${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
-        with: { node-version: '$NODE_VERSION', cache: 'npm' }
+        with:
+          node-version: "__NODE__"
+          cache: npm
       - run: npm ci || npm i
       - run: npm run lint || true
       - run: npm test -- --ci --reporters=default --reporters=jest-junit
-"@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/ci.yml
+'@
+$ci.Replace("__BRANCH__",$BRANCH).Replace("__NODE__",$NODE) | Set-Content -Encoding UTF8 .github/workflows/ci.yml
 
-# -------- CodeQL --------
-@"
+# ---- CodeQL ----
+@'
 name: codeql
 on:
   push:
@@ -145,13 +144,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: github/codeql-action/init@v3
-        with: { languages: `${{ matrix.language }} }
+        with: { languages: ${{ matrix.language }} }
       - uses: github/codeql-action/analyze@v3
-        with: { category: codeql-`${{ matrix.language }} }
-"@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/codeql.yml
+        with: { category: codeql-${{ matrix.language }} }
+'@ | Set-Content -Encoding UTF8 .github/workflows/codeql.yml
 
-# -------- Trivy --------
-@"
+# ---- Trivy ----
+@'
 name: trivy
 on:
   push:
@@ -176,14 +175,14 @@ jobs:
         with:
           sarif_file: trivy-files.sarif
           category: trivy-fs
-"@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/trivy.yml
+'@ | Set-Content -Encoding UTF8 .github/workflows/trivy.yml
 
-# -------- Enforce main health (auto-revert) --------
-@"
+# ---- Enforce main health (auto-revert) ----
+$enforce = @'
 name: enforce-main-health
 on:
   push:
-    branches: [$BRANCH]
+    branches: [__BRANCH__]
 permissions:
   contents: write
   pull-requests: write
@@ -191,11 +190,13 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     outputs:
-      result: `${{ steps.outcome.outputs.status }}
+      result: ${{ steps.outcome.outputs.status }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '$NODE_VERSION', cache: 'npm' }
+        with:
+          node-version: "__NODE__"
+          cache: npm
       - run: npm ci || npm i
       - id: lint
         run: npm run lint
@@ -203,10 +204,10 @@ jobs:
         run: npm test -- --ci
       - id: outcome
         run: |
-          if [ "`${{ steps.lint.outcome }}`" = "success" ] && [ "`${{ steps.test.outcome }}`" = "success" ]; then
-            echo "status=success" >> "`$GITHUB_OUTPUT"
+          if [ "${{ steps.lint.outcome }}" = "success" ] && [ "${{ steps.test.outcome }}" = "success" ]; then
+            echo "status=success" >> "$GITHUB_OUTPUT"
           else
-            echo "status=failure" >> "`$GITHUB_OUTPUT"
+            echo "status=failure" >> "$GITHUB_OUTPUT"
           fi
 
   revert_if_failed:
@@ -215,18 +216,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { ref: '$BRANCH', fetch-depth: 0 }
-      - name: Revert last commit on $BRANCH
+        with:
+          ref: "__BRANCH__"
+          fetch-depth: 0
+      - name: Revert last commit on __BRANCH__
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git revert --no-edit "`$GITHUB_SHA" || exit 1
-          git push origin HEAD:$BRANCH
-"@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/enforce-main-health.yml
+          git revert --no-edit "${GITHUB_SHA}" || exit 1
+          git push origin HEAD:__BRANCH__
+'@
+$enforce.Replace("__BRANCH__",$BRANCH).Replace("__NODE__",$NODE) | Set-Content -Encoding UTF8 .github/workflows/enforce-main-health.yml
 
-# -------- COMMIT --------
+# ---- COMMIT ----
 git add .husky .github package.json .codacy.yml
-git commit -m "infra(ci): direct-to-$BRANCH with CI/CodeQL/Trivy, Husky, auto-revert guard" || $true
+git commit -m "infra(ci): direct-to-$BRANCH with CI/CodeQL/Trivy, Husky, auto-revert" || $true
 git push -u origin $BRANCH
 
-Write-Host "Klaar. Direct commits op '$BRANCH' actief met CI en auto-revert guard."
+Write-Host "Klaar. Direct commits op '$BRANCH' met CI, CodeQL, Trivy en auto-revert guard."
