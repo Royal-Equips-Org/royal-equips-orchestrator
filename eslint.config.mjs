@@ -1,65 +1,61 @@
-﻿import js from "@eslint/js";
+// eslint.config.mjs
+import js from "@eslint/js";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
 /** @type {import("eslint").Linter.FlatConfig[]} */
 export default [
+  {
+    ignores: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/coverage/**",
+      "**/.next/**",
+      "**/out/**",
+      "**/*.min.js",
+    ],
+  },
+
   // basisregels
   js.configs.recommended,
 
-  // Node (scripts, backend)
-  {
-    files: ["**/*.js", "**/*.cjs", "**/*.mjs"],
-    ignores: ["node_modules/**", "dist/**", "build/**", "**/*.min.js"],
+  // TypeScript (src + dashboard)
+  ...tseslint.configs.recommendedTypeChecked.map(cfg => ({
+    ...cfg,
+    files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
-      ecmaVersion: 2022,
-      globals: {
-        ...globals.node,
-        ...globals.es2021,
-        console: "readonly",
+      ...cfg.languageOptions,
+      parserOptions: {
+        project: ["./tsconfig.base.json"],
+        tsconfigRootDir: process.cwd(),
       },
     },
-    rules: {},
-  },
+  })),
 
-  // Browser / dashboard
+  // Node
   {
-    files: ["dashboard/**/*.{js,ts,jsx,tsx}"],
+    files: ["**/*.cjs", "**/*.mjs", "scripts/**/*.js"],
     languageOptions: {
-      ecmaVersion: 2022,
-      globals: {
-        ...globals.browser,
-        ...globals.serviceworker,   // Headers, Request, Response, fetch
-        ...globals.webworker,       // self, WorkerGlobalScope
-        TextEncoder: "readonly",
-        TransformStream: "readonly",
-        crypto: "readonly",
-        URL: "readonly",
-        Headers: "readonly",
-        AbortSignal: "readonly",
-      },
-    },
-    rules: {},
-  },
-
-  // Edge/Workers (indien aanwezig, b.v. Cloudflare/Vercel Edge)
-  {
-    files: ["edge/**", "workers/**"],
-    languageOptions: {
-      ecmaVersion: 2022,
-      globals: {
-        ...globals.worker,
-        ...globals.browser,
-      },
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.node },
     },
   },
 
-  // Testbestanden (Jest)
+  // Browser (dashboard, public)
+  {
+    files: ["dashboard/**/*.{js,jsx,ts,tsx}", "public/**/*.{js,jsx}"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.browser },
+    },
+  },
+
+  // Tests
   {
     files: ["**/*.test.*", "**/__tests__/**"],
-    languageOptions: {
-      globals: {
-        ...globals.jest,
-      },
-    },
+    languageOptions: { globals: { ...globals.jest } },
   },
 ];
