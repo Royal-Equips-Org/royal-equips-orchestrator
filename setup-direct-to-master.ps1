@@ -1,46 +1,52 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#requires -Version 7
+$ErrorActionPreference = "Stop"
 
 # -------- CONFIG --------
-ORG="Royal-Equips-Org"
-REPO="Royal-Equips-Orchestrator"
-BRANCH="master"          # zet op 'main' als jouw default branch zo heet
-NODE_VERSION="20"
+$ORG="Royal-Equips-Org"
+$REPO="Royal-Equips-Orchestrator"
+$BRANCH="master"        # zet op 'main' als jouw default branch zo heet
+$NODE_VERSION="20"
 
 # -------- SAFETY --------
-git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Run from repo root."; exit 1; }
+git rev-parse --is-inside-work-tree *> $null
+
 git fetch origin --prune
-git checkout -B "$BRANCH" "origin/$BRANCH" 2>/dev/null || git checkout -B "$BRANCH"
-git pull --ff-only || true
+try { git checkout -B $BRANCH "origin/$BRANCH" } catch { git checkout -B $BRANCH }
+git pull --ff-only || $true
 
 # -------- GITHUB SETTINGS --------
-gh api -X PATCH -H "Accept: application/vnd.github+json" "/repos/$ORG/$REPO" -f allow_auto_merge=true >/dev/null
+gh api -X PATCH -H "Accept: application/vnd.github+json" "/repos/$ORG/$REPO" -f allow_auto_merge=true *> $null
 
-# Branch protection: geen PR verplicht, wel lineaire historie en admin enforcement.
-# Let op: status checks blokkeren geen directe pushes. We vangen failures af met auto-revert workflow.
-gh api -X PUT -H "Accept: application/vnd.github+json" \
-  "/repos/$ORG/$REPO/branches/$BRANCH/protection" \
-  -f enforce_admins=true \
-  -f required_linear_history=true \
-  -f allow_force_pushes=false \
-  -f allow_deletions=false \
-  -F required_pull_request_reviews='{"required_approving_review_count":0,"require_code_owner_reviews":false}' \
-  -F required_status_checks='{"strict":false,"contexts":["ci","codeql","trivy"]}' \
-  -F restrictions='null' >/dev/null
+gh api -X PUT -H "Accept: application/vnd.github+json" `
+  "/repos/$ORG/$REPO/branches/$BRANCH/protection" `
+  -f enforce_admins=true `
+  -f required_linear_history=true `
+  -f allow_force_pushes=false `
+  -f allow_deletions=false `
+  -F required_pull_request_reviews='{"required_approving_review_count":0,"require_code_owner_reviews":false}' `
+  -F required_status_checks='{"strict":false,"contexts":["ci","codeql","trivy"]}' `
+  -F restrictions='null' *> $null
 
-mkdir -p .github/workflows .husky
+# -------- FS LAYOUT --------
+New-Item -ItemType Directory -Force -Path ".github/workflows" | Out-Null
+New-Item -ItemType Directory -Force -Path ".husky/_" | Out-Null
 
-# -------- PACKAGE + HUSKY --------
-if [ -f package.json ]; then
-  TMP=$(mktemp)
-  jq '
-    .engines = (.engines // {}) + {"node":"'"$NODE_VERSION"'"} |
-    .scripts = (.scripts // {}) +
-      {"husky:install":"husky install","husky:verify":"node -e \"require(\" + "\"fs\"" + ").accessSync(\" + "\".husky/pre-commit\"" + \")\"} +
-      {"lint":(.scripts.lint // "eslint ."),"test":(.scripts.test // "jest --runInBand")}
-  ' package.json > "$TMP" && mv "$TMP" package.json
-else
-  cat > package.json <<JSON
+# -------- package.json + Husky --------
+if (Test-Path package.json) {
+  node -e @"
+const fs=require('fs');
+const f='package.json';
+const j=JSON.parse(fs.readFileSync(f,'utf8'));
+j.engines=j.engines||{}; j.engines.node='$NODE_VERSION';
+j.scripts=j.scripts||{};
+j.scripts['husky:install']='husky install';
+j.scripts['husky:verify']="node -e \"require('fs').accessSync('.husky/pre-commit')\"";
+if(!j.scripts.lint) j.scripts.lint='eslint .';
+if(!j.scripts.test) j.scripts.test='jest --runInBand';
+fs.writeFileSync(f, JSON.stringify(j,null,2));
+"@
+} else {
+@"
 {
   "name": "royal-equips-orchestrator",
   "private": true,
@@ -54,36 +60,26 @@ else
   },
   "devDependencies": {}
 }
-JSON
-fi
+"@ | Set-Content -NoNewline -Encoding UTF8 package.json
+}
 
-# Basic dev deps lock-in (idempotent; faalt niet als geen npm)
-( corepack enable >/dev/null 2>&1 || true; npm pkg set engines.node="$NODE_VERSION" >/dev/null 2>&1 || true )
-
-cat > .husky/pre-commit <<'HUSKY'
+@"
 #!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
+. "\$(dirname "\$0")/_/husky.sh"
 npm run lint
 npm test --silent
-HUSKY
-chmod +x .husky/pre-commit
-
-# Husky bootstrap
-mkdir -p .husky/_ && cat > .husky/_/husky.sh <<'EOS'
+"@ | Set-Content -NoNewline -Encoding UTF8 .husky/pre-commit
+# minimale husky shim
+@"
 #!/usr/bin/env sh
 # shellcheck shell=sh
-if [ -z "$husky_skip_init" ]; then
-  debug () {
-    [ "${HUSKY_DEBUG:-}" = "1" ] && echo "husky (debug) - $1"
-  }
-  readonly hook_name="$(basename "$0")"
-  debug "starting $hook_name..."
+if [ -z "\$husky_skip_init" ]; then
+  :
 fi
-EOS
-chmod +x .husky/_/husky.sh
+"@ | Set-Content -NoNewline -Encoding UTF8 .husky/_/husky.sh
 
-# -------- CODACY (optioneel strict) --------
-cat > .codacy.yml <<'YML'
+# -------- Codacy --------
+@"
 engines:
   eslint:
     enabled: true
@@ -103,10 +99,10 @@ patterns:
       languages: [javascript, typescript]
       severity: error
       regex: "child_process\\.(exec|execSync)\\("
-YML
+"@ | Set-Content -NoNewline -Encoding UTF8 .codacy.yml
 
 # -------- CI --------
-cat > .github/workflows/ci.yml <<YAML
+@"
 name: ci
 on:
   push:
@@ -129,10 +125,10 @@ jobs:
       - run: npm ci || npm i
       - run: npm run lint || true
       - run: npm test -- --ci --reporters=default --reporters=jest-junit
-YAML
+"@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/ci.yml
 
-# -------- CODEQL --------
-cat > .github/workflows/codeql.yml <<'YAML'
+# -------- CodeQL --------
+@"
 name: codeql
 on:
   push:
@@ -150,13 +146,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: github/codeql-action/init@v3
-        with: { languages: ${{ matrix.language }} }
+        with: { languages: \${{ matrix.language }} }
       - uses: github/codeql-action/analyze@v3
-        with: { category: codeql-${{ matrix.language }} }
-YAML
+        with: { category: codeql-\${{ matrix.language }} }
+"@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/codeql.yml
 
-# -------- TRIVY --------
-cat > .github/workflows/trivy.yml <<'YAML'
+# -------- Trivy --------
+@"
 name: trivy
 on:
   push:
@@ -181,10 +177,10 @@ jobs:
         with:
           sarif_file: trivy-files.sarif
           category: trivy-fs
-YAML
+"@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/trivy.yml
 
-# -------- ENFORCE HEALTH: auto-revert on failure to keep master green --------
-cat > .github/workflows/enforce-main-health.yml <<YAML
+# -------- Enforce main health (auto-revert) --------
+@"
 name: enforce-main-health
 on:
   push:
@@ -209,9 +205,9 @@ jobs:
       - id: outcome
         run: |
           if [ "\${{ steps.lint.outcome }}" = "success" ] && [ "\${{ steps.test.outcome }}" = "success" ]; then
-            echo "status=success" >> "$GITHUB_OUTPUT"
+            echo "status=success" >> "\$GITHUB_OUTPUT"
           else
-            echo "status=failure" >> "$GITHUB_OUTPUT"
+            echo "status=failure" >> "\$GITHUB_OUTPUT"
           fi
 
   revert_if_failed:
@@ -225,13 +221,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git revert --no-edit "${GITHUB_SHA}" || exit 1
+          git revert --no-edit "\${GITHUB_SHA}" || exit 1
           git push origin HEAD:$BRANCH
-YAML
+"@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/enforce-main-health.yml
 
 # -------- COMMIT --------
-git add .husky .github package.json .codacy.yml || true
-git commit -m "infra(ci): direct-to-$BRANCH with CI/CodeQL/Trivy, Husky, auto-revert guard" || true
-git push -u origin "$BRANCH"
+git add .husky .github package.json .codacy.yml
+git commit -m "infra(ci): direct-to-$BRANCH with CI/CodeQL/Trivy, Husky, auto-revert guard" || $true
+git push -u origin $BRANCH
 
-echo "Done. Direct commits to '$BRANCH' zijn actief met CI en auto-revert guard."
+Write-Host "Klaar. Direct commits op '$BRANCH' actief met CI en auto-revert guard."
