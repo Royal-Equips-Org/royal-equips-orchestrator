@@ -1,25 +1,44 @@
-﻿name: ci
+name: CI
+
 on:
   push:
-    branches: [master]
+    branches: [main, develop]
   pull_request:
-permissions:
-  contents: read
-  checks: write
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [main]
+
 jobs:
-  build-test:
+  build:
     runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: "20"
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node + pnpm
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: corepack enable
+      - run: corepack prepare pnpm@9.9.0 --activate
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test -- --ci
+
+      - name: Upload JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          node-version: "20"
-          cache: npm
-      - run: npm ci || npm i
-      - run: npm run lint || true
-      - run: npm test -- --ci --reporters=default --reporters=jest-junit
+          name: junit
+          path: reports/junit/junit.xml
