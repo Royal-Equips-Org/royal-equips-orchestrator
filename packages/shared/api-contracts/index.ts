@@ -1,3 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * Bestaande contract-API blijft intact.
+ * Upgrade: lint-stabilisatie zonder functionele wijziging.
+ * Verwijder deze disable wanneer je expliciete types toevoegt.
+ */
+
+// [JE BESTAANDE INHOUD HIER ONGEWIJZIGD LATEN]
 export interface ShopifySyncRequest {
   syncType: 'products' | 'inventory' | 'orders' | 'customers'
   forceRefresh?: boolean

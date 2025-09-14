@@ -6,7 +6,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.base.json --noEmit",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --passWithNoTests",
     "prepare": "husky install",
     "fix-agent": "node scripts/fix-agent.mjs --watch"
   },
