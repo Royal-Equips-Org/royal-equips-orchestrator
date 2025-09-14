@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 set -e
-npx -y pnpm@9.9.0 -w lint
-npx -y pnpm@9.9.0 -w typecheck
+pnpm -w lint
+pnpm -w typecheck
