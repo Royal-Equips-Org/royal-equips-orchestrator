@@ -1,7 +1,12 @@
-name: ci
+﻿name: ci
 on: [push, pull_request]
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "ok"
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - run: corepack enable
+      - run: pnpm install
+      - run: pnpm -w lint
+      - run: pnpm -w typecheck
