@@ -1,4 +1,4 @@
-﻿name: enforce-main-health
+name: enforce-main-health
 on:
   push:
     branches: [master]
@@ -12,15 +12,35 @@ jobs:
       result: ${{ steps.outcome.outputs.status }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      # Install pnpm globally (production best practice)
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # Setup pnpm cache for faster installs
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
         with:
-          node-version: "20"
-          cache: npm
-      - run: npm ci || npm i
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      # Install dependencies using pnpm and frozen lockfile for reproducible builds
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Run lint step with pnpm
       - id: lint
-        run: npm run lint
+        name: Run Lint
+        run: pnpm lint
+
+      # Run tests step with pnpm
       - id: test
-        run: npm test -- --ci
+        name: Run Tests
+        run: pnpm test -- --ci
+
+      # Outcome detection for self-healing workflow
       - id: outcome
         run: |
           if [ "${{ steps.lint.outcome }}" = "success" ] && [ "${{ steps.test.outcome }}" = "success" ]; then
@@ -28,6 +48,10 @@ jobs:
           else
             echo "status=failure" >> "$GITHUB_OUTPUT"
           fi
+
+      # Optional: Security scan (enable if required; uncomment to use)
+      # - name: pnpm audit
+      #   run: pnpm audit
 
   revert_if_failed:
     needs: [ci]
