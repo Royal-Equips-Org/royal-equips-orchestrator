@@ -3,8 +3,9 @@ import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-/** @type {import("eslint").Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
+  // Globale ignores
   {
     ignores: [
       "**/node_modules/**",
@@ -14,14 +15,16 @@ export default [
       "**/.next/**",
       "**/out/**",
       "**/*.min.js",
+      "**/public/assets/**",
+      "**/vendor/**",
     ],
   },
 
-  // basisregels
+  // Basis JS
   js.configs.recommended,
 
-  // TypeScript (src + dashboard)
-  ...tseslint.configs.recommendedTypeChecked.map(cfg => ({
+  // TypeScript met type-aware rules
+  ...tseslint.configs.recommendedTypeChecked.map((cfg) => ({
     ...cfg,
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
@@ -33,7 +36,7 @@ export default [
     },
   })),
 
-  // Node
+  // Node / scripts
   {
     files: ["**/*.cjs", "**/*.mjs", "scripts/**/*.js"],
     languageOptions: {
@@ -41,9 +44,10 @@ export default [
       sourceType: "module",
       globals: { ...globals.node },
     },
+    rules: {},
   },
 
-  // Browser (dashboard, public)
+  // Browser / dashboard
   {
     files: ["dashboard/**/*.{js,jsx,ts,tsx}", "public/**/*.{js,jsx}"],
     languageOptions: {
@@ -51,11 +55,13 @@ export default [
       sourceType: "module",
       globals: { ...globals.browser },
     },
+    rules: {},
   },
 
   // Tests
   {
     files: ["**/*.test.*", "**/__tests__/**"],
     languageOptions: { globals: { ...globals.jest } },
+    rules: {},
   },
 ];
