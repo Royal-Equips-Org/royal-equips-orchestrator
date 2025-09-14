@@ -1,7 +1,9 @@
-name: ci
-on: [push, pull_request]
+name: e2e
+on:
+  pull_request:
+  workflow_dispatch:
 jobs:
-  ci:
+  e2e:
     runs-on: ubuntu-latest
     steps:
       - run: echo "ok"
