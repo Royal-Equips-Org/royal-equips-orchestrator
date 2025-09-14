@@ -3,13 +3,12 @@
   "private": true,
   "packageManager": "pnpm@9.9.0",
   "scripts": {
-    "lint": "eslint . --ext .ts,.tsx,.js,.cjs",
-    "typecheck": "tsc -p tsconfig.base.json --noEmit",
-    "prepare": "husky",
-    "husky:install": "husky install",
-    "husky:verify": "node -e \"require('fs').accessSync('.husky/pre-commit')\"",
-    "test": "jest --runInBand"
-  },
+  "lint": "eslint .",
+  "lint:fix": "eslint . --fix",
+  "typecheck": "tsc -p tsconfig.base.json --noEmit",
+  "test": "jest --runInBand",
+  "prepare": "husky"
+},
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
@@ -28,3 +27,4 @@
     "node": "20"
   }
 }
+
