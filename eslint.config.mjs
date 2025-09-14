@@ -6,9 +6,9 @@ import tseslint from "typescript-eslint";
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
   { ignores: [
-      "node_modules/**","dist/**","build/**","coverage/**",
+      "node_modules/**","dist/**","build/**","coverage/**","vendor/**",
       "**/*.min.js","app/static/assets/**","app/static/react-vendor*.js",
-      "dashboard/.next/**","dashboard/dist/**","vendor/**"
+      "dashboard/.next/**","dashboard/dist/**"
   ]},
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked.map(cfg => ({

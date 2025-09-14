@@ -7,10 +7,12 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.base.json --noEmit",
     "test": "jest --runInBand",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "fix-agent": "node scripts/fix-agent.mjs --watch"
   },
   "devDependencies": {
     "@eslint/js": "9.35.0",
+    "chokidar": "^4.0.3",
     "diff": "^8.0.2",
     "eslint": "9.35.0",
     "eslint-config-prettier": "9.1.2",
