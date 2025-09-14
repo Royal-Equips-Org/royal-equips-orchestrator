@@ -1,4 +1,21 @@
+<<<<<<< HEAD
 #!/usr/bin/env sh
 set -e
 pnpm -w lint
 pnpm -w typecheck
+=======
+#!/usr/bin/env bash
+set -euo pipefail
+PNPM_VERSION="9.9.0"
+# Skip locally if node_modules is missing (CI checks everything anyway)
+if [ -z "${CI:-}" ] && [ ! -d node_modules ]; then
+  exit 0
+fi
+<<<<<<< HEAD
+npx -y pnpm@9.9.0 -w lint
+npx -y pnpm@9.9.0 -w typecheck
+>>>>>>> 4a6e584 (Create pre-commit hook for linting and type checking)
+=======
+npx -y pnpm@${PNPM_VERSION} -w lint
+npx -y pnpm@${PNPM_VERSION} -w typecheck
+>>>>>>> 02d19cf (Update .husky/pre-commit)
