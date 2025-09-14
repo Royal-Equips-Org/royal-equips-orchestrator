@@ -12,8 +12,20 @@ concurrency:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - name: Install (npm ci)
+        run: npm ci
+      - name: Lint
+        run: npm run lint --if-present
+      - name: Tests
+        env:
+          JEST_JUNIT_OUTPUT: reports/junit/junit.xml
+        run: npm test --if-present
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
@@ -23,3 +35,4 @@ jobs:
       - run: npm ci || npm i
       - run: npm run lint || true
       - run: npm test -- --ci --reporters=default --reporters=jest-junit
+
