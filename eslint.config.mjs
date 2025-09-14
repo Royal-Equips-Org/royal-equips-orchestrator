@@ -1,10 +1,10 @@
 // eslint.config.mjs
 import js from "@eslint/js";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
+/** @type {import("eslint").Linter.FlatConfig[]} */
 export default [
-  // 0) Globale ignores (sneller + schoner)
   {
     ignores: [
       "**/node_modules/**",
@@ -13,82 +13,49 @@ export default [
       "**/coverage/**",
       "**/.next/**",
       "**/out/**",
-      "**/public/assets/**",
       "**/*.min.js",
-      "**/vendor/**"
     ],
   },
 
-  // 1) Basisregels
+  // basisregels
   js.configs.recommended,
 
-  // 2) Node (scripts, backend, configs)
+  // TypeScript (src + dashboard)
+  ...tseslint.configs.recommendedTypeChecked.map(cfg => ({
+    ...cfg,
+    files: ["**/*.ts", "**/*.tsx"],
+    languageOptions: {
+      ...cfg.languageOptions,
+      parserOptions: {
+        project: ["./tsconfig.base.json"],
+        tsconfigRootDir: process.cwd(),
+      },
+    },
+  })),
+
+  // Node
   {
-    files: [
-      "**/*.cjs",
-      "**/*.mjs",
-      "scripts/**/*.js",
-      "server/**/*.js",
-      "backend/**/*.js",
-      "*.config.{js,cjs,mjs}",
-    ],
+    files: ["**/*.cjs", "**/*.mjs", "scripts/**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: {
-        ...globals.node,
-        ...globals.es2021,
-        console: "readonly",
-      },
+      globals: { ...globals.node },
     },
-    rules: {},
   },
 
-  // 3) Browser / dashboard (JS & JSX)
-  // Let op: voeg TS pas toe wanneer @typescript-eslint is geconfigureerd
+  // Browser (dashboard, public)
   {
-    files: ["dashboard/**/*.{js,jsx}", "public/**/*.{js,jsx}"],
+    files: ["dashboard/**/*.{js,jsx,ts,tsx}", "public/**/*.{js,jsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: {
-        ...globals.browser,
-        ...globals.serviceworker,
-        ...globals.webworker,
-        TextEncoder: "readonly",
-        TransformStream: "readonly",
-        crypto: "readonly",
-        URL: "readonly",
-        Headers: "readonly",
-        AbortSignal: "readonly",
-      },
+      globals: { ...globals.browser },
     },
-    rules: {},
   },
 
-  // 4) Edge/Workers
-  {
-    files: ["edge/**", "workers/**"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: {
-        ...globals.worker,
-        ...globals.browser,
-      },
-    },
-    rules: {},
-  },
-
-  // 5) Tests (Jest)
+  // Tests
   {
     files: ["**/*.test.*", "**/__tests__/**"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      globals: {
-        ...globals.jest,
-      },
-    },
-    rules: {},
+    languageOptions: { globals: { ...globals.jest } },
   },
 ];
