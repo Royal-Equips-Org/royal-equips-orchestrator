@@ -8,14 +8,14 @@ $BRANCH= "master"     # zet op 'main' als dat je default is
 $NODE  = "20"
 
 # ---- SAFETY ----
-git rev-parse --is-inside-work-tree *> $null
+git rev-parse --is-inside-work-tree | Out-Null
 git fetch origin --prune
 try { git checkout -B $BRANCH "origin/$BRANCH" } catch { git checkout -B $BRANCH }
-git pull --ff-only || $true
+git pull --ff-only; if ($LASTEXITCODE -ne 0) { Write-Host "git pull returned $LASTEXITCODE (ok to continue)"; }
 
 # ---- GH REPO SETTINGS ----
-gh api -X PATCH -H "Accept: application/vnd.github+json" "/repos/$ORG/$REPO" -f allow_auto_merge=true *> $null
-gh api -X PUT -H "Accept: application/vnd.github+json" `
+& gh api -X PATCH -H "Accept: application/vnd.github+json" "/repos/$ORG/$REPO" -f allow_auto_merge=true | Out-Null
+& gh api -X PUT -H "Accept: application/vnd.github+json" `
   "/repos/$ORG/$REPO/branches/$BRANCH/protection" `
   -f enforce_admins=true `
   -f required_linear_history=true `
@@ -23,7 +23,7 @@ gh api -X PUT -H "Accept: application/vnd.github+json" `
   -f allow_deletions=false `
   -F required_pull_request_reviews='{"required_approving_review_count":0,"require_code_owner_reviews":false}' `
   -F required_status_checks='{"strict":false,"contexts":["ci","codeql","trivy"]}' `
-  -F restrictions='null' *> $null
+  -F restrictions='null' | Out-Null
 
 # ---- FS LAYOUT ----
 New-Item -ItemType Directory -Force -Path ".github/workflows" | Out-Null
@@ -72,7 +72,7 @@ npm test --silent
 # minimal shim
 '@ | Set-Content -Encoding UTF8 .husky/_/husky.sh
 
-# ---- Codacy (optioneel strict) ----
+# ---- Codacy ----
 @'
 engines:
   eslint:
@@ -230,7 +230,8 @@ $enforce.Replace("__BRANCH__",$BRANCH).Replace("__NODE__",$NODE) | Set-Content -
 
 # ---- COMMIT ----
 git add .husky .github package.json .codacy.yml
-git commit -m "infra(ci): direct-to-$BRANCH with CI/CodeQL/Trivy, Husky, auto-revert" || $true
+git commit -m "infra(ci): direct-to-$BRANCH with CI/CodeQL/Trivy, Husky, auto-revert"
+if ($LASTEXITCODE -ne 0) { Write-Host "Nothing to commit"; }
 git push -u origin $BRANCH
 
 Write-Host "Klaar. Direct commits op '$BRANCH' met CI, CodeQL, Trivy en auto-revert guard."
