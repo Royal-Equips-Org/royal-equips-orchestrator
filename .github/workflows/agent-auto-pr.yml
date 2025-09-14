@@ -1,0 +1,39 @@
+﻿name: agent-auto-pr
+on:
+  schedule: [{ cron: "0 8 * * *" }]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  plan-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set bot identity
+        run: |
+          git config user.name "empire-bot"
+          git config user.email "empire-bot@users.noreply.github.com"
+      - name: Create branch
+        id: br
+        run: |
+          B="bot/housekeeping-$(date +%Y%m%d-%H%M)"
+          echo "B=$B" >> $GITHUB_OUTPUT
+          git switch -c "$B"
+      - name: Apply change
+        run: |
+          mkdir -p .github
+          echo "tick $(date -u +%FT%TZ)" >> .github/housekeeping.log
+          git add .github/housekeeping.log
+          git commit -m "chore(bot): housekeeping tick"
+      - name: Push branch
+        run: git push -u origin "${{ steps.br.outputs.B }}"
+      - name: Open PR and enable automerge
+        env: { GH_TOKEN: ${{ github.token }} }
+        run: |
+          gh pr create --base master --head "${{ steps.br.outputs.B }}" \
+            --title "chore(bot): housekeeping" \
+            --body "Automated housekeeping tick"
+          PR=$(gh pr view --json number -q .number)
+          gh pr edit "$PR" --add-label automerge || true
+          gh pr merge "$PR" --squash --auto
