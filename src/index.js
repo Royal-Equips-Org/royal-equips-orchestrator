@@ -22,7 +22,6 @@ app.get('/health', (c) => {
 });
 
 // Handle CORS preflight requests
-/* eslint-disable-next-line no-unused-vars */
 app.options('/api/*', (c) => {
   return new Response(null, {
     status: 204,
@@ -251,7 +250,6 @@ function serveStreamlitEmbed(streamlitUrl) {
     }
   });
 }
-/* eslint-disable-next-line no-unused-vars */
 
 function serveHolographicFallback(c) {
   const html = `<!DOCTYPE html>
@@ -3510,4 +3508,5 @@ app.all('*', (c) => {
 });
 
 export default app;
+
 

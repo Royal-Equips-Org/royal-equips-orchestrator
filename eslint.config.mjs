@@ -42,4 +42,11 @@ export default [
     rules:{ "no-unused-vars":["off"] }
   },
   { files:["**/*.test.*","**/__tests__/**"], languageOptions:{ globals:{ ...globals.jest } } }
+  ,
+  {
+    files: ["src/index.js"],
+    rules: {
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^(?:_|c)$", varsIgnorePattern: "^_" }]
+    }
+  }
 ];
