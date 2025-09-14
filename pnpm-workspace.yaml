@@ -1,0 +1,4 @@
+﻿packages:
+  - "agents/*"
+  - "services/*"
+  - "packages/*"
