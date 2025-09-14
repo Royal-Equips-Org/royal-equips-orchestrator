@@ -1,5 +1,4 @@
-// scripts/fix-package.js
-const fs = require("fs");
+﻿const fs = require("fs");
 const f = "package.json";
 
 let raw = "";
@@ -14,12 +13,10 @@ j.engines = { ...(j.engines || {}), node: "20" };
 j.scripts = {
   ...(j.scripts || {}),
   "husky:install": "husky install",
-  "husky:verify":
-    "node -e \"require('fs').accessSync('.husky/pre-commit')\"",
+  "husky:verify": "node -e \"require('fs').accessSync('.husky/pre-commit')\"",
   lint: j.scripts && j.scripts.lint ? j.scripts.lint : "eslint .",
   test: j.scripts && j.scripts.test ? j.scripts.test : "jest --runInBand",
 };
 
 fs.writeFileSync(f, JSON.stringify(j, null, 2), "utf8");
 console.log("✅ package.json patched");
-

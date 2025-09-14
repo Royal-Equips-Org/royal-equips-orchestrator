@@ -1,11 +1,14 @@
-﻿{
+{
   "name": "royal-equips-orchestrator",
   "private": true,
   "packageManager": "pnpm@9.9.0",
   "scripts": {
     "lint": "eslint . --ext .ts,.tsx,.js,.cjs",
     "typecheck": "tsc -p tsconfig.base.json --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "husky:install": "husky install",
+    "husky:verify": "node -e \"require('fs').accessSync('.husky/pre-commit')\"",
+    "test": "jest --runInBand"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
@@ -18,5 +21,8 @@
     "@commitlint/config-conventional": "^19.4.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": "20"
   }
 }
