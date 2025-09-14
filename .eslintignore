@@ -1,8 +1,0 @@
-﻿app/
-edge-functions/
-src/
-node_modules/
-dist/
-.husky/
-.eslintrc.cjs
-commitlint.config.cjs

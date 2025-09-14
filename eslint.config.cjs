@@ -3,14 +3,11 @@ const tsParser = require("@typescript-eslint/parser");
 const tsPlugin = require("@typescript-eslint/eslint-plugin");
 
 module.exports = [
-  { ignores: ["dist/**", "build/**", "scripts/*.js"] },
+  // alleen ignores, geen andere keys
+  { ignores: ["**/.*", "dist/**", "build/**", "scripts/*.js"] },
   {
-    files: ["**/*.{ts,tsx,js,cjs,mjs}"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      parser: tsParser,
-    },
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.cjs", "**/*.mjs"],
+    languageOptions: { ecmaVersion: "latest", sourceType: "module", parser: tsParser },
     plugins: { "@typescript-eslint": tsPlugin },
     rules: {
       ...js.configs.recommended.rules,
