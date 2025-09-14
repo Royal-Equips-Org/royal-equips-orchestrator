@@ -9,7 +9,6 @@ $NODE_VERSION="20"
 
 # -------- SAFETY --------
 git rev-parse --is-inside-work-tree *> $null
-
 git fetch origin --prune
 try { git checkout -B $BRANCH "origin/$BRANCH" } catch { git checkout -B $BRANCH }
 git pull --ff-only || $true
@@ -112,7 +111,7 @@ permissions:
   contents: read
   checks: write
 concurrency:
-  group: \${{ github.workflow }}-\${{ github.ref }}
+  group: `${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build-test:
@@ -146,9 +145,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: github/codeql-action/init@v3
-        with: { languages: \${{ matrix.language }} }
+        with: { languages: `${{ matrix.language }} }
       - uses: github/codeql-action/analyze@v3
-        with: { category: codeql-\${{ matrix.language }} }
+        with: { category: codeql-`${{ matrix.language }} }
 "@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/codeql.yml
 
 # -------- Trivy --------
@@ -192,7 +191,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     outputs:
-      result: \${{ steps.outcome.outputs.status }}
+      result: `${{ steps.outcome.outputs.status }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -204,10 +203,10 @@ jobs:
         run: npm test -- --ci
       - id: outcome
         run: |
-          if [ "\${{ steps.lint.outcome }}" = "success" ] && [ "\${{ steps.test.outcome }}" = "success" ]; then
-            echo "status=success" >> "\$GITHUB_OUTPUT"
+          if [ "`${{ steps.lint.outcome }}`" = "success" ] && [ "`${{ steps.test.outcome }}`" = "success" ]; then
+            echo "status=success" >> "`$GITHUB_OUTPUT"
           else
-            echo "status=failure" >> "\$GITHUB_OUTPUT"
+            echo "status=failure" >> "`$GITHUB_OUTPUT"
           fi
 
   revert_if_failed:
@@ -221,7 +220,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git revert --no-edit "\${GITHUB_SHA}" || exit 1
+          git revert --no-edit "`$GITHUB_SHA" || exit 1
           git push origin HEAD:$BRANCH
 "@ | Set-Content -NoNewline -Encoding UTF8 .github/workflows/enforce-main-health.yml
 
