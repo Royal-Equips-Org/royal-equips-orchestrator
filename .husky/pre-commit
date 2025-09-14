@@ -1,4 +1,15 @@
+<<<<<<< HEAD
 #!/usr/bin/env sh
 set -e
 pnpm -w lint
 pnpm -w typecheck
+=======
+#!/usr/bin/env bash
+set -euo pipefail
+# Skip lokaal als node_modules ontbreekt (CI checkt toch alles)
+if [ -z "${CI:-}" ] && [ ! -d node_modules ]; then
+  exit 0
+fi
+npx -y pnpm@9.9.0 -w lint
+npx -y pnpm@9.9.0 -w typecheck
+>>>>>>> 4a6e584 (Create pre-commit hook for linting and type checking)
