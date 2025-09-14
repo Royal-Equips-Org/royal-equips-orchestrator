@@ -1,0 +1,8 @@
+tools:
+  trivy:
+    enabled: true
+    patterns:
+      - vuln        # CVEs
+      - misconfig   # IaC / config issues
+    options:
+      severity: HIGH
