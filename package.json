@@ -13,8 +13,8 @@
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
     "@eslint/js": "^9.35.0",
-    "@typescript-eslint/eslint-plugin": "^latest",
-    "@typescript-eslint/parser": "^latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-import": "^2.29.1",
@@ -30,4 +30,5 @@
     "node": "20"
   }
 }
+
 
