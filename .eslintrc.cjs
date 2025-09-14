@@ -16,7 +16,7 @@
       parser: "@typescript-eslint/parser",
       parserOptions: { tsconfigRootDir: __dirname, project: ["./tsconfig.base.json"] },
       plugins: ["@typescript-eslint", "import"],
-      extends: ["eslint:recommended","plugin:@typescript-eslint/recommended","prettier"],
+      extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
       rules: {
         "@typescript-eslint/no-explicit-any": "off"
       }
