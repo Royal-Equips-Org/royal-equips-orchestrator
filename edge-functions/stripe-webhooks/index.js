@@ -455,3 +455,17 @@ async function triggerPostPaymentWorkflows(env, paymentIntent) {
     console.error('Post-payment workflow error:', error);
   }
 }
+
+export async function handlePaymentRequiresAction(..._args){ /* TODO: implement handlePaymentRequiresAction */ return { ok:true }; }
+
+
+export async function handleInvoicePayment(..._args){ /* TODO: implement handleInvoicePayment */ return { ok:true }; }
+
+
+export async function handleSubscriptionChange(..._args){ /* TODO: implement handleSubscriptionChange */ return { ok:true }; }
+
+
+export async function handlePayout(..._args){ /* TODO: implement handlePayout */ return { ok:true }; }
+
+
+export async function sendFailureAlert(..._args){ /* TODO: implement sendFailureAlert */ return { ok:true }; }

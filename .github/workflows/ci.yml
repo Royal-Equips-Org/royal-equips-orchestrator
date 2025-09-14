@@ -1,38 +1,47 @@
-﻿name: ci
+name: CI
+
 on:
   push:
-    branches: [master]
+    branches: [main, develop]
   pull_request:
-permissions:
-  contents: read
-  checks: write
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [main]
+
 jobs:
-  build-test:
+  build:
     runs-on: ubuntu-latest
-    
-      - name: Setup Node
+    env:
+      NODE_VERSION: "20"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node + pnpm
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      - name: Install (npm ci)
-        run: npm ci
-      - name: Lint
-        run: npm run lint --if-present
-      - name: Tests
-        env:
-          JEST_JUNIT_OUTPUT: reports/junit/junit.xml
-        run: npm test --if-present
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-      - run: npm ci || npm i
-      - run: npm run lint || true
-      - run: npm test -- --ci --reporters=default --reporters=jest-junit
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: corepack enable
+      - run: corepack prepare pnpm@9.9.0 --activate
 
+      - name: Install deps
+        # Husky is disabled in CI to prevent install errors
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test -- --ci
+
+      - name: Upload JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit
+          path: reports/junit/junit.xml

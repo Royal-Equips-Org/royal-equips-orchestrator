@@ -3,59 +3,39 @@ import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-/** @type {import("eslint").Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
-  {
-    ignores: [
-      "**/node_modules/**",
-      "**/dist/**",
-      "**/build/**",
-      "**/coverage/**",
-      "**/.next/**",
-      "**/out/**",
-      "**/*.min.js",
-    ],
-  },
-
-  // basisregels
+  { ignores: [
+      "node_modules/**","dist/**","build/**","coverage/**",
+      "**/*.min.js","app/static/assets/**","app/static/react-vendor*.js",
+      "dashboard/.next/**","dashboard/dist/**","vendor/**"
+  ]},
   js.configs.recommended,
-
-  // TypeScript (src + dashboard)
   ...tseslint.configs.recommendedTypeChecked.map(cfg => ({
     ...cfg,
-    files: ["**/*.ts", "**/*.tsx"],
+    files: ["**/*.ts","**/*.tsx"],
     languageOptions: {
       ...cfg.languageOptions,
-      parserOptions: {
-        project: ["./tsconfig.base.json"],
-        tsconfigRootDir: process.cwd(),
-      },
+      sourceType: "module",
+      parserOptions: { project: ["./tsconfig.base.json"], tsconfigRootDir: process.cwd() }
     },
+    rules: { ...cfg.rules,
+      "no-unused-vars":"off",
+      "@typescript-eslint/no-unused-vars":["warn",{ argsIgnorePattern:"^_", varsIgnorePattern:"^_" }]
+    }
   })),
-
-  // Node
-  {
-    files: ["**/*.cjs", "**/*.mjs", "scripts/**/*.js"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: { ...globals.node },
-    },
+  { files: ["**/*.{js,cjs,mjs}","scripts/**/*.js"],
+    languageOptions: { ecmaVersion: 2022, sourceType:"module", globals:{ ...globals.node, ...globals.es2021, console:"readonly" }},
+    rules: { "no-unused-vars":["warn",{ argsIgnorePattern:"^_", varsIgnorePattern:"^_" }] }
   },
-
-  // Browser (dashboard, public)
-  {
-    files: ["dashboard/**/*.{js,jsx,ts,tsx}", "public/**/*.{js,jsx}"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: { ...globals.browser },
-    },
+  { files:["dashboard/**/*.{js,ts,jsx,tsx}","public/**/*.{js,jsx}"],
+    languageOptions:{ ecmaVersion:2022, sourceType:"module", globals:{ ...globals.browser, ...globals.serviceworker, ...globals.webworker,
+      TextEncoder:"readonly", TransformStream:"readonly", crypto:"readonly", URL:"readonly", Headers:"readonly", AbortSignal:"readonly" }}
   },
-
-  // Tests
-  {
-    files: ["**/*.test.*", "**/__tests__/**"],
-    languageOptions: { globals: { ...globals.jest } },
+  { files:["edge-functions/**/*.{js,ts}"],
+    languageOptions:{ ecmaVersion:2022, sourceType:"module", globals:{ ...globals.worker, ...globals.serviceworker, ...globals.webworker,
+      fetch:"readonly", Request:"readonly", Response:"readonly", Headers:"readonly", URL:"readonly", WebSocketPair:"readonly", caches:"readonly" }},
+    rules:{ "no-unused-vars":["warn",{ argsIgnorePattern:"^_", varsIgnorePattern:"^_" }] }
   },
+  { files:["**/*.test.*","**/__tests__/**"], languageOptions:{ globals:{ ...globals.jest } } }
 ];

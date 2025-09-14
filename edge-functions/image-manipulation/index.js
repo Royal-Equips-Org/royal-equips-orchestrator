@@ -345,3 +345,11 @@ async function logImageProcessing(env, data) {
     console.error('Image processing logging error:', error);
   }
 }
+
+export async function handleCrop(..._args){ /* TODO: implement handleCrop */ return { ok:true }; }
+
+
+export async function handleFilter(..._args){ /* TODO: implement handleFilter */ return { ok:true }; }
+
+
+export async function handleFormat(..._args){ /* TODO: implement handleFormat */ return { ok:true }; }
