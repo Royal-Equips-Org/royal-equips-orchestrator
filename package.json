@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.35.0",
+    "@types/jest": "29",
     "chokidar": "^4.0.3",
     "diff": "^8.0.2",
     "eslint": "9.35.0",

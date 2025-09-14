@@ -1,47 +1,22 @@
 name: CI
-
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
+  push: { branches: [main, develop, chore/**] }
+  pull_request: { branches: [main] }
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      NODE_VERSION: "20"
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node + pnpm
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
+          node-version: '20'
+          cache: pnpm
       - run: corepack enable
       - run: corepack prepare pnpm@9.9.0 --activate
-
-      - name: Install deps
-        # Husky is disabled in CI to prevent install errors
+      - name: Install
         run: pnpm install --frozen-lockfile
         env:
           HUSKY: 0
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test -- --ci
-
-      - name: Upload JUnit
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: junit
-          path: reports/junit/junit.xml
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
