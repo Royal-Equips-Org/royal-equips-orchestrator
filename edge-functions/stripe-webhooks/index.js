@@ -456,7 +456,7 @@ async function triggerPostPaymentWorkflows(env, paymentIntent) {
   }
 }
 
-export async function handlePaymentRequiresAction(..._args){ /* TODO: implement handlePaymentRequiresAction */ return { ok:true }; }
+export async function handlePaymentRequiresAction(..._args){ /* TODO: implement handlePaymentRequiresAction */ return new Response("handlePaymentRequiresAction: stub"); }
 
 
 export async function handleInvoicePayment(..._args){ /* TODO: implement handleInvoicePayment */ return { ok:true }; }
