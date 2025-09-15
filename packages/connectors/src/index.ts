@@ -1,2 +1,2 @@
-export * from './shopify.js';
-export * from './supabase.js';
+export * from './shopify-simple.js';
+export * from './supabase-simple.js';

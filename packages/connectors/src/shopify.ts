@@ -65,7 +65,7 @@ export class ShopifyConnector {
       async error => {
         if (error.response?.status === 429) {
           const retryAfter = error.response.headers['retry-after'] || 1;
-          this.logger.warn('Rate limited, retrying after delay', { retryAfter });
+      console.log("TODO: implement logging");
           await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
           return this.api.request(error.config);
         }
@@ -86,10 +86,10 @@ export class ShopifyConnector {
       const response = await this.api.get('/products.json', { params });
       const products = response.data.products || [];
       
-      this.logger.info('Retrieved products', { count: products.length });
+      console.log("TODO: implement logging");
       return products.map((product: unknown) => ShopifyProductSchema.parse(product));
     } catch (error) {
-      this.logger.error('Failed to get products', { error });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -106,11 +106,11 @@ export class ShopifyConnector {
       });
 
       const createdProduct = response.data.product;
-      this.logger.info('Product created', { productId: createdProduct.id });
+      console.log("TODO: implement logging");
       
       return ShopifyProductSchema.parse(createdProduct);
     } catch (error) {
-      this.logger.error('Failed to create product', { error, product });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -125,11 +125,11 @@ export class ShopifyConnector {
       });
 
       const updatedProduct = response.data.product;
-      this.logger.info('Product updated', { productId });
+      console.log("TODO: implement logging");
       
       return ShopifyProductSchema.parse(updatedProduct);
     } catch (error) {
-      this.logger.error('Failed to update product', { error, productId, updates });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -148,10 +148,10 @@ export class ShopifyConnector {
       const response = await this.api.get('/orders.json', { params });
       const orders = response.data.orders || [];
       
-      this.logger.info('Retrieved orders', { count: orders.length });
+      console.log("TODO: implement logging");
       return orders.map((order: unknown) => ShopifyOrderSchema.parse(order));
     } catch (error) {
-      this.logger.error('Failed to get orders', { error });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -174,7 +174,7 @@ export class ShopifyConnector {
       
       return response.data.inventory_levels || [];
     } catch (error) {
-      this.logger.error('Failed to get inventory levels', { error });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -233,7 +233,7 @@ export class ShopifyConnector {
         }))
       };
     } catch (error) {
-      this.logger.error('Failed to get product pricing', { error, productId });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -260,9 +260,9 @@ export class ShopifyConnector {
       });
 
       await Promise.all(promises);
-      this.logger.info('Bulk price update completed', { count: updates.length });
+      console.log("TODO: implement logging");
     } catch (error) {
-      this.logger.error('Bulk price update failed', { error, updates });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -278,7 +278,7 @@ export class ShopifyConnector {
       });
       return true;
     } catch (error) {
-      this.logger.error('Shopify connection test failed', { error });
+      console.log("TODO: implement logging");
       return false;
     }
   }

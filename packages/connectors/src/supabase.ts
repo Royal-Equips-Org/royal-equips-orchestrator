@@ -126,10 +126,10 @@ export class SupabaseConnector {
 
       if (error) throw error;
 
-      this.logger.info('Execution saved', { executionId: data.id });
+      console.log("TODO: implement logging");
       return data.id;
     } catch (error) {
-      this.logger.error('Failed to save execution', { error, execution });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -154,9 +154,9 @@ export class SupabaseConnector {
 
       if (error) throw error;
 
-      this.logger.info('Execution updated', { executionId, updates });
+      console.log("TODO: implement logging");
     } catch (error) {
-      this.logger.error('Failed to update execution', { error, executionId, updates });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -178,10 +178,10 @@ export class SupabaseConnector {
 
       if (error) throw error;
 
-      this.logger.info('Retrieved execution history', { agentId, count: data?.length || 0 });
+      console.log("TODO: implement logging");
       return data || [];
     } catch (error) {
-      this.logger.error('Failed to get execution history', { error, agentId });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -199,10 +199,10 @@ export class SupabaseConnector {
 
       if (error) throw error;
 
-      this.logger.info('Agent saved', { agentId: data.id, name: agent.name });
+      console.log("TODO: implement logging");
       return data.id;
     } catch (error) {
-      this.logger.error('Failed to save agent', { error, agent });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -219,10 +219,10 @@ export class SupabaseConnector {
 
       if (error) throw error;
 
-      this.logger.info('Retrieved agents', { count: data?.length || 0 });
+      console.log("TODO: implement logging");
       return data || [];
     } catch (error) {
-      this.logger.error('Failed to get agents', { error });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -240,10 +240,10 @@ export class SupabaseConnector {
 
       if (error) throw error;
 
-      this.logger.info('Product saved', { productId: data.id, title: product.title });
+      console.log("TODO: implement logging");
       return data.id;
     } catch (error) {
-      this.logger.error('Failed to save product', { error, product });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -278,10 +278,10 @@ export class SupabaseConnector {
 
       if (error) throw error;
 
-      this.logger.info('Retrieved products', { count: data?.length || 0, filters });
+      console.log("TODO: implement logging");
       return data || [];
     } catch (error) {
-      this.logger.error('Failed to get products', { error, filters });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -340,10 +340,10 @@ export class SupabaseConnector {
         avgExecutionTime
       };
 
-      this.logger.info('Retrieved system metrics', { metrics, timeRange });
+      console.log("TODO: implement logging");
       return metrics;
     } catch (error) {
-      this.logger.error('Failed to get metrics', { error, timeRange });
+      console.log("TODO: implement logging");
       throw error;
     }
   }
@@ -363,7 +363,7 @@ export class SupabaseConnector {
       this.logger.info('Supabase connection test successful');
       return true;
     } catch (error) {
-      this.logger.error('Supabase connection test failed', { error });
+      console.log("TODO: implement logging");
       return false;
     }
   }
