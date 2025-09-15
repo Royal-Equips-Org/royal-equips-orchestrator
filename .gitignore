@@ -28,3 +28,7 @@ venv/
 .wrangler/
 *.log.env
 
+
+reports/junit/
+package-lock.json
+
