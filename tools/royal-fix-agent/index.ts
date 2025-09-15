@@ -8,7 +8,9 @@ const exists = (p: string) => fs.pathExists(p);
 
 async function ensurePNPM() {
   try { await execa("pnpm", ["-v"]); }
-  catch { console.log("pnpm missing. Use temporarily: npx pnpm@9.9.0 <cmd>"); }
+  catch (err) {
+    console.error("pnpm ontbreekt. Gebruik tijdelijk: npx pnpm@9.9.0 <cmd>", { error: err });
+  }
 }
 
 async function readJSON(p: string) {
@@ -28,7 +30,7 @@ async function fixNpmrc() {
   ];
   for (const line of want) if (!s.includes(line)) s += (s.endsWith("\n") ? "" : "\n") + line + "\n";
   await fs.writeFile(p, s);
-  console.log("✔ .npmrc standardized");
+  console.log("✔ .npmrc gestandaardiseerd");
 }
 
 async function fixPackageJson() {
@@ -43,31 +45,36 @@ async function fixPackageJson() {
 
   // DevDeps normaliseren (geen 'latest')
   pkg.devDependencies ||= {};
-  // Load devDependencies from configuration file
-  let want: Record<string, string> = {};
-  try {
-    want = await readJSON(r("devDependencies.json"));
-  } catch (e) {
-    console.error("devDependencies.json not found or invalid. Please create it at the project root.");
-    want = {};
-  }
+  const want: Record<string, string> = {
+    "@eslint/js": "9.35.0",
+    "eslint": "9.35.0",
+    "eslint-config-prettier": "9.1.2",
+    "eslint-plugin-import": "2.32.0",
+    "globals": "15.15.0",
+    "husky": "9.1.7",
+    "jest": "29.7.0",
+    "jest-junit": "16.0.0",
+    "prettier": "3.6.2",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.43.0"
+  };
   // verwijder scoped @typescript-eslint als aanwezig
   delete pkg.devDependencies["@typescript-eslint/eslint-plugin"];
   delete pkg.devDependencies["@typescript-eslint/parser"];
-  pkg.devDependencies = { ...pkg.devDependencies, ...want };
+  for (const [k, v] of Object.entries(want)) pkg.devDependencies[k] = v;
 
   // Engines
   pkg.engines ||= {}; pkg.engines.node = "20";
 
   await writeJSON(p, pkg);
-  console.log("✔ package.json normalized");
+  console.log("✔ package.json genormaliseerd");
 }
 
 async function dropLegacyIgnore() {
   const p = r(".eslintignore");
   if (await exists(p)) {
     await fs.remove(p);
-    console.log("✔ .eslintignore removed (flat config uses ignores)");
+    console.log("✔ .eslintignore verwijderd (flat config gebruikt ignores)");
   }
 }
 
@@ -116,7 +123,7 @@ export default [
 async function ensureEslintConfig() {
   const p = r("eslint.config.mjs");
   await fs.writeFile(p, ESLINT_CONFIG);
-  console.log("✔ eslint.config.mjs placed");
+  console.log("✔ eslint.config.mjs geplaatst");
 }
 
 const JEST_CONFIG = `export default {
@@ -131,7 +138,7 @@ async function ensureJestConfig() {
   const p2 = r("jest.config.js");
   if (!(await exists(p1)) && !(await exists(p2))) {
     await fs.writeFile(p1, JEST_CONFIG);
-    console.log("✔ jest.config.mjs placed");
+    console.log("✔ jest.config.mjs geplaatst");
   }
 }
 
@@ -149,7 +156,7 @@ async function ensureNginxStubStatus() {
       deny all;
     }`);
     await fs.writeFile(p, s);
-    console.log("✔ nginx stub_status added");
+    console.log("✔ nginx stub_status toegevoegd");
   }
 }
 
@@ -174,20 +181,14 @@ async function addMissingHandlerStubs() {
       if (!re.test(s) && s.includes(fn)) {
         s += `
 
-export async function ${fn}(..._args: any[]): Promise<{ ok: boolean }> { 
-  /* TODO: implement ${fn}
-     Parameters: _args: any[]
-     Expected return: Promise<{ ok: boolean }>
-  */ 
-  return { ok: true }; 
-}
+export async function ${fn}(..._args){ /* TODO: implement ${fn} */ return new Response("Not implemented", { status: 501 }); }
 `;
         changed = true;
       }
     }
     if (changed) {
       await fs.writeFile(f, s);
-      console.log(`✔ stubs added to ${f}`);
+      console.log(`✔ stubs toegevoegd in ${f}`);
     }
   }
 }
@@ -217,5 +218,5 @@ async function runChecks() {
   await addMissingHandlerStubs();
   await installDeps();
   await runChecks();
-  console.log("✔ Fix Agent run completed");
+  console.log("✔ Fix Agent run voltooid");
 })();

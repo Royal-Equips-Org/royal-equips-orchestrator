@@ -80,28 +80,18 @@ async function normalizePackageJson() {
   delete pkg.devDependencies["@typescript-eslint/eslint-plugin"];
   delete pkg.devDependencies["@typescript-eslint/parser"];
   const want = {
+    "@eslint/js": "9.35.0",
+    "eslint": "9.35.0",
+    "eslint-config-prettier": "9.1.2",
+    "eslint-plugin-import": "2.32.0",
+    "globals": "15.15.0",
+    "husky": "9.1.7",
+    "jest": "29.7.0",
+    "jest-junit": "16.0.0",
+    "prettier": "3.6.2",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.43.0"
   };
-  // Load dependency versions from external config file
-  let want = {};
-  const depVersionsPath = r("scripts/dependency-versions.json");
-  if (await fileExists(depVersionsPath)) {
-    want = JSON.parse(await read(depVersionsPath));
-  } else {
-    // fallback to hardcoded versions if config file is missing
-    want = {
-      "@eslint/js": "9.35.0",
-      "eslint": "9.35.0",
-      "eslint-config-prettier": "9.1.2",
-      "eslint-plugin-import": "2.32.0",
-      "globals": "15.15.0",
-      "husky": "9.1.7",
-      "jest": "29.7.0",
-      "jest-junit": "16.0.0",
-      "prettier": "3.6.2",
-      "typescript": "5.6.3",
-      "typescript-eslint": "8.43.0"
-    };
-  }
   for (const [k, v] of Object.entries(want)) pkg.devDependencies[k] = v;
 
   return await writeWithApproval(p, JSON.stringify(pkg, null, 2) + "\n", options);
@@ -212,22 +202,25 @@ async function addMissingHandlerStubs() {
     "handleMessageComponent","handleLogsCommand","handleMetricsCommand","handleInventoryCommand"
   ];
 
+  // Precompute RegExp objects for each function name
+  const neededRegexes = needed.map(fn => ({
+    fn,
+    reDecl: new RegExp(`\\b(export\\s+)?(async\\s+)?function\\s+${fn}\\b|\\b${fn}\\s*=\\s*\\(`, "m")
+  }));
   let total = 0;
   for (const f of files) {
     let s = await read(f);
     let changed = false;
-    for (const fn of needed) {
+    for (const {fn, reDecl} of neededRegexes) {
       if (s.includes(fn)) {
-        const reDecl = new RegExp(`\\b(export\\s+)?(async\\s+)?function\\s+${fn}\\b|\\b${fn}\\s*=\\s*\\(`, "m");
         if (!reDecl.test(s)) {
           s += `
 
 export async function ${fn}(..._args){
   if (typeof Response !== "undefined") {
     return new Response("${fn}: stub");
-  } else {
-    return { status: "stub", handler: "${fn}" };
   }
+  return { body: "${fn}: stub", status: 200 };
 }
 `;
           changed = true;
