@@ -57,7 +57,3 @@ jobs:
           echo "See Code scanning for SARIF results." > cmt.txt
           gh pr comment ${{ steps.pr.outputs.pull_request_number }} --body-file cmt.txt || true
         env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
-      - name: Request Copilot review
-        run: |
-          gh pr edit ${{ steps.pr.outputs.pull_request_number }} --add-reviewer "github-copilot" || true
-        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
