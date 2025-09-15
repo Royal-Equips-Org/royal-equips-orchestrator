@@ -9,7 +9,6 @@ update_file () {
     chmod --reference="$f" "$tmpfile"
     chown --reference="$f" "$tmpfile"
     mv -f "$tmpfile" "$f"
-    (echo "# Royal Empire — Canonical Knowledge"; echo ""; cat "$f") > "$f.tmp" && mv "$f.tmp" "$f"
   fi
   if ! grep -q "^---$" "$f"; then
     printf "\n---\nLast-Upgrade: %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$f"
