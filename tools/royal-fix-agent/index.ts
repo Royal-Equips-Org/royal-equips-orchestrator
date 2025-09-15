@@ -8,7 +8,9 @@ const exists = (p: string) => fs.pathExists(p);
 
 async function ensurePNPM() {
   try { await execa("pnpm", ["-v"]); }
-  catch { console.log("pnpm ontbreekt. Gebruik tijdelijk: npx pnpm@9.9.0 <cmd>"); }
+  catch (err) {
+    console.error("pnpm ontbreekt. Gebruik tijdelijk: npx pnpm@9.9.0 <cmd>", { error: err });
+  }
 }
 
 async function readJSON(p: string) {
