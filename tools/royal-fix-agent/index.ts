@@ -154,7 +154,7 @@ async function ensureNginxStubStatus() {
       deny all;
     }`);
     await fs.writeFile(p, s);
-    console.log("✔ nginx stub_status toegevoegd");
+    console.log("✔ nginx stub_status added");
   }
 }
 
