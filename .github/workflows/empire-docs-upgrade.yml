@@ -43,8 +43,14 @@ jobs:
           if ! git diff --quiet; then
             git add -A
             COMMIT_MSG="chore(docs): normalize & upgrade empire brains"
-            if ! git commit -S -m "$COMMIT_MSG"; then
-              echo "Error: GPG signing failed. Commit was not created."
+            # Only sign the commit if GPG secrets are available
+            if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ] && [ -n "${{ secrets.GPG_PASSPHRASE }}" ] && [ -n "${{ secrets.BOT_EMAIL }}" ] && [ -n "${{ secrets.BOT_NAME }}" ]; then
+              SIGN_FLAG="-S"
+            else
+              SIGN_FLAG=""
+            fi
+            if ! git commit $SIGN_FLAG -m "$COMMIT_MSG"; then
+              echo "Error: Commit failed."
               exit 1
             fi
             git push
