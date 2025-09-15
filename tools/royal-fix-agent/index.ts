@@ -54,7 +54,7 @@ async function fixPackageJson() {
   // verwijder scoped @typescript-eslint als aanwezig
   delete pkg.devDependencies["@typescript-eslint/eslint-plugin"];
   delete pkg.devDependencies["@typescript-eslint/parser"];
-  for (const [k, v] of Object.entries(want)) pkg.devDependencies[k] = v;
+  pkg.devDependencies = { ...pkg.devDependencies, ...want };
 
   // Engines
   pkg.engines ||= {}; pkg.engines.node = "20";
