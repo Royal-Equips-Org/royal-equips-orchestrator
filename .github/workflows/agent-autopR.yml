@@ -39,7 +39,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PR_JSON=$(gh pr create --base master --head "${{ steps.branch.outputs.BR }}" \
+          PR_JSON=$(gh pr create --base "${{ github.event.repository.default_branch }}" --head "${{ steps.branch.outputs.BR }}" \
             --title "chore(bot): housekeeping" \
             --body "Automated housekeeping tick; validates agent pipeline.")
           PR_NUM=$(echo "$PR_JSON" | jq -r .number 2>/dev/null || gh pr view --json number -q .number)
