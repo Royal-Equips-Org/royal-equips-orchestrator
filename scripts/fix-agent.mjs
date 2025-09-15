@@ -203,13 +203,18 @@ async function addMissingHandlerStubs() {
     "handleMessageComponent","handleLogsCommand","handleMetricsCommand","handleInventoryCommand"
   ];
 
+  // Precompute RegExp objects for each function name
+  const neededRegexes = needed.map(fn => ({
+    fn,
+    reDecl: new RegExp(`\\b(export\\s+)?(async\\s+)?function\\s+${fn}\\b|\\b${fn}\\s*=\\s*\\(`, "m")
+  }));
+
   let total = 0;
   for (const f of files) {
     let s = await read(f);
     let changed = false;
-    for (const fn of needed) {
+    for (const {fn, reDecl} of neededRegexes) {
       if (s.includes(fn)) {
-        const reDecl = new RegExp(`\\b(export\\s+)?(async\\s+)?function\\s+${fn}\\b|\\b${fn}\\s*=\\s*\\(`, "m");
         if (!reDecl.test(s)) {
           s += `
 
