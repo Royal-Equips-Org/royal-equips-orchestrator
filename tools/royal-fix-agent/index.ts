@@ -181,7 +181,7 @@ async function addMissingHandlerStubs() {
       if (!re.test(s) && s.includes(fn)) {
         s += `
 
-export async function ${fn}(..._args){ /* TODO: implement ${fn} */ return { ok:true }; }
+export async function ${fn}(..._args){ /* TODO: implement ${fn} */ return new Response("Not implemented", { status: 501 }); }
 `;
         changed = true;
       }
