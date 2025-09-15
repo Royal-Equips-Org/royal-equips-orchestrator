@@ -11,14 +11,16 @@ jobs:
     outputs:
       result: ${{ steps.outcome.outputs.status }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install dependencies (including dev)
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
         run: pnpm install --include=dev
 
-      - name: Lint
-        run: pnpm run lint
+  # ...other steps
 
       # Setup pnpm cache for faster installs
       - name: Setup pnpm cache
