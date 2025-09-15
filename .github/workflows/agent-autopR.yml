@@ -42,6 +42,6 @@ jobs:
           PR_JSON=$(gh pr create --base master --head "${{ steps.branch.outputs.BR }}" \
             --title "chore(bot): housekeeping" \
             --body "Automated housekeeping tick; validates agent pipeline.")
-          PR_NUM=$(echo "$PR_JSON" | jq -r .number 2>/dev/null || gh pr view --json number -q .number)
+          PR_NUM=$(echo "$PR_JSON" | jq -r .number 2>/dev/null || gh pr view "${{ steps.branch.outputs.BR }}" --json number -q .number)
           gh pr edit "$PR_NUM" --add-label automerge
           gh pr merge "$PR_NUM" --squash --auto
