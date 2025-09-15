@@ -3,12 +3,16 @@
   "private": true,
   "packageManager": "pnpm@9.9.0",
   "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.base.json --noEmit",
     "test": "jest --runInBand --passWithNoTests",
     "prepare": "node -e \"process.exit((process.env.CI==='true'||process.env.NODE_ENV==='production')?0:1)\" || husky install",
-    "fix-agent": "node scripts/fix-agent.mjs --watch"
+    "fix-agent": "node scripts/fix-agent.mjs --watch",
+    "start:api": "pnpm --filter @royal-equips/orchestrator-api start",
+    "dev:api": "pnpm --filter @royal-equips/orchestrator-api dev"
   },
   "devDependencies": {
     "@eslint/js": "9.35.0",
