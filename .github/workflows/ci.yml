@@ -45,8 +45,6 @@ jobs:
       # Husky bypass for CI
       - name: Disable Husky in CI
         run: echo "HUSKY=0" >> $GITHUB_ENV
-        env:
-          HUSKY: 0
 
       # Lint
       - name: Lint
