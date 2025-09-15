@@ -30,14 +30,6 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      # Enable corepack (recommended for reproducibility)
-      - name: Enable corepack
-        run: corepack enable
-
-      # Prepare pnpm via corepack (self-healing)
-      - name: Prepare pnpm via corepack
-        run: corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
       # Dependency installation (no scripts)
       - name: Install Dependencies (no scripts)
         run: pnpm install --ignore-scripts --frozen-lockfile
