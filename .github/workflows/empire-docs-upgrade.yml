@@ -36,6 +36,7 @@ jobs:
         run: |
           if ! git diff --quiet; then
             git add -A
-            git commit -S -m "chore(docs): normalize & upgrade empire brains" || git commit -m "chore(docs): normalize & upgrade empire brains"
+            COMMIT_MSG="chore(docs): normalize & upgrade empire brains"
+            git commit -S -m "$COMMIT_MSG" || git commit -m "$COMMIT_MSG"
             git push
           fi
