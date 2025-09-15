@@ -216,7 +216,12 @@ async function addMissingHandlerStubs() {
         if (!reDecl.test(s)) {
           s += `
 
-export async function ${fn}(..._args){ return new Response("${fn}: stub"); }
+export async function ${fn}(..._args){
+  if (typeof Response !== "undefined") {
+    return new Response("${fn}: stub");
+  }
+  return { body: "${fn}: stub", status: 200 };
+}
 `;
           changed = true;
         }
