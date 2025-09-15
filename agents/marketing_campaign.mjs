@@ -1,1 +1,1 @@
-﻿console.log("marketing campaign running");
+console.log("marketing campaign running");
