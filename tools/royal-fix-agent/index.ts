@@ -43,19 +43,14 @@ async function fixPackageJson() {
 
   // DevDeps normaliseren (geen 'latest')
   pkg.devDependencies ||= {};
-  const want: Record<string, string> = {
-    "@eslint/js": "9.35.0",
-    "eslint": "9.35.0",
-    "eslint-config-prettier": "9.1.2",
-    "eslint-plugin-import": "2.32.0",
-    "globals": "15.15.0",
-    "husky": "9.1.7",
-    "jest": "29.7.0",
-    "jest-junit": "16.0.0",
-    "prettier": "3.6.2",
-    "typescript": "5.6.3",
-    "typescript-eslint": "8.43.0"
-  };
+  // Load devDependencies from configuration file
+  let want: Record<string, string> = {};
+  try {
+    want = await readJSON(r("devDependencies.json"));
+  } catch (e) {
+    console.error("devDependencies.json not found or invalid. Please create it at the project root.");
+    want = {};
+  }
   // verwijder scoped @typescript-eslint als aanwezig
   delete pkg.devDependencies["@typescript-eslint/eslint-plugin"];
   delete pkg.devDependencies["@typescript-eslint/parser"];
