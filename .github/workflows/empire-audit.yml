@@ -34,7 +34,13 @@ jobs:
           if [ -f package.json ] && jq -e '.scripts.build' package.json >/dev/null; then pnpm -w run build; fi
       - name: Unit tests (if present)
         run: |
-          if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then pnpm -w run test -- --ci --reporter=dot || true; fi
+          if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then
+            if jq -e '.devDependencies.jest // .dependencies.jest' package.json >/dev/null; then
+              pnpm -w run test -- --ci --reporter=dot || true
+            else
+              pnpm -w run test || true
+            fi
+          fi
   codeql:
     runs-on: ubuntu-latest
     steps:
