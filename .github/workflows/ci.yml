@@ -11,39 +11,59 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: "20"
+      PNPM_VERSION: "9.9.0"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup Node + pnpm
+      # Node.js setup
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
-      - run: corepack enable
-      - run: corepack prepare pnpm@9.9.0 --activate
 
-      - name: Install deps (no scripts)
-      - run: pnpm install --ignore-scripts --frozen-lockfile
-      - run: echo "HUSKY=0" >> $GITHUB_ENV
+      # pnpm installation (guaranteed and cached)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      # Enable corepack (recommended for reproducibility)
+      - name: Enable corepack
+        run: corepack enable
+
+      # Prepare pnpm via corepack (self-healing)
+      - name: Prepare pnpm via corepack
+        run: corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+
+      # Dependency installation (no scripts)
+      - name: Install Dependencies (no scripts)
+        run: pnpm install --ignore-scripts --frozen-lockfile
+
+      # Husky bypass for CI
+      - name: Disable Husky in CI
+        run: echo "HUSKY=0" >> $GITHUB_ENV
         env:
           HUSKY: 0
 
+      # Lint
       - name: Lint
         run: pnpm lint
 
+      # Typecheck
       - name: Typecheck
         run: pnpm typecheck
 
+      # Test
       - name: Test
         run: pnpm test -- --ci
 
+      # Upload JUnit report (always, for observability)
       - name: Upload JUnit
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: junit
           path: reports/junit/junit.xml
-
-
