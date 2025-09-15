@@ -65,7 +65,7 @@ async function fixPackageJson() {
   pkg.engines ||= {}; pkg.engines.node = "20";
 
   await writeJSON(p, pkg);
-  console.log("✔ package.json genormaliseerd");
+  console.log("✔ package.json normalized");
 }
 
 async function dropLegacyIgnore() {
