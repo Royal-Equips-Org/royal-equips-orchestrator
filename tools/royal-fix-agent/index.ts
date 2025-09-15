@@ -121,7 +121,7 @@ export default [
 async function ensureEslintConfig() {
   const p = r("eslint.config.mjs");
   await fs.writeFile(p, ESLINT_CONFIG);
-  console.log("✔ eslint.config.mjs geplaatst");
+  console.log("✔ eslint.config.mjs placed");
 }
 
 const JEST_CONFIG = `export default {
