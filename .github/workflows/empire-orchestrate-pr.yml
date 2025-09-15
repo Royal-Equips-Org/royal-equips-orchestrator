@@ -24,7 +24,7 @@ jobs:
           git push -u origin "$BR" || true
       - name: Create or update PR
         id: pr
-        uses: actions-ecosystem/action-create-or-update-pull-request@v1
+        uses: actions-ecosystem/action-create-or-update-pull-request@b7b1c6e2e1e6e7e3c2ac9c3056a8321d8ef6e7c8
         with:
           title: "chore(empire): auto-upgrade pipeline"
           body: |
