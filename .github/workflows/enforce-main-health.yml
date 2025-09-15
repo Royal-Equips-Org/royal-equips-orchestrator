@@ -11,11 +11,14 @@ jobs:
     outputs:
       result: ${{ steps.outcome.outputs.status }}
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # Install pnpm globally (production best practice)
-      - name: Install pnpm
-        run: npm install -g pnpm
+      - name: Install dependencies (including dev)
+        run: pnpm install --include=dev
+
+      - name: Lint
+        run: pnpm run lint
 
       # Setup pnpm cache for faster installs
       - name: Setup pnpm cache
