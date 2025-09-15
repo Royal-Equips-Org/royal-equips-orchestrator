@@ -3023,7 +3023,7 @@ function serveHolographicFallback(c) {
                 console.error('Message send error:', error);
                 
                 // Fallback response with more helpful message
-                const fallbackMessage = 'I apologize, but I'm currently unable to connect to the AI service. ' +
+                const fallbackMessage = 'I apologize, but I\'m currently unable to connect to the AI service. ' +
                     'This could be because the backend API is not configured or unavailable. ' +
                     'Please check the PYTHON_API_URL configuration or try again later.';
                 
