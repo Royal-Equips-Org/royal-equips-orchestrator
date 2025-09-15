@@ -18,7 +18,6 @@ const options = {
 };
 
 const log = (...a) => console.log("[fix-agent]", ...a);
-
 async function fileExists(p) { return fs.pathExists(p); }
 async function read(p) { return (await fileExists(p)) ? fs.readFile(p, "utf8") : ""; }
 
@@ -208,7 +207,6 @@ async function addMissingHandlerStubs() {
     fn,
     reDecl: new RegExp(`\\b(export\\s+)?(async\\s+)?function\\s+${fn}\\b|\\b${fn}\\s*=\\s*\\(`, "m")
   }));
-
   let total = 0;
   for (const f of files) {
     let s = await read(f);
