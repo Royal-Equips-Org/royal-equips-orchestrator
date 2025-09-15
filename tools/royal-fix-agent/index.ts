@@ -72,7 +72,7 @@ async function dropLegacyIgnore() {
   const p = r(".eslintignore");
   if (await exists(p)) {
     await fs.remove(p);
-    console.log("✔ .eslintignore verwijderd (flat config gebruikt ignores)");
+    console.log("✔ .eslintignore removed (flat config uses ignores)");
   }
 }
 
