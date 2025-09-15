@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * Bestaande contract-API blijft intact.
- * Upgrade: lint-stabilisatie zonder functionele wijziging.
- * Verwijder deze disable wanneer je expliciete types toevoegt.
+ * Existing contract-API remains intact.
+ * Upgrade: lint stabilization without functional change.
+ * Remove this disable when you add explicit types.
  */
 
 // [JE BESTAANDE INHOUD HIER ONGEWIJZIGD LATEN]
