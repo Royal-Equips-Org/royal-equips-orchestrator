@@ -3128,7 +3128,7 @@ function serveHolographicFallback(c) {
                     if (!assistantMessage) {
                         AppState.sessions[sessionId].push({
                             role: 'assistant',
-                            content: 'I'm sorry, but there was a connection error while streaming the response. Please try again.'
+                            content: 'I’m sorry, but there was a connection error while streaming the response. Please try again.'
                         });
                         renderChatMessages();
                     }
