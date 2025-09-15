@@ -3,7 +3,7 @@
 export type Channel = "system" | "shopify" | "logs";
 export type LogLevel = "debug" | "info" | "warning" | "error";
 
-/** Generieke eventbasis. */
+/** Generic event base. */
 export interface WebSocketEvent<D = unknown> {
   channel: string;
   event: string;
