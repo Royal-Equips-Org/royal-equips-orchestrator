@@ -1,0 +1,9 @@
+﻿name: Order Processing Agent
+on:
+  workflow_call: {}
+  repository_dispatch:
+    types: [product_research_complete, campaign_complete]
+jobs:
+  call:
+    uses: ./.github/workflows/_reusable-base.yml
+    with: { agent: "order_processing" }
