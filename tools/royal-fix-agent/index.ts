@@ -186,7 +186,7 @@ export async function ${fn}(..._args){ /* TODO: implement ${fn} */ return { ok:t
     }
     if (changed) {
       await fs.writeFile(f, s);
-      console.log(`✔ stubs toegevoegd in ${f}`);
+      console.log(`✔ stubs added to ${f}`);
     }
   }
 }
