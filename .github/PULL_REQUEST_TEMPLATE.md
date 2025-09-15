@@ -1,15 +1,11 @@
-﻿## What changed
-- 
+﻿## Summary
+Explain what the change does in one paragraph.
 
-## Why
-- 
+## Checklist
+- [ ] Lint, typecheck, tests pass
+- [ ] Health endpoint exists
+- [ ] Ports unified to 10000
+- [ ] Security findings addressed
 
-## Safety
-- [ ] No secrets committed
-- [ ] DB migrations reviewed
-- [ ] Rollback described
-
-## Tests
-- [ ] Unit
-- [ ] Integration
-- [ ] Local docker compose ok
+## Copilot
+If more info is needed, post your self-prompts here and continue iterating.
