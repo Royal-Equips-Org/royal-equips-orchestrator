@@ -28,7 +28,7 @@ async function fixNpmrc() {
   ];
   for (const line of want) if (!s.includes(line)) s += (s.endsWith("\n") ? "" : "\n") + line + "\n";
   await fs.writeFile(p, s);
-  console.log("✔ .npmrc gestandaardiseerd");
+  console.log("✔ .npmrc standardized");
 }
 
 async function fixPackageJson() {
