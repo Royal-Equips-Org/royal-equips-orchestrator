@@ -43,6 +43,9 @@ jobs:
           if ! git diff --quiet; then
             git add -A
             COMMIT_MSG="chore(docs): normalize & upgrade empire brains"
-            git commit -S -m "$COMMIT_MSG" || git commit -m "$COMMIT_MSG"
+            if ! git commit -S -m "$COMMIT_MSG"; then
+              echo "Error: GPG signing failed. Commit was not created."
+              exit 1
+            fi
             git push
           fi
