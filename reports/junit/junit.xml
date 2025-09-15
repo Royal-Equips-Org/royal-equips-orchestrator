@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="1" failures="0" errors="0" time="0.464">
-  <testsuite name="smoke" errors="0" failures="0" skipped="0" timestamp="2025-09-14T22:21:07" time="0.357" tests="1">
+<testsuites name="jest tests" tests="1" failures="0" errors="0" time="0.518">
+  <testsuite name="smoke" errors="0" failures="0" skipped="0" timestamp="2025-09-15T16:54:06" time="0.401" tests="1">
     <testcase classname="smoke runs" name="smoke runs" time="0.003">
     </testcase>
   </testsuite>
