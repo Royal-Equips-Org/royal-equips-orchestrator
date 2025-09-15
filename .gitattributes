@@ -1,3 +1,1 @@
-*.sh text eol=lf
-.husky/* text eol=lf
-*.cjs text eol=lf
+﻿*.sh text eol=lf
