@@ -2,7 +2,8 @@
 set -euo pipefail
 update_file () {
   local f="$1"; [ -f "$f" ] || return 0
-  if ! grep -q "^# Royal Empire —" "$f"; then
+  # Check for any header or metadata block in the first 5 lines
+  if ! head -n 5 "$f" | grep -Eq '^(#|---|<!--)'; then
     (echo "# Royal Empire — Canonical Knowledge"; echo ""; cat "$f") > "$f.tmp" && mv "$f.tmp" "$f"
   fi
   if ! grep -q "^---$" "$f"; then
