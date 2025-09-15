@@ -216,5 +216,5 @@ async function runChecks() {
   await addMissingHandlerStubs();
   await installDeps();
   await runChecks();
-  console.log("✔ Fix Agent run voltooid");
+  console.log("✔ Fix Agent run completed");
 })();
