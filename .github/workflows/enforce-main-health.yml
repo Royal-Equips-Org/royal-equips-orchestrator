@@ -5,6 +5,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -17,7 +18,7 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
-      # Setup pnpm cache for faster installs
+      # Setup pnpm cache for faster installs (self-healing: cross-OS safe)
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
@@ -26,16 +27,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      # Install dependencies using pnpm and frozen lockfile for reproducible builds
+      # Install all dependencies (incl. devDependencies) for lint/test
+      # Self-healing: If strict fails, fallback to fix-lockfile and rerun
       - name: Install dependencies
         run: |
           set -e
-          # Self-healing: If strict fails, fallback to fix-lockfile and rerun
-          pnpm install --frozen-lockfile || (pnpm install --fix-lockfile && pnpm install --frozen-lockfile)
+          pnpm install --frozen-lockfile --prod=false || (pnpm install --fix-lockfile --prod=false && pnpm install --frozen-lockfile --prod=false)
         env:
-          NODE_ENV: production
+          NODE_ENV: development
 
-      # Run lint step with pnpm
+      # Run lint step with pnpm (ESLint must be available)
       - id: lint
         name: Run Lint
         run: pnpm lint
@@ -48,6 +49,7 @@ jobs:
       # Outcome detection for self-healing workflow
       - id: outcome
         run: |
+          set -e
           if [ "${{ steps.lint.outcome }}" = "success" ] && [ "${{ steps.test.outcome }}" = "success" ]; then
             echo "status=success" >> "$GITHUB_OUTPUT"
           else
