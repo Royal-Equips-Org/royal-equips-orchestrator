@@ -25,7 +25,8 @@ jobs:
       - run: corepack prepare pnpm@9.9.0 --activate
 
       - name: Install deps (no scripts)
-        run: pnpm install --ignore-scripts --frozen-lockfile
+      - run: pnpm install --ignore-scripts --frozen-lockfile
+      - run: echo "HUSKY=0" >> $GITHUB_ENV
         env:
           HUSKY: 0
 
@@ -44,4 +45,5 @@ jobs:
         with:
           name: junit
           path: reports/junit/junit.xml
+
 
