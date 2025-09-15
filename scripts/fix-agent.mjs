@@ -18,7 +18,6 @@ const options = {
 };
 
 const log = (...a) => console.log("[fix-agent]", ...a);
-
 async function fileExists(p) { return fs.pathExists(p); }
 async function read(p) { return (await fileExists(p)) ? fs.readFile(p, "utf8") : ""; }
 
