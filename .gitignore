@@ -15,7 +15,7 @@ results.sarif
 clean-results.json
 
 # Build artifacts and dependencies
-src/
+
 *.egg-info/
 build/
 dist/
@@ -27,3 +27,4 @@ venv/
 # Node.js and Cloudflare Workers
 .wrangler/
 *.log.env
+

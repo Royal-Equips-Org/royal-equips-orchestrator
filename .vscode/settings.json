@@ -1,0 +1,12 @@
+﻿{
+  "github.copilot.chat.context.selection": "on",
+  "github.copilot.chat.context.files": [
+    "AGENT_INSTRUCTIONS.md",
+    "EMPIRE_PROMPT.md",
+    "EMPIRE_INFRASTRUCTURE.md",
+    "docs/COPILOT_BRIEFING.md",
+    "platform/**",
+    "infra/**",
+    ".github/workflows/**"
+  ]
+}

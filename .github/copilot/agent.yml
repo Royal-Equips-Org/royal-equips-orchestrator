@@ -1,0 +1,39 @@
+﻿version: 1
+name: Royal Orchestrator Builder
+goals:
+  - Bouw en verbeter alle agents, orchestrator en API tot productie.
+  - Respecteer port 10000 en health /health.
+  - Schrijf veilige migraties en tests. Geen placeholders.
+context:
+  include:
+    - AGENT_INSTRUCTIONS.md
+    - EMPIRE_PROMPT.md
+    - EMPIRE_INFRASTRUCTURE.md
+    - docs/COPILOT_BRIEFING.md
+    - platform/**
+    - infra/**
+    - .github/workflows/**
+guardrails:
+  sensitive_actions:
+    - deployment
+    - secret_changes
+    - database_migration
+    - billing_changes
+  require_pr_approval: true
+  reviewers:
+    - "@Skidaw23"
+workflow:
+  pr_strategy:
+    branch_prefix: "cp-auto/"
+    auto_label: ["copilot", "automation"]
+    require_checks: true
+tasks:
+  - id: unify-ports
+    title: Unify all services to port 10000
+    accept_criteria: "docker compose up exposes 10000; /health=200"
+  - id: fill-agents
+    title: Implement end-to-end ecommerce pipeline agents
+    accept_criteria: "pipeline run green; actions persisted; tests passing"
+  - id: command-center
+    title: Build holographic command center UI
+    accept_criteria: "live agent telemetry; KPI charts; WS events"

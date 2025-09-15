@@ -1,11 +1,9 @@
 name: CI
-
+permissions:
+  contents: read
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
+  push: { branches: [main, develop, chore/**] }
+  pull_request: { branches: [main] }
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,6 +11,7 @@ jobs:
       NODE_VERSION: "20"
 
     steps:
+
       # Checkout source code
       - name: Checkout
         uses: actions/checkout@v5

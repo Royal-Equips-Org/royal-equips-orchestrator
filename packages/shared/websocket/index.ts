@@ -1,37 +1,49 @@
-export interface WebSocketEvent {
-  channel: string
-  event: string
-  data: any
-  timestamp: Date
+// packages/shared/websocket/index.ts
+
+export type Channel = "system" | "shopify" | "logs";
+export type LogLevel = "debug" | "info" | "warning" | "error";
+
+/** Generic event base. */
+export interface WebSocketEvent<D = unknown> {
+  channel: string;
+  event: string;
+  data: D;
+  timestamp: Date;
 }
 
-export interface SystemHeartbeat extends WebSocketEvent {
-  channel: 'system'
-  event: 'heartbeat'
-  data: {
-    metrics: import('../types').SystemMetrics
-    agents: import('../types').Agent[]
-  }
+/** System → heartbeat */
+export interface SystemHeartbeat
+  extends WebSocketEvent<{
+    metrics: import("../types").SystemMetrics;
+    agents: import("../types").Agent[];
+  }> {
+  channel: "system";
+  event: "heartbeat";
 }
 
-export interface ShopifyUpdate extends WebSocketEvent {
-  channel: 'shopify'
-  event: 'sync_progress' | 'rate_limit' | 'webhook'
-  data: {
-    jobId?: string
-    progress?: number
-    rateLimitRemaining?: number
-    webhookData?: any
-  }
+/** Shopify → progress/ratelimit/webhook */
+export interface ShopifyUpdate
+  extends WebSocketEvent<{
+    jobId?: string;
+    progress?: number;
+    rateLimitRemaining?: number;
+    webhookData?: unknown;
+  }> {
+  channel: "shopify";
+  event: "sync_progress" | "rate_limit" | "webhook";
 }
 
-export interface LogStreamEvent extends WebSocketEvent {
-  channel: 'logs'
-  event: 'log'
-  data: {
-    level: 'debug' | 'info' | 'warning' | 'error'
-    message: string
-    source: string
-    timestamp: Date
-  }
+/** Logs → streaming logregels */
+export interface LogStreamEvent
+  extends WebSocketEvent<{
+    level: LogLevel;
+    message: string;
+    source: string;
+    timestamp: Date;
+  }> {
+  channel: "logs";
+  event: "log";
 }
+
+/** Handige union voor alle events. */
+export type WebSocketMessage = SystemHeartbeat | ShopifyUpdate | LogStreamEvent;

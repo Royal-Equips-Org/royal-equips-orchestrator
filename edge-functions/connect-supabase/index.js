@@ -1,21 +1,19 @@
 /**
  * Minimal Supabase Client Connection
- * 
- * Strategic Use: Baseline client for all edge modules; 
- * env-driven multi-project routing
+ * Strategic Use: Baseline client for all edge modules; env-driven multi-project routing
  */
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export default {
-  async fetch(request, env, ctx) {
-    if (request.method === 'OPTIONS') {
+  async fetch(request, env, _ctx) {
+    // CORS preflight
+    if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
         },
       });
     }
@@ -23,319 +21,178 @@ export default {
     const url = new URL(request.url);
 
     try {
-      // Initialize Supabase client based on environment
       const supabase = createSupabaseClient(env);
 
       switch (url.pathname) {
-        case '/health':
+        case "/health":
           return await handleHealth(supabase, env);
-        case '/query':
+        case "/query":
           return await handleQuery(request, supabase, env);
-        case '/rpc':
+        case "/rpc":
           return await handleRPC(request, supabase, env);
-        case '/auth':
+        case "/auth":
           return await handleAuth(request, supabase, env);
         default:
-          return new Response('Not found', { status: 404 });
+          return json({ error: "Not found", path: url.pathname }, 404);
       }
     } catch (error) {
-      console.error('Supabase client error:', error);
-      return new Response(JSON.stringify({
-        error: 'Supabase operation failed',
-        details: error.message
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      console.error("Supabase client error:", error);
+      return json({ error: "Supabase operation failed", details: error.message }, 500);
     }
-  }
+  },
 };
 
 function createSupabaseClient(env) {
-  // Multi-project routing based on environment
   let supabaseUrl = env.SUPABASE_URL;
   let supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // Environment-specific routing
-  if (env.ENVIRONMENT === 'staging') {
+  if (env.ENVIRONMENT === "staging") {
     supabaseUrl = env.SUPABASE_STAGING_URL || supabaseUrl;
     supabaseKey = env.SUPABASE_STAGING_KEY || supabaseKey;
-  } else if (env.ENVIRONMENT === 'development') {
+  } else if (env.ENVIRONMENT === "development") {
     supabaseUrl = env.SUPABASE_DEV_URL || supabaseUrl;
     supabaseKey = env.SUPABASE_DEV_KEY || supabaseKey;
   }
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Supabase configuration missing');
-  }
+  if (!supabaseUrl || !supabaseKey) throw new Error("Supabase configuration missing");
 
   return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    },
+    auth: { autoRefreshToken: false, persistSession: false },
     global: {
       headers: {
-        'x-royal-equips-client': 'edge-function',
-        'x-environment': env.ENVIRONMENT || 'production'
-      }
-    }
+        "x-royal-equips-client": "edge-function",
+        "x-environment": env.ENVIRONMENT || "production",
+      },
+    },
   });
 }
 
 async function handleHealth(supabase, env) {
   try {
-    // Test connection with a simple query
-    const { data, error } = await supabase
-      .from('health_check')
-      .select('*')
-      .limit(1);
+    const { data, error } = await supabase.from("health_check").select("*").limit(1);
 
     const health = {
-      status: error ? 'unhealthy' : 'healthy',
+      status: error ? "unhealthy" : "healthy",
       timestamp: new Date().toISOString(),
-      environment: env.ENVIRONMENT || 'production',
-      supabaseUrl: env.SUPABASE_URL ? 'configured' : 'missing',
-      error: error?.message || null
+      environment: env.ENVIRONMENT || "production",
+      supabaseUrl: env.SUPABASE_URL ? "configured" : "missing",
+      error: error?.message || null,
+      sample: data ?? null,
     };
 
-    return new Response(JSON.stringify(health), {
-      status: error ? 503 : 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return json(health, error ? 503 : 200);
   } catch (error) {
-    return new Response(JSON.stringify({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: error.message
-    }), {
-      status: 500,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return json({ status: "error", timestamp: new Date().toISOString(), error: error.message }, 500);
   }
 }
 
-async function handleQuery(request, supabase, env) {
-  if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
+async function handleQuery(request, supabase, _env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const { table, operation, data, filters = {}, options = {} } = await request.json();
-
-  if (!table || !operation) {
-    return new Response(JSON.stringify({
-      error: 'Table and operation required'
-    }), { 
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  if (!table || !operation) return json({ error: "Table and operation required" }, 400);
 
   try {
     let query = supabase.from(table);
 
     switch (operation) {
-      case 'select':
-        query = query.select(options.select || '*');
-        
-        // Apply filters
+      case "select": {
+        query = query.select(options.select || "*");
         Object.entries(filters).forEach(([key, value]) => {
-          if (typeof value === 'object' && value.operator) {
-            query = query.filter(key, value.operator, value.value);
-          } else {
-            query = query.eq(key, value);
-          }
+          if (typeof value === "object" && value.operator) query = query.filter(key, value.operator, value.value);
+          else query = query.eq(key, value);
         });
-
-        // Apply options
         if (options.limit) query = query.limit(options.limit);
         if (options.order) query = query.order(options.order.column, { ascending: options.order.ascending });
         if (options.range) query = query.range(options.range.from, options.range.to);
-
         break;
-
-      case 'insert':
+      }
+      case "insert": {
         query = query.insert(data);
         if (options.select) query = query.select(options.select);
         break;
-
-      case 'update':
+      }
+      case "update": {
         query = query.update(data);
-        Object.entries(filters).forEach(([key, value]) => {
-          query = query.eq(key, value);
-        });
+        Object.entries(filters).forEach(([key, value]) => { query = query.eq(key, value); });
         if (options.select) query = query.select(options.select);
         break;
-
-      case 'delete':
-        Object.entries(filters).forEach(([key, value]) => {
-          query = query.eq(key, value);
-        });
+      }
+      case "delete": {
+        Object.entries(filters).forEach(([key, value]) => { query = query.eq(key, value); });
         break;
-
+      }
       default:
         throw new Error(`Unsupported operation: ${operation}`);
     }
 
     const result = await query;
+    if (result.error) throw new Error(result.error.message);
 
-    if (result.error) {
-      throw new Error(result.error.message);
-    }
-
-    return new Response(JSON.stringify({
+    return json({
       success: true,
       data: result.data,
       count: result.count,
       status: result.status,
-      statusText: result.statusText
-    }), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      statusText: result.statusText,
     });
-
   } catch (error) {
-    return new Response(JSON.stringify({
-      error: 'Query execution failed',
-      details: error.message,
-      operation,
-      table
-    }), {
-      status: 400,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return json({ error: "Query execution failed", details: error.message, operation, table }, 400);
   }
 }
 
-async function handleRPC(request, supabase, env) {
-  if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
+async function handleRPC(request, supabase, _env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const { function_name, params = {} } = await request.json();
-
-  if (!function_name) {
-    return new Response(JSON.stringify({
-      error: 'Function name required'
-    }), { 
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  if (!function_name) return json({ error: "Function name required" }, 400);
 
   try {
     const { data, error } = await supabase.rpc(function_name, params);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return new Response(JSON.stringify({
-      success: true,
-      data,
-      function_name,
-      params
-    }), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
-
+    if (error) throw new Error(error.message);
+    return json({ success: true, data, function_name, params });
   } catch (error) {
-    return new Response(JSON.stringify({
-      error: 'RPC execution failed',
-      details: error.message,
-      function_name,
-      params
-    }), {
-      status: 400,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return json({ error: "RPC execution failed", details: error.message, function_name, params }, 400);
   }
 }
 
-async function handleAuth(request, supabase, env) {
+async function handleAuth(request, supabase, _env) {
   const url = new URL(request.url);
-  const action = url.searchParams.get('action');
+  const action = url.searchParams.get("action");
 
   try {
     switch (action) {
-      case 'session':
-        const authHeader = request.headers.get('Authorization');
-        if (!authHeader) {
-          throw new Error('No authorization header');
-        }
+      case "session": {
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader) throw new Error("No authorization header");
 
-        const { data: user, error } = await supabase.auth.getUser(
-          authHeader.replace('Bearer ', '')
-        );
-
+        const token = authHeader.replace("Bearer ", "");
+        const { data: user, error } = await supabase.auth.getUser(token);
         if (error) throw error;
 
-        return new Response(JSON.stringify({
-          success: true,
-          user,
-          authenticated: true
-        }), {
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
-        });
-
-      case 'validate':
-        const token = url.searchParams.get('token');
-        if (!token) {
-          throw new Error('Token required for validation');
-        }
-
-        const { data, error: validateError } = await supabase.auth.getUser(token);
-        
-        return new Response(JSON.stringify({
-          valid: !validateError,
-          user: data?.user || null,
-          error: validateError?.message || null
-        }), {
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
-        });
-
+        return json({ success: true, user, authenticated: true });
+      }
+      case "validate": {
+        const token = url.searchParams.get("token");
+        if (!token) throw new Error("Token required for validation");
+        const { data, error } = await supabase.auth.getUser(token);
+        return json({ valid: !error, user: data?.user || null, error: error?.message || null });
+      }
       default:
-        return new Response(JSON.stringify({
-          error: 'Invalid auth action'
-        }), { 
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return json({ error: "Invalid auth action" }, 400);
     }
   } catch (error) {
-    return new Response(JSON.stringify({
-      error: 'Auth operation failed',
-      details: error.message,
-      action
-    }), {
-      status: 401,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return json({ error: "Auth operation failed", details: error.message, action }, 401);
   }
+}
+
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Vary": "Origin",
+    },
+  });
 }

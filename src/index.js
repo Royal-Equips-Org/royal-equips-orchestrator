@@ -3128,7 +3128,7 @@ function serveHolographicFallback(c) {
                     if (!assistantMessage) {
                         AppState.sessions[sessionId].push({
                             role: 'assistant',
-                            content: 'I\'m sorry, but there was a connection error while streaming the response. Please try again.'
+                            content: 'I’m sorry, but there was a connection error while streaming the response. Please try again.'
                         });
                         renderChatMessages();
                     }
@@ -3140,7 +3140,7 @@ function serveHolographicFallback(c) {
                 // Immediate fallback
                 AppState.sessions[sessionId].push({
                     role: 'assistant',
-                    content: 'I\'m unable to establish a streaming connection. Please check if the streaming endpoint is available.'
+                    content: 'I'm unable to establish a streaming connection. Please check if the streaming endpoint is available.'
                 });
                 renderChatMessages();
             }
