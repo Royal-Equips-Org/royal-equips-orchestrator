@@ -1,1 +1,1 @@
-﻿console.log("product research running");
+console.log("product research running");
