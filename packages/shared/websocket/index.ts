@@ -27,7 +27,7 @@ export interface ShopifyUpdate
     jobId?: string;
     progress?: number;
     rateLimitRemaining?: number;
-    webhookData?: unknown; // eerder: any
+    webhookData?: unknown;
   }> {
   channel: "shopify";
   event: "sync_progress" | "rate_limit" | "webhook";
