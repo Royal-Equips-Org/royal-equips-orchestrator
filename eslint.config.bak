@@ -18,7 +18,7 @@ export default [
     languageOptions: {
       ...cfg.languageOptions,
       sourceType: "module",
-      parserOptions: { ./tsconfig.base.json"], tsconfigRootDir: process.cwd() }
+      parserOptions: { project: ["./tsconfig.base.json"], tsconfigRootDir: process.cwd() }
     },
     rules: { ...cfg.rules,
       "no-unused-vars":"off",
