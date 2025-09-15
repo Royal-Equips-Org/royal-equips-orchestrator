@@ -1,11 +1,9 @@
 name: CI
-
+permissions:
+  contents: read
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
+  push: { branches: [main, develop, chore/**] }
+  pull_request: { branches: [main] }
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,6 +12,8 @@ jobs:
       PNPM_VERSION: "9.9.0"
 
     steps:
+
+      # Checkout source code
       - name: Checkout
         uses: actions/checkout@v5
 
@@ -48,8 +48,7 @@ jobs:
 
       # Test
       - name: Test
-        run: pnpm test -- --ci
-
+        run: pnpm test -- --ci --reporters=default --reporters=jest-junit
       # Upload JUnit report (always, for observability)
       - name: Upload JUnit
         if: always()

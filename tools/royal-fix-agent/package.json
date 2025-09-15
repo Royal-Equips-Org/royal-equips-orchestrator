@@ -1,0 +1,7 @@
+{
+  "name": "royal-fix-agent",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "scripts": { "run": "tsx index.ts" }
+}

@@ -4,7 +4,6 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
-export default [
   // 1) Globale ignores
   {
     ignores: [
