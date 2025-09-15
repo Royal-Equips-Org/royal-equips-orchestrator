@@ -136,7 +136,7 @@ async function ensureJestConfig() {
   const p2 = r("jest.config.js");
   if (!(await exists(p1)) && !(await exists(p2))) {
     await fs.writeFile(p1, JEST_CONFIG);
-    console.log("✔ jest.config.mjs geplaatst");
+    console.log("✔ jest.config.mjs placed");
   }
 }
 
