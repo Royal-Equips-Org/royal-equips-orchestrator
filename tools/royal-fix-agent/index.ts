@@ -174,7 +174,13 @@ async function addMissingHandlerStubs() {
       if (!re.test(s) && s.includes(fn)) {
         s += `
 
-export async function ${fn}(..._args){ /* TODO: implement ${fn} */ return { ok:true }; }
+export async function ${fn}(..._args: any[]): Promise<{ ok: boolean }> { 
+  /* TODO: implement ${fn}
+     Parameters: _args: any[]
+     Expected return: Promise<{ ok: boolean }>
+  */ 
+  return { ok: true }; 
+}
 `;
         changed = true;
       }
