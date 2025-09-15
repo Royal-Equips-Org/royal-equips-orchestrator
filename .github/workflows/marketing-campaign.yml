@@ -1,0 +1,11 @@
+﻿name: Marketing Campaign Agent
+permissions:
+  contents: read
+on:
+  workflow_call: {}
+  repository_dispatch:
+    types: [order_processing_complete]
+jobs:
+  call:
+    uses: ./.github/workflows/_reusable-base.yml
+    with: { agent: "marketing_campaign" }

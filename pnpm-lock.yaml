@@ -42,7 +42,7 @@ importers:
         specifier: ^14.1.0
         version: 14.1.0
       husky:
-        specifier: 9.1.7
+        specifier: ^9.1.7
         version: 9.1.7
       jest:
         specifier: 29.7.0
@@ -561,7 +561,6 @@ packages:
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
     engines: {node: '>=18'}
-
 
   '@sinonjs/commons@3.0.1':
     resolution: {integrity: sha512-K3mCHKQ9sVh8o1C9cxkwxaOmXoAMlDxC1mYyHrjqOWEcBjYr76t96zL2zlj5dUGZ3HSw240X1qgH3Mjf1yJWpQ==}
@@ -3902,7 +3901,7 @@ snapshots:
     dependencies:
       which-typed-array: 1.1.19
 
-is-unicode-supported@2.1.0: {}
+  is-unicode-supported@2.1.0: {}
 
   is-weakmap@2.0.2: {}
 
@@ -4943,4 +4942,5 @@ is-unicode-supported@2.1.0: {}
       yargs-parser: 21.1.1
 
   yocto-queue@0.1.0: {}
+
   yoctocolors@2.1.2: {}

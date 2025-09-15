@@ -11,16 +11,11 @@ jobs:
     outputs:
       result: ${{ steps.outcome.outputs.status }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
+      # Install pnpm globally (production best practice)
       - name: Install pnpm
         run: npm install -g pnpm
-
-      - name: Install dependencies
-        run: pnpm install --include=dev
-
-  # ...other steps
 
       # Setup pnpm cache for faster installs
       - name: Setup pnpm cache
@@ -68,7 +63,7 @@ jobs:
     if: needs.ci.outputs.result == 'failure'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           ref: "master"
           fetch-depth: 0
@@ -78,4 +73,3 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git revert --no-edit "${GITHUB_SHA}" || exit 1
           git push origin HEAD:master
-

@@ -1,0 +1,64 @@
+﻿name: Reusable Base
+on:
+  workflow_call:
+    inputs:
+      agent:
+        required: true
+        type: string
+    secrets:
+      ORG_GITHUB_TOKEN:
+        required: false
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.agent }}
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.9.0 }
+
+      - name: Install
+        run: pnpm install --ignore-scripts --frozen-lockfile
+        env: { HUSKY: "0" }
+
+      - name: Execute agent (with retries)
+        id: agent
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: |
+            node agents/${{ inputs.agent }}.mjs || node agents/${{ inputs.agent }}.js || pnpm tsx agents/${{ inputs.agent }}.ts
+
+      - name: Dispatch next step
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN || github.token }}
+        run: |
+          case "${{ inputs.agent }}" in
+            product_research) ev="product_research_complete" ;;
+            order_processing) ev="order_processing_complete" ;;
+            marketing_campaign) ev="campaign_complete" ;;
+            *) ev="agent_complete" ;;
+          esac
+          curl -sS -X POST -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" -d "{\"event_type\":\"$ev\"}" "https://api.github.com/repos/${{ github.repository }}/dispatches"
+
+      - name: Audit log (optional)
+        if: always() && env.ORG_AUDIT_WEBHOOK
+        env:
+          ORG_AUDIT_WEBHOOK: ${{ secrets.ORG_AUDIT_WEBHOOK }}
+        run: |
+          curl -sS -X POST -H "Content-Type: application/json" -d "{\"repo\":\"${{ github.repository }}\",\"wf\":\"${{ github.workflow }}\",\"agent\":\"${{ inputs.agent }}\",\"status\":\"${{ job.status }}\",\"run_id\":${{ github.run_id }}}" "$ORG_AUDIT_WEBHOOK"

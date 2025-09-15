@@ -1,55 +1,54 @@
 name: CI
 permissions:
   contents: read
+
 on:
-  push: { branches: [main, develop, chore/**] }
-  pull_request: { branches: [main] }
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
       NODE_VERSION: "20"
-      PNPM_VERSION: "9.9.0"
 
     steps:
-
       # Checkout source code
       - name: Checkout
         uses: actions/checkout@v5
 
-      # Node.js setup
-      - name: Setup Node.js
+      # Setup Node.js and pnpm (with caching)
+      - name: Setup Node + pnpm
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
 
-      # pnpm installation (guaranteed and cached)
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
+      # Enable and prepare pnpm for reproducible builds
+      - run: corepack enable
+      - run: corepack prepare pnpm@9.9.0 --activate
 
-      # Dependency installation (no scripts)
-      - name: Install Dependencies (no scripts)
+      # Install dependencies (no lifecycle scripts for CI safety)
+      - name: Install deps (no scripts)
         run: pnpm install --ignore-scripts --frozen-lockfile
+        env:
+          HUSKY: 0
 
-      # Husky bypass for CI
-      - name: Disable Husky in CI
-        run: echo "HUSKY=0" >> $GITHUB_ENV
-
-      # Lint
+      # Lint all code (ESLint/Prettier as per org standards)
       - name: Lint
         run: pnpm lint
 
-      # Typecheck
+      # Type checking (strict TypeScript)
       - name: Typecheck
         run: pnpm typecheck
 
-      # Test
+      # Run tests with JUnit reporter for CI integration
       - name: Test
         run: pnpm test -- --ci --reporters=default --reporters=jest-junit
-      # Upload JUnit report (always, for observability)
+
+      # Upload JUnit XML results for reporting (always, even on failure)
       - name: Upload JUnit
         if: always()
         uses: actions/upload-artifact@v4
