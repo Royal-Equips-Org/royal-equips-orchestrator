@@ -24,34 +24,58 @@ jobs:
           git push -u origin "$BR" || true
       - name: Create or update PR
         id: pr
-        uses: actions-ecosystem/action-create-or-update-pull-request@v1
-        with:
-          title: "chore(empire): auto-upgrade pipeline"
-          body: |
-            This PR is opened by Empire Orchestrator.
-            ### Inputs for Copilot
-            - Diff targets: INSTRUCTIONS.md, EMPIRE_PROMPT.md, AGENT_INSTRUCTIONS.md, EMPIRE_INFRASTRUCTURE.md
-            - Security artefacts: CodeQL SARIF, Trivy SARIF
-            - Tasks:
-              1. Read brains files and infer required code changes.
-              2. Propose and apply refactors across repo.
-              3. Generate follow-up prompts for yourself if context is missing.
-              4. Keep ports unified to 10000. Ensure health endpoints exist.
-              5. Respect signed commits and CI constraints.
-            ### Copilot Self-Prompt
-            ```prompt
-            Role: Senior Empire Engineer.
-            Goal: Autonomously evolve this repository to production-grade scale.
-            Steps:
-            - Parse brains docs. Derive mandatory upgrades.
-            - Cross-check security findings. Patch with minimal diff.
-            - Write code, tests, and docs. Deterministic builds.
-            - If info missing, create TODO issues with exact spec.
-            - Commit in small, verifiable chunks.
-            ```
-          head: "chore/empire-auto-upgrade"
-          base: ${{ steps.def.outputs.branch }}
-          labels: "empire,autoupgrade,ai"
+        run: |
+          PR_TITLE="chore(empire): auto-upgrade pipeline"
+          PR_BODY="$(cat <<EOF
+          This PR is opened by Empire Orchestrator.
+          ### Inputs for Copilot
+          - Diff targets: INSTRUCTIONS.md, EMPIRE_PROMPT.md, AGENT_INSTRUCTIONS.md, EMPIRE_INFRASTRUCTURE.md
+          - Security artefacts: CodeQL SARIF, Trivy SARIF
+          - Tasks:
+            1. Read brains files and infer required code changes.
+            2. Propose and apply refactors across repo.
+            3. Generate follow-up prompts for yourself if context is missing.
+            4. Keep ports unified to 10000. Ensure health endpoints exist.
+            5. Respect signed commits and CI constraints.
+          ### Copilot Self-Prompt
+          \`\`\`prompt
+          Role: Senior Empire Engineer.
+          Goal: Autonomously evolve this repository to production-grade scale.
+          Steps:
+          - Parse brains docs. Derive mandatory upgrades.
+          - Cross-check security findings. Patch with minimal diff.
+          - Write code, tests, and docs. Deterministic builds.
+          - If info missing, create TODO issues with exact spec.
+          - Commit in small, verifiable chunks.
+          \`\`\`
+          EOF
+          )"
+          # Try to find an existing PR
+          PR_URL=$(gh pr list --head "chore/empire-auto-upgrade" --base "${{ steps.def.outputs.branch }}" --json url,number --jq '.[0].url')
+          if [ -z "$PR_URL" ]; then
+            gh pr create \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              --head "chore/empire-auto-upgrade" \
+              --base "${{ steps.def.outputs.branch }}" \
+              --label "empire" \
+              --label "autoupgrade" \
+              --label "ai"
+            PR_URL=$(gh pr list --head "chore/empire-auto-upgrade" --base "${{ steps.def.outputs.branch }}" --json url,number --jq '.[0].url')
+          else
+            PR_NUMBER=$(gh pr list --head "chore/empire-auto-upgrade" --base "${{ steps.def.outputs.branch }}" --json number --jq '.[0].number')
+            gh pr edit "$PR_NUMBER" \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              --add-label "empire" \
+              --add-label "autoupgrade" \
+              --add-label "ai"
+          fi
+          # Output PR number for next step
+          PR_NUMBER=$(gh pr list --head "chore/empire-auto-upgrade" --base "${{ steps.def.outputs.branch }}" --json number --jq '.[0].number')
+          echo "pull_request_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Attach SARIF links as PR comment
         run: |
           echo "See Code scanning for SARIF results." > cmt.txt
