@@ -46,10 +46,10 @@ export interface ExecutionResults {
 }
 
 export interface ExecutionMetrics {
-  duration: number;
-  apiCalls?: number;
-  resourcesUsed?: number;
-  dataProcessed?: number;
+  duration: number | undefined;
+  apiCalls: number | undefined;
+  resourcesUsed: number | undefined;
+  dataProcessed: number | undefined;
   [key: string]: number | undefined;
 }
 
