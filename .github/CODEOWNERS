@@ -1,10 +1,11 @@
 # .github/CODEOWNERS
 # Critical paths require review from both domains
-/platform/api/**              @Skidaw23 @Royal-Equips-Org/ops
-/platform/agents/**           @Skidaw23 @Royal-Equips-Org/ops
-/platform/core/**             @Skidaw23 @Royal-Equips-Org/ops
-/platform/database/**         @Skidaw23 @Royal-Equips-Org/ops
-/.github/workflows/**         @Royal-Equips-Org/secops
-/nginx/**                     @Royal-Equips-Org/ops
-/monitoring/**                @Royal-Equips-Org/ops
-/scripts/**                   @Royal-Equips-Org/ops
+/platform/api/**              @Skidaw23 @Royal-Equips-Org
+/platform/agents/**           @Skidaw23 @Royal-Equips-Org
+/platform/core/**             @Skidaw23 @Royal-Equips-Org
+/platform/database/**         @Skidaw23 @Royal-Equips-Org
+/.github/workflows/**         @Royal-Equips-Org
+/nginx/**                     @Royal-Equips-Org
+/monitoring/**                @Royal-Equips-Org
+/scripts/**                   @Royal-Equips-Org
+
