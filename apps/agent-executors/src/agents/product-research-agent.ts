@@ -54,7 +54,12 @@ export class ProductResearchAgent extends BaseAgent {
     const params = this.validateParameters(ProductResearchParams, parameters);
     const planId = this.generatePlanId();
 
-    console.log("TODO: logging");
+    this.logger.info({
+      event: 'plan_created',
+      agentId: this.config.id,
+      planId,
+      parameters: params
+    }, 'ProductResearchAgent plan created');
 
     return {
       id: planId,
