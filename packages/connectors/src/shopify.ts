@@ -2,6 +2,108 @@ import axios, { AxiosInstance } from 'axios';
 import { Logger } from 'pino';
 import { z } from 'zod';
 
+// Error type for axios responses
+interface AxiosErrorLike {
+  response?: {
+    status: number;
+    headers: Record<string, string>;
+  };
+  config?: {
+    url?: string;
+    method?: string;
+  };
+}
+
+function isAxiosRateLimitError(error: unknown): error is AxiosErrorLike {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'response' in error &&
+    typeof (error as AxiosErrorLike).response === 'object' &&
+    (error as AxiosErrorLike).response?.status === 429
+  );
+}
+interface ConnectorLogger {
+  info: (msg: string, obj?: Record<string, unknown>) => void;
+  error: (msg: string, obj?: Record<string, unknown>) => void;
+  warn: (msg: string, obj?: Record<string, unknown>) => void;
+  debug: (msg: string, obj?: Record<string, unknown>) => void;
+  child: (obj: Record<string, unknown>) => ConnectorLogger;
+}
+
+// API Response interfaces
+export interface ShopifyVariant {
+  id: number;
+  price: string;
+  compare_at_price?: string;
+  inventory_quantity?: number;
+  sku?: string;
+}
+
+export interface ShopifyAPIProduct {
+  id: number;
+  title: string;
+  body_html?: string;
+  vendor?: string;
+  product_type?: string;
+  status: 'active' | 'archived' | 'draft';
+  variants: ShopifyVariant[];
+}
+
+export interface ShopifyAPIResponse<T> {
+  data: T;
+}
+
+export interface ShopifyProductsResponse {
+  products: ShopifyAPIProduct[];
+}
+
+export interface ShopifyProductResponse {
+  product: ShopifyAPIProduct;
+}
+
+export interface ShopifyOrdersResponse {
+  orders: ShopifyAPIOrder[];
+}
+
+export interface ShopifyAPIOrder {
+  id: number;
+  order_number: number;
+  email?: string;
+  total_price: string;
+  financial_status: string;
+  fulfillment_status?: string;
+  line_items: Array<{
+    id: number;
+    product_id?: number;
+    variant_id?: number;
+    quantity: number;
+    price: string;
+  }>;
+}
+
+export interface ShopifyInventoryLevel {
+  inventory_item_id: number;
+  location_id: number;
+  available: number;
+}
+
+export interface ShopifyInventoryResponse {
+  inventory_levels: ShopifyInventoryLevel[];
+}
+
+export interface ShopifyShopResponse {
+  shop: {
+    name: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface VariantUpdateData {
+  price: string;
+  compare_at_price?: string;
+}
+
 const ShopifyProductSchema = z.object({
   id: z.number().optional(),
   title: z.string(),
@@ -38,11 +140,11 @@ export type ShopifyOrder = z.infer<typeof ShopifyOrderSchema>;
 
 export class ShopifyConnector {
   private api: AxiosInstance;
-  private logger: Logger;
+  private logger: ConnectorLogger;
   private rateLimitDelay = 500; // 500ms between requests
 
   constructor(shopDomain: string, accessToken: string, logger: Logger) {
-    this.logger = logger.child({ connector: 'shopify' });
+    this.logger = logger.child({ connector: 'shopify' }) as ConnectorLogger;
     
     this.api = axios.create({
       baseURL: `https://${shopDomain}.myshopify.com/admin/api/2024-01`,
@@ -55,27 +157,35 @@ export class ShopifyConnector {
 
     // Add rate limiting interceptor
     this.api.interceptors.request.use(async (config) => {
-      await this.rateLimitDelay && new Promise(resolve => setTimeout(resolve, this.rateLimitDelay));
+      if (this.rateLimitDelay) {
+        await new Promise(resolve => setTimeout(resolve, this.rateLimitDelay));
+      }
       return config;
     });
 
     // Add response interceptor for rate limit handling
     this.api.interceptors.response.use(
       response => response,
-      async error => {
-        if (error.response?.status === 429) {
-          const retryAfter = error.response.headers['retry-after'] || 1;
+      async (error: unknown) => {
+        if (isAxiosRateLimitError(error)) {
+          const retryAfter = error.response?.headers['retry-after'] || '1';
+          const retrySeconds = typeof retryAfter === 'string' ? parseInt(retryAfter, 10) : 1;
+          
           this.logger.warn(
+            `Shopify rate limit hit (429). Retrying after ${retrySeconds} second(s).`,
             {
-              url: error.config?.url,
-              method: error.config?.method,
-              retryAfter,
-              status: error.response?.status
-            },
-            `Shopify rate limit hit (429). Retrying after ${retryAfter} second(s).`
+              url: error.config?.url || 'unknown',
+              method: error.config?.method || 'unknown',
+              retryAfter: retrySeconds,
+              status: error.response?.status || 429
+            }
           );
-          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-          return this.api.request(error.config);
+          
+          await new Promise(resolve => setTimeout(resolve, retrySeconds * 1000));
+          
+          if (error.config) {
+            return this.api.request(error.config);
+          }
         }
         throw error;
       }
@@ -91,13 +201,13 @@ export class ShopifyConnector {
     status?: 'active' | 'archived' | 'draft';
   } = {}): Promise<ShopifyProduct[]> {
     try {
-      const response = await this.api.get('/products.json', { params });
+      const response = await this.api.get<ShopifyProductsResponse>('/products.json', { params });
       const products = response.data.products || [];
       
-      console.log("TODO: implement logging");
-      return products.map((product: unknown) => ShopifyProductSchema.parse(product));
+      this.logger.info('Retrieved products', { count: products.length });
+      return products.map((product: ShopifyAPIProduct) => ShopifyProductSchema.parse(product));
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Failed to get products', { error });
       throw error;
     }
   }
@@ -109,16 +219,16 @@ export class ShopifyConnector {
     try {
       const validatedProduct = ShopifyProductSchema.omit({ id: true }).parse(product);
       
-      const response = await this.api.post('/products.json', {
+      const response = await this.api.post<ShopifyProductResponse>('/products.json', {
         product: validatedProduct
       });
 
       const createdProduct = response.data.product;
-      console.log("TODO: implement logging");
+      this.logger.info('Product created successfully', { productId: createdProduct.id });
       
       return ShopifyProductSchema.parse(createdProduct);
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Failed to create product', { error });
       throw error;
     }
   }
@@ -128,16 +238,16 @@ export class ShopifyConnector {
    */
   async updateProduct(productId: number, updates: Partial<ShopifyProduct>): Promise<ShopifyProduct> {
     try {
-      const response = await this.api.put(`/products/${productId}.json`, {
+      const response = await this.api.put<ShopifyProductResponse>(`/products/${productId}.json`, {
         product: updates
       });
 
       const updatedProduct = response.data.product;
-      console.log("TODO: implement logging");
+      this.logger.info('Product updated successfully', { productId: updatedProduct.id });
       
       return ShopifyProductSchema.parse(updatedProduct);
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Failed to update product', { error, productId });
       throw error;
     }
   }
@@ -153,13 +263,13 @@ export class ShopifyConnector {
     fulfillment_status?: string;
   } = {}): Promise<ShopifyOrder[]> {
     try {
-      const response = await this.api.get('/orders.json', { params });
+      const response = await this.api.get<ShopifyOrdersResponse>('/orders.json', { params });
       const orders = response.data.orders || [];
       
-      console.log("TODO: implement logging");
-      return orders.map((order: unknown) => ShopifyOrderSchema.parse(order));
+      this.logger.info('Retrieved orders', { count: orders.length });
+      return orders.map((order: ShopifyAPIOrder) => ShopifyOrderSchema.parse(order));
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Failed to get orders', { error });
       throw error;
     }
   }
@@ -167,14 +277,10 @@ export class ShopifyConnector {
   /**
    * Get inventory levels for products
    */
-  async getInventoryLevels(locationId?: number): Promise<Array<{
-    inventory_item_id: number;
-    location_id: number;
-    available: number;
-  }>> {
+  async getInventoryLevels(locationId?: number): Promise<ShopifyInventoryLevel[]> {
     try {
       const params = locationId ? { location_ids: locationId } : {};
-      const response = await this.api.get('/inventory_levels.json', { params });
+      const response = await this.api.get<ShopifyInventoryResponse>('/inventory_levels.json', { params });
       
       this.logger.info('Retrieved inventory levels', { 
         count: response.data.inventory_levels?.length || 0 
@@ -182,7 +288,7 @@ export class ShopifyConnector {
       
       return response.data.inventory_levels || [];
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Failed to get inventory levels', { error });
       throw error;
     }
   }
@@ -226,7 +332,7 @@ export class ShopifyConnector {
     variants: Array<{ id: number; price: number; compare_at_price?: number }>;
   }> {
     try {
-      const response = await this.api.get(`/products/${productId}.json`);
+      const response = await this.api.get<ShopifyProductResponse>(`/products/${productId}.json`);
       const product = response.data.product;
       
       const variants = product.variants || [];
@@ -234,14 +340,14 @@ export class ShopifyConnector {
       
       return {
         currentPrice,
-        variants: variants.map((v: any) => ({
-          id: v.id,
-          price: parseFloat(v.price),
-          compare_at_price: v.compare_at_price ? parseFloat(v.compare_at_price) : undefined
+        variants: variants.map((variant: ShopifyVariant) => ({
+          id: variant.id,
+          price: parseFloat(variant.price),
+          compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : undefined
         }))
       };
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Failed to get product pricing', { error, productId });
       throw error;
     }
   }
@@ -256,8 +362,8 @@ export class ShopifyConnector {
     compareAtPrice?: number;
   }>): Promise<void> {
     try {
-      const promises = updates.map(async ({ productId, variantId, price, compareAtPrice }) => {
-        const variantUpdate: any = { price: price.toString() };
+      const promises = updates.map(async ({ variantId, price, compareAtPrice }) => {
+        const variantUpdate: VariantUpdateData = { price: price.toString() };
         if (compareAtPrice) {
           variantUpdate.compare_at_price = compareAtPrice.toString();
         }
@@ -268,9 +374,9 @@ export class ShopifyConnector {
       });
 
       await Promise.all(promises);
-      console.log("TODO: implement logging");
+      this.logger.info('Bulk price update completed', { updatesCount: updates.length });
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Failed to bulk update prices', { error });
       throw error;
     }
   }
@@ -280,13 +386,13 @@ export class ShopifyConnector {
    */
   async testConnection(): Promise<boolean> {
     try {
-      const response = await this.api.get('/shop.json');
+      const response = await this.api.get<ShopifyShopResponse>('/shop.json');
       this.logger.info('Shopify connection test successful', { 
         shop: response.data.shop?.name 
       });
       return true;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Shopify connection test failed', { error });
       return false;
     }
   }

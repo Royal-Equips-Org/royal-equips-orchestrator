@@ -31,6 +31,22 @@ export interface ShopifyOrder {
   }>;
 }
 
+// API Response types
+interface ShopifyProductsResponse {
+  products: ShopifyProduct[];
+}
+
+interface ShopifyProductResponse {
+  product: ShopifyProduct;
+}
+
+interface ShopifyShopResponse {
+  shop: {
+    name: string;
+    [key: string]: unknown;
+  };
+}
+
 export class ShopifyConnector {
   private api: AxiosInstance;
 
@@ -47,7 +63,7 @@ export class ShopifyConnector {
 
   async getProducts(): Promise<ShopifyProduct[]> {
     try {
-      const response = await this.api.get('/products.json');
+      const response = await this.api.get<ShopifyProductsResponse>('/products.json');
       return response.data.products || [];
     } catch (error) {
       console.error('Failed to get products:', error);
@@ -57,7 +73,7 @@ export class ShopifyConnector {
 
   async createProduct(product: Omit<ShopifyProduct, 'id'>): Promise<ShopifyProduct> {
     try {
-      const response = await this.api.post('/products.json', { product });
+      const response = await this.api.post<ShopifyProductResponse>('/products.json', { product });
       return response.data.product;
     } catch (error) {
       console.error('Failed to create product:', error);
@@ -67,7 +83,7 @@ export class ShopifyConnector {
 
   async testConnection(): Promise<boolean> {
     try {
-      await this.api.get('/shop.json');
+      await this.api.get<ShopifyShopResponse>('/shop.json');
       return true;
     } catch (error) {
       console.error('Shopify connection test failed:', error);
