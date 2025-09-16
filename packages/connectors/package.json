@@ -1,0 +1,29 @@
+{
+  "name": "@royal-equips/connectors",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./shopify": "./dist/shopify.js",
+    "./supabase": "./dist/supabase.js",
+    "./bigquery": "./dist/bigquery.js",
+    "./slack": "./dist/slack.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "@google-cloud/bigquery": "^7.9.0",
+    "axios": "^1.7.7",
+    "zod": "^3.23.8",
+    "pino": "^9.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "typescript": "^5.6.3"
+  }
+}
