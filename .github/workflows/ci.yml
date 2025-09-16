@@ -48,6 +48,10 @@ jobs:
       - name: Test
         run: pnpm test -- --ci --reporters=default --reporters=jest-junit
 
+      # (Optional) Debug: List JUnit report files
+      - name: Check JUnit reports directory
+        run: ls -l reports/junit || echo "JUnit report directory missing"
+
       # Upload JUnit XML results for reporting (always, even on failure)
       - name: Upload JUnit
         if: always()
@@ -55,3 +59,4 @@ jobs:
         with:
           name: junit
           path: reports/junit/junit.xml
+          if-no-files-found: ignore
