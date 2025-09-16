@@ -237,4 +237,18 @@ Contributors are recognized in:
 - Release notes
 - Project documentation
 
+# CONTRIBUTING.md
+## Rules
+- Signed, Conventional Commits.
+- Tests for all new logic. Rollback for all migrations.
+- No secrets in code. No PII in logs.
+- Add metrics and alerts for new services.
+## Flow
+1) Create branch `feat/*|fix/*|chore/*`.  
+2) Write code + tests + docs.  
+3) Open PR with risk + rollback.  
+4) Green guardrails → merge.  
+5) Canary deploy + monitor.
+
+
 Thank you for contributing to Royal Equips Orchestrator! 🚀
