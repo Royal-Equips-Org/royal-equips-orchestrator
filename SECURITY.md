@@ -58,7 +58,7 @@ Security vulnerabilities should be reported privately to allow us to patch them 
 
 ### 3. Alternative: Email Report
 
-Send an email to: **security@royalequips.com** (if available) or create a private issue.
+Send an email to: **google@royalequips.nl** (if available) or create a private issue.
 
 Include:
 - Description of the vulnerability
@@ -145,5 +145,6 @@ Contributors who have responsibly disclosed security vulnerabilities will be lis
 ---
 
 Last updated: January 2024
+
 
 
