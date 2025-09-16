@@ -8,5 +8,5 @@
     "composite": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/shopify.ts", "src/supabase.ts"]
+  "exclude": ["node_modules", "dist"]
 }
