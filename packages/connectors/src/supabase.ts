@@ -34,9 +34,16 @@ export interface AgentConfig {
   [key: string]: string | number | boolean | null;
 }
 
-export interface ExecutionParameters {
-  [key: string]: string | number | boolean | null | ExecutionParameters | ExecutionParameters[];
-}
+// Limit ExecutionParameters nesting to 3 levels to prevent deep recursion
+export type ExecutionParametersLevel3 = {
+  [key: string]: string | number | boolean | null;
+};
+export type ExecutionParametersLevel2 = {
+  [key: string]: string | number | boolean | null | ExecutionParametersLevel3 | ExecutionParametersLevel3[];
+};
+export type ExecutionParameters = {
+  [key: string]: string | number | boolean | null | ExecutionParametersLevel2 | ExecutionParametersLevel2[];
+};
 
 export interface ExecutionResults {
   success: boolean;
