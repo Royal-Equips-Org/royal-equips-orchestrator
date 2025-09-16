@@ -65,7 +65,15 @@ export class ShopifyConnector {
       async error => {
         if (error.response?.status === 429) {
           const retryAfter = error.response.headers['retry-after'] || 1;
-      console.log("TODO: implement logging");
+          this.logger.warn(
+            {
+              url: error.config?.url,
+              method: error.config?.method,
+              retryAfter,
+              status: error.response?.status
+            },
+            `Shopify rate limit hit (429). Retrying after ${retryAfter} second(s).`
+          );
           await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
           return this.api.request(error.config);
         }
