@@ -157,9 +157,7 @@ export class ShopifyConnector {
 
     // Add rate limiting interceptor
     this.api.interceptors.request.use(async (config) => {
-      if (this.rateLimitDelay) {
-        await new Promise(resolve => setTimeout(resolve, this.rateLimitDelay));
-      }
+      await new Promise(resolve => setTimeout(resolve, this.rateLimitDelay));
       return config;
     });
 
