@@ -1,10 +1,2 @@
-# .github/CODEOWNERS
-# Critical paths require review from both domains
-/platform/api/**              @Skidaw23
-/platform/agents/**           @Skidaw23
-/platform/core/**             @Skidaw23
-/platform/database/**         @Skidaw23
-/.github/workflows/**         @Skidaw23
-/nginx/**                     @Skidaw23
-/monitoring/**                @Skidaw23
-/scripts/**                   @Skidaw23
+* @Skidaw23
+.github/workflows/* @Skidaw23
