@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Skip hooks when explicitly requested or on CI
 if [ -n "$SKIP_HUSKY" ] || [ -n "$CI" ]; then
   echo "Husky skipped"; exit 0

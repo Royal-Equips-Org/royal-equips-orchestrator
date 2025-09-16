@@ -1,11 +1,18 @@
-﻿## Summary
-Explain what the change does in one paragraph.
+# .github/pull_request_template.md
+## Summary
+- What changed
+- Why (business impact)
+- Risk and rollback
 
-## Checklist
-- [ ] Lint, typecheck, tests pass
-- [ ] Health endpoint exists
-- [ ] Ports unified to 10000
-- [ ] Security findings addressed
+## Checklists
+- [ ] Conventional Commit and signed (`-S`)
+- [ ] Tests added/updated (unit, integration, e2e if applicable)
+- [ ] Migrations include rollback and backfill notes
+- [ ] Metrics/logs/alerts updated
+- [ ] Security review: secrets, PII, scopes, RBAC
+- [ ] Runbooks/ADRs updated
 
-## Copilot
-If more info is needed, post your self-prompts here and continue iterating.
+## Evidence
+- Benchmarks p95/p99
+- Screenshots / dashboards
+- Links to issues/ADRs
