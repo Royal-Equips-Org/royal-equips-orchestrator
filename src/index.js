@@ -3057,7 +3057,7 @@ function serveHolographicFallback(c) {
                     if (!assistantMessage) {
                         AppState.sessions[sessionId].push({
                             role: 'assistant',
-                            content: 'I apologize for the delay. The AI service is taking longer than expected to respond.'
+                            content: "I apologize for the delay. The AI service is taking longer than expected to respond."
                         });
                         renderChatMessages();
                     }
@@ -3097,7 +3097,7 @@ function serveHolographicFallback(c) {
                             if (!assistantMessage) {
                                 AppState.sessions[sessionId].push({
                                     role: 'assistant',
-                                    content: 'I encountered an error while processing your request: ' + (data.message || 'Unknown error')
+                                    content: "I encountered an error while processing your request: " + (data.message || 'Unknown error')
                                 });
                                 renderChatMessages();
                             }
@@ -3508,5 +3508,6 @@ app.all('*', (c) => {
 });
 
 export default app;
+
 
 
