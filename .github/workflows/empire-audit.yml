@@ -34,7 +34,7 @@ jobs:
           if [ -f package.json ] && jq -e '.scripts.build' package.json >/dev/null; then pnpm -w run build; fi
       - name: Unit tests (if present)
         run: |
-          if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then pnpm -w run test -- --ci --reporter=dot || true; fi
+          if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then pnpm -w run test -- --ci --reporter=dot; fi
   codeql:
     uses: github/codeql-action/analyze@v3
     with: { languages: 'javascript,python,go', build-mode: "none" }
