@@ -1,14 +1,14 @@
-# .github/workflows/commitlint.yml
 name: Commitlint
-on:
-  pull_request:
-  push:
-    branches: [main]
+
+on: [push, pull_request]
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - run: npm i -g @commitlint/{config-conventional,cli}@19
-      - run: commitlint --from=HEAD~50 --to=HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Use v18 for best compatibility
+      - run: npm ci
+      - run: npx commitlint --from=HEAD~50 --to=HEAD
