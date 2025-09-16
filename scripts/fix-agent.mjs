@@ -264,7 +264,7 @@ export async function ${fn}(..._args){
 async function pnpmInstall(pm) {
   try {
     await execa(pm.cmd, [...pm.base, "install"], { stdio: "inherit" });
-  } catch (_err) {
+  } catch (err2) {
     log("install fallback --no-frozen-lockfile");
     try {
       await execa(pm.cmd, [...pm.base, "install", "--no-frozen-lockfile"], { stdio: "inherit" });
