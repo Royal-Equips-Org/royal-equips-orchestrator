@@ -1,4 +1,13 @@
 # Security Policy
+# SECURITY.md
+## Reporting
+Email: pro.jokhoe2@gmail.com 72h SLA.  
+## Scope
+Code, pipelines, infra, supply chain.  
+## Controls
+Signed commits, RBAC, least privilege, WAF, DDoS, secret scanning, SBOM, Trivy, CodeQL.  
+## Handling
+Triage → contain → fix → rotate secrets → postmortem.
 
 ## Supported Versions
 
@@ -136,3 +145,4 @@ Contributors who have responsibly disclosed security vulnerabilities will be lis
 ---
 
 Last updated: January 2024
+
