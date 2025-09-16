@@ -1,5 +1,5 @@
 // commitlint.config.cjs
-export default {
+module.exports = {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'signed-off-by': [0, 'always'],
