@@ -8,7 +8,7 @@ update_file () {
   if ! grep -q "^---$" "$f"; then
     printf "\n---\nLast-Upgrade: %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$f"
   fi
-  sed -i 's/[ \t]*$//' "$f" || true
+  sed -i '' 's/[ \t]*$//' "$f" || true
 }
 for f in INSTRUCTIONS.md EMPIRE_PROMPT.md AGENT_INSTRUCTIONS.md EMPIRE_INFRASTRUCTURE.md .github/COPILOT.md; do
   update_file "$f"
