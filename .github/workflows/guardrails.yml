@@ -22,7 +22,10 @@ jobs:
           npx --yes @commitlint/cli@19 -V --from=origin/${{ github.base_ref || 'HEAD' }} --to=HEAD
       - name: Secret scan (trufflehog)
         uses: trufflesecurity/trufflehog@v3
-        with: {path: ., base: HEAD~50, head: HEAD}
+        with:
+          path: .
+          base: ${{ github.event.before || 'HEAD~1' }}
+          head: HEAD
       - name: Python setup
         uses: actions/setup-python@v5
         with: {python-version: '3.11', cache: 'pip'}
