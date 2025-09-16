@@ -1,6 +1,65 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Logger } from 'pino';
 
+// Supabase response types
+interface SupabaseResponse<T> {
+  data: T | null;
+  error: Error | null;
+}
+
+interface IdResponse {
+  id: string;
+}
+
+// Helper function for type-safe data extraction
+function extractData<T>(response: SupabaseResponse<T>): T {
+  if (response.error) {
+    throw response.error;
+  }
+  if (!response.data) {
+    throw new Error('No data returned from Supabase');
+  }
+  return response.data;
+}
+interface ConnectorLogger {
+  info: (msg: string, obj?: Record<string, unknown>) => void;
+  error: (msg: string, obj?: Record<string, unknown>) => void;
+  warn: (msg: string, obj?: Record<string, unknown>) => void;
+  debug: (msg: string, obj?: Record<string, unknown>) => void;
+  child: (obj: Record<string, unknown>) => ConnectorLogger;
+}
+
+// Proper type definitions for configuration, parameters, results, and metrics
+export interface AgentConfig {
+  [key: string]: string | number | boolean | null;
+}
+
+// Limit ExecutionParameters nesting to 3 levels to prevent deep recursion
+export type ExecutionParametersLevel3 = {
+  [key: string]: string | number | boolean | null;
+};
+export type ExecutionParametersLevel2 = {
+  [key: string]: string | number | boolean | null | ExecutionParametersLevel3 | ExecutionParametersLevel3[];
+};
+export type ExecutionParameters = {
+  [key: string]: string | number | boolean | null | ExecutionParametersLevel2 | ExecutionParametersLevel2[];
+};
+
+export interface ExecutionResults {
+  success: boolean;
+  data?: unknown;
+  errors?: string[];
+  [key: string]: unknown;
+}
+
+export interface ExecutionMetrics {
+  duration: number | undefined;
+  apiCalls: number | undefined;
+  resourcesUsed: number | undefined;
+  dataProcessed: number | undefined;
+  [key: string]: number | undefined;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -10,7 +69,7 @@ export interface Database {
           name: string;
           type: string;
           status: string;
-          config: any;
+          config: AgentConfig;
           created_at: string;
           updated_at: string;
         };
@@ -19,7 +78,7 @@ export interface Database {
           name: string;
           type: string;
           status?: string;
-          config?: any;
+          config?: AgentConfig;
           created_at?: string;
           updated_at?: string;
         };
@@ -28,7 +87,7 @@ export interface Database {
           name?: string;
           type?: string;
           status?: string;
-          config?: any;
+          config?: AgentConfig;
           updated_at?: string;
         };
       };
@@ -38,9 +97,9 @@ export interface Database {
           agent_id: string;
           plan_id: string;
           status: string;
-          parameters: any;
-          results: any;
-          metrics: any;
+          parameters: ExecutionParameters;
+          results: ExecutionResults;
+          metrics: ExecutionMetrics;
           created_at: string;
           completed_at: string | null;
         };
@@ -49,16 +108,16 @@ export interface Database {
           agent_id: string;
           plan_id: string;
           status?: string;
-          parameters?: any;
-          results?: any;
-          metrics?: any;
+          parameters?: ExecutionParameters;
+          results?: ExecutionResults;
+          metrics?: ExecutionMetrics;
           created_at?: string;
           completed_at?: string | null;
         };
         Update: {
           status?: string;
-          results?: any;
-          metrics?: any;
+          results?: ExecutionResults;
+          metrics?: ExecutionMetrics;
           completed_at?: string | null;
         };
       };
@@ -100,17 +159,17 @@ export interface Database {
 }
 
 export class SupabaseConnector {
-  private client: SupabaseClient<Database>;
-  private logger: Logger;
+  private client: SupabaseClient;
+  private logger: ConnectorLogger;
 
   constructor(url: string, serviceRoleKey: string, logger: Logger) {
-    this.logger = logger.child({ connector: 'supabase' });
-    this.client = createClient<Database>(url, serviceRoleKey, {
+    this.logger = logger.child({ connector: 'supabase' }) as ConnectorLogger;
+    this.client = createClient(url, serviceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
       }
-    });
+    }) as SupabaseClient;
   }
 
   /**
@@ -118,18 +177,17 @@ export class SupabaseConnector {
    */
   async saveExecution(execution: Database['public']['Tables']['executions']['Insert']): Promise<string> {
     try {
-      const { data, error } = await this.client
+      const response = await this.client
         .from('executions')
         .insert(execution)
         .select('id')
         .single();
 
-      if (error) throw error;
-
-      console.log("TODO: implement logging");
+      const data = extractData(response) as IdResponse;
+      this.logger.info('Execution saved successfully', { executionId: data.id });
       return data.id;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Error saving execution', { error });
       throw error;
     }
   }
@@ -142,7 +200,7 @@ export class SupabaseConnector {
     updates: Database['public']['Tables']['executions']['Update']
   ): Promise<void> {
     try {
-      const { error } = await this.client
+      const response = await this.client
         .from('executions')
         .update({
           ...updates,
@@ -152,11 +210,14 @@ export class SupabaseConnector {
         })
         .eq('id', executionId);
 
-      if (error) throw error;
+      if (response.error) {
+        this.logger.error('Failed to update execution', { error: response.error, executionId });
+        throw response.error;
+      }
 
-      console.log("TODO: implement logging");
+      this.logger.info('Execution updated successfully', { executionId });
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Error updating execution', { error, executionId });
       throw error;
     }
   }
@@ -169,19 +230,21 @@ export class SupabaseConnector {
     limit = 50
   ): Promise<Database['public']['Tables']['executions']['Row'][]> {
     try {
-      const { data, error } = await this.client
+      const response = await this.client
         .from('executions')
         .select('*')
         .eq('agent_id', agentId)
         .order('created_at', { ascending: false })
         .limit(limit);
 
-      if (error) throw error;
-
-      console.log("TODO: implement logging");
-      return data || [];
+      const data = extractData(response) as Database['public']['Tables']['executions']['Row'][];
+      this.logger.info('Retrieved execution history', { 
+        agentId, 
+        count: data.length 
+      });
+      return data;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Error getting execution history', { error, agentId });
       throw error;
     }
   }
@@ -191,18 +254,17 @@ export class SupabaseConnector {
    */
   async saveAgent(agent: Database['public']['Tables']['agents']['Insert']): Promise<string> {
     try {
-      const { data, error } = await this.client
+      const response = await this.client
         .from('agents')
         .upsert(agent, { onConflict: 'id' })
         .select('id')
         .single();
 
-      if (error) throw error;
-
-      console.log("TODO: implement logging");
+      const data = extractData(response) as IdResponse;
+      this.logger.info('Agent saved successfully', { agentId: data.id });
       return data.id;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Error saving agent', { error, agentName: agent.name });
       throw error;
     }
   }
@@ -212,17 +274,16 @@ export class SupabaseConnector {
    */
   async getAgents(): Promise<Database['public']['Tables']['agents']['Row'][]> {
     try {
-      const { data, error } = await this.client
+      const response = await this.client
         .from('agents')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      console.log("TODO: implement logging");
-      return data || [];
+      const data = extractData(response) as Database['public']['Tables']['agents']['Row'][];
+      this.logger.info('Retrieved agents', { count: data.length });
+      return data;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Error getting agents', { error });
       throw error;
     }
   }
@@ -232,18 +293,17 @@ export class SupabaseConnector {
    */
   async saveProduct(product: Database['public']['Tables']['products']['Insert']): Promise<string> {
     try {
-      const { data, error } = await this.client
+      const response = await this.client
         .from('products')
         .upsert(product, { onConflict: 'shopify_id' })
         .select('id')
         .single();
 
-      if (error) throw error;
-
-      console.log("TODO: implement logging");
+      const data = extractData(response) as IdResponse;
+      this.logger.info('Product saved successfully', { productId: data.id });
       return data.id;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Error saving product', { error, productTitle: product.title });
       throw error;
     }
   }
@@ -274,14 +334,13 @@ export class SupabaseConnector {
         query = query.range(filters.offset, filters.offset + (filters.limit || 50) - 1);
       }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      console.log("TODO: implement logging");
-      return data || [];
+      const response = await query;
+      const data = extractData(response) as Database['public']['Tables']['products']['Row'][];
+      
+      this.logger.info('Retrieved products', { count: data.length, filters });
+      return data;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Error getting products', { error, filters });
       throw error;
     }
   }
@@ -309,41 +368,44 @@ export class SupabaseConnector {
           break;
       }
 
-      // Get execution metrics
-      const { data: executions, error: execError } = await this.client
+      // Get execution metrics with proper typing
+      const executionsResponse = await this.client
         .from('executions')
         .select('status, metrics')
         .gte('created_at', timeFilter.toISOString());
 
-      if (execError) throw execError;
+      const executions = extractData(executionsResponse) as Array<{
+        status: string;
+        metrics: ExecutionMetrics;
+      }>;
 
       // Get active agents count
-      const { data: agents, error: agentsError } = await this.client
+      const agentsResponse = await this.client
         .from('agents')
         .select('id')
         .eq('status', 'active');
 
-      if (agentsError) throw agentsError;
+      const agents = extractData(agentsResponse) as Array<{ id: string }>;
 
-      const totalExecutions = executions?.length || 0;
-      const successfulExecutions = executions?.filter(e => e.status === 'success').length || 0;
+      const totalExecutions = executions.length;
+      const successfulExecutions = executions.filter(e => e.status === 'success').length;
       const successRate = totalExecutions > 0 ? (successfulExecutions / totalExecutions) * 100 : 0;
       
-      const avgExecutionTime = executions && executions.length > 0
+      const avgExecutionTime = executions.length > 0
         ? executions.reduce((sum, exec) => sum + (exec.metrics?.duration || 0), 0) / executions.length
         : 0;
 
       const metrics = {
         totalExecutions,
         successRate,
-        activeAgents: agents?.length || 0,
+        activeAgents: agents.length,
         avgExecutionTime
       };
 
-      console.log("TODO: implement logging");
+      this.logger.info('Retrieved system metrics', { metrics, timeRange });
       return metrics;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Error getting system metrics', { error, timeRange });
       throw error;
     }
   }
@@ -353,17 +415,20 @@ export class SupabaseConnector {
    */
   async testConnection(): Promise<boolean> {
     try {
-      const { data, error } = await this.client
+      const response = await this.client
         .from('agents')
         .select('count')
         .limit(1);
 
-      if (error) throw error;
+      if (response.error) {
+        this.logger.error('Supabase connection test failed', { error: response.error });
+        return false;
+      }
 
       this.logger.info('Supabase connection test successful');
       return true;
     } catch (error) {
-      console.log("TODO: implement logging");
+      this.logger.error('Supabase connection test failed', { error });
       return false;
     }
   }

@@ -1,5 +1,22 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+// Type definitions for simple connector
+export interface SimpleExecutionParams {
+  agent_id: string;
+  plan_id: string;
+  status?: string;
+  parameters?: Record<string, unknown>;
+  results?: Record<string, unknown>;
+  metrics?: Record<string, number>;
+}
+
+export interface SimpleMetrics {
+  totalExecutions: number;
+  successRate: number;
+  activeAgents: number;
+  avgExecutionTime: number;
+}
+
 export class SupabaseConnector {
   private client: SupabaseClient;
 
@@ -9,17 +26,10 @@ export class SupabaseConnector {
         autoRefreshToken: false,
         persistSession: false
       }
-    });
+    }) as SupabaseClient;
   }
 
-  async saveExecution(execution: {
-    agent_id: string;
-    plan_id: string;
-    status?: string;
-    parameters?: any;
-    results?: any;
-    metrics?: any;
-  }): Promise<string> {
+  async saveExecution(execution: SimpleExecutionParams): Promise<string> {
     try {
       const { data, error } = await this.client
         .from('executions')
@@ -28,19 +38,16 @@ export class SupabaseConnector {
         .single();
 
       if (error) throw error;
-      return data.id;
+      return (data as { id: string }).id;
     } catch (error) {
       console.error('Failed to save execution:', error);
       throw error;
     }
   }
 
-  async getMetrics(): Promise<{
-    totalExecutions: number;
-    successRate: number;
-    activeAgents: number;
-    avgExecutionTime: number;
-  }> {
+  getMetrics(): SimpleMetrics {
+    // Simple implementation that returns default values
+    // In a real implementation, this would query the database
     return {
       totalExecutions: 0,
       successRate: 100,
@@ -57,8 +64,8 @@ export class SupabaseConnector {
         .limit(1);
 
       return !error;
-    } catch (error) {
-      console.error('Supabase connection test failed:', error);
+    } catch (_error) {
+      console.error('Supabase connection test failed:', _error);
       return false;
     }
   }
