@@ -130,7 +130,7 @@ bandit -r royal_mcp/ api/ app/ orchestrator/
 
 For security-related questions or concerns:
 
-- **Security Reports**: Use GitHub Security Advisories or email security@royalequips.com
+- **Security Reports**: Use GitHub Security Advisories or email google@royalequips.nl
 - **General Security Questions**: Create a GitHub Discussion in the Security category
 - **Documentation Issues**: Submit a regular GitHub issue
 
@@ -145,4 +145,5 @@ Contributors who have responsibly disclosed security vulnerabilities will be lis
 ---
 
 Last updated: January 2024
+
 
