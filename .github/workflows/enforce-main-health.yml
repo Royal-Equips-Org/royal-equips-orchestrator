@@ -5,24 +5,20 @@ on:
 permissions:
   contents: write
   pull-requests: write
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     outputs:
       result: ${{ steps.outcome.outputs.status }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
+      # Install pnpm globally (production best practice)
       - name: Install pnpm
         run: npm install -g pnpm
 
-      - name: Install dependencies
-        run: pnpm install --include=dev
-
-  # ...other steps
-
-      # Setup pnpm cache for faster installs
+      # Setup pnpm cache for faster installs (self-healing: cross-OS safe)
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
@@ -31,16 +27,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      # Install dependencies using pnpm and frozen lockfile for reproducible builds
+      # Install all dependencies (incl. devDependencies) for lint/test
+      # Self-healing: If strict fails, fallback to fix-lockfile and rerun
       - name: Install dependencies
         run: |
           set -e
-          # Self-healing: If strict fails, fallback to fix-lockfile and rerun
-          pnpm install --frozen-lockfile || (pnpm install --fix-lockfile && pnpm install --frozen-lockfile)
+          pnpm install --frozen-lockfile --prod=false || (pnpm install --fix-lockfile --prod=false && pnpm install --frozen-lockfile --prod=false)
         env:
-          NODE_ENV: production
+          NODE_ENV: development
 
-      # Run lint step with pnpm
+      # Run lint step with pnpm (ESLint must be available)
       - id: lint
         name: Run Lint
         run: pnpm lint
@@ -53,6 +49,7 @@ jobs:
       # Outcome detection for self-healing workflow
       - id: outcome
         run: |
+          set -e
           if [ "${{ steps.lint.outcome }}" = "success" ] && [ "${{ steps.test.outcome }}" = "success" ]; then
             echo "status=success" >> "$GITHUB_OUTPUT"
           else
@@ -68,7 +65,7 @@ jobs:
     if: needs.ci.outputs.result == 'failure'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           ref: "master"
           fetch-depth: 0
@@ -78,4 +75,3 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git revert --no-edit "${GITHUB_SHA}" || exit 1
           git push origin HEAD:master
-

@@ -1,0 +1,51 @@
+# .github/workflows/guardrails.yml
+name: Guardrails
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Enforce signed commits
+        run: |
+          unsigned=$(git log --pretty='%H %G?' origin/${{ github.base_ref || 'HEAD' }}..HEAD | awk '$2!="G"')
+          if [ -n "$unsigned" ]; then echo "Unsigned commits found"; echo "$unsigned"; exit 1; fi
+      - name: Enforce Conventional Commits
+        run: |
+          npx --yes @commitlint/cli@19 -V --from=origin/${{ github.base_ref || 'HEAD' }} --to=HEAD
+      - name: Secret scan (trufflehog)
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: .
+          base: ${{ github.event.before || 'HEAD~1' }}
+          head: HEAD
+      - name: Python setup
+        uses: actions/setup-python@v5
+        with: {python-version: '3.11', cache: 'pip'}
+      - run: pip install -r requirements.txt && pip install pytest pytest-asyncio pytest-cov bandit safety
+      - name: Lint security
+        run: |
+          bandit -r platform -q || true
+          safety check -r requirements.txt --full-report || true
+      - name: Unit + integration tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+        run: |
+          pytest -q --disable-warnings --maxfail=1
+      - name: Container SBOM + scan
+        uses: anchore/sbom-action@v0
+      - name: Trivy FS
+        uses: aquasecurity/trivy-action@master
+        with: {scan-type: 'fs', scan-ref: '.'}
+      - name: Require ADR/Docs on architectural changes
+        run: |
+          if git diff --name-only origin/${{ github.base_ref || 'HEAD' }}..HEAD | grep -E 'platform/(core|agents|database)|nginx/|monitoring/'; then
+            git diff --name-only | grep -qE '^docs/|^ADR' || (echo "Missing docs/ADR for arch change" && exit 1)
+          fi

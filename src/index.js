@@ -3023,9 +3023,9 @@ function serveHolographicFallback(c) {
                 console.error('Message send error:', error);
                 
                 // Fallback response with more helpful message
-                const fallbackMessage = 'I apologize, but I\'m currently unable to connect to the AI service. ' +
-                    'This could be because the backend API is not configured or unavailable. ' +
-                    'Please check the PYTHON_API_URL configuration or try again later.';
+                const fallbackMessage = "I apologize, but I'm currently unable to connect to the AI service. " +
+                    "This could be because the backend API is not configured or unavailable. " +
+                    "Please check the PYTHON_API_URL configuration or try again later.";
                 
                 AppState.sessions[AppState.currentSession].push({
                     role: 'assistant',
@@ -3127,8 +3127,8 @@ function serveHolographicFallback(c) {
                     
                     if (!assistantMessage) {
                         AppState.sessions[sessionId].push({
-                            role: 'assistant',
-                            content: 'I’m sorry, but there was a connection error while streaming the response. Please try again.'
+                            role: 'assistant',                           
+             content: "I'm sorry, but there was a connection error while streaming the response. Please try again."
                         });
                         renderChatMessages();
                     }
@@ -3140,7 +3140,7 @@ function serveHolographicFallback(c) {
                 // Immediate fallback
                 AppState.sessions[sessionId].push({
                     role: 'assistant',
-                    content: 'I'm unable to establish a streaming connection. Please check if the streaming endpoint is available.'
+                    content: "I'm unable to establish a streaming connection. Please check if the streaming endpoint is available."
                 });
                 renderChatMessages();
             }
@@ -3508,3 +3508,5 @@ app.all('*', (c) => {
 });
 
 export default app;
+
+
