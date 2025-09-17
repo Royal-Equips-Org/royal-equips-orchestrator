@@ -1,4 +1,6 @@
 name: 🤖 Autonomous Agent Execution
+permissions:
+  contents: read
 
 on:
   schedule:
@@ -162,6 +164,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [critical-agents, growth-agents]
     if: always()
+    permissions:
+      contents: write
+      pull-requests: write
     
     steps:
       - name: Checkout repository
