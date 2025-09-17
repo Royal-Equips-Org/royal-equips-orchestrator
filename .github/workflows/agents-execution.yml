@@ -1,0 +1,207 @@
+name: 🤖 Autonomous Agent Execution
+permissions:
+  contents: read
+
+on:
+  schedule:
+    # Execute critical agents every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      agent_name:
+        description: 'Specific agent to run (optional)'
+        required: false
+        type: string
+      force_run:
+        description: 'Force run even if conditions not met'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # Tier 1 Critical Agents - Must run 24/7
+  critical-agents:
+    name: 🚨 Tier 1 Critical Agents
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    strategy:
+      matrix:
+        agent: [
+          'inventory_pricing',
+          'order_fulfillment', 
+          'fraud_security',
+          'analytics'
+        ]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest-asyncio
+      
+      - name: Run health check
+        run: |
+          python -c "
+          import asyncio
+          from orchestrator.core.orchestrator import Orchestrator
+          from orchestrator.agents import *
+          
+          async def health_check():
+              orchestrator = Orchestrator()
+              try:
+                  # Import and register agent
+                  if '${{ matrix.agent }}' == 'inventory_pricing':
+                      from orchestrator.agents.pricing_optimizer import PricingOptimizerAgent
+                      agent = PricingOptimizerAgent()
+                  elif '${{ matrix.agent }}' == 'order_fulfillment':
+                      from orchestrator.agents.order_management import OrderManagementAgent
+                      agent = OrderManagementAgent()
+                  elif '${{ matrix.agent }}' == 'fraud_security':
+                      from orchestrator.agents.security import SecurityAgent
+                      agent = SecurityAgent()
+                  elif '${{ matrix.agent }}' == 'analytics':
+                      from orchestrator.agents.analytics import AnalyticsAgent
+                      agent = AnalyticsAgent()
+                  else:
+                      return
+                  
+                  health = await agent.health_check()
+                  print(f'Agent ${{ matrix.agent }} health: {health}')
+                  return health.get('status') == 'ok'
+              except Exception as e:
+                  print(f'Health check failed: {e}')
+                  return False
+          
+          result = asyncio.run(health_check())
+          exit(0 if result else 1)
+          "
+      
+      - name: Execute agent
+        run: |
+          python scripts/execute_agent.py --agent ${{ matrix.agent }} --timeout 300
+        env:
+          # Production secrets
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          RABBITMQ_URL: ${{ secrets.RABBITMQ_URL }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          SHOPIFY_SHOP_URL: ${{ secrets.SHOPIFY_SHOP_URL }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          
+      - name: Report execution results
+        if: always()
+        run: |
+          echo "::notice::Agent ${{ matrix.agent }} execution completed"
+        
+      - name: Slack notification on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "🚨 Critical Agent ${{ matrix.agent }} execution failed"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Tier 2 Growth Agents - Run every hour
+  growth-agents:
+    name: 📈 Tier 2 Growth Agents
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    needs: critical-agents
+    strategy:
+      matrix:
+        agent: [
+          'marketing_automation',
+          'customer_support',
+          'content_creation',
+          'competitor_analysis',
+          'supplier_management'
+        ]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest-asyncio
+      
+      - name: Execute agent
+        run: |
+          python scripts/execute_agent.py --agent ${{ matrix.agent }} --timeout 600
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          RABBITMQ_URL: ${{ secrets.RABBITMQ_URL }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          SHOPIFY_SHOP_URL: ${{ secrets.SHOPIFY_SHOP_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          
+  # Self-healing and monitoring
+  system-health:
+    name: 🔧 System Health & Self-Healing
+    runs-on: ubuntu-latest
+    needs: [critical-agents, growth-agents]
+    if: always()
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest-asyncio
+      
+      - name: Run system health check
+        run: |
+          python scripts/health_check.py --comprehensive
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          APP_URL: ${{ secrets.APP_URL }}
+          
+      - name: Auto-generate improvement PRs
+        if: success()
+        run: |
+          python scripts/auto_improvement.py --scan --create-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Slack health report
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: "🏥 Royal Equips Empire health check completed"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
