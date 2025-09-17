@@ -1,0 +1,11 @@
+{
+  "analysis_period": "Last 7 days",
+  "total_revenue": 0.0,
+  "total_orders": 0,
+  "total_products": 99,
+  "total_customers": 0,
+  "generated_at": "2025-09-17T18:09:22.219656",
+  "data_files": [
+    "shopify_data/products_20250917_180916.json"
+  ]
+}
