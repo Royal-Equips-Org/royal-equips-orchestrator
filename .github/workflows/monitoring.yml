@@ -26,6 +26,8 @@ jobs:
   # System Health Monitoring
   system-health:
     name: 🔍 System Health Check
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     
@@ -132,6 +134,8 @@ jobs:
   # Agent Health Monitoring
   agent-health:
     name: 🤖 Agent Health Monitoring
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: system-health
     if: always()
@@ -350,6 +354,8 @@ jobs:
           echo "*Autonomous monitoring powered by Royal Equips Empire 🚀*" >> $GITHUB_STEP_SUMMARY
       
       - name: Final Status Check
+      permissions:
+        contents: read
         run: |
           if [[ "${{ needs.system-health.result }}" == "failure" ]]; then
             echo "💥 Critical system health issues detected!"
