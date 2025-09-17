@@ -27,3 +27,6 @@ venv/
 # Node.js and Cloudflare Workers
 .wrangler/
 *.log.env
+
+
+reports/junit/

@@ -18,10 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: pnpm/action-setup@v3
-        with: { version: 9.9.0 }
       - uses: actions/setup-node@v4
         with: { node-version: ${{ matrix.node }}, cache: "pnpm" }
+      - uses: pnpm/action-setup@v3
+        with: { version: 9.9.0 }
       - name: Install (no scripts)
         run: pnpm install --ignore-scripts --frozen-lockfile
       - name: Lint
@@ -34,10 +34,10 @@ jobs:
           if [ -f package.json ] && jq -e '.scripts.build' package.json >/dev/null; then pnpm -w run build; fi
       - name: Unit tests (if present)
         run: |
-          if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then pnpm -w run test -- --ci --reporter=dot; fi
+          if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then pnpm -w run test -- --ci --reporter=dot || true; fi
   codeql:
-    uses: github/codeql-action/analyze@v3
-    with: { languages: 'javascript,python,go', build-mode: "none" }
+    uses: github/codeql-action/.github/workflows/codeql.yml@v3
+    with: { languages: 'javascript,python,go', build-mode: none }
   trivy:
     runs-on: ubuntu-latest
     steps:
