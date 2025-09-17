@@ -38,7 +38,7 @@ app.options('/api/*', (c) => {
 // API proxy - forward all /api/* requests to backend with enhanced SSE and binary support
 app.all('/api/*', async (c) => {
   const pythonApiUrl = c.env.PYTHON_API_URL;
-  
+
   if (!pythonApiUrl) {
     return c.json({ error: "PYTHON_API_URL is not configured" }, 500);
   }
@@ -46,7 +46,7 @@ app.all('/api/*', async (c) => {
   try {
     const url = new URL(c.req.url);
     const backendUrl = new URL(pythonApiUrl);
-    
+
     // Build target URL: backend base + current path + query
     const targetPath = url.pathname.replace('/api', '') || '/';
     const targetUrl = new URL(targetPath + url.search, backendUrl);
@@ -54,7 +54,7 @@ app.all('/api/*', async (c) => {
     // Prepare request headers - remove accept-encoding to avoid compression mismatches
     const headers = new Headers(c.req.raw.headers);
     headers.delete('accept-encoding'); // Always remove to ensure clean pass-through
-    
+
     // Set forwarding headers
     headers.set('x-forwarded-for', c.req.header('CF-Connecting-IP') || '');
     headers.set('x-forwarded-proto', 'https');
@@ -74,27 +74,27 @@ app.all('/api/*', async (c) => {
     }
 
     const response = await fetch(targetUrl.toString(), upstreamInit);
-    
+
     // Forward response with original status and enhanced headers
     const responseHeaders = new Headers(response.headers);
-    
+
     // Add comprehensive CORS headers
     responseHeaders.set('Access-Control-Allow-Origin', '*');
     responseHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS');
     responseHeaders.set('Access-Control-Allow-Headers', '*');
     responseHeaders.set('Access-Control-Allow-Credentials', 'true');
     responseHeaders.set('Access-Control-Expose-Headers', '*');
-    
+
     // Handle SSE and streaming responses specially
     const contentType = responseHeaders.get('content-type') || '';
     const isSSEStream = contentType.includes('text/event-stream') || contentType.includes('text/plain');
-    
+
     if (isSSEStream) {
       responseHeaders.set('Cache-Control', 'no-cache');
       responseHeaders.set('Connection', 'keep-alive');
       responseHeaders.set('X-Accel-Buffering', 'no'); // Disable nginx buffering
     }
-    
+
     // Pass-through response body for proper streaming support
     return new Response(response.body, {
       status: response.status,
@@ -121,7 +121,7 @@ async function handleAdmin(c) {
   if (streamlitUrl) {
     try {
       // Test if Streamlit is reachable
-      const healthCheck = await fetch(streamlitUrl, { 
+      const healthCheck = await fetch(streamlitUrl, {
         method: 'HEAD',
         signal: AbortSignal.timeout(3000) // 3 second timeout
       });
@@ -226,9 +226,9 @@ function serveStreamlitEmbed(streamlitUrl) {
                 <a href="/admin?fallback=1" class="embed-btn">🎮 Holographic Mode</a>
             </div>
         </div>
-        <iframe 
-            class="embed-frame" 
-            src="${streamlitUrl}" 
+        <iframe
+            class="embed-frame"
+            src="${streamlitUrl}"
             title="Royal Equips Admin Dashboard"
             allow="camera; microphone; fullscreen"
             sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups"
@@ -265,7 +265,7 @@ function serveHolographicFallback(c) {
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         :root {
             /* Enhanced color palette with better contrast */
             --primary-cyan: #00E5FF;
@@ -303,7 +303,7 @@ function serveHolographicFallback(c) {
             --security-danger: #FF3B3B;
             --security-critical: #E91E63;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Courier New', monospace;
             background: var(--bg-void);
@@ -312,7 +312,7 @@ function serveHolographicFallback(c) {
             overflow: hidden;
             position: relative;
         }
-        
+
         /* === ENHANCED STARFIELD BACKGROUND === */
         .starfield {
             position: fixed;
@@ -320,7 +320,7 @@ function serveHolographicFallback(c) {
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
+            background:
                 radial-gradient(2px 2px at 20px 30px, var(--primary-cyan), transparent),
                 radial-gradient(1.5px 1.5px at 40px 70px, var(--primary-magenta), transparent),
                 radial-gradient(1px 1px at 90px 40px, var(--primary-neon-green), transparent),
@@ -334,7 +334,7 @@ function serveHolographicFallback(c) {
             animation: starfieldMove 25s linear infinite, starfieldPulse 8s ease-in-out infinite;
             z-index: -1;
         }
-        
+
         .starfield::before {
             content: '';
             position: absolute;
@@ -342,7 +342,7 @@ function serveHolographicFallback(c) {
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
+            background:
                 radial-gradient(3px 3px at 80px 20px, var(--primary-electric), transparent),
                 radial-gradient(2px 2px at 120px 90px, var(--primary-neon-green), transparent),
                 radial-gradient(1.5px 1.5px at 180px 60px, var(--primary-cyan), transparent);
@@ -351,36 +351,36 @@ function serveHolographicFallback(c) {
             animation: starfieldMove 30s linear infinite reverse, starfieldGlow 6s ease-in-out infinite;
             opacity: 0.7;
         }
-        
+
         @keyframes starfieldMove {
             0% { transform: translateY(0) translateX(0); }
             50% { transform: translateY(-50px) translateX(25px); }
             100% { transform: translateY(-150px) translateX(0); }
         }
-        
+
         @keyframes starfieldPulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.8; }
         }
-        
+
         @keyframes starfieldGlow {
             0%, 100% { opacity: 0.7; }
             50% { opacity: 0.4; }
         }
-        
+
         /* === ENHANCED MAIN LAYOUT === */
         .control-center {
             display: flex;
             height: 100vh;
-            background: linear-gradient(135deg, 
-                rgba(10, 10, 15, 0.95) 0%, 
+            background: linear-gradient(135deg,
+                rgba(10, 10, 15, 0.95) 0%,
                 rgba(16, 19, 26, 0.8) 30%,
-                rgba(22, 33, 62, 0.85) 60%, 
+                rgba(22, 33, 62, 0.85) 60%,
                 rgba(26, 26, 46, 0.9) 100%);
             backdrop-filter: blur(10px);
             position: relative;
         }
-        
+
         .control-center::before {
             content: '';
             position: absolute;
@@ -388,14 +388,14 @@ function serveHolographicFallback(c) {
             left: 0;
             right: 0;
             bottom: 0;
-            background: 
+            background:
                 radial-gradient(circle at 20% 30%, var(--glow-cyan), transparent 40%),
                 radial-gradient(circle at 80% 70%, var(--glow-magenta), transparent 40%),
                 radial-gradient(circle at 50% 50%, var(--glow-electric), transparent 60%);
             opacity: 0.1;
             z-index: -1;
         }
-        
+
         /* === ENHANCED NAVIGATION SIDEBAR === */
         .nav-sidebar {
             width: 280px;
@@ -407,7 +407,7 @@ function serveHolographicFallback(c) {
             position: relative;
             box-shadow: inset 0 0 50px rgba(0, 229, 255, 0.05);
         }
-        
+
         .nav-sidebar::before {
             content: '';
             position: absolute;
@@ -425,13 +425,13 @@ function serveHolographicFallback(c) {
             );
             pointer-events: none;
         }
-        
+
         .nav-header {
             padding: 2rem 1.5rem;
             border-bottom: 1px solid var(--glass-border);
             text-align: center;
         }
-        
+
         .nav-title {
             font-size: 1.5rem;
             font-weight: 700;
@@ -441,24 +441,24 @@ function serveHolographicFallback(c) {
             -webkit-text-fill-color: transparent;
             animation: holographicPulse 3s ease-in-out infinite;
         }
-        
+
         .nav-subtitle {
             font-size: 0.9rem;
             color: var(--text-secondary);
             margin-top: 0.5rem;
             font-weight: 300;
         }
-        
+
         @keyframes holographicPulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
-        
+
         .nav-menu {
             flex: 1;
             padding: 1rem 0;
         }
-        
+
         .nav-item {
             display: block;
             width: 100%;
@@ -473,24 +473,24 @@ function serveHolographicFallback(c) {
             position: relative;
             text-decoration: none;
         }
-        
+
         .nav-item:hover {
             color: var(--primary-cyan);
             background: rgba(0, 255, 255, 0.1);
             box-shadow: inset 4px 0 0 var(--primary-cyan);
         }
-        
+
         .nav-item.active {
             color: var(--primary-cyan);
             background: var(--glow-cyan);
             box-shadow: inset 4px 0 0 var(--primary-cyan);
         }
-        
+
         .nav-item:focus {
             outline: 2px solid var(--primary-cyan);
             outline-offset: -2px;
         }
-        
+
         /* === MAIN CONTENT === */
         .main-content {
             flex: 1;
@@ -498,19 +498,19 @@ function serveHolographicFallback(c) {
             flex-direction: column;
             overflow: hidden;
         }
-        
+
         .page {
             display: none;
             flex: 1;
             padding: 2rem;
             overflow-y: auto;
         }
-        
+
         .page.active {
             display: flex;
             flex-direction: column;
         }
-        
+
         .page-title {
             font-size: 2.5rem;
             font-weight: 300;
@@ -520,7 +520,7 @@ function serveHolographicFallback(c) {
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        
+
         /* === OVERVIEW PAGE === */
         .overview-grid {
             display: grid;
@@ -528,7 +528,7 @@ function serveHolographicFallback(c) {
             gap: 2rem;
             height: calc(100vh - 8rem);
         }
-        
+
         .central-hub {
             position: relative;
             background: var(--glass-bg);
@@ -540,19 +540,19 @@ function serveHolographicFallback(c) {
             align-items: center;
             justify-content: center;
         }
-        
+
         .hub-canvas {
             width: 100%;
             height: 100%;
             display: block;
         }
-        
+
         .sidebar-panels {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
-        
+
         .panel {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -561,7 +561,7 @@ function serveHolographicFallback(c) {
             padding: 1.5rem;
             flex: 1;
         }
-        
+
         .panel-title {
             font-size: 1.2rem;
             font-weight: 600;
@@ -571,13 +571,13 @@ function serveHolographicFallback(c) {
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .status-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
         }
-        
+
         .status-item {
             padding: 1rem;
             background: rgba(0, 255, 255, 0.05);
@@ -585,24 +585,24 @@ function serveHolographicFallback(c) {
             border-radius: 8px;
             text-align: center;
         }
-        
+
         .status-value {
             font-size: 1.5rem;
             font-weight: 600;
             color: var(--primary-cyan);
         }
-        
+
         .status-label {
             font-size: 0.9rem;
             color: var(--text-secondary);
             margin-top: 0.5rem;
         }
-        
+
         .events-feed {
             max-height: 200px;
             overflow-y: auto;
         }
-        
+
         .event-item {
             padding: 0.75rem;
             margin-bottom: 0.5rem;
@@ -611,25 +611,25 @@ function serveHolographicFallback(c) {
             border-radius: 0 8px 8px 0;
             font-size: 0.9rem;
         }
-        
+
         .event-time {
             color: var(--text-secondary);
             font-size: 0.8rem;
         }
-        
+
         /* === ANALYTICS PANEL STYLES === */
         .analytics-panel {
-            background: linear-gradient(135deg, 
+            background: linear-gradient(135deg,
                 rgba(0, 229, 255, 0.08) 0%,
                 rgba(75, 195, 255, 0.05) 100%);
             border: 1px solid var(--glass-border);
         }
-        
+
         .analytics-grid {
             display: grid;
             gap: 1rem;
         }
-        
+
         .metric-card {
             padding: 1rem;
             background: rgba(0, 229, 255, 0.1);
@@ -639,7 +639,7 @@ function serveHolographicFallback(c) {
             position: relative;
             overflow: hidden;
         }
-        
+
         .metric-card::before {
             content: '';
             position: absolute;
@@ -647,47 +647,47 @@ function serveHolographicFallback(c) {
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, 
+            background: linear-gradient(90deg,
                 transparent,
                 rgba(0, 229, 255, 0.1),
                 transparent);
             animation: shimmer 3s infinite;
         }
-        
+
         @keyframes shimmer {
             0% { left: -100%; }
             100% { left: 100%; }
         }
-        
+
         .metric-value {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--primary-electric);
             margin-bottom: 0.5rem;
         }
-        
+
         .metric-label {
             font-size: 0.85rem;
             color: var(--text-secondary);
             margin-bottom: 0.5rem;
         }
-        
+
         .metric-trend {
             font-size: 0.8rem;
             font-weight: 600;
         }
-        
+
         .trending-up {
             color: var(--text-success);
         }
-        
+
         .trending-down {
             color: var(--text-warning);
         }
-        
+
         .metric-chart {
             height: 40px;
-            background: linear-gradient(90deg, 
+            background: linear-gradient(90deg,
                 transparent 0%,
                 var(--primary-electric) 20%,
                 var(--primary-neon-green) 40%,
@@ -698,26 +698,26 @@ function serveHolographicFallback(c) {
             margin-top: 0.5rem;
             animation: pulse 2s ease-in-out infinite;
         }
-        
+
         @keyframes pulse {
             0%, 100% { opacity: 0.3; transform: scaleY(1); }
             50% { opacity: 0.6; transform: scaleY(0.8); }
         }
-        
+
         /* === SECURITY PANEL STYLES === */
         .security-panel {
-            background: linear-gradient(135deg, 
+            background: linear-gradient(135deg,
                 rgba(45, 255, 136, 0.08) 0%,
                 rgba(233, 30, 99, 0.05) 100%);
             border: 1px solid var(--security-safe);
         }
-        
+
         .security-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
         }
-        
+
         .security-item {
             padding: 0.8rem;
             background: rgba(45, 255, 136, 0.08);
@@ -725,36 +725,36 @@ function serveHolographicFallback(c) {
             border-radius: 8px;
             text-align: center;
         }
-        
+
         .security-status {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 0.3rem;
         }
-        
+
         .security-status.secure {
             color: var(--security-safe);
         }
-        
+
         .security-status.monitoring {
             color: var(--security-warning);
         }
-        
+
         .security-status.alert {
             color: var(--security-danger);
         }
-        
+
         .security-value {
             font-size: 1.4rem;
             font-weight: 700;
             color: var(--primary-neon-green);
         }
-        
+
         .security-label {
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
-        
+
         /* === VOICE CONTROL & AR INTERFACE STYLES === */
         .voice-ar-controls {
             position: fixed;
@@ -764,7 +764,7 @@ function serveHolographicFallback(c) {
             gap: 10px;
             z-index: 1000;
         }
-        
+
         .voice-control-btn, .ar-mode-btn, .biometric-btn {
             width: 50px;
             height: 50px;
@@ -780,13 +780,13 @@ function serveHolographicFallback(c) {
             align-items: center;
             justify-content: center;
         }
-        
+
         .voice-control-btn:hover, .ar-mode-btn:hover, .biometric-btn:hover {
             background: var(--glass-bg-light);
             box-shadow: 0 0 20px var(--glow-cyan);
             transform: scale(1.1);
         }
-        
+
         /* === AR OVERLAY STYLES === */
         .ar-overlay {
             position: fixed;
@@ -801,14 +801,14 @@ function serveHolographicFallback(c) {
             justify-content: center;
             align-items: center;
         }
-        
+
         .ar-hud {
             position: relative;
             width: 80%;
             height: 80%;
             border: 2px solid var(--primary-electric);
             border-radius: 20px;
-            background: linear-gradient(135deg, 
+            background: linear-gradient(135deg,
                 rgba(0, 229, 255, 0.1) 0%,
                 rgba(75, 195, 255, 0.05) 100%);
             backdrop-filter: blur(10px);
@@ -816,7 +816,7 @@ function serveHolographicFallback(c) {
             flex-direction: column;
             justify-content: space-between;
         }
-        
+
         .ar-targeting-system {
             position: absolute;
             top: 50%;
@@ -828,7 +828,7 @@ function serveHolographicFallback(c) {
             border-radius: 50%;
             animation: arTargeting 3s linear infinite;
         }
-        
+
         .ar-targeting-system::before {
             content: '';
             position: absolute;
@@ -841,7 +841,7 @@ function serveHolographicFallback(c) {
             border-radius: 50%;
             animation: arTargeting 2s linear infinite reverse;
         }
-        
+
         .ar-targeting-system::after {
             content: '';
             position: absolute;
@@ -854,12 +854,12 @@ function serveHolographicFallback(c) {
             border-radius: 50%;
             animation: pulse 1s ease-in-out infinite;
         }
-        
+
         @keyframes arTargeting {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
-        
+
         .ar-data-stream {
             position: absolute;
             right: 20px;
@@ -868,7 +868,7 @@ function serveHolographicFallback(c) {
             flex-direction: column;
             gap: 15px;
         }
-        
+
         .ar-metric {
             background: rgba(0, 229, 255, 0.15);
             border: 1px solid var(--primary-electric);
@@ -876,20 +876,20 @@ function serveHolographicFallback(c) {
             padding: 10px 15px;
             min-width: 200px;
         }
-        
+
         .ar-label {
             display: block;
             font-size: 0.9rem;
             color: var(--text-secondary);
             margin-bottom: 5px;
         }
-        
+
         .ar-value {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--primary-electric);
         }
-        
+
         /* === VOICE STATUS STYLES === */
         .voice-status {
             position: fixed;
@@ -905,13 +905,13 @@ function serveHolographicFallback(c) {
             gap: 15px;
             z-index: 1000;
         }
-        
+
         .voice-indicator {
             display: flex;
             gap: 3px;
             align-items: flex-end;
         }
-        
+
         .voice-wave {
             width: 4px;
             height: 20px;
@@ -919,25 +919,25 @@ function serveHolographicFallback(c) {
             border-radius: 2px;
             animation: voiceWave 1s ease-in-out infinite;
         }
-        
+
         .voice-wave:nth-child(2) {
             animation-delay: 0.2s;
         }
-        
+
         .voice-wave:nth-child(3) {
             animation-delay: 0.4s;
         }
-        
+
         @keyframes voiceWave {
             0%, 100% { height: 20px; }
             50% { height: 40px; }
         }
-        
+
         .voice-text {
             color: var(--primary-neon-green);
             font-weight: 600;
         }
-        
+
         /* === BIOMETRIC MODAL STYLES === */
         .biometric-modal {
             position: fixed;
@@ -952,7 +952,7 @@ function serveHolographicFallback(c) {
             align-items: center;
             z-index: 10000;
         }
-        
+
         .biometric-content {
             background: var(--glass-bg);
             backdrop-filter: blur(25px);
@@ -962,13 +962,13 @@ function serveHolographicFallback(c) {
             text-align: center;
             min-width: 400px;
         }
-        
+
         .biometric-content h3 {
             color: var(--primary-magenta);
             margin-bottom: 20px;
             font-size: 1.5rem;
         }
-        
+
         .biometric-scanner {
             position: relative;
             width: 200px;
@@ -979,19 +979,19 @@ function serveHolographicFallback(c) {
             background: rgba(233, 30, 99, 0.1);
             overflow: hidden;
         }
-        
+
         .scanner-grid {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: 
+            background-image:
                 linear-gradient(90deg, rgba(233, 30, 99, 0.3) 1px, transparent 1px),
                 linear-gradient(rgba(233, 30, 99, 0.3) 1px, transparent 1px);
             background-size: 20px 20px;
         }
-        
+
         .scan-line {
             position: absolute;
             top: 0;
@@ -1002,12 +1002,12 @@ function serveHolographicFallback(c) {
             box-shadow: 0 0 10px var(--primary-magenta);
             animation: scanLine 2s linear infinite;
         }
-        
+
         @keyframes scanLine {
             0% { top: 0; }
             100% { top: calc(100% - 3px); }
         }
-        
+
         .biometric-progress {
             margin-top: 20px;
             width: 100%;
@@ -1016,7 +1016,7 @@ function serveHolographicFallback(c) {
             border-radius: 3px;
             overflow: hidden;
         }
-        
+
         .progress-bar {
             height: 100%;
             width: 0%;
@@ -1024,13 +1024,13 @@ function serveHolographicFallback(c) {
             border-radius: 3px;
             transition: width 0.1s ease;
         }
-        
+
         .biometric-status {
             margin-top: 15px;
             color: var(--text-primary);
             font-weight: 600;
         }
-        
+
         .close-biometric {
             margin-top: 20px;
             padding: 10px 20px;
@@ -1041,19 +1041,19 @@ function serveHolographicFallback(c) {
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .close-biometric:hover {
             background: rgba(233, 30, 99, 0.3);
             transform: scale(1.05);
         }
-        
+
         /* === OPERATIONS CENTER STYLES === */
         .operations-dashboard {
             padding: 2rem;
             height: 100%;
             overflow-y: auto;
         }
-        
+
         .ops-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -1061,7 +1061,7 @@ function serveHolographicFallback(c) {
             max-width: 1400px;
             margin: 0 auto;
         }
-        
+
         .ops-panel {
             background: var(--glass-bg);
             backdrop-filter: blur(25px);
@@ -1071,7 +1071,7 @@ function serveHolographicFallback(c) {
             position: relative;
             overflow: hidden;
         }
-        
+
         .ops-panel::before {
             content: '';
             position: absolute;
@@ -1079,13 +1079,13 @@ function serveHolographicFallback(c) {
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, 
+            background: linear-gradient(90deg,
                 transparent,
                 rgba(0, 229, 255, 0.05),
                 transparent);
             animation: shimmer 4s infinite;
         }
-        
+
         .ops-panel-title {
             font-size: 1.2rem;
             font-weight: 600;
@@ -1095,26 +1095,26 @@ function serveHolographicFallback(c) {
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         /* System Performance Metrics */
         .metric-display {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
-        
+
         .metric-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .metric-label {
             font-size: 0.9rem;
             color: var(--text-secondary);
             min-width: 100px;
         }
-        
+
         .metric-value-bar {
             flex: 1;
             height: 25px;
@@ -1124,26 +1124,26 @@ function serveHolographicFallback(c) {
             position: relative;
             overflow: hidden;
         }
-        
+
         .progress-bar {
             height: 100%;
             border-radius: 12px;
             transition: width 0.5s ease;
             position: relative;
         }
-        
+
         .cpu-bar {
             background: linear-gradient(90deg, var(--primary-electric), var(--primary-cyan));
         }
-        
+
         .memory-bar {
             background: linear-gradient(90deg, var(--primary-neon-orange), var(--primary-magenta));
         }
-        
+
         .disk-bar {
             background: linear-gradient(90deg, var(--primary-neon-green), var(--primary-electric));
         }
-        
+
         .metric-percentage {
             position: absolute;
             right: 1rem;
@@ -1153,14 +1153,14 @@ function serveHolographicFallback(c) {
             color: var(--text-primary);
             font-size: 0.9rem;
         }
-        
+
         /* Network Status */
         .network-stats {
             display: flex;
             justify-content: space-between;
             gap: 1rem;
         }
-        
+
         .network-metric {
             display: flex;
             align-items: center;
@@ -1172,29 +1172,29 @@ function serveHolographicFallback(c) {
             flex: 1;
             text-align: center;
         }
-        
+
         .network-icon {
             font-size: 1.5rem;
         }
-        
+
         .network-value {
             font-size: 1.3rem;
             font-weight: 700;
             color: var(--primary-electric);
         }
-        
+
         .network-label {
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
-        
+
         /* Process List */
         .process-list {
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
         }
-        
+
         .process-item {
             display: flex;
             justify-content: space-between;
@@ -1204,38 +1204,38 @@ function serveHolographicFallback(c) {
             border: 1px solid rgba(45, 255, 136, 0.15);
             border-radius: 8px;
         }
-        
+
         .process-name {
             font-weight: 500;
             color: var(--text-primary);
         }
-        
+
         .process-status {
             padding: 0.3rem 0.8rem;
             border-radius: 15px;
             font-size: 0.8rem;
             font-weight: 600;
         }
-        
+
         .process-status.running {
             background: rgba(45, 255, 136, 0.2);
             color: var(--security-safe);
             border: 1px solid var(--security-safe);
         }
-        
+
         .process-status.paused {
             background: rgba(255, 193, 7, 0.2);
             color: var(--security-warning);
             border: 1px solid var(--security-warning);
         }
-        
+
         /* Alert List */
         .alert-list {
             display: flex;
             flex-direction: column;
             gap: 0.8rem;
         }
-        
+
         .alert-item {
             display: flex;
             align-items: flex-start;
@@ -1243,38 +1243,38 @@ function serveHolographicFallback(c) {
             padding: 1rem;
             border-radius: 10px;
         }
-        
+
         .alert-success {
             background: rgba(45, 255, 136, 0.1);
             border: 1px solid rgba(45, 255, 136, 0.3);
         }
-        
+
         .alert-warning {
             background: rgba(255, 193, 7, 0.1);
             border: 1px solid rgba(255, 193, 7, 0.3);
         }
-        
+
         .alert-info {
             background: rgba(75, 195, 255, 0.1);
             border: 1px solid rgba(75, 195, 255, 0.3);
         }
-        
+
         .alert-icon {
             font-size: 1.2rem;
             margin-top: 0.2rem;
         }
-        
+
         .alert-title {
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 0.3rem;
         }
-        
+
         .alert-desc {
             font-size: 0.9rem;
             color: var(--text-secondary);
         }
-        
+
         /* Chart Panel */
         .chart-container {
             height: 200px;
@@ -1285,19 +1285,19 @@ function serveHolographicFallback(c) {
             border-radius: 10px;
             position: relative;
         }
-        
+
         .performance-chart {
             width: 100%;
             height: 100%;
         }
-        
+
         /* Control Panel */
         .control-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
         }
-        
+
         .control-btn {
             padding: 0.8rem 1rem;
             background: var(--glass-bg-light);
@@ -1308,36 +1308,36 @@ function serveHolographicFallback(c) {
             transition: all 0.3s ease;
             font-weight: 500;
         }
-        
+
         .control-btn:hover {
             background: var(--glass-bg);
             box-shadow: 0 0 15px var(--glow-cyan);
             transform: translateY(-2px);
         }
-        
+
         .restart-btn:hover {
             box-shadow: 0 0 15px var(--glow-electric);
         }
-        
+
         .backup-btn:hover {
             box-shadow: 0 0 15px var(--glow-neon);
         }
-        
+
         .optimize-btn:hover {
             box-shadow: 0 0 15px var(--glow-magenta);
         }
-        
+
         .maintenance-btn:hover {
             box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
         }
-        
+
         /* === DATA ANALYTICS DASHBOARD STYLES === */
         .analytics-dashboard {
             padding: 2rem;
             height: 100%;
             overflow-y: auto;
         }
-        
+
         .analytics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -1345,7 +1345,7 @@ function serveHolographicFallback(c) {
             max-width: 1400px;
             margin: 0 auto;
         }
-        
+
         .analytics-panel {
             background: var(--glass-bg);
             backdrop-filter: blur(25px);
@@ -1355,7 +1355,7 @@ function serveHolographicFallback(c) {
             position: relative;
             overflow: hidden;
         }
-        
+
         .analytics-panel::before {
             content: '';
             position: absolute;
@@ -1363,13 +1363,13 @@ function serveHolographicFallback(c) {
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, 
+            background: linear-gradient(90deg,
                 transparent,
                 rgba(75, 195, 255, 0.05),
                 transparent);
             animation: shimmer 5s infinite;
         }
-        
+
         .analytics-panel-title {
             font-size: 1.2rem;
             font-weight: 600;
@@ -1379,7 +1379,7 @@ function serveHolographicFallback(c) {
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         /* Customer Segmentation Rings */
         .segment-rings {
             display: flex;
@@ -1388,7 +1388,7 @@ function serveHolographicFallback(c) {
             flex-wrap: wrap;
             gap: 1rem;
         }
-        
+
         .segment-ring {
             width: 100px;
             height: 100px;
@@ -1400,49 +1400,49 @@ function serveHolographicFallback(c) {
             position: relative;
             animation: ringPulse 3s ease-in-out infinite;
         }
-        
+
         .segment-ring.premium {
             border-color: var(--primary-magenta);
             background: radial-gradient(circle, rgba(233, 30, 99, 0.2), transparent);
         }
-        
+
         .segment-ring.standard {
             border-color: var(--primary-electric);
             background: radial-gradient(circle, rgba(75, 195, 255, 0.2), transparent);
         }
-        
+
         .segment-ring.basic {
             border-color: var(--primary-neon-green);
             background: radial-gradient(circle, rgba(45, 255, 136, 0.2), transparent);
         }
-        
+
         @keyframes ringPulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
-        
+
         .ring-center {
             text-align: center;
         }
-        
+
         .segment-value {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-primary);
         }
-        
+
         .segment-label {
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
-        
+
         /* Data Flow Streams */
         .data-streams {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
-        
+
         .stream-item {
             display: flex;
             align-items: center;
@@ -1452,13 +1452,13 @@ function serveHolographicFallback(c) {
             border-radius: 10px;
             border: 1px solid rgba(0, 229, 255, 0.15);
         }
-        
+
         .stream-source {
             font-weight: 600;
             color: var(--text-primary);
             min-width: 120px;
         }
-        
+
         .stream-flow {
             flex: 1;
             height: 4px;
@@ -1468,14 +1468,14 @@ function serveHolographicFallback(c) {
             margin: 0 1rem;
             overflow: hidden;
         }
-        
+
         .flow-line {
             width: 100%;
             height: 100%;
             background: var(--primary-electric);
             border-radius: 2px;
         }
-        
+
         .flow-particles {
             position: absolute;
             top: 0;
@@ -1486,26 +1486,26 @@ function serveHolographicFallback(c) {
             border-radius: 2px;
             animation: flowAnimation 2s linear infinite;
         }
-        
+
         @keyframes flowAnimation {
             0% { left: -20px; }
             100% { left: 100%; }
         }
-        
+
         .stream-rate {
             font-weight: 600;
             color: var(--primary-electric);
             min-width: 80px;
             text-align: right;
         }
-        
+
         /* Prediction Metrics */
         .prediction-metrics {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
-        
+
         .prediction-item {
             display: flex;
             align-items: flex-start;
@@ -1515,81 +1515,81 @@ function serveHolographicFallback(c) {
             border: 1px solid rgba(156, 39, 176, 0.2);
             border-radius: 10px;
         }
-        
+
         .prediction-icon {
             font-size: 1.5rem;
             margin-top: 0.2rem;
         }
-        
+
         .prediction-title {
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 0.3rem;
         }
-        
+
         .prediction-value {
             font-size: 1.2rem;
             font-weight: 700;
             color: var(--primary-neon-green);
             margin-bottom: 0.3rem;
         }
-        
+
         .confidence-level {
             font-size: 0.9rem;
             color: var(--text-secondary);
         }
-        
+
         /* Behavior Heatmap */
         .behavior-heatmap {
             text-align: center;
         }
-        
+
         .heatmap-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             margin-bottom: 1rem;
         }
-        
+
         .heatmap-cell {
             width: 60px;
             height: 60px;
             border-radius: 8px;
             animation: heatmapPulse 2s ease-in-out infinite;
         }
-        
+
         .heatmap-cell.high {
             background: var(--primary-magenta);
             box-shadow: 0 0 15px rgba(233, 30, 99, 0.5);
         }
-        
+
         .heatmap-cell.medium {
             background: var(--primary-neon-orange);
             box-shadow: 0 0 10px rgba(255, 107, 53, 0.4);
         }
-        
+
         .heatmap-cell.low {
             background: var(--primary-neon-green);
             box-shadow: 0 0 8px rgba(45, 255, 136, 0.3);
         }
-        
+
         @keyframes heatmapPulse {
             0%, 100% { opacity: 0.7; }
             50% { opacity: 1; }
         }
-        
+
         .heatmap-label {
             color: var(--text-secondary);
             font-size: 0.9rem;
         }
-        
+
         /* ML Model Performance */
         .ml-metrics {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
-        
+
         .ml-model {
             display: flex;
             justify-content: space-between;
@@ -1599,13 +1599,13 @@ function serveHolographicFallback(c) {
             border: 1px solid rgba(45, 255, 136, 0.15);
             border-radius: 10px;
         }
-        
+
         .model-name {
             font-weight: 600;
             color: var(--text-primary);
             min-width: 150px;
         }
-        
+
         .model-accuracy {
             flex: 1;
             height: 20px;
@@ -1615,7 +1615,7 @@ function serveHolographicFallback(c) {
             position: relative;
             overflow: hidden;
         }
-        
+
         .accuracy-bar {
             height: 100%;
             background: linear-gradient(90deg, var(--primary-neon-green), var(--primary-electric));
@@ -1623,7 +1623,7 @@ function serveHolographicFallback(c) {
             transition: width 0.5s ease;
             position: relative;
         }
-        
+
         .accuracy-value {
             position: absolute;
             right: 10px;
@@ -1633,7 +1633,7 @@ function serveHolographicFallback(c) {
             color: var(--text-primary);
             font-size: 0.9rem;
         }
-        
+
         /* Data Quality Indicators */
         .quality-indicators {
             display: flex;
@@ -1642,11 +1642,11 @@ function serveHolographicFallback(c) {
             flex-wrap: wrap;
             gap: 1rem;
         }
-        
+
         .quality-metric {
             text-align: center;
         }
-        
+
         .quality-circle {
             width: 80px;
             height: 80px;
@@ -1659,33 +1659,33 @@ function serveHolographicFallback(c) {
             position: relative;
             animation: qualityPulse 2s ease-in-out infinite;
         }
-        
+
         .quality-circle.excellent {
             border-color: var(--security-safe);
             background: radial-gradient(circle, rgba(45, 255, 136, 0.2), transparent);
         }
-        
+
         .quality-circle.good {
             border-color: var(--security-warning);
             background: radial-gradient(circle, rgba(255, 193, 7, 0.2), transparent);
         }
-        
+
         @keyframes qualityPulse {
             0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(45, 255, 136, 0.3); }
             50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(45, 255, 136, 0.5); }
         }
-        
+
         .quality-percentage {
             font-size: 1.2rem;
             font-weight: 700;
             color: var(--text-primary);
         }
-        
+
         .quality-label {
             font-size: 0.9rem;
             color: var(--text-secondary);
         }
-        
+
         /* === AGENTS PAGE === */
         .agents-workspace {
             display: grid;
@@ -1693,7 +1693,7 @@ function serveHolographicFallback(c) {
             gap: 2rem;
             height: calc(100vh - 8rem);
         }
-        
+
         .chat-sessions {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -1702,7 +1702,7 @@ function serveHolographicFallback(c) {
             padding: 1.5rem;
             overflow-y: auto;
         }
-        
+
         .session-item {
             padding: 1rem;
             margin-bottom: 0.5rem;
@@ -1712,13 +1712,13 @@ function serveHolographicFallback(c) {
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .session-item:hover,
         .session-item.active {
             background: var(--glow-cyan);
             border-color: var(--primary-cyan);
         }
-        
+
         .chat-room {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -1727,7 +1727,7 @@ function serveHolographicFallback(c) {
             display: flex;
             flex-direction: column;
         }
-        
+
         .chat-header {
             padding: 1.5rem;
             border-bottom: 1px solid var(--glass-border);
@@ -1735,12 +1735,12 @@ function serveHolographicFallback(c) {
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .voice-controls {
             display: flex;
             gap: 1rem;
         }
-        
+
         .voice-btn {
             padding: 0.5rem 1rem;
             background: var(--glass-bg);
@@ -1750,34 +1750,34 @@ function serveHolographicFallback(c) {
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .voice-btn:hover {
             background: var(--glow-cyan);
             border-color: var(--primary-cyan);
         }
-        
+
         .voice-btn.active {
             background: var(--primary-cyan);
             color: var(--bg-dark);
         }
-        
+
         .chat-messages {
             flex: 1;
             padding: 1.5rem;
             overflow-y: auto;
             max-height: calc(100vh - 250px);
         }
-        
+
         .message {
             margin-bottom: 1.5rem;
             display: flex;
             flex-direction: column;
         }
-        
+
         .message.user {
             align-items: flex-end;
         }
-        
+
         .message-content {
             max-width: 70%;
             padding: 1rem 1.5rem;
@@ -1785,19 +1785,19 @@ function serveHolographicFallback(c) {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
         }
-        
+
         .message.user .message-content {
             background: var(--glow-cyan);
             border-color: var(--primary-cyan);
         }
-        
+
         .chat-input {
             padding: 1.5rem;
             border-top: 1px solid var(--glass-border);
             display: flex;
             gap: 1rem;
         }
-        
+
         .message-input {
             flex: 1;
             padding: 1rem 1.5rem;
@@ -1809,12 +1809,12 @@ function serveHolographicFallback(c) {
             outline: none;
             transition: all 0.3s ease;
         }
-        
+
         .message-input:focus {
             border-color: var(--primary-cyan);
             box-shadow: 0 0 0 2px var(--glow-cyan);
         }
-        
+
         .send-btn {
             padding: 1rem 2rem;
             background: var(--primary-cyan);
@@ -1825,16 +1825,16 @@ function serveHolographicFallback(c) {
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .send-btn:hover {
             background: var(--primary-magenta);
         }
-        
+
         .send-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-        
+
         /* === PLACEHOLDER PAGES === */
         .placeholder-grid {
             display: grid;
@@ -1842,7 +1842,7 @@ function serveHolographicFallback(c) {
             gap: 2rem;
             margin-top: 2rem;
         }
-        
+
         .placeholder-card {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -1855,25 +1855,25 @@ function serveHolographicFallback(c) {
             flex-direction: column;
             justify-content: center;
         }
-        
+
         .placeholder-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
             color: var(--primary-cyan);
         }
-        
+
         .placeholder-title {
             font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 1rem;
             color: var(--primary-cyan);
         }
-        
+
         .placeholder-desc {
             color: var(--text-secondary);
             line-height: 1.6;
         }
-        
+
         /* === LOADING STATES === */
         .loading {
             display: inline-block;
@@ -1884,35 +1884,35 @@ function serveHolographicFallback(c) {
             border-top: 2px solid var(--primary-cyan);
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         /* === RESPONSIVE === */
         @media (max-width: 768px) {
             .control-center {
                 flex-direction: column;
             }
-            
+
             .nav-sidebar {
                 width: 100%;
                 height: auto;
                 order: 2;
             }
-            
+
             .overview-grid {
                 grid-template-columns: 1fr;
                 grid-template-rows: 1fr auto;
             }
-            
+
             .agents-workspace {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto 1fr;
             }
         }
-        
+
         /* === REDUCED MOTION === */
         @media (prefers-reduced-motion: reduce) {
             * {
@@ -1920,12 +1920,12 @@ function serveHolographicFallback(c) {
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
             }
-            
+
             .starfield {
                 animation: none;
             }
         }
-        
+
         /* === HIGH CONTRAST === */
         @media (prefers-contrast: high) {
             :root {
@@ -1934,7 +1934,7 @@ function serveHolographicFallback(c) {
                 --text-secondary: #cccccc;
             }
         }
-        
+
         /* === ACCESSIBILITY === */
         .sr-only {
             position: absolute;
@@ -1947,7 +1947,7 @@ function serveHolographicFallback(c) {
             white-space: nowrap;
             border: 0;
         }
-        
+
         :focus {
             outline: 2px solid var(--primary-cyan);
             outline-offset: 2px;
@@ -1956,7 +1956,7 @@ function serveHolographicFallback(c) {
 </head>
 <body>
     <div class="starfield" aria-hidden="true"></div>
-    
+
     <div class="control-center" role="main">
         <!-- Navigation Sidebar -->
         <nav class="nav-sidebar" role="navigation" aria-label="Main navigation">
@@ -1964,7 +1964,7 @@ function serveHolographicFallback(c) {
                 <h1 class="nav-title">ROYAL EQUIPS</h1>
                 <p class="nav-subtitle">Holographic Control Center</p>
             </div>
-            
+
             <div class="nav-menu">
                 <button class="nav-item active" data-page="overview" aria-label="Overview page">
                     📊 Overview
@@ -1986,7 +1986,7 @@ function serveHolographicFallback(c) {
                 </button>
             </div>
         </nav>
-        
+
         <!-- Main Content Area -->
         <div class="main-content">
             <!-- Voice Control & AR Interface -->
@@ -2004,12 +2004,12 @@ function serveHolographicFallback(c) {
             <!-- Overview Page -->
             <div class="page active" id="overview" role="tabpanel" aria-labelledby="overview-title">
                 <h2 id="overview-title" class="page-title">SYSTEM OVERVIEW</h2>
-                
+
                 <div class="overview-grid">
                     <div class="central-hub" role="region" aria-label="Central control hub">
                         <canvas class="hub-canvas" id="hubCanvas" width="800" height="600" aria-label="Live system visualization"></canvas>
                     </div>
-                    
+
                     <div class="sidebar-panels">
                         <div class="panel" role="region" aria-labelledby="status-title">
                             <h3 id="status-title" class="panel-title">🟢 System Status</h3>
@@ -2032,7 +2032,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="panel analytics-panel" role="region" aria-labelledby="analytics-title">
                             <h3 id="analytics-title" class="panel-title">📊 Real-Time Analytics</h3>
                             <div class="analytics-grid">
@@ -2053,7 +2053,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="panel security-panel" role="region" aria-labelledby="security-title">
                             <h3 id="security-title" class="panel-title">🛡️ Security Monitor</h3>
                             <div class="security-grid">
@@ -2075,7 +2075,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="panel" role="region" aria-labelledby="events-title">
                             <h3 id="events-title" class="panel-title">📡 Live Events</h3>
                             <div class="events-feed" id="eventsFeed" aria-live="polite">
@@ -2088,7 +2088,7 @@ function serveHolographicFallback(c) {
                     </div>
                 </div>
             </div>
-            
+
             <!-- Operations Page -->
             <div class="page" id="operations" role="tabpanel" aria-labelledby="operations-title">
                 <h2 id="operations-title" class="page-title">OPERATIONS CENTER</h2>
@@ -2121,7 +2121,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Network Monitoring -->
                         <div class="ops-panel network-panel">
                             <h3 class="ops-panel-title">📡 Network Status</h3>
@@ -2149,7 +2149,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Active Processes -->
                         <div class="ops-panel processes-panel">
                             <h3 class="ops-panel-title">🔄 Active Processes</h3>
@@ -2172,7 +2172,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Security Alerts -->
                         <div class="ops-panel alerts-panel">
                             <h3 class="ops-panel-title">🚨 Security Alerts</h3>
@@ -2200,7 +2200,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Live Analytics Chart -->
                         <div class="ops-panel chart-panel">
                             <h3 class="ops-panel-title">📈 Performance Trends</h3>
@@ -2208,7 +2208,7 @@ function serveHolographicFallback(c) {
                                 <canvas id="performanceChart" class="performance-chart"></canvas>
                             </div>
                         </div>
-                        
+
                         <!-- System Control -->
                         <div class="ops-panel control-panel">
                             <h3 class="ops-panel-title">⚙️ System Control</h3>
@@ -2222,7 +2222,7 @@ function serveHolographicFallback(c) {
                     </div>
                 </div>
             </div>
-            
+
             <!-- Data Analytics Page -->
             <div class="page" id="data" role="tabpanel" aria-labelledby="data-title">
                 <h2 id="data-title" class="page-title">DATA ANALYTICS & INTELLIGENCE</h2>
@@ -2252,7 +2252,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Real-time Data Flow -->
                         <div class="analytics-panel dataflow-panel">
                             <h3 class="analytics-panel-title">🔄 Data Flow Monitor</h3>
@@ -2283,7 +2283,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Predictive Analytics -->
                         <div class="analytics-panel prediction-panel">
                             <h3 class="analytics-panel-title">🔮 Predictive Analytics</h3>
@@ -2314,7 +2314,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Behavioral Insights -->
                         <div class="analytics-panel behavior-panel">
                             <h3 class="analytics-panel-title">🧠 Behavioral Insights</h3>
@@ -2335,7 +2335,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- ML Model Performance -->
                         <div class="analytics-panel ml-panel">
                             <h3 class="analytics-panel-title">🤖 ML Model Performance</h3>
@@ -2363,7 +2363,7 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Data Quality Monitor -->
                         <div class="analytics-panel quality-panel">
                             <h3 class="analytics-panel-title">✅ Data Quality</h3>
@@ -2391,7 +2391,7 @@ function serveHolographicFallback(c) {
                     </div>
                 </div>
             </div>
-            
+
             <!-- Commerce Page -->
             <div class="page" id="commerce" role="tabpanel" aria-labelledby="commerce-title">
                 <h2 id="commerce-title" class="page-title">COMMERCE HUB</h2>
@@ -2413,11 +2413,11 @@ function serveHolographicFallback(c) {
                     </div>
                 </div>
             </div>
-            
+
             <!-- Agents Page -->
             <div class="page" id="agents" role="tabpanel" aria-labelledby="agents-title">
                 <h2 id="agents-title" class="page-title">AI AGENTS</h2>
-                
+
                 <div class="agents-workspace">
                     <div class="chat-sessions" role="region" aria-label="Chat sessions">
                         <h3 class="panel-title">Active Sessions</h3>
@@ -2431,7 +2431,7 @@ function serveHolographicFallback(c) {
                             ➕ New Session
                         </button>
                     </div>
-                    
+
                     <div class="chat-room" role="region" aria-label="Chat conversation">
                         <div class="chat-header">
                             <h3 id="currentSessionTitle">Main Session</h3>
@@ -2444,7 +2444,7 @@ function serveHolographicFallback(c) {
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div class="chat-messages" id="chatMessages" aria-live="polite">
                             <div class="message">
                                 <div class="message-content">
@@ -2452,13 +2452,13 @@ function serveHolographicFallback(c) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="chat-input">
-                            <input 
-                                type="text" 
-                                class="message-input" 
-                                id="messageInput" 
-                                placeholder="Type your message..." 
+                            <input
+                                type="text"
+                                class="message-input"
+                                id="messageInput"
+                                placeholder="Type your message..."
                                 aria-label="Message input"
                                 onkeypress="handleMessageKeyPress(event)"
                             >
@@ -2469,7 +2469,7 @@ function serveHolographicFallback(c) {
                     </div>
                 </div>
             </div>
-            
+
             <!-- Settings Page -->
             <div class="page" id="settings" role="tabpanel" aria-labelledby="settings-title">
                 <h2 id="settings-title" class="page-title">SYSTEM SETTINGS</h2>
@@ -2493,7 +2493,7 @@ function serveHolographicFallback(c) {
             </div>
         </div>
     </div>
-    
+
     <!-- AR Overlay (Hidden by default) -->
     <div id="arOverlay" class="ar-overlay" style="display: none;">
         <div class="ar-hud">
@@ -2514,7 +2514,7 @@ function serveHolographicFallback(c) {
             </div>
         </div>
     </div>
-    
+
     <!-- Voice Recognition Status -->
     <div id="voiceStatus" class="voice-status" style="display: none;">
         <div class="voice-indicator">
@@ -2524,7 +2524,7 @@ function serveHolographicFallback(c) {
         </div>
         <div class="voice-text">Listening...</div>
     </div>
-    
+
     <!-- Biometric Authentication Modal -->
     <div id="biometricModal" class="biometric-modal" style="display: none;">
         <div class="biometric-content">
@@ -2541,10 +2541,10 @@ function serveHolographicFallback(c) {
             <button id="closeBiometric" class="close-biometric">Cancel</button>
         </div>
     </div>
-    
+
     <script>
         // === HOLOGRAPHIC CONTROL CENTER JAVASCRIPT ===
-        
+
         // Global state management
         const AppState = {
             currentPage: 'overview',
@@ -2556,7 +2556,7 @@ function serveHolographicFallback(c) {
             hubAnimation: null,
             eventSource: null
         };
-        
+
         // === NAVIGATION SYSTEM ===
         function initNavigation() {
             const navItems = document.querySelectorAll('.nav-item');
@@ -2569,25 +2569,25 @@ function serveHolographicFallback(c) {
                 });
             });
         }
-        
+
         function switchPage(pageId) {
             // Cleanup current page
             cleanupCurrentPage();
-            
+
             // Update navigation active state
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
             document.querySelector('[data-page="' + pageId + '"]').classList.add('active');
-            
+
             // Update page visibility
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
             document.getElementById(pageId).classList.add('active');
-            
+
             AppState.currentPage = pageId;
-            
+
             // Initialize page-specific features (lazy initialization)
             setTimeout(() => {
                 if (pageId === 'overview') {
@@ -2598,39 +2598,39 @@ function serveHolographicFallback(c) {
                 }
             }, 100); // Small delay for smooth transition
         }
-        
+
         function cleanupCurrentPage() {
             // Stop hub animation
             if (AppState.hubAnimation) {
                 cancelAnimationFrame(AppState.hubAnimation);
                 AppState.hubAnimation = null;
             }
-            
+
             // Close event source if switching away from overview
             if (AppState.currentPage === 'overview' && AppState.eventSource) {
                 AppState.eventSource.close();
                 AppState.eventSource = null;
             }
         }
-        
+
         // === CENTRAL HUB CANVAS ANIMATION ===
         function initHubCanvas() {
             const canvas = document.getElementById('hubCanvas');
             if (!canvas || AppState.currentPage !== 'overview') return;
-            
+
             // Stop any existing animation
             if (AppState.hubAnimation) {
                 cancelAnimationFrame(AppState.hubAnimation);
             }
-            
+
             const ctx = canvas.getContext('2d');
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            
+
             let animationTime = 0;
             const nodes = [];
             const arcs = [];
-            
+
             // Initialize nodes and arcs
             for (let i = 0; i < 8; i++) {
                 const angle = (i * Math.PI * 2) / 8;
@@ -2642,7 +2642,7 @@ function serveHolographicFallback(c) {
                     radius: radius,
                     pulse: Math.random() * Math.PI * 2
                 });
-                
+
                 arcs.push({
                     startAngle: angle,
                     endAngle: angle + Math.PI / 4,
@@ -2650,29 +2650,29 @@ function serveHolographicFallback(c) {
                     speed: 0.01 + Math.random() * 0.02
                 });
             }
-            
+
             function animate() {
                 // Check if we should still be animating
                 if (AppState.currentPage !== 'overview') {
                     AppState.hubAnimation = null;
                     return;
                 }
-                
+
                 // Performance: only animate if page is visible
                 if (document.hidden) {
                     AppState.hubAnimation = requestAnimationFrame(animate);
                     return;
                 }
-                
+
                 // Enhanced background with subtle glow
                 ctx.fillStyle = 'rgba(10, 10, 15, 0.15)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
+
                 animationTime += 0.016; // ~60fps
-                
+
                 // Draw enhanced central core with multiple layers
                 const coreRadius = 45 + Math.sin(animationTime * 2) * 6;
-                
+
                 // Outer glow layer
                 const outerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius * 1.8);
                 outerGradient.addColorStop(0, 'rgba(0, 229, 255, 0.1)');
@@ -2682,36 +2682,36 @@ function serveHolographicFallback(c) {
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, coreRadius * 1.8, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Main core with enhanced gradient
                 const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius);
                 gradient.addColorStop(0, 'rgba(233, 30, 99, 0.9)');
                 gradient.addColorStop(0.3, 'rgba(0, 229, 255, 0.7)');
                 gradient.addColorStop(0.7, 'rgba(75, 195, 255, 0.4)');
                 gradient.addColorStop(1, 'rgba(0, 229, 255, 0.1)');
-                
+
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Inner pulsing core
                 const innerRadius = 15 + Math.sin(animationTime * 4) * 3;
                 const innerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
                 innerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
                 innerGradient.addColorStop(0.5, 'rgba(45, 255, 136, 0.6)');
                 innerGradient.addColorStop(1, 'transparent');
-                
+
                 ctx.fillStyle = innerGradient;
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Draw enhanced orbiting arcs with varied colors
                 arcs.forEach((arc, index) => {
                     arc.startAngle += arc.speed;
                     arc.endAngle += arc.speed;
-                    
+
                     // Use different colors for each arc
                     const colors = [
                         'rgba(233, 30, 99, ', // Magenta
@@ -2722,30 +2722,30 @@ function serveHolographicFallback(c) {
                     ];
                     const colorBase = colors[index % colors.length];
                     const alpha = 0.4 + Math.sin(animationTime * 1.5 + arc.startAngle) * 0.3;
-                    
+
                     ctx.strokeStyle = colorBase + alpha + ')';
                     ctx.lineWidth = 3 + Math.sin(animationTime + index) * 1;
                     ctx.lineCap = 'round';
                     ctx.beginPath();
                     ctx.arc(centerX, centerY, arc.radius, arc.startAngle, arc.endAngle);
                     ctx.stroke();
-                    
+
                     // Add glow effect
                     ctx.shadowColor = colorBase + '0.6)';
                     ctx.shadowBlur = 10;
                     ctx.stroke();
                     ctx.shadowBlur = 0;
                 });
-                
+
                 // Draw enhanced nodes with varied colors and effects
                 nodes.forEach((node, index) => {
                     node.angle += 0.008;
                     node.pulse += 0.12;
-                    
+
                     const x = centerX + Math.cos(node.angle) * node.radius;
                     const y = centerY + Math.sin(node.angle) * node.radius;
                     const size = 5 + Math.sin(node.pulse) * 2.5;
-                    
+
                     // Different colors for different nodes
                     const nodeColors = [
                         'rgba(0, 229, 255, ', // Cyan
@@ -2759,7 +2759,7 @@ function serveHolographicFallback(c) {
                     ];
                     const colorBase = nodeColors[index % nodeColors.length];
                     const alpha = 0.7 + Math.sin(node.pulse) * 0.3;
-                    
+
                     // Draw node glow
                     const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 2);
                     glowGradient.addColorStop(0, colorBase + alpha + ')');
@@ -2768,13 +2768,13 @@ function serveHolographicFallback(c) {
                     ctx.beginPath();
                     ctx.arc(x, y, size * 2, 0, Math.PI * 2);
                     ctx.fill();
-                    
+
                     // Draw main node
                     ctx.fillStyle = colorBase + alpha + ')';
                     ctx.beginPath();
                     ctx.arc(x, y, size, 0, Math.PI * 2);
                     ctx.fill();
-                    
+
                     // Draw enhanced connection to center
                     const connectionAlpha = 0.15 + Math.sin(node.pulse * 0.5) * 0.1;
                     ctx.strokeStyle = colorBase + connectionAlpha + ')';
@@ -2786,13 +2786,13 @@ function serveHolographicFallback(c) {
                     ctx.stroke();
                     ctx.setLineDash([]);
                 });
-                
+
                 AppState.hubAnimation = requestAnimationFrame(animate);
             }
-            
+
             animate();
         }
-        
+
         // === SYSTEM STATUS MONITORING ===
         async function initStatusMonitoring() {
             try {
@@ -2812,29 +2812,29 @@ function serveHolographicFallback(c) {
                 backendStatusEl.textContent = 'ERROR';
                 backendStatusEl.style.color = 'var(--primary-magenta)';
             }
-            
+
             // Initialize live events feed only for overview page
             if (AppState.currentPage === 'overview') {
                 initEventsFeed();
             }
         }
-        
+
         function initEventsFeed() {
             // Close existing connection
             if (AppState.eventSource) {
                 AppState.eventSource.close();
                 AppState.eventSource = null;
             }
-            
+
             try {
                 // Attempt to connect to SSE endpoint
                 AppState.eventSource = new EventSource('/api/events');
-                
+
                 AppState.eventSource.onopen = function(event) {
                     console.log('Events feed connected');
                     addEvent('Events feed connected', 'success');
                 };
-                
+
                 AppState.eventSource.onmessage = function(event) {
                     try {
                         const data = JSON.parse(event.data);
@@ -2843,43 +2843,43 @@ function serveHolographicFallback(c) {
                         addEvent(event.data, 'info');
                     }
                 };
-                
+
                 AppState.eventSource.onerror = function(error) {
                     console.log('EventSource error:', error);
                     AppState.eventSource.close();
                     AppState.eventSource = null;
-                    
+
                     // Show connection error and fallback to simulated events
                     addEvent('Live events unavailable - using simulated feed', 'warning');
                     setTimeout(startSimulatedEvents, 1000);
                 };
-                
+
             } catch (error) {
                 console.log('SSE not available, using simulated events');
                 addEvent('SSE not supported - using simulated feed', 'info');
                 startSimulatedEvents();
             }
         }
-        
+
         function addEvent(message, type) {
             type = type || 'info';
             const feed = document.getElementById('eventsFeed');
             if (!feed) return;
-            
+
             const eventItem = document.createElement('div');
             eventItem.className = 'event-item';
-            eventItem.innerHTML = 
+            eventItem.innerHTML =
                 '<div>' + message + '</div>' +
                 '<div class="event-time">' + new Date().toLocaleTimeString() + '</div>';
-            
+
             feed.insertBefore(eventItem, feed.firstChild);
-            
+
             // Keep only last 10 events
             while (feed.children.length > 10) {
                 feed.removeChild(feed.lastChild);
             }
         }
-        
+
         function startSimulatedEvents() {
             const events = [
                 'System heartbeat normal',
@@ -2891,7 +2891,7 @@ function serveHolographicFallback(c) {
                 'Active sessions: 12',
                 'Queue processing: 3 items'
             ];
-            
+
             setInterval(() => {
                 if (AppState.currentPage === 'overview') {
                     const randomEvent = events[Math.floor(Math.random() * events.length)];
@@ -2899,62 +2899,62 @@ function serveHolographicFallback(c) {
                 }
             }, 5000);
         }
-        
+
         // === AGENTS PAGE FUNCTIONALITY ===
         function initAgentsPage() {
             // Initialize session if not exists
             if (!AppState.sessions[AppState.currentSession]) {
                 AppState.sessions[AppState.currentSession] = [];
             }
-            
+
             // Check for speech synthesis and recognition support
             updateVoiceButtonStates();
         }
-        
+
         function createNewSession() {
             const sessionId = 'session_' + Date.now();
             AppState.sessions[sessionId] = [];
-            
+
             const sessionsList = document.getElementById('sessionsList');
             const sessionItem = document.createElement('div');
             sessionItem.className = 'session-item';
             sessionItem.dataset.session = sessionId;
-            sessionItem.innerHTML = 
+            sessionItem.innerHTML =
                 '<div>Session ' + Object.keys(AppState.sessions).length + '</div>' +
                 '<div class="event-time">New</div>';
-            
+
             sessionItem.addEventListener('click', () => switchSession(sessionId));
             sessionsList.appendChild(sessionItem);
-            
+
             switchSession(sessionId);
         }
-        
+
         function switchSession(sessionId) {
             AppState.currentSession = sessionId;
-            
+
             // Update UI
             document.querySelectorAll('.session-item').forEach(item => {
                 item.classList.remove('active');
             });
             document.querySelector('[data-session="' + sessionId + '"]').classList.add('active');
-            
+
             // Update chat messages
             renderChatMessages();
-            
+
             // Update session title
             const sessionNumber = Object.keys(AppState.sessions).indexOf(sessionId) + 1;
-            document.getElementById('currentSessionTitle').textContent = 
+            document.getElementById('currentSessionTitle').textContent =
                 sessionId === 'main' ? 'Main Session' : 'Session ' + sessionNumber;
         }
-        
+
         function renderChatMessages() {
             const messagesContainer = document.getElementById('chatMessages');
             const messages = AppState.sessions[AppState.currentSession] || [];
-            
+
             messagesContainer.innerHTML = '';
-            
+
             if (messages.length === 0) {
-                messagesContainer.innerHTML = 
+                messagesContainer.innerHTML =
                     '<div class="message">' +
                         '<div class="message-content">' +
                             'Welcome to the AI Agents workspace. You can chat with advanced AI assistants here.' +
@@ -2962,44 +2962,44 @@ function serveHolographicFallback(c) {
                     '</div>';
                 return;
             }
-            
+
             messages.forEach(msg => {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message ' + msg.role;
-                messageDiv.innerHTML = 
+                messageDiv.innerHTML =
                     '<div class="message-content">' + msg.content + '</div>';
                 messagesContainer.appendChild(messageDiv);
             });
-            
+
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
-        
+
         function handleMessageKeyPress(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
         }
-        
+
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
-            
+
             if (!message) return;
-            
+
             // Add user message to session
             AppState.sessions[AppState.currentSession].push({
                 role: 'user',
                 content: message
             });
-            
+
             input.value = '';
             renderChatMessages();
-            
+
             // Show loading state
             const sendBtn = document.getElementById('sendBtn');
             sendBtn.disabled = true;
             sendBtn.innerHTML = '<div class="loading"></div>';
-            
+
             try {
                 // Send to backend via API proxy
                 const response = await fetch('/api/agents/' + AppState.currentSession + '/messages', {
@@ -3007,12 +3007,12 @@ function serveHolographicFallback(c) {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         message: message,
-                        session_id: AppState.currentSession 
+                        session_id: AppState.currentSession
                     })
                 });
-                
+
                 if (response.ok) {
                     // Start SSE stream for response
                     startAgentStream(AppState.currentSession);
@@ -3021,57 +3021,57 @@ function serveHolographicFallback(c) {
                 }
             } catch (error) {
                 console.error('Message send error:', error);
-                
+
                 // Fallback response with more helpful message
-                const fallbackMessage = 'I apologize, but I\'m currently unable to connect to the AI service. ' +
-                    'This could be because the backend API is not configured or unavailable. ' +
-                    'Please check the PYTHON_API_URL configuration or try again later.';
-                
+                const fallbackMessage = "I apologize, but I'm currently unable to connect to the AI service. " +
+                    "This could be because the backend API is not configured or unavailable. " +
+                    "Please check the PYTHON_API_URL configuration or try again later.";
+
                 AppState.sessions[AppState.currentSession].push({
                     role: 'assistant',
                     content: fallbackMessage
                 });
                 renderChatMessages();
-                
+
                 if (AppState.isTTSEnabled) {
                     speakText('I apologize, but the AI service is currently unavailable.');
                 }
             }
-            
+
             // Reset button
             sendBtn.disabled = false;
             sendBtn.innerHTML = 'Send';
         }
-        
+
         function startAgentStream(sessionId) {
             try {
                 const eventSource = new EventSource('/api/agents/' + sessionId + '/stream');
                 let assistantMessage = '';
                 let streamTimeout;
-                
+
                 // Set timeout for stream response
                 streamTimeout = setTimeout(() => {
                     eventSource.close();
                     console.warn('Agent stream timeout');
-                    
+
                     if (!assistantMessage) {
                         AppState.sessions[sessionId].push({
                             role: 'assistant',
-                            content: 'I apologize for the delay. The AI service is taking longer than expected to respond.'
+                            content: "I apologize for the delay. The AI service is taking longer than expected to respond."
                         });
                         renderChatMessages();
                     }
                 }, 30000); // 30 second timeout
-                
+
                 eventSource.onmessage = function(event) {
                     clearTimeout(streamTimeout);
-                    
+
                     try {
                         const data = JSON.parse(event.data);
-                        
+
                         if (data.type === 'content' || data.type === 'text') {
                             assistantMessage += (data.text || data.content || '');
-                            
+
                             // Update or add assistant message
                             const messages = AppState.sessions[sessionId];
                             if (messages.length > 0 && messages[messages.length - 1].role === 'assistant') {
@@ -3082,22 +3082,22 @@ function serveHolographicFallback(c) {
                                     content: assistantMessage
                                 });
                             }
-                            
+
                             renderChatMessages();
                         } else if (data.type === 'done' || data.type === 'end') {
                             eventSource.close();
-                            
+
                             if (AppState.isTTSEnabled && assistantMessage) {
                                 speakText(assistantMessage);
                             }
                         } else if (data.type === 'error') {
                             eventSource.close();
                             console.error('Stream error:', data.message);
-                            
+
                             if (!assistantMessage) {
                                 AppState.sessions[sessionId].push({
                                     role: 'assistant',
-                                    content: 'I encountered an error while processing your request: ' + (data.message || 'Unknown error')
+                                    content: "I encountered an error while processing your request: " + (data.message || 'Unknown error')
                                 });
                                 renderChatMessages();
                             }
@@ -3106,7 +3106,7 @@ function serveHolographicFallback(c) {
                         console.error('SSE parsing error:', e);
                         // Treat unparseable data as plain text content
                         assistantMessage += event.data;
-                        
+
                         const messages = AppState.sessions[sessionId];
                         if (messages.length > 0 && messages[messages.length - 1].role === 'assistant') {
                             messages[messages.length - 1].content = assistantMessage;
@@ -3119,39 +3119,39 @@ function serveHolographicFallback(c) {
                         renderChatMessages();
                     }
                 };
-                
+
                 eventSource.onerror = function(error) {
                     clearTimeout(streamTimeout);
                     console.error('Agent stream error:', error);
                     eventSource.close();
-                    
+
                     if (!assistantMessage) {
                         AppState.sessions[sessionId].push({
                             role: 'assistant',
-                            content: 'I’m sorry, but there was a connection error while streaming the response. Please try again.'
+             content: "I'm sorry, but there was a connection error while streaming the response. Please try again."
                         });
                         renderChatMessages();
                     }
                 };
-                
+
             } catch (error) {
                 console.error('Failed to start agent stream:', error);
-                
+
                 // Immediate fallback
                 AppState.sessions[sessionId].push({
                     role: 'assistant',
-                    content: 'I'm unable to establish a streaming connection. Please check if the streaming endpoint is available.'
+                    content: "I'm unable to establish a streaming connection. Please check if the streaming endpoint is available."
                 });
                 renderChatMessages();
             }
         }
-        
+
         // === VOICE FUNCTIONALITY ===
         function toggleTTS() {
             AppState.isTTSEnabled = !AppState.isTTSEnabled;
             updateVoiceButtonStates();
         }
-        
+
         function toggleMic() {
             if (AppState.isMicEnabled) {
                 stopListening();
@@ -3159,24 +3159,24 @@ function serveHolographicFallback(c) {
                 startListening();
             }
         }
-        
+
         function updateVoiceButtonStates() {
             const ttsBtn = document.getElementById('ttsToggle');
             const micBtn = document.getElementById('micToggle');
-            
+
             if (ttsBtn) {
                 ttsBtn.classList.toggle('active', AppState.isTTSEnabled);
-                
+
                 // Check TTS support
                 if (!('speechSynthesis' in window)) {
                     ttsBtn.disabled = true;
                     ttsBtn.style.opacity = '0.5';
                 }
             }
-            
+
             if (micBtn) {
                 micBtn.classList.toggle('active', AppState.isMicEnabled);
-                
+
                 // Check speech recognition support
                 if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                     micBtn.disabled = true;
@@ -3184,72 +3184,72 @@ function serveHolographicFallback(c) {
                 }
             }
         }
-        
+
         function speakText(text) {
             if (!AppState.isTTSEnabled || !('speechSynthesis' in window)) return;
-            
+
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = 0.9;
             utterance.pitch = 1.0;
             utterance.volume = 0.8;
-            
+
             speechSynthesis.speak(utterance);
         }
-        
+
         function startListening() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) return;
-            
+
             const recognition = new SpeechRecognition();
             recognition.continuous = false;
             recognition.interimResults = false;
             recognition.lang = 'en-US';
-            
+
             recognition.onstart = function() {
                 AppState.isMicEnabled = true;
                 AppState.isListening = true;
                 updateVoiceButtonStates();
             };
-            
+
             recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript;
                 document.getElementById('messageInput').value = transcript;
             };
-            
+
             recognition.onend = function() {
                 AppState.isMicEnabled = false;
                 AppState.isListening = false;
                 updateVoiceButtonStates();
             };
-            
+
             recognition.onerror = function(event) {
                 console.error('Speech recognition error:', event.error);
                 AppState.isMicEnabled = false;
                 AppState.isListening = false;
                 updateVoiceButtonStates();
             };
-            
+
             recognition.start();
         }
-        
+
         function stopListening() {
             AppState.isMicEnabled = false;
             AppState.isListening = false;
             updateVoiceButtonStates();
         }
-        
+
         // === INITIALIZATION ===
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Holographic Control Center Initialized');
-            
+
             initNavigation();
             initStatusMonitoring();
-            
+
             // Initialize overview page by default
             if (AppState.currentPage === 'overview') {
                 initHubCanvas();
             }
-            
+
             // Add keyboard navigation
             document.addEventListener('keydown', function(event) {
                 if (event.altKey && event.key >= '1' && event.key <= '6') {
@@ -3261,7 +3261,7 @@ function serveHolographicFallback(c) {
                     event.preventDefault();
                 }
             });
-            
+
             // Handle page visibility changes for performance
             document.addEventListener('visibilitychange', function() {
                 if (document.hidden) {
@@ -3279,7 +3279,7 @@ function serveHolographicFallback(c) {
                     }
                 }
             });
-            
+
             // Cleanup on page unload
             window.addEventListener('beforeunload', function() {
                 cleanupCurrentPage();
@@ -3287,20 +3287,20 @@ function serveHolographicFallback(c) {
                     AppState.eventSource.close();
                 }
             });
-            
+
             // Add reduced motion support
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
             if (prefersReducedMotion.matches) {
                 document.documentElement.style.setProperty('--animation-duration', '0.01s');
             }
         });
-        
+
         // === ADVANCED FEATURES ===
-        
+
         // Voice Recognition System
         let recognition = null;
         let isListening = false;
-        
+
         function initVoiceRecognition() {
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3308,19 +3308,19 @@ function serveHolographicFallback(c) {
                 recognition.continuous = true;
                 recognition.interimResults = true;
                 recognition.lang = 'en-US';
-                
+
                 recognition.onstart = function() {
                     isListening = true;
                     document.getElementById('voiceStatus').style.display = 'block';
                     document.getElementById('voiceControlBtn').style.background = 'var(--glow-neon)';
                 };
-                
+
                 recognition.onend = function() {
                     isListening = false;
                     document.getElementById('voiceStatus').style.display = 'none';
                     document.getElementById('voiceControlBtn').style.background = '';
                 };
-                
+
                 recognition.onresult = function(event) {
                     let command = '';
                     for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -3330,7 +3330,7 @@ function serveHolographicFallback(c) {
                     }
                     processVoiceCommand(command.trim().toLowerCase());
                 };
-                
+
                 recognition.onerror = function(event) {
                     console.log('Voice recognition error:', event.error);
                     isListening = false;
@@ -3338,13 +3338,13 @@ function serveHolographicFallback(c) {
                 };
             }
         }
-        
+
         function processVoiceCommand(command) {
             console.log('Voice command received:', command);
-            
+
             // Add event to feed
             addEventToFeed('🎤 Voice Command: ' + command);
-            
+
             if (command.includes('show overview') || command.includes('go to overview')) {
                 switchPage('overview');
             } else if (command.includes('show operations')) {
@@ -3365,15 +3365,15 @@ function serveHolographicFallback(c) {
                 addEventToFeed('🛡️ Security Status: All systems secure');
             }
         }
-        
+
         // AR Visualization Mode
         let arMode = false;
-        
+
         function toggleARMode() {
             arMode = !arMode;
             const overlay = document.getElementById('arOverlay');
             const button = document.getElementById('arModeBtn');
-            
+
             if (arMode) {
                 overlay.style.display = 'block';
                 button.style.background = 'var(--glow-electric)';
@@ -3385,41 +3385,41 @@ function serveHolographicFallback(c) {
                 addEventToFeed('👁️ AR Mode Deactivated');
             }
         }
-        
+
         function startARAnimation() {
             if (!arMode) return;
-            
+
             // Update AR metrics with random data
             document.getElementById('arSystemLoad').textContent = (Math.random() * 100).toFixed(1) + '%';
             document.getElementById('arMemoryUsage').textContent = (50 + Math.random() * 40).toFixed(1) + '%';
             document.getElementById('arNetworkIO').textContent = (Math.random() * 5).toFixed(1) + ' GB/s';
-            
+
             setTimeout(() => startARAnimation(), 2000);
         }
-        
+
         // Biometric Authentication
         function showBiometricAuth() {
             document.getElementById('biometricModal').style.display = 'flex';
             startBiometricScan();
         }
-        
+
         function startBiometricScan() {
             const progressBar = document.getElementById('biometricProgress');
             const status = document.getElementById('biometricStatus');
             let progress = 0;
-            
+
             status.textContent = 'Scanning...';
-            
+
             const scanInterval = setInterval(() => {
                 progress += 2;
                 progressBar.style.width = progress + '%';
-                
+
                 if (progress >= 100) {
                     clearInterval(scanInterval);
                     status.textContent = 'Authentication Successful ✓';
                     status.style.color = 'var(--security-safe)';
                     addEventToFeed('🔐 Biometric Authentication: SUCCESS');
-                    
+
                     setTimeout(() => {
                         document.getElementById('biometricModal').style.display = 'none';
                         progressBar.style.width = '0%';
@@ -3429,28 +3429,28 @@ function serveHolographicFallback(c) {
                 }
             }, 100);
         }
-        
+
         // Event System
         function addEventToFeed(message) {
             const feed = document.getElementById('eventsFeed');
             const eventItem = document.createElement('div');
             eventItem.className = 'event-item';
-            eventItem.innerHTML = 
+            eventItem.innerHTML =
                 '<div>' + message + '</div>' +
                 '<div class="event-time">Now</div>';
-            
+
             feed.insertBefore(eventItem, feed.firstChild);
-            
+
             // Keep only last 10 events
             while (feed.children.length > 10) {
                 feed.removeChild(feed.lastChild);
             }
         }
-        
+
         // Initialize Advanced Features
         document.addEventListener('DOMContentLoaded', function() {
             initVoiceRecognition();
-            
+
             // Voice Control Button
             document.getElementById('voiceControlBtn').addEventListener('click', function() {
                 if (recognition) {
@@ -3463,13 +3463,13 @@ function serveHolographicFallback(c) {
                     addEventToFeed('❌ Voice recognition not supported');
                 }
             });
-            
+
             // AR Mode Button
             document.getElementById('arModeBtn').addEventListener('click', toggleARMode);
-            
+
             // Biometric Button
             document.getElementById('biometricBtn').addEventListener('click', showBiometricAuth);
-            
+
             // Close Biometric Modal
             document.getElementById('closeBiometric').addEventListener('click', function() {
                 document.getElementById('biometricModal').style.display = 'none';
@@ -3493,7 +3493,7 @@ app.get('/admin/*', async (c) => {
   if (c.req.query('fallback') === '1') {
     return serveHolographicFallback(c);
   }
-  
+
   return handleAdmin(c);
 });
 
