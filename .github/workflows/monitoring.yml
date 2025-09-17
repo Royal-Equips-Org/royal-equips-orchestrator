@@ -30,22 +30,22 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install pytest-asyncio
-      
+
       - name: Comprehensive Health Check
         id: health-check
         run: |
@@ -54,7 +54,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
           APP_URL: ${{ secrets.APP_URL }}
-          
+
       - name: Parse Health Results
         id: parse-results
         run: |
@@ -63,11 +63,11 @@ jobs:
             CRITICAL_ISSUES=$(jq -r '.critical_issues // 0' health-report.json)
             UNHEALTHY_AGENTS=$(jq -r '.unhealthy_agents // 0' health-report.json)
             SYSTEM_STATUS=$(jq -r '.overall_status // "unknown"' health-report.json)
-            
+
             echo "critical_issues=$CRITICAL_ISSUES" >> $GITHUB_OUTPUT
             echo "unhealthy_agents=$UNHEALTHY_AGENTS" >> $GITHUB_OUTPUT
             echo "system_status=$SYSTEM_STATUS" >> $GITHUB_OUTPUT
-            
+
             # Set alert level
             if [ "$CRITICAL_ISSUES" -gt 0 ]; then
               echo "alert_level=critical" >> $GITHUB_OUTPUT
@@ -80,7 +80,7 @@ jobs:
             echo "alert_level=error" >> $GITHUB_OUTPUT
             echo "system_status=health_check_failed" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Upload health report
         permissions:
           contents: read
@@ -90,8 +90,10 @@ jobs:
           name: health-report-${{ github.run_number }}
           path: health-report.json
           retention-days: 30
-      
+
       - name: Slack notification - Critical
+        permissions:
+          contents: read
         if: steps.parse-results.outputs.alert_level == 'critical'
         uses: 8398a7/action-slack@v3
         with:
@@ -99,15 +101,17 @@ jobs:
           title: "🚨 CRITICAL: Royal Equips Empire Health Alert"
           text: |
             Critical system issues detected!
-            
+
             🔥 Critical Issues: ${{ steps.parse-results.outputs.critical_issues }}
             ⚠️ Unhealthy Agents: ${{ steps.parse-results.outputs.unhealthy_agents }}
             📊 System Status: ${{ steps.parse-results.outputs.system_status }}
-            
+
             Immediate attention required!
           webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-      
+
       - name: Slack notification - Warning
+        permissions:
+          contents: read
         if: steps.parse-results.outputs.alert_level == 'warning'
         uses: 8398a7/action-slack@v3
         with:
@@ -115,12 +119,14 @@ jobs:
           title: "⚠️ Royal Equips Empire Health Warning"
           text: |
             System health issues detected:
-            
+
             ⚠️ Unhealthy Agents: ${{ steps.parse-results.outputs.unhealthy_agents }}
             📊 System Status: ${{ steps.parse-results.outputs.system_status }}
           webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-      
+
       - name: Slack notification - Healthy
+        permissions:
+          contents: read
         if: steps.parse-results.outputs.alert_level == 'healthy' && github.event.inputs.detailed_report == 'true'
         uses: 8398a7/action-slack@v3
         with:
@@ -128,7 +134,7 @@ jobs:
           title: "✅ Royal Equips Empire Health Report"
           text: |
             All systems operational!
-            
+
             📊 System Status: ${{ steps.parse-results.outputs.system_status }}
             🤖 All agents healthy
           webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -137,7 +143,7 @@ jobs:
   agent-health:
     name: 🤖 Agent Health Monitoring
     permissions:
-     contents: read
+      contents: read
     runs-on: ubuntu-latest
     needs: system-health
     if: always()
@@ -149,41 +155,43 @@ jobs:
           'fraud_security'
         ]
       fail-fast: false
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install pytest-asyncio
-      
+
       - name: Agent Health Check
         id: agent-health
         continue-on-error: true
         run: |
           python scripts/execute_agent.py --agent ${{ matrix.agent }} --health-check > agent-health.log 2>&1
           HEALTH_STATUS=$?
-          
+
           if [ $HEALTH_STATUS -eq 0 ]; then
             echo "status=healthy" >> $GITHUB_OUTPUT
           else
             echo "status=unhealthy" >> $GITHUB_OUTPUT
           fi
-          
+
           # Extract health details if available
           if grep -q "Health check for" agent-health.log; then
             echo "Agent health check completed"
           fi
-      
+
       - name: Restart Unhealthy Agent
+        permissions:
+          contents: read
         if: steps.agent-health.outputs.status == 'unhealthy' && (github.event.inputs.force_restart == 'true' || contains(github.event_name, 'schedule'))
         run: |
           echo "🔄 Attempting to restart unhealthy agent: ${{ matrix.agent }}"
@@ -194,8 +202,10 @@ jobs:
           REDIS_URL: ${{ secrets.REDIS_URL }}
           SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      
+
       - name: Upload agent logs
+        permissions:
+          contents: read
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -206,41 +216,43 @@ jobs:
   # Performance Metrics Collection
   performance-metrics:
     name: 📊 Performance Metrics
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: [system-health, agent-health]
     if: always()
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install pytest-asyncio
-      
+
       - name: Collect Performance Metrics
         run: |
           python -c "
           import json
           import time
           from datetime import datetime
-          
+
           metrics = {
               'timestamp': datetime.utcnow().isoformat(),
               'workflow_run_id': '${{ github.run_id }}',
               'repository': '${{ github.repository }}',
               'system_metrics': {
-                  'uptime': $(uptime | awk '{print $3}' | tr -d ','),
-                  'load_average': '$(uptime | awk -F'load average:' '{print $2}' | xargs)',
-                  'memory_usage': '$(free -m | awk 'NR==2{printf \"%.2f%%\", $3*100/$2 }')',
-                  'disk_usage': '$(df -h | awk '$NF==\"/\"{printf \"%s\", $5}')'
+                  'uptime': '$(uptime | awk \'{print $3}\' | tr -d \',\')',
+                  'load_average': '$(uptime | awk -F\'load average:\' \'{print $2}\' | xargs)',
+                  'memory_usage': '$(free -m | awk \'NR==2{printf \"%.2f%%\", $3*100/$2 }\')',
+                  'disk_usage': '$(df -h | awk \'$NF==\"/\"{printf \"%s\", $5}\')'
               },
               'agent_metrics': {
                   'total_agents': 10,
@@ -249,14 +261,16 @@ jobs:
                   'critical_agents': 5
               }
           }
-          
+
           print(json.dumps(metrics, indent=2))
-          
+
           with open('performance-metrics.json', 'w') as f:
               json.dump(metrics, f, indent=2)
           "
-      
+
       - name: Upload performance metrics
+        permissions:
+          contents: read
         uses: actions/upload-artifact@v4
         with:
           name: performance-metrics-${{ github.run_number }}
@@ -266,25 +280,27 @@ jobs:
   # Security Monitoring
   security-monitoring:
     name: 🔒 Security Monitoring
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: system-health
     if: always()
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install pytest-asyncio
-      
+
       - name: Run Security Agent
         continue-on-error: true
         run: |
@@ -292,19 +308,21 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
-      
+
       - name: Security Vulnerability Scan
         run: |
           # Run quick security scans
           if command -v bandit &> /dev/null; then
             bandit -r . -f json -o security-scan.json || true
           fi
-          
+
           if command -v safety &> /dev/null; then
             safety check --json --output safety-report.json || true
           fi
-      
+
       - name: Upload security reports
+        permissions:
+          contents: read
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -317,10 +335,12 @@ jobs:
   # Summary Report
   monitoring-summary:
     name: 📋 Monitoring Summary
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: [system-health, agent-health, performance-metrics, security-monitoring]
     if: always()
-    
+
     steps:
       - name: Generate Summary
         run: |
@@ -330,7 +350,7 @@ jobs:
           echo "**Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
           echo "**Run ID**: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "### 📊 Job Status Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -339,25 +359,25 @@ jobs:
           echo "| Performance Metrics | ${{ needs.performance-metrics.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Monitoring | ${{ needs.security-monitoring.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "### 🔍 Next Steps" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.system-health.result }}" == "failure" ]]; then
             echo "- ⚠️ **Critical**: Address system health issues immediately" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [[ "${{ needs.agent-health.result }}" == "failure" ]]; then
             echo "- 🤖 **Action Required**: Check unhealthy agents" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "- 📈 **Continuous**: Monitor performance trends" >> $GITHUB_STEP_SUMMARY
           echo "- 🔒 **Security**: Review security scan results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "*Autonomous monitoring powered by Royal Equips Empire 🚀*" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Final Status Check
-      permissions:
-        contents: read
+        permissions:
+          contents: read
         run: |
           if [[ "${{ needs.system-health.result }}" == "failure" ]]; then
             echo "💥 Critical system health issues detected!"
@@ -368,4 +388,3 @@ jobs:
           else
             echo "✅ All monitoring checks completed successfully"
             exit 0
-          fi
