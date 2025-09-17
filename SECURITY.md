@@ -1,4 +1,13 @@
 # Security Policy
+# SECURITY.md
+## Reporting
+Email: pro.jokhoe2@gmail.com 72h SLA.  
+## Scope
+Code, pipelines, infra, supply chain.  
+## Controls
+Signed commits, RBAC, least privilege, WAF, DDoS, secret scanning, SBOM, Trivy, CodeQL.  
+## Handling
+Triage → contain → fix → rotate secrets → postmortem.
 
 ## Supported Versions
 
@@ -49,7 +58,7 @@ Security vulnerabilities should be reported privately to allow us to patch them 
 
 ### 3. Alternative: Email Report
 
-Send an email to: **security@royalequips.com** (if available) or create a private issue.
+Send an email to: **google@royalequips.nl** (if available) or create a private issue.
 
 Include:
 - Description of the vulnerability
@@ -121,7 +130,7 @@ bandit -r royal_mcp/ api/ app/ orchestrator/
 
 For security-related questions or concerns:
 
-- **Security Reports**: Use GitHub Security Advisories or email security@royalequips.com
+- **Security Reports**: Use GitHub Security Advisories or email google@royalequips.nl
 - **General Security Questions**: Create a GitHub Discussion in the Security category
 - **Documentation Issues**: Submit a regular GitHub issue
 
@@ -136,3 +145,6 @@ Contributors who have responsibly disclosed security vulnerabilities will be lis
 ---
 
 Last updated: January 2024
+
+
+

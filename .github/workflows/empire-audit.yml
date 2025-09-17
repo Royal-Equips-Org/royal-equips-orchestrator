@@ -1,4 +1,4 @@
-﻿name: Empire Audit
+name: Empire Audit
 on:
   push:
   pull_request:

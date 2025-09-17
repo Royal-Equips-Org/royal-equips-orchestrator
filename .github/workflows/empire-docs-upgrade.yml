@@ -1,4 +1,4 @@
-﻿name: Empire Docs Upgrade
+name: Empire Docs Upgrade
 on:
   schedule: [ { cron: "15 * * * *" } ]
   workflow_dispatch:

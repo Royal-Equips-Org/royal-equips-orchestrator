@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-black text-white font-mono;
+    background: radial-gradient(ellipse at center, #0a0a0a 0%, #000000 100%);
+  }
+}
+
+.hologram-text {
+  text-shadow: 0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 30px #00FFFF;
+}
+
+.hologram-border {
+  border: 1px solid #00FFFF;
+  box-shadow: 0 0 10px #00FFFF, inset 0 0 10px rgba(0, 255, 255, 0.1);
+}
+
+.glass-panel {
+  background: rgba(0, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+@keyframes scanner {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanner-line {
+  animation: scanner 3s linear infinite;
+}
