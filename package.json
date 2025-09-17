@@ -11,6 +11,7 @@
     "fix-agent": "node scripts/fix-agent.mjs --watch"
   },
   "devDependencies": {
+    "@commitlint/config-conventional": "^19.8.1",
     "@eslint/js": "9.35.0",
     "@types/jest": "29",
     "chokidar": "^4.0.3",
