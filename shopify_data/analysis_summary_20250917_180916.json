@@ -6,6 +6,6 @@
   "total_customers": 0,
   "generated_at": "2025-09-17T18:09:22.219656Z",
   "data_files": [
-    "shopify_data/products_20250917_180916.json"
+    "./products_20250917_180916.json"
   ]
 }
