@@ -93,6 +93,23 @@ docs(readme): update MCP server setup instructions
 test(integration): add comprehensive workflow tests
 ```
 
+### Commitlint Configuration
+
+The repository uses `commitlint` to enforce conventional commit standards. The configuration includes:
+
+- **Standard Rules**: All new commits must follow the conventional commit format
+- **Legacy Support**: Historical commits that don't follow the format are ignored via the `ignores` configuration in `commitlint.config.cjs`
+- **Dependencies**: Both `@commitlint/cli` and `@commitlint/config-conventional` are required dependencies
+
+To test your commit messages locally:
+```bash
+# Test a commit message
+echo "feat: add new feature" | npx commitlint
+
+# Test commit range
+npx commitlint --from=HEAD~1 --to=HEAD
+```
+
 ## Code Quality Standards
 
 ### Python Code
