@@ -1,4 +1,6 @@
 name: 🏥 Royal Equips Empire Health Monitoring
+permissions:
+  contents: read
 
 on:
   schedule:
