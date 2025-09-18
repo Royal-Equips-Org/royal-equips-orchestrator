@@ -31,7 +31,6 @@ const FloatingKPI: React.FC<{
   return (
     <group position={position}>
       <Box ref={meshRef} args={[1.5, 1, 0.1]}>
-        <meshBasicMaterial transparent opacity={0.3} color={color} />
       </Box>
       
       <Text
@@ -39,7 +38,7 @@ const FloatingKPI: React.FC<{
         fontSize={0.3}
         color={color}
         anchorX="center"
-        anchorY="center"
+        anchorY="middle"
         font="/fonts/RobotoMono-Bold.ttf"
       >
         {String(value)}
@@ -50,8 +49,7 @@ const FloatingKPI: React.FC<{
         fontSize={0.15}
         color="white"
         anchorX="center"
-        anchorY="center"
-        opacity={0.8}
+        anchorY="middle"
       >
         {label}
       </Text>
@@ -84,7 +82,6 @@ const AgentNode: React.FC<{
         <meshBasicMaterial 
           color={active ? "#00FFFF" : "#666666"} 
           transparent 
-          opacity={active ? 0.8 : 0.3}
         />
       </Sphere>
       
@@ -93,8 +90,7 @@ const AgentNode: React.FC<{
         fontSize={0.1}
         color="white"
         anchorX="center"
-        anchorY="center"
-        opacity={0.7}
+        anchorY="middle"
       >
         {name}
       </Text>
@@ -123,7 +119,10 @@ const NetworkConnection: React.FC<{
   
   useFrame((state) => {
     if (meshRef.current && active) {
-      meshRef.current.material.opacity = 0.3 + Math.sin(state.clock.elapsedTime * 4) * 0.2
+      const material = meshRef.current.material as any
+      if (material.opacity !== undefined) {
+        material.opacity = 0.3 + Math.sin(state.clock.elapsedTime * 4) * 0.2
+      }
     }
   })
 
@@ -137,7 +136,6 @@ const NetworkConnection: React.FC<{
       <meshBasicMaterial 
         color={active ? "#00FFFF" : "#333333"} 
         transparent 
-        opacity={active ? 0.5 : 0.1}
       />
     </Cylinder>
   )
@@ -164,7 +162,6 @@ const KPIVisualization: React.FC<KPIVisualizationProps> = ({ metrics }) => {
     <group ref={centerRef}>
       {/* Central Hub */}
       <Sphere args={[0.5, 32, 32]} position={[0, 0, 0]}>
-        <meshBasicMaterial color="#FFD700" transparent opacity={0.6} />
       </Sphere>
       
       <Text
@@ -172,7 +169,7 @@ const KPIVisualization: React.FC<KPIVisualizationProps> = ({ metrics }) => {
         fontSize={0.2}
         color="#000"
         anchorX="center"
-        anchorY="center"
+        anchorY="middle"
         font="/fonts/RobotoMono-Bold.ttf"
       >
         ROYAL
