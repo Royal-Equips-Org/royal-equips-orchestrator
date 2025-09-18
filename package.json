@@ -1,7 +1,7 @@
 {
   "name": "royal-equips-orchestrator",
   "private": true,
-  "packageManager": "pnpm@9.9.0",
+  "packageManager": "pnpm@10.17.0",
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
@@ -15,12 +15,12 @@
     "dev:api": "pnpm --filter @royal-equips/orchestrator-api dev"
   },
   "devDependencies": {
+    "@commitlint/config-conventional": "^17.7.0",
     "@eslint/js": "9.35.0",
     "@types/jest": "29",
     "chokidar": "^4.0.3",
     "diff": "^8.0.2",
     "eslint": "9.35.0",
-    "@commitlint/config-conventional": "^17.7.0",
     "eslint-config-prettier": "9.1.2",
     "eslint-plugin-import": "2.32.0",
     "execa": "^9.6.0",
