@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: #000000;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* Holographic UI Effects */
+.glass-panel {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.hologram-text {
+  background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: hologram-glow 3s ease-in-out infinite;
+}
+
+.hologram-border {
+  border: 1px solid;
+  border-image: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00) 30;
+  animation: border-glow 2s ease-in-out infinite alternate;
+}
+
+/* Scanner line animation */
+.scanner-line {
+  animation: scanner-sweep 4s linear infinite;
+}
+
+@keyframes scanner-sweep {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes hologram-glow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes border-glow {
+  from { 
+    border-color: rgba(0, 255, 255, 0.3);
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.2);
+  }
+  to { 
+    border-color: rgba(0, 255, 255, 0.8);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  }
+}
+
+/* Pulsing animations for active elements */
+.pulse-active {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    opacity: 1;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+  }
+  50% { 
+    opacity: 0.8;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+  }
+}
+
+/* Status indicators */
+.status-active { color: #00ff88; }
+.status-warning { color: #ffaa00; }
+.status-error { color: #ff4444; }
+.status-offline { color: #666666; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 255, 0.5);
+}
