@@ -944,7 +944,8 @@ async def reject_product(product_id: str, reason: str = "Manual rejection"):
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Failed to reject product {product_id}: {e}")
+        safe_product_id = product_id.replace('\r', '').replace('\n', '')
+        logger.error(f"Failed to reject product {safe_product_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
