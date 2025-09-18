@@ -1,5 +1,5 @@
-// Product Opportunity Cards Component - Simplified Version
-import { useState } from 'react';
+// Product Opportunity Cards Component - Real API Integration
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
@@ -11,264 +11,259 @@ import {
   Info,
   Star
 } from 'lucide-react';
-import { usePendingProducts, useEmpireStore } from '@/store/empire-store';
+import { useProductOpportunities, useEmpireStore } from '@/store/empire-store';
 import type { ProductOpportunity } from '@/types/empire';
 
-// Mock product opportunities
-const mockProducts: ProductOpportunity[] = [
-  {
-    id: "prod_001",
-    title: "Portable Solar Power Bank with Wireless Charging",
-    price_range: "$25-$35",
-    trend_score: 87,
-    profit_potential: "High",
-    source_platform: "Amazon",
-    search_volume: 45000,
-    competition_level: "Medium",
-    seasonal_factor: "Year-round",
-    supplier_leads: ["SolarTech Co.", "GreenPower Ltd.", "EcoCharge Inc."],
-    market_insights: "Growing demand for eco-friendly tech accessories. Peak season during outdoor activities.",
-    image_url: "/api/placeholder/300/200",
-    category: "Electronics",
-    estimated_profit_margin: 45,
-    risk_level: "Low",
-    approval_status: "pending",
-    discovered_at: new Date()
-  },
-  {
-    id: "prod_002", 
-    title: "Ergonomic Standing Desk Converter",
-    price_range: "$120-$180",
-    trend_score: 92,
-    profit_potential: "High",
-    source_platform: "eBay",
-    search_volume: 28000,
-    competition_level: "Low",
-    seasonal_factor: "Q1 peak (New Year resolutions)",
-    supplier_leads: ["WorkWell Systems", "ErgoDesk Pro"],
-    market_insights: "Remote work trend driving demand. Health-conscious professionals main target.",
-    category: "Home Office",
-    estimated_profit_margin: 38,
-    risk_level: "Low",
-    approval_status: "pending",
-    discovered_at: new Date()
-  },
-  {
-    id: "prod_003",
-    title: "Smart Garden Watering System",
-    price_range: "$85-$115",
-    trend_score: 79,
-    profit_potential: "Medium",
-    source_platform: "Shopify",
-    search_volume: 18500,
-    competition_level: "High",
-    seasonal_factor: "Spring/Summer peak",
-    supplier_leads: ["GardenTech Solutions", "SmartGrow Co."],
-    market_insights: "Urban gardening trend growing. Smart home integration important.",
-    category: "Home & Garden",
-    estimated_profit_margin: 32,
-    risk_level: "Medium",
-    approval_status: "pending",
-    discovered_at: new Date()
-  }
-];
+export default function ProductOpportunityCards() {
+  const opportunities = useProductOpportunities();
+  const { approveProduct, rejectProduct } = useEmpireStore();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-function ProductCard({ product, onApprove, onReject }: {
-  product: ProductOpportunity;
-  onApprove: () => void;
-  onReject: () => void;
-}) {
-  const getProfitColor = () => {
-    switch (product.profit_potential) {
-      case 'High':
-        return 'text-green-400';
-      case 'Medium':
-        return 'text-yellow-400';
-      default:
-        return 'text-gray-400';
+  // Mock data if no opportunities available
+  const mockOpportunities: ProductOpportunity[] = [
+    {
+      id: "opp_1",
+      title: "Portable Solar Power Bank with Wireless Charging",
+      price_range: "$25-$35",
+      trend_score: 87,
+      profit_potential: "High",
+      source_platform: "AliExpress",
+      search_volume: 45000,
+      competition_level: "Medium",
+      seasonal_factor: "Year-round",
+      supplier_leads: ["SolarTech Co.", "GreenPower Ltd."],
+      market_insights: "Growing demand for sustainable tech accessories",
+      approval_status: "pending",
+      discovered_at: new Date()
+    },
+    {
+      id: "opp_2",
+      title: "Smart Fitness Tracker with Heart Monitor", 
+      price_range: "$45-$65",
+      trend_score: 92,
+      profit_potential: "High",
+      source_platform: "Amazon",
+      search_volume: 67000,
+      competition_level: "High",
+      seasonal_factor: "Q1 peak",
+      supplier_leads: ["FitTech Corp.", "HealthGadgets Inc."],
+      market_insights: "Health tech market expanding rapidly",
+      approval_status: "pending", 
+      discovered_at: new Date()
+    },
+    {
+      id: "opp_3",
+      title: "LED Gaming Mouse Pad RGB",
+      price_range: "$15-$25",
+      trend_score: 74,
+      profit_potential: "Medium",
+      source_platform: "DHgate", 
+      search_volume: 23000,
+      competition_level: "Low",
+      seasonal_factor: "Holiday peak",
+      supplier_leads: ["GameTech Ltd.", "RGB Solutions"],
+      market_insights: "Gaming accessories steady growth",
+      approval_status: "pending",
+      discovered_at: new Date()
+    }
+  ];
+
+  const displayOpportunities = opportunities.length > 0 ? opportunities : mockOpportunities;
+  const currentOpportunity = displayOpportunities[currentIndex];
+
+  const handleApprove = async () => {
+    if (currentOpportunity) {
+      try {
+        await approveProduct(currentOpportunity.id);
+        // Move to next opportunity
+        if (currentIndex < displayOpportunities.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        } else {
+          setCurrentIndex(0);
+        }
+      } catch (error) {
+        console.error('Failed to approve product:', error);
+      }
     }
   };
 
-  const getTrendIcon = () => {
-    return product.trend_score > 75 ? 
-      <TrendingUp className="w-4 h-4 text-green-400" /> :
-      <TrendingDown className="w-4 h-4 text-red-400" />;
+  const handleReject = async () => {
+    if (currentOpportunity) {
+      try {
+        await rejectProduct(currentOpportunity.id, 'Manual rejection from UI');
+        // Move to next opportunity
+        if (currentIndex < displayOpportunities.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        } else {
+          setCurrentIndex(0);
+        }
+      } catch (error) {
+        console.error('Failed to reject product:', error);
+      }
+    }
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-panel p-6 mb-4"
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-2 line-clamp-2">
-            {product.title}
-          </h3>
-          <div className="flex items-center space-x-4 text-sm">
-            <span className="text-hologram font-medium">{product.price_range}</span>
-            <span className={getProfitColor()}>
-              {product.profit_potential} Profit
-            </span>
-          </div>
-        </div>
-        
-        <div className="text-right">
-          <div className="flex items-center space-x-1 mb-1">
-            {getTrendIcon()}
-            <span className="text-xl font-bold">{product.trend_score}</span>
-          </div>
-          <div className="text-xs opacity-70">Trend Score</div>
-        </div>
-      </div>
-
-      {/* Product Image Placeholder */}
-      <div className="w-full h-32 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg mb-4 flex items-center justify-center">
-        <div className="text-4xl">📦</div>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-1">
-            <Eye className="w-4 h-4 text-blue-400" />
-          </div>
-          <div className="text-sm font-medium">
-            {product.search_volume ? `${(product.search_volume / 1000).toFixed(0)}K` : 'N/A'}
-          </div>
-          <div className="text-xs opacity-70">Monthly Searches</div>
-        </div>
-        
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-1">
-            <DollarSign className="w-4 h-4 text-green-400" />
-          </div>
-          <div className="text-sm font-medium">{product.estimated_profit_margin}%</div>
-          <div className="text-xs opacity-70">Profit Margin</div>
-        </div>
-        
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-1">
-            <Star className="w-4 h-4 text-yellow-400" />
-          </div>
-          <div className="text-sm font-medium">{product.competition_level}</div>
-          <div className="text-xs opacity-70">Competition</div>
-        </div>
-      </div>
-
-      {/* Market Insights */}
-      <div className="mb-4">
-        <p className="text-sm text-gray-300 line-clamp-3">
-          {product.market_insights}
-        </p>
-      </div>
-
-      {/* Suppliers */}
-      <div className="mb-4">
-        <div className="text-xs opacity-70 mb-1">Supplier Leads:</div>
-        <div className="flex flex-wrap gap-1">
-          {product.supplier_leads.slice(0, 2).map((supplier, i) => (
-            <span key={i} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
-              {supplier}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-center space-x-4">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onReject}
-          className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/30 flex items-center space-x-2"
-        >
-          <ThumbsDown className="w-4 h-4" />
-          <span>Reject</span>
-        </motion.button>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-6 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg border border-blue-500/30 flex items-center space-x-2"
-        >
-          <Info className="w-4 h-4" />
-          <span>More Info</span>
-        </motion.button>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onApprove}
-          className="px-6 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg border border-green-500/30 flex items-center space-x-2"
-        >
-          <ThumbsUp className="w-4 h-4" />
-          <span>Approve</span>
-        </motion.button>
-      </div>
-    </motion.div>
-  );
-}
-
-export default function ProductOpportunityCards() {
-  const pendingProducts = usePendingProducts();
-  const { approveProduct, rejectProduct } = useEmpireStore();
-  
-  // Use mock data if no products in store yet
-  const displayProducts = pendingProducts.length > 0 ? pendingProducts : mockProducts;
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const handleApprove = (productId: string) => {
-    approveProduct(productId);
-    setCurrentIndex(prev => prev + 1);
+  const getTrendIcon = (score: number) => {
+    return score >= 80 ? (
+      <TrendingUp className="w-5 h-5 text-green-400" />
+    ) : (
+      <TrendingDown className="w-5 h-5 text-yellow-400" />
+    );
   };
 
-  const handleReject = (productId: string) => {
-    rejectProduct(productId, 'Manually rejected');
-    setCurrentIndex(prev => prev + 1);
+  const getProfitColor = (potential: string) => {
+    switch (potential.toLowerCase()) {
+      case 'high': return 'text-green-400';
+      case 'medium': return 'text-yellow-400';
+      case 'low': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
   };
 
-  const visibleProducts = displayProducts.slice(currentIndex, currentIndex + 1);
-
-  if (visibleProducts.length === 0) {
+  if (!currentOpportunity) {
     return (
-      <div className="h-96 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🎉</div>
-          <h3 className="text-xl font-semibold mb-2">All caught up!</h3>
-          <p className="text-gray-400">No pending product opportunities at the moment.</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Agents are discovering new opportunities...
-          </p>
+      <div className="text-center py-12">
+        <div className="text-gray-400 mb-4">
+          <Info className="w-16 h-16 mx-auto" />
         </div>
+        <h3 className="text-xl font-semibold text-white mb-2">No Opportunities Available</h3>
+        <p className="text-gray-400">The market intelligence agents are analyzing new opportunities...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Stats */}
-      <div className="flex items-center justify-between text-sm">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <span className="text-hologram font-medium">{displayProducts.length}</span>
-          <span className="text-gray-400 ml-1">opportunities pending</span>
+          <h3 className="text-lg font-semibold text-white">Product Opportunities</h3>
+          <p className="text-sm text-gray-400">
+            {currentIndex + 1} of {displayOpportunities.length} opportunities
+          </p>
         </div>
-        <div className="text-gray-400">
-          Product {currentIndex + 1} of {displayProducts.length}
+        <div className="flex items-center space-x-2">
+          <Star className="w-5 h-5 text-yellow-400" />
+          <span className="text-yellow-400 font-bold">{currentOpportunity.trend_score}</span>
+          <span className="text-gray-400 text-sm">Trend Score</span>
         </div>
       </div>
 
-      {/* Current Product */}
-      {visibleProducts.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onApprove={() => handleApprove(product.id)}
-          onReject={() => handleReject(product.id)}
-        />
-      ))}
+      {/* Main Card */}
+      <motion.div
+        key={currentOpportunity.id}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="bg-black/40 border border-cyan-500/30 rounded-lg p-6 backdrop-blur-md"
+      >
+        {/* Product Title */}
+        <div className="mb-4">
+          <h4 className="text-xl font-bold text-white mb-2">{currentOpportunity.title}</h4>
+          <div className="flex items-center space-x-4 text-sm text-gray-400">
+            <span>Source: {currentOpportunity.source_platform}</span>
+            <span>•</span>
+            <span>Competition: {currentOpportunity.competition_level}</span>
+          </div>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <DollarSign className="w-5 h-5 text-green-400" />
+            </div>
+            <div className="text-lg font-bold text-white">{currentOpportunity.price_range}</div>
+            <div className="text-xs text-gray-400">Price Range</div>
+          </div>
+
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              {getTrendIcon(currentOpportunity.trend_score)}
+            </div>
+            <div className="text-lg font-bold text-white">{currentOpportunity.trend_score}</div>
+            <div className="text-xs text-gray-400">Trend Score</div>
+          </div>
+
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Eye className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="text-lg font-bold text-white">
+              {currentOpportunity.search_volume?.toLocaleString() || 'N/A'}
+            </div>
+            <div className="text-xs text-gray-400">Monthly Searches</div>
+          </div>
+
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <TrendingUp className={`w-5 h-5 ${getProfitColor(currentOpportunity.profit_potential)}`} />
+            </div>
+            <div className={`text-lg font-bold ${getProfitColor(currentOpportunity.profit_potential)}`}>
+              {currentOpportunity.profit_potential}
+            </div>
+            <div className="text-xs text-gray-400">Profit Potential</div>
+          </div>
+        </div>
+
+        {/* Market Insights */}
+        <div className="mb-6">
+          <h5 className="font-semibold text-white mb-2">Market Insights</h5>
+          <p className="text-gray-300 text-sm">{currentOpportunity.market_insights}</p>
+        </div>
+
+        {/* Supplier Leads */}
+        <div className="mb-6">
+          <h5 className="font-semibold text-white mb-2">Supplier Leads</h5>
+          <div className="flex flex-wrap gap-2">
+            {currentOpportunity.supplier_leads?.map((supplier, index) => (
+              <span
+                key={index}
+                className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm rounded-full border border-blue-500/30"
+              >
+                {supplier}
+              </span>
+            )) || <span className="text-gray-400 text-sm">No suppliers available</span>}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex space-x-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleReject}
+            className="flex-1 flex items-center justify-center space-x-2 py-3 px-6 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 transition-colors"
+          >
+            <ThumbsDown className="w-5 h-5" />
+            <span>Reject</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleApprove}
+            className="flex-1 flex items-center justify-center space-x-2 py-3 px-6 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg hover:bg-green-600/30 transition-colors"
+          >
+            <ThumbsUp className="w-5 h-5" />
+            <span>Approve for Shopify</span>
+          </motion.button>
+        </div>
+      </motion.div>
+
+      {/* Navigation */}
+      <div className="flex justify-center space-x-2">
+        {displayOpportunities.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-3 h-3 rounded-full transition-colors ${index === currentIndex
+              ? 'bg-cyan-400'
+              : 'bg-gray-600 hover:bg-gray-500'
+              }`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
