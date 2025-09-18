@@ -1,4 +1,4 @@
-// Product Opportunity Cards Component with Swipe Functionality
+// Product Opportunity Cards Component - Simplified Version
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -73,45 +73,11 @@ const mockProducts: ProductOpportunity[] = [
   }
 ];
 
-function SwipeableCard({ product, onSwipe, index: _index }: {
+function ProductCard({ product, onApprove, onReject }: {
   product: ProductOpportunity;
-  onSwipe: (direction: 'left' | 'right', productId: string) => void;
-  index: number;
+  onApprove: () => void;
+  onReject: () => void;
 }) {
-  const [dragX, setDragX] = useState(0);
-  const [dragRotation, setDragRotation] = useState(0);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    let currentX = startX;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      currentX = e.clientX;
-      const deltaX = currentX - startX;
-      setDragX(deltaX);
-      setDragRotation(deltaX * 0.1); // Slight rotation based on drag
-    };
-
-    const handleMouseUp = () => {
-      const deltaX = currentX - startX;
-      
-      if (Math.abs(deltaX) > 100) {
-        onSwipe(deltaX > 0 ? 'right' : 'left', product.id);
-      } else {
-        // Snap back
-        setDragX(0);
-        setDragRotation(0);
-      }
-
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
   const getProfitColor = () => {
     switch (product.profit_potential) {
       case 'High':
@@ -130,107 +96,119 @@ function SwipeableCard({ product, onSwipe, index: _index }: {
   };
 
   return (
-    <div
-      onMouseDown={handleMouseDown}
-      style={{ 
-        transform: `translateX(${dragX}px) rotate(${dragRotation}deg)`,
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        cursor: 'grab'
-      }}
-      className="touch-pan-y select-none"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass-panel p-6 mb-4"
     >
-      <div className="glass-panel p-6 h-full select-none">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2 line-clamp-2">
-              {product.title}
-            </h3>
-            <div className="flex items-center space-x-4 text-sm">
-              <span className="text-hologram font-medium">{product.price_range}</span>
-              <span className={getProfitColor()}>
-                {product.profit_potential} Profit
-              </span>
-            </div>
-          </div>
-          
-          <div className="text-right">
-            <div className="flex items-center space-x-1 mb-1">
-              {getTrendIcon()}
-              <span className="text-xl font-bold">{product.trend_score}</span>
-            </div>
-            <div className="text-xs opacity-70">Trend Score</div>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+            {product.title}
+          </h3>
+          <div className="flex items-center space-x-4 text-sm">
+            <span className="text-hologram font-medium">{product.price_range}</span>
+            <span className={getProfitColor()}>
+              {product.profit_potential} Profit
+            </span>
           </div>
         </div>
-
-        {/* Product Image Placeholder */}
-        <div className="w-full h-32 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg mb-4 flex items-center justify-center">
-          <div className="text-4xl">📦</div>
-        </div>
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <Eye className="w-4 h-4 text-blue-400" />
-            </div>
-            <div className="text-sm font-medium">
-              {product.search_volume ? `${(product.search_volume / 1000).toFixed(0)}K` : 'N/A'}
-            </div>
-            <div className="text-xs opacity-70">Monthly Searches</div>
+        
+        <div className="text-right">
+          <div className="flex items-center space-x-1 mb-1">
+            {getTrendIcon()}
+            <span className="text-xl font-bold">{product.trend_score}</span>
           </div>
-          
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <DollarSign className="w-4 h-4 text-green-400" />
-            </div>
-            <div className="text-sm font-medium">{product.estimated_profit_margin}%</div>
-            <div className="text-xs opacity-70">Profit Margin</div>
-          </div>
-          
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <Star className="w-4 h-4 text-yellow-400" />
-            </div>
-            <div className="text-sm font-medium">{product.competition_level}</div>
-            <div className="text-xs opacity-70">Competition</div>
-          </div>
-        </div>
-
-        {/* Market Insights */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-300 line-clamp-3">
-            {product.market_insights}
-          </p>
-        </div>
-
-        {/* Suppliers */}
-        <div className="mb-4">
-          <div className="text-xs opacity-70 mb-1">Supplier Leads:</div>
-          <div className="flex flex-wrap gap-1">
-            {product.supplier_leads.slice(0, 2).map((supplier, i) => (
-              <span key={i} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
-                {supplier}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Swipe Instructions */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-between px-6 text-xs opacity-50">
-          <div className="flex items-center space-x-1">
-            <ThumbsDown className="w-3 h-3" />
-            <span>Swipe Left to Reject</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <span>Swipe Right to Approve</span>
-            <ThumbsUp className="w-3 h-3" />
-          </div>
+          <div className="text-xs opacity-70">Trend Score</div>
         </div>
       </div>
-    </div>
+
+      {/* Product Image Placeholder */}
+      <div className="w-full h-32 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg mb-4 flex items-center justify-center">
+        <div className="text-4xl">📦</div>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-1">
+            <Eye className="w-4 h-4 text-blue-400" />
+          </div>
+          <div className="text-sm font-medium">
+            {product.search_volume ? `${(product.search_volume / 1000).toFixed(0)}K` : 'N/A'}
+          </div>
+          <div className="text-xs opacity-70">Monthly Searches</div>
+        </div>
+        
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-1">
+            <DollarSign className="w-4 h-4 text-green-400" />
+          </div>
+          <div className="text-sm font-medium">{product.estimated_profit_margin}%</div>
+          <div className="text-xs opacity-70">Profit Margin</div>
+        </div>
+        
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-1">
+            <Star className="w-4 h-4 text-yellow-400" />
+          </div>
+          <div className="text-sm font-medium">{product.competition_level}</div>
+          <div className="text-xs opacity-70">Competition</div>
+        </div>
+      </div>
+
+      {/* Market Insights */}
+      <div className="mb-4">
+        <p className="text-sm text-gray-300 line-clamp-3">
+          {product.market_insights}
+        </p>
+      </div>
+
+      {/* Suppliers */}
+      <div className="mb-4">
+        <div className="text-xs opacity-70 mb-1">Supplier Leads:</div>
+        <div className="flex flex-wrap gap-1">
+          {product.supplier_leads.slice(0, 2).map((supplier, i) => (
+            <span key={i} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+              {supplier}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-center space-x-4">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onReject}
+          className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/30 flex items-center space-x-2"
+        >
+          <ThumbsDown className="w-4 h-4" />
+          <span>Reject</span>
+        </motion.button>
+        
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-6 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg border border-blue-500/30 flex items-center space-x-2"
+        >
+          <Info className="w-4 h-4" />
+          <span>More Info</span>
+        </motion.button>
+        
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onApprove}
+          className="px-6 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg border border-green-500/30 flex items-center space-x-2"
+        >
+          <ThumbsUp className="w-4 h-4" />
+          <span>Approve</span>
+        </motion.button>
+      </div>
+    </motion.div>
   );
 }
 
@@ -242,18 +220,17 @@ export default function ProductOpportunityCards() {
   const displayProducts = pendingProducts.length > 0 ? pendingProducts : mockProducts;
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleSwipe = (direction: 'left' | 'right', productId: string) => {
-    if (direction === 'right') {
-      approveProduct(productId);
-    } else {
-      rejectProduct(productId, 'Manually rejected via swipe');
-    }
-    
-    // Move to next card
+  const handleApprove = (productId: string) => {
+    approveProduct(productId);
     setCurrentIndex(prev => prev + 1);
   };
 
-  const visibleProducts = displayProducts.slice(currentIndex, currentIndex + 3);
+  const handleReject = (productId: string) => {
+    rejectProduct(productId, 'Manually rejected');
+    setCurrentIndex(prev => prev + 1);
+  };
+
+  const visibleProducts = displayProducts.slice(currentIndex, currentIndex + 1);
 
   if (visibleProducts.length === 0) {
     return (
@@ -279,53 +256,19 @@ export default function ProductOpportunityCards() {
           <span className="text-gray-400 ml-1">opportunities pending</span>
         </div>
         <div className="text-gray-400">
-          Card {currentIndex + 1} of {displayProducts.length}
+          Product {currentIndex + 1} of {displayProducts.length}
         </div>
       </div>
 
-      {/* Card Stack */}
-      <div className="relative h-96 w-full">
-        {visibleProducts.map((product, index) => (
-          <SwipeableCard
-            key={product.id}
-            product={product}
-            onSwipe={handleSwipe}
-            index={index}
-          />
-        ))}
-      </div>
-
-      {/* Manual Controls */}
-      <div className="flex justify-center space-x-4">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => handleSwipe('left', visibleProducts[0]?.id || '')}
-          className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/30 flex items-center space-x-2"
-        >
-          <ThumbsDown className="w-4 h-4" />
-          <span>Reject</span>
-        </motion.button>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-6 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg border border-blue-500/30 flex items-center space-x-2"
-        >
-          <Info className="w-4 h-4" />
-          <span>More Info</span>
-        </motion.button>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => handleSwipe('right', visibleProducts[0]?.id || '')}
-          className="px-6 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg border border-green-500/30 flex items-center space-x-2"
-        >
-          <ThumbsUp className="w-4 h-4" />
-          <span>Approve</span>
-        </motion.button>
-      </div>
+      {/* Current Product */}
+      {visibleProducts.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onApprove={() => handleApprove(product.id)}
+          onReject={() => handleReject(product.id)}
+        />
+      ))}
     </div>
   );
 }
