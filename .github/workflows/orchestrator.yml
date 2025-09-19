@@ -1,0 +1,15 @@
+﻿name: Empire Orchestrator
+on:
+  schedule: [{ cron: "0 * * * *" }]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  product_research:
+    uses: ./.github/workflows/product-research.yml
+  order_processing:
+    needs: [product_research]
+    uses: ./.github/workflows/order-processing.yml
+  marketing_campaign:
+    needs: [order_processing]
+    uses: ./.github/workflows/marketing-campaign.yml

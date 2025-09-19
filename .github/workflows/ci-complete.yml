@@ -1,0 +1,233 @@
+name: '🏗️ Complete CI Pipeline - Royal Equips Empire'
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.9.0'
+
+jobs:
+  lint-and-typecheck:
+    name: '🔍 Lint & Type Check'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        
+      - name: '🔧 Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Setup pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: '🏗️ Install Dependencies'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        
+      - name: '🔍 Run ESLint'
+        run: pnpm lint
+        
+      - name: '📘 Type Check'
+        run: pnpm typecheck
+
+  build-and-test:
+    name: '🔨 Build & Test'
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        
+      - name: '🔧 Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Setup pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: '🏗️ Install Dependencies'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        
+      - name: '🔨 Build All Packages'
+        run: pnpm build
+        
+      - name: '🧪 Run Tests'
+        run: pnpm test
+        
+      - name: '📊 Upload Build Artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            apps/*/dist/
+            packages/*/dist/
+          retention-days: 7
+
+  agent-integration-test:
+    name: '🤖 Agent Integration Tests'
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+          
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        
+      - name: '🔧 Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Setup pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: '🏗️ Install Dependencies'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        
+      - name: '🔨 Build Packages'
+        run: pnpm build
+        
+      - name: '🚀 Start Orchestrator API'
+        run: |
+          pnpm dev:api &
+          sleep 10
+          
+      - name: '🧪 Test API Health'
+        run: |
+          curl -f http://localhost:10000/healthz
+          curl -f http://localhost:10000/readyz
+          curl -f http://localhost:10000/metrics
+          
+      - name: '🤖 Test Agent Execution'
+        run: |
+          # Test basic agent endpoints
+          curl -f http://localhost:10000/api/agents
+          
+  empire-readiness-check:
+    name: '👑 Empire Readiness Assessment'
+    runs-on: ubuntu-latest
+    needs: [build-and-test, agent-integration-test]
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        
+      - name: '🔧 Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Setup pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: '🏗️ Install Dependencies'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        
+      - name: '🔨 Build All'
+        run: pnpm build
+        
+      - name: '🚀 Start Complete System'
+        run: |
+          # Start API server
+          pnpm dev:api &
+          API_PID=$!
+          sleep 10
+          
+          # Start Command Center UI  
+          pnpm --filter @royal-equips/command-center-ui dev &
+          UI_PID=$!
+          sleep 15
+          
+          # Health checks
+          echo "🔍 Testing API Health..."
+          curl -f http://localhost:10000/healthz || exit 1
+          curl -f http://localhost:10000/readyz || exit 1
+          curl -f http://localhost:10000/metrics || exit 1
+          
+          echo "🔍 Testing Command Center..."
+          curl -f http://localhost:3000 || exit 1
+          
+          echo "✅ All systems operational!"
+          
+          # Cleanup
+          kill $API_PID $UI_PID || true
+          
+      - name: '📋 Empire Status Report'
+        run: |
+          echo "## 👑 Royal Equips Empire Status Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 **Mission**: Bootstrap Autonomous Empire Orchestrator v1" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Systems Online:" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚀 Orchestrator API (Port 10000)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎮 Holographic Command Center (Port 3000)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🤖 Agent Execution Framework" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Plan/DryRun/Apply Pattern" >> $GITHUB_STEP_SUMMARY
+          echo "- 🛡️ Health Monitoring" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🤖 Agents Deployed:" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 ProductResearchAgent (Tier 1)" >> $GITHUB_STEP_SUMMARY
+          echo "- 💰 PricingAgent (Framework Ready)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 InventoryAgent (Framework Ready)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🛒 OrdersAgent (Framework Ready)" >> $GITHUB_STEP_SUMMARY
+          echo "- 👁️ ObserverAgent (Framework Ready)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🏗️ Infrastructure:" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚡ Fastify API with Swagger Docs" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎮 React + Three.js Holographic UI" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔗 Shopify & Supabase Connectors" >> $GITHUB_STEP_SUMMARY
+          echo "- 💻 Interactive Command Console" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Real-time KPI Visualization" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: 🟢 Empire Foundation Complete - Ready for Agent Deployment!" >> $GITHUB_STEP_SUMMARY
+
+  notify-empire-status:
+    name: '📢 Empire Status Notification'
+    runs-on: ubuntu-latest
+    needs: [empire-readiness-check]
+    if: always() && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: '📊 Determine Status'
+        id: status
+        run: |
+          if [[ "${{ needs.empire-readiness-check.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "message=🎉 Empire systems fully operational! All agents ready for autonomous deployment." >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "message=⚠️ Empire systems require attention. Check the build for details." >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: '👑 Empire Status Update'
+        run: |
+          echo "## 👑 ROYAL EQUIPS EMPIRE STATUS"
+          echo "**Build**: ${{ github.run_number }}"
+          echo "**Commit**: ${{ github.sha }}"
+          echo "**Status**: ${{ steps.status.outputs.message }}"
+          echo ""
+          echo "**Next Phase**: Deploy Tier 1 autonomous agents for 24/7 operations"

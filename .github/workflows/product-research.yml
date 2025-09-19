@@ -1,0 +1,8 @@
+﻿name: Product Research Agent
+permissions:
+  contents: read
+on: { workflow_call: {} }
+jobs:
+  call:
+    uses: ./.github/workflows/_reusable-base.yml
+    with: { agent: "product_research" }

@@ -1,4 +1,4 @@
-﻿## Summary
+## Summary
 Explain what the change does in one paragraph.
 
 ## Checklist
