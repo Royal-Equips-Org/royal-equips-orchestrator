@@ -252,7 +252,6 @@ export async function ${fn}(..._args){
 `;
         changed = true;
       }
-    }
     if (changed) {
       await writeWithApproval(r(f), s, options);
       total++;
