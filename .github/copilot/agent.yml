@@ -1,18 +1,34 @@
-﻿version: 1
+version: 1
 name: Royal Orchestrator Builder
+
+# High‑level goals for the Copilot coding agent.  The agent is expected to
+# autonomously deliver production‑ready code without placeholders, fully
+# integrating all services and agents defined in the Empire blueprint.
 goals:
-  - Bouw en verbeter alle agents, orchestrator en API tot productie.
-  - Respecteer port 10000 en health /health.
-  - Schrijf veilige migraties en tests. Geen placeholders.
+  - Bouw en verbeter alle agents, orchestrator, API en frontend tot productie en zorg dat alle pipelines autonoom draaien.
+  - Respecteer port 10000 voor alle services en implementeer een uniforme health endpoint op `/health`.
+  - Schrijf veilige migraties, unit tests en integratietests voor elke module; geen placeholders of stubfuncties.
+  - Vervang alle mockdata door echte API‑integraties (Shopify, Amazon, eBay, Alibaba, Klaviyo, Twilio, AutoDS/Spocket, Printful, BigQuery).
+  - Ontwerp en bouw een holografisch command‑center dashboard met live telemetry, KPI‑charts, WebSocket events en 3D visualisaties.
+
+# Context: welke bestanden en mappen Copilot moet inladen om de juiste
+# instructies, schema's en workflows te begrijpen.  Dit omvat de
+# architectuurblauwdrukken, infrastructuurconfiguraties en alle broncode.
 context:
   include:
     - AGENT_INSTRUCTIONS.md
     - EMPIRE_PROMPT.md
     - EMPIRE_INFRASTRUCTURE.md
     - docs/COPILOT_BRIEFING.md
+    - copilot_agent_plan.md
     - platform/**
+    - orchestrator/**
     - infra/**
+    - dashboard/**
     - .github/workflows/**
+
+# Guardrails define which sensitive operations require human approval
+# and cannot be performed automatically by the Copilot agent.
 guardrails:
   sensitive_actions:
     - deployment
@@ -22,18 +38,52 @@ guardrails:
   require_pr_approval: true
   reviewers:
     - "@Skidaw23"
+
+# Workflow defines how Copilot should manage branches, pull requests
+# and CI checks.  All changes must go through CI and require manual
+# approval before merging.
 workflow:
   pr_strategy:
     branch_prefix: "cp-auto/"
     auto_label: ["copilot", "automation"]
     require_checks: true
+
+# Task list for the Copilot agent.  Each task contains an id,
+# a descriptive title and acceptance criteria.  The agent should work
+# through these tasks in order, creating PRs that satisfy the criteria.
 tasks:
+  # New high‑level tasks derived from the comprehensive Copilot agent plan.  Each
+  # task encapsulates a logical set of subtasks and acceptance criteria.
   - id: unify-ports
     title: Unify all services to port 10000
-    accept_criteria: "docker compose up exposes 10000; /health=200"
-  - id: fill-agents
-    title: Implement end-to-end ecommerce pipeline agents
-    accept_criteria: "pipeline run green; actions persisted; tests passing"
-  - id: command-center
+    accept_criteria: "docker compose up exposes port 10000 for all services; GET /health returns HTTP 200 on each service"
+  - id: repo-audit
+    title: Perform full repository audit and static analysis
+    accept_criteria: "Alle modules worden gescand op stubs, placeholders en code quality; rapport opgesteld met te vervangen onderdelen; tests blijven groen"
+  - id: implement-core-platform
+    title: Implement and enhance core platform (ChannelManager, AgentOrchestrator, API layer)
+    accept_criteria: "Unified product/order sync voor Shopify/Amazon/bol/Printful; error‑backoff en rate limiting geïmplementeerd; API endpoints uitgebreid met OAuth/JWT en RBAC; metrics beschikbaar via Prometheus"
+  - id: implement-product-research
+    title: Implement end‑to‑end ProductResearchAgent
+    accept_criteria: "Pipeline haalt data van Amazon, eBay, Alibaba, Google Trends en Keywords Everywhere; trend scores berekend; producten (≥70 score) als concept geplaatst in Shopify; alle tests slagen"
+  - id: implement-inventory-pricing
+    title: Implement InventoryPricingAgent with real inventory and pricing logic
+    accept_criteria: "Voorraad gesynchroniseerd via Shopify, Amazon en bol.com; vraagvoorspelling en prijsaanpassingen uitgevoerd; prijsupdates doorgezet naar alle kanalen; tests slagen"
+  - id: implement-marketing-automation
+    title: Implement MarketingAutomationAgent
+    accept_criteria: "Klaviyo/Twilio integraties operationeel; e‑mail en sms‑campagnes automatisch verzonden; segmentatie en A/B‑testen beschikbaar; tests slagen"
+  - id: implement-order-fulfillment
+    title: Implement OrderFulfillmentAgent
+    accept_criteria: "Orderrisico ingeschat; orders automatisch naar AutoDS/Printful gestuurd; tracking info bijgewerkt; fraudedetectie actief; tests slagen"
+  - id: implement-supplier-intelligence
+    title: Implement SupplierIntelligenceAgent
+    accept_criteria: "Leveranciers vergeleken op prijs, levertijd en betrouwbaarheid; automatische purchase orders aangemaakt; rapporten opgeslagen; tests slagen"
+  - id: build-command-center
     title: Build holographic command center UI
-    accept_criteria: "live agent telemetry; KPI charts; WS events"
+    accept_criteria: "Next.js dashboard toont live agent‑telemetrie, KPI‑grafieken en 3D‑network‑visualisaties met WebSocket‑events; dark sci‑fi design met responsieve layouts"
+  - id: implement-analytics-monitoring
+    title: Implement metrics, monitoring and alerting
+    accept_criteria: "Prometheus exporteert alle relevante metrics; Grafana dashboards aanwezig; Slack/PagerDuty alerts bij kritieke events; systeemhealth herstelt automatisch"
+  - id: complete-documentation
+    title: Complete documentation and onboarding guides
+    accept_criteria: "README en docs folder bevatten installatie‑instructies, ADR's, API‑beschrijvingen, test‑richtlijnen en een onboarding playbook; code gedocumenteerd en gedekt door tests"
