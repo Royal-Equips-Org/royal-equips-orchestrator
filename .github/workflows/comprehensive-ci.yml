@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
@@ -87,7 +87,7 @@ jobs:
       continue-on-error: true
 
   javascript:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     
     steps:
     - uses: actions/checkout@v5
@@ -118,7 +118,7 @@ jobs:
         echo "✅ Wrangler configuration is valid"
 
   integration:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     needs: [test]
     if: github.event_name == 'push'
     
