@@ -131,8 +131,8 @@ jobs:
       run: |
         if ($IsWindows -or $env:OS -like "*Windows*") {
           Write-Host (@{level="info"; message="Running Bandit security scan on Windows"} | ConvertTo-Json -Compress)
-          bandit -r royal_mcp/ api/ app/ orchestrator/ --skip B101 -f json -o bandit-report.json; $null
-          bandit -r royal_mcp/ api/ app/ orchestrator/ --skip B101; $null
+          bandit -r royal_mcp/ api/ app/ orchestrator/ --skip B101 -f json -o bandit-report.json -ErrorAction SilentlyContinue
+          bandit -r royal_mcp/ api/ app/ orchestrator/ --skip B101 -ErrorAction SilentlyContinue
         } else {
           echo '{"level":"info","message":"Running Bandit security scan on Linux"}'
           bandit -r royal_mcp/ api/ app/ orchestrator/ --skip B101 -f json -o bandit-report.json || true
