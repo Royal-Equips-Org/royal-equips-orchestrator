@@ -71,10 +71,10 @@ jobs:
           command: |
             if ($IsWindows -or $env:OS -like "*Windows*") {
               Write-Host (@{level="info"; message="Installing dependencies on Windows"} | ConvertTo-Json -Compress)
-              pnpm install --ignore-scripts --no-frozen-lockfile
+              pnpm install --ignore-scripts --frozen-lockfile
             } else {
               echo '{"level":"info","message":"Installing dependencies on Linux"}'
-              pnpm install --ignore-scripts --no-frozen-lockfile
+              pnpm install --ignore-scripts --frozen-lockfile
             fi
         env: 
           HUSKY: "0"
