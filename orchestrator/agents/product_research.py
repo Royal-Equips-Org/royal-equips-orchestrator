@@ -217,7 +217,7 @@ class ProductResearchAgent(AgentBase):
                             'title': item.get('title'),
                             'source': 'Spocket',
                             'supplier_price': float(item.get('price', 0)),
-                            'suggested_price': float(item.get('price', 0)) * 2.5,  # 150% markup
+                            'suggested_price': float(item.get('price', 0)) * 2.5,  # 150% markup (2.5x multiplier)
                             'category': item.get('category', 'General'),
                             'trend_score': self._calculate_trend_score(item),
                             'image_url': item.get('images', [{}])[0].get('src'),
