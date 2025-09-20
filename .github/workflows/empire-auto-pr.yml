@@ -28,6 +28,12 @@ on:
           - plan-and-apply
           - emergency-rollback
 
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  issues: write
+
 env:
   NODE_VERSION: '20'
   PNPM_VERSION: '9.9.0'
