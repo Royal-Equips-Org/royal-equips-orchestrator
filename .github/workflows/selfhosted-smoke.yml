@@ -1,0 +1,14 @@
+name: Self-hosted smoke
+on: workflow_dispatch
+jobs:
+  ping:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show runner info
+        run: |
+          $PSVersionTable
+          whoami
+          hostname
+      - name: Success
+        run: echo "Runner is alive 🚀"
