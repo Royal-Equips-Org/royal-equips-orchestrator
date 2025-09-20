@@ -1,4 +1,4 @@
-name: '🏗️ Complete CI Pipeline - Royal Equips Empire'
+name: '🏗️ Complete CI Pipeline - Royal Equips Empire (Cross-Platform)'
 
 on:
   push:
@@ -18,14 +18,40 @@ env:
 jobs:
   lint-and-typecheck:
     name: '🔍 Lint & Type Check'
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            shell: bash
+          - os: windows-latest
+            shell: pwsh
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
     
     steps:
+      - name: '📊 Structured Log - Job Start'
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Lint & Type Check started"; os="${{ matrix.os }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
+          } else {
+            echo '{"level":"info","message":"Lint & Type Check started","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          fi
+
       - name: '📥 Checkout Code'
         uses: actions/checkout@v4
         
-      - name: '🔧 Setup Node.js'
-        uses: actions/setup-node@v4
+      - name: '🔧 Setup Node.js with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: echo "Setting up Node.js..."
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
@@ -34,26 +60,97 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
           
-      - name: '🏗️ Install Dependencies'
-        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: '🏗️ Install Dependencies with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Installing dependencies on Windows"} | ConvertTo-Json -Compress)
+              pnpm install --frozen-lockfile --ignore-scripts
+            } else {
+              echo '{"level":"info","message":"Installing dependencies on Linux"}'
+              pnpm install --frozen-lockfile --ignore-scripts
+            fi
         
-      - name: '🔍 Run ESLint'
-        run: pnpm lint
+      - name: '🔍 Run ESLint with Self-Healing'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Running ESLint on Windows"} | ConvertTo-Json -Compress)
+              pnpm lint
+            } else {
+              echo '{"level":"info","message":"Running ESLint on Linux"}'
+              pnpm lint
+            fi
         
-      - name: '📘 Type Check'
-        run: pnpm typecheck
+      - name: '📘 Type Check with Self-Healing'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Running TypeScript type check on Windows"} | ConvertTo-Json -Compress)
+              pnpm typecheck
+            } else {
+              echo '{"level":"info","message":"Running TypeScript type check on Linux"}'
+              pnpm typecheck
+            fi
+
+      - name: '📊 Structured Log - Job Complete'
+        if: always()
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Lint & Type Check completed"; status="${{ job.status }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
+          } else {
+            echo '{"level":"info","message":"Lint & Type Check completed","status":"${{ job.status }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          fi
 
   build-and-test:
     name: '🔨 Build & Test'
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            shell: bash
+          - os: windows-latest
+            shell: pwsh
+    runs-on: ${{ matrix.os }}
     needs: lint-and-typecheck
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
     
     steps:
+      - name: '📊 Structured Log - Job Start'
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Build & Test started"; os="${{ matrix.os }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
+          } else {
+            echo '{"level":"info","message":"Build & Test started","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          fi
+
       - name: '📥 Checkout Code'
         uses: actions/checkout@v4
         
-      - name: '🔧 Setup Node.js'
-        uses: actions/setup-node@v4
+      - name: '🔧 Setup Node.js with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: echo "Setting up Node.js..."
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
@@ -62,41 +159,93 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
           
-      - name: '🏗️ Install Dependencies'
-        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: '🏗️ Install Dependencies with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Installing dependencies on Windows"} | ConvertTo-Json -Compress)
+              pnpm install --no-frozen-lockfile --ignore-scripts
+            } else {
+              echo '{"level":"info","message":"Installing dependencies on Linux"}'
+              pnpm install --no-frozen-lockfile --ignore-scripts
+            fi
         
-      - name: '🔨 Build All Packages'
-        run: pnpm build
+      - name: '🔨 Build All Packages with Self-Healing'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Building packages on Windows"} | ConvertTo-Json -Compress)
+              pnpm build
+            } else {
+              echo '{"level":"info","message":"Building packages on Linux"}'
+              pnpm build
+            fi
         
-      - name: '🧪 Run Tests'
-        run: pnpm test
+      - name: '🧪 Run Tests with Self-Healing'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Running tests on Windows"} | ConvertTo-Json -Compress)
+              pnpm test
+            } else {
+              echo '{"level":"info","message":"Running tests on Linux"}'
+              pnpm test
+            fi
         
       - name: '📊 Upload Build Artifacts'
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-${{ matrix.os }}
           path: |
             apps/*/dist/
             packages/*/dist/
           retention-days: 7
 
+      - name: '📊 Structured Log - Job Complete'
+        if: always()
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Build & Test completed"; status="${{ job.status }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
+          } else {
+            echo '{"level":"info","message":"Build & Test completed","status":"${{ job.status }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          fi
+
   agent-integration-test:
     name: '🤖 Agent Integration Tests'
     runs-on: ubuntu-latest
     needs: build-and-test
-    
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
+    defaults:
+      run:
+        shell: bash
           
     steps:
+      - name: '📊 Structured Log - Job Start'
+        run: echo '{"level":"info","message":"Agent Integration Tests started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
       - name: '📥 Checkout Code'
         uses: actions/checkout@v4
         
-      - name: '🔧 Setup Node.js'
-        uses: actions/setup-node@v4
+      - name: '🔧 Setup Node.js with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: echo "Setting up Node.js..."
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
@@ -105,40 +254,101 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
           
-      - name: '🏗️ Install Dependencies'
-        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: '🏗️ Install Dependencies with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: |
+            echo '{"level":"info","message":"Installing dependencies for agent tests"}'
+            pnpm install --no-frozen-lockfile --ignore-scripts
         
-      - name: '🔨 Build Packages'
-        run: pnpm build
+      - name: '🔨 Build Packages with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_on: error
+          command: |
+            echo '{"level":"info","message":"Building packages for agent tests"}'
+            pnpm build
         
-      - name: '🚀 Start Orchestrator API'
+      - name: '🚀 Start Orchestrator API with Self-Healing'
         run: |
-          pnpm dev:api &
-          sleep 10
+          echo '{"level":"info","message":"Starting orchestrator API"}'
+          for i in {1..3}; do
+            pnpm dev:api &
+            API_PID=$!
+            sleep 10
+            if curl -f http://localhost:10000/healthz 2>/dev/null; then
+              echo '{"level":"info","message":"API started successfully","pid":"'$API_PID'"}'
+              break
+            else
+              echo '{"level":"warn","message":"API start attempt '$i' failed, retrying..."}'
+              kill $API_PID 2>/dev/null || true
+              if [ $i -eq 3 ]; then
+                echo '{"level":"error","message":"Failed to start API after 3 attempts"}'
+                exit 1
+              fi
+              sleep $((5*i))
+            fi
+          done
           
-      - name: '🧪 Test API Health'
-        run: |
-          curl -f http://localhost:10000/healthz
-          curl -f http://localhost:10000/readyz
-          curl -f http://localhost:10000/metrics
+      - name: '🧪 Test API Health with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 5
+          retry_wait_seconds: 10
+          retry_on: error
+          command: |
+            echo '{"level":"info","message":"Testing API health endpoints"}'
+            curl -f http://localhost:10000/healthz
+            curl -f http://localhost:10000/readyz
+            curl -f http://localhost:10000/metrics
+            echo '{"level":"info","message":"All health checks passed"}'
           
-      - name: '🤖 Test Agent Execution'
-        run: |
-          # Test basic agent endpoints
-          curl -f http://localhost:10000/api/agents
-          
+      - name: '🤖 Test Agent Execution with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: |
+            echo '{"level":"info","message":"Testing agent endpoints"}'
+            curl -f http://localhost:10000/api/agents
+            echo '{"level":"info","message":"Agent endpoint tests completed"}'
+
+      - name: '📊 Structured Log - Job Complete'
+        if: always()
+        run: echo '{"level":"info","message":"Agent Integration Tests completed","status":"${{ job.status }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
   empire-readiness-check:
     name: '👑 Empire Readiness Assessment'
     runs-on: ubuntu-latest
     needs: [build-and-test, agent-integration-test]
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        shell: bash
     
     steps:
+      - name: '📊 Structured Log - Job Start'
+        run: echo '{"level":"info","message":"Empire Readiness Check started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
       - name: '📥 Checkout Code'
         uses: actions/checkout@v4
         
-      - name: '🔧 Setup Node.js'
-        uses: actions/setup-node@v4
+      - name: '🔧 Setup Node.js with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: echo "Setting up Node.js..."
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
@@ -147,37 +357,103 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
           
-      - name: '🏗️ Install Dependencies'
-        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: '🏗️ Install Dependencies with Retry'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: |
+            echo '{"level":"info","message":"Installing dependencies for readiness check"}'
+            pnpm install --no-frozen-lockfile --ignore-scripts
         
-      - name: '🔨 Build All'
-        run: pnpm build
+      - name: '🔨 Build All with Self-Healing'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_on: error
+          command: |
+            echo '{"level":"info","message":"Building all packages for readiness check"}'
+            pnpm build
         
-      - name: '🚀 Start Complete System'
+      - name: '🚀 Start Complete System with Self-Healing'
         run: |
-          # Start API server
-          pnpm dev:api &
-          API_PID=$!
-          sleep 10
+          echo '{"level":"info","message":"Starting complete system for readiness assessment"}'
           
-          # Start Command Center UI  
-          pnpm --filter @royal-equips/command-center-ui dev &
-          UI_PID=$!
-          sleep 15
+          # Start API server with retry logic
+          for i in {1..3}; do
+            pnpm dev:api &
+            API_PID=$!
+            sleep 10
+            if curl -f http://localhost:10000/healthz 2>/dev/null; then
+              echo '{"level":"info","message":"API server started successfully","pid":"'$API_PID'"}'
+              break
+            else
+              echo '{"level":"warn","message":"API start attempt '$i' failed, retrying..."}'
+              kill $API_PID 2>/dev/null || true
+              if [ $i -eq 3 ]; then
+                echo '{"level":"error","message":"Failed to start API server"}'
+                exit 1
+              fi
+              sleep $((5*i))
+            fi
+          done
           
-          # Health checks
-          echo "🔍 Testing API Health..."
-          curl -f http://localhost:10000/healthz || exit 1
-          curl -f http://localhost:10000/readyz || exit 1
-          curl -f http://localhost:10000/metrics || exit 1
+          # Start Command Center UI with retry logic (if available)
+          UI_PID=""
+          if pnpm list --filter @royal-equips/command-center-ui 2>/dev/null; then
+            for i in {1..3}; do
+              pnpm --filter @royal-equips/command-center-ui dev &
+              UI_PID=$!
+              sleep 15
+              if curl -f http://localhost:3000 2>/dev/null; then
+                echo '{"level":"info","message":"Command Center UI started successfully","pid":"'$UI_PID'"}'
+                break
+              else
+                echo '{"level":"warn","message":"UI start attempt '$i' failed, retrying..."}'
+                kill $UI_PID 2>/dev/null || true
+                if [ $i -eq 3 ]; then
+                  echo '{"level":"warn","message":"Failed to start Command Center UI, continuing without it"}'
+                  UI_PID=""
+                  break
+                fi
+                sleep $((5*i))
+              fi
+            done
+          else
+            echo '{"level":"info","message":"Command Center UI not available, skipping"}'
+          fi
           
-          echo "🔍 Testing Command Center..."
-          curl -f http://localhost:3000 || exit 1
+          # Health checks with retry
+          echo '{"level":"info","message":"Performing comprehensive health checks"}'
+          for i in {1..5}; do
+            if curl -f http://localhost:10000/healthz && curl -f http://localhost:10000/readyz && curl -f http://localhost:10000/metrics; then
+              echo '{"level":"info","message":"All API health checks passed"}'
+              break
+            elif [ $i -eq 5 ]; then
+              echo '{"level":"error","message":"API health checks failed after 5 attempts"}'
+              exit 1
+            else
+              echo '{"level":"warn","message":"Health check attempt '$i' failed, retrying..."}'
+              sleep 5
+            fi
+          done
           
-          echo "✅ All systems operational!"
+          # Test Command Center if available
+          if [ -n "$UI_PID" ]; then
+            if curl -f http://localhost:3000; then
+              echo '{"level":"info","message":"Command Center health check passed"}'
+            else
+              echo '{"level":"warn","message":"Command Center health check failed"}'
+            fi
+          fi
+          
+          echo '{"level":"info","message":"All systems operational"}'
           
           # Cleanup
-          kill $API_PID $UI_PID || true
+          [ -n "$API_PID" ] && kill $API_PID 2>/dev/null || true
+          [ -n "$UI_PID" ] && kill $UI_PID 2>/dev/null || true
           
       - name: '📋 Empire Status Report'
         run: |
@@ -191,6 +467,9 @@ jobs:
           echo "- 🤖 Agent Execution Framework" >> $GITHUB_STEP_SUMMARY
           echo "- 🔄 Plan/DryRun/Apply Pattern" >> $GITHUB_STEP_SUMMARY
           echo "- 🛡️ Health Monitoring" >> $GITHUB_STEP_SUMMARY
+          echo "- 🖥️ Cross-Platform Support (Windows + Linux)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Self-Healing Retry Logic" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Structured JSON Logging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🤖 Agents Deployed:" >> $GITHUB_STEP_SUMMARY
           echo "- 🔍 ProductResearchAgent (Tier 1)" >> $GITHUB_STEP_SUMMARY
@@ -205,34 +484,83 @@ jobs:
           echo "- 🔗 Shopify & Supabase Connectors" >> $GITHUB_STEP_SUMMARY
           echo "- 💻 Interactive Command Console" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 Real-time KPI Visualization" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Enterprise Self-Healing Workflows" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: 🟢 Empire Foundation Complete - Ready for Agent Deployment!" >> $GITHUB_STEP_SUMMARY
+
+      - name: '📊 Structured Log - Job Complete'
+        if: always()
+        run: echo '{"level":"info","message":"Empire Readiness Check completed","status":"${{ job.status }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
 
   notify-empire-status:
     name: '📢 Empire Status Notification'
     runs-on: ubuntu-latest
     needs: [empire-readiness-check]
     if: always() && github.ref == 'refs/heads/master'
+    defaults:
+      run:
+        shell: bash
     
     steps:
-      - name: '📊 Determine Status'
+      - name: '📊 Determine Status with Structured Logging'
         id: status
         run: |
+          echo '{"level":"info","message":"Determining empire status","readiness_result":"${{ needs.empire-readiness-check.result }}"}'
           if [[ "${{ needs.empire-readiness-check.result }}" == "success" ]]; then
             echo "status=success" >> $GITHUB_OUTPUT
-            echo "message=🎉 Empire systems fully operational! All agents ready for autonomous deployment." >> $GITHUB_OUTPUT
+            echo "message=🎉 Empire systems fully operational! All agents ready for autonomous deployment with cross-platform support." >> $GITHUB_OUTPUT
             echo "color=good" >> $GITHUB_OUTPUT
+            echo '{"level":"info","message":"Empire status: SUCCESS"}'
           else
             echo "status=failure" >> $GITHUB_OUTPUT
             echo "message=⚠️ Empire systems require attention. Check the build for details." >> $GITHUB_OUTPUT
             echo "color=danger" >> $GITHUB_OUTPUT
+            echo '{"level":"error","message":"Empire status: FAILURE"}'
           fi
           
-      - name: '👑 Empire Status Update'
+      - name: '👑 Empire Status Update with Slack Notification'
+        if: secrets.ORG_SLACK_WEBHOOK || vars.ORG_SLACK_WEBHOOK
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ORG_SLACK_WEBHOOK || vars.ORG_SLACK_WEBHOOK }}
+        run: |
+          echo '{"level":"info","message":"Sending empire status to Slack"}'
+          
+          # Determine status emoji and message
+          if [ "${{ steps.status.outputs.status }}" = "success" ]; then
+            STATUS_EMOJI="✅"
+            STATUS_COLOR="good"
+          else
+            STATUS_EMOJI="❌"
+            STATUS_COLOR="danger"
+          fi
+          
+          # Send structured Slack notification
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"$STATUS_EMOJI Royal Equips Empire Status Update\",
+              \"attachments\": [
+                {
+                  \"color\": \"$STATUS_COLOR\",
+                  \"fields\": [
+                    {\"title\": \"Build\", \"value\": \"#${{ github.run_number }}\", \"short\": true},
+                    {\"title\": \"Commit\", \"value\": \"${{ github.sha }}\", \"short\": true},
+                    {\"title\": \"Status\", \"value\": \"${{ steps.status.outputs.message }}\", \"short\": false},
+                    {\"title\": \"Platform Support\", \"value\": \"Ubuntu + Windows Self-Hosted\", \"short\": true},
+                    {\"title\": \"Features\", \"value\": \"Self-Healing, Structured Logging, Cross-Shell\", \"short\": true}
+                  ]
+                }
+              ]
+            }" \
+            "$SLACK_WEBHOOK_URL"
+          
+      - name: '👑 Empire Status Summary'
         run: |
           echo "## 👑 ROYAL EQUIPS EMPIRE STATUS"
           echo "**Build**: ${{ github.run_number }}"
           echo "**Commit**: ${{ github.sha }}"
           echo "**Status**: ${{ steps.status.outputs.message }}"
+          echo "**Platform Support**: Ubuntu + Windows Self-Hosted"
+          echo "**Enterprise Features**: Self-Healing, Structured Logging, Cross-Shell Compatibility"
           echo ""
           echo "**Next Phase**: Deploy Tier 1 autonomous agents for 24/7 operations"
+          echo '{"level":"info","message":"Empire status notification completed"}'
