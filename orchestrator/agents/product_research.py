@@ -18,7 +18,12 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 import httpx
-from pytrends.request import TrendReq
+try:
+    from pytrends.request import TrendReq
+    _PYTRENDS_AVAILABLE = True
+except ImportError:
+    TrendReq = None
+    _PYTRENDS_AVAILABLE = False
 
 from orchestrator.core.agent_base import AgentBase
 
