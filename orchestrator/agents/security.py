@@ -29,13 +29,13 @@ class SecurityAgent(AgentBase):
     """Comprehensive security and fraud detection agent."""
 
     def __init__(self, name: str = "security_fraud") -> None:
-        super().__init__(name)
+        super().__init__(name, agent_type="security", description="Advanced security agent")
         self.logger = logging.getLogger(self.name)
         self.fraud_alerts: List[Dict[str, Any]] = []
         self.security_events: List[Dict[str, Any]] = []
         self.risk_threshold = 0.7  # Risk scores above this trigger alerts
         
-    async def run(self) -> None:
+    async def _execute_task(self) -> None:
         """Execute comprehensive security monitoring and fraud detection."""
         self.logger.info("Running security monitoring and fraud detection")
         
