@@ -31,11 +31,11 @@ class AnalyticsAgent(AgentBase):
     """Exports orchestrator metrics to BigQuery."""
 
     def __init__(self, orchestrator: Orchestrator, name: str = "analytics") -> None:
-        super().__init__(name)
+        super().__init__(name, agent_type="analytics", description="Advanced analytics agent")
         self.logger = logging.getLogger(self.name)
         self.orchestrator = orchestrator
 
-    async def run(self) -> None:
+    async def _execute_task(self) -> None:
         self.logger.info("Running analytics agent")
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._export_metrics)
