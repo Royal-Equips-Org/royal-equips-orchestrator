@@ -30,3 +30,16 @@ venv/
 
 
 reports/junit/
+# Additional build artifacts
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.log
+build/
+dist/
+.coverage
+.mypy_cache/
+.ruff_cache/

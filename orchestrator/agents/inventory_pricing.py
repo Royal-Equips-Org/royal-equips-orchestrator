@@ -72,48 +72,43 @@ class InventoryPricingAgent(AgentBase):
         self.max_price_change_percent = 20.0  # Maximum price change per adjustment
         self.demand_forecast_days = 30  # Days to forecast demand
         
-    async def run(self) -> None:
+    async def _execute_task(self) -> None:
         """Execute inventory management and pricing optimization."""
         self.logger.info("Running inventory management and pricing optimization")
         
-        try:
-            # 1. Update inventory data from all channels
-            await self._sync_inventory_data()
-            
-            # 2. Monitor stock levels and generate reorder alerts
-            await self._monitor_stock_levels()
-            
-            # 3. Update demand forecasts
-            await self._update_demand_forecasts()
-            
-            # 4. Analyze competitor pricing
-            await self._analyze_competitor_pricing()
-            
-            # 5. Generate pricing recommendations
-            await self._generate_pricing_recommendations()
-            
-            # 6. Execute approved pricing changes
-            await self._execute_pricing_changes()
-            
-            # 7. Process reordering for low stock items
-            await self._process_reordering()
-            
-            # 8. Generate performance report
-            await self._generate_performance_report()
-            
-            # Update last successful run
-            self._last_run = time.time()
-            
-            self.logger.info(
-                "Inventory pricing cycle completed: %d items managed, %d pricing recommendations, %d reorder alerts",
-                len(self.inventory_items),
-                len(self.pricing_recommendations),
-                len(self.reorder_alerts)
-            )
-            
-        except Exception as exc:
-            self.logger.exception("Inventory pricing agent execution failed: %s", exc)
-            raise
+        # 1. Update inventory data from all channels
+        await self._sync_inventory_data()
+        
+        # 2. Monitor stock levels and generate reorder alerts
+        await self._monitor_stock_levels()
+        
+        # 3. Update demand forecasts
+        await self._update_demand_forecasts()
+        
+        # 4. Analyze competitor pricing
+        await self._analyze_competitor_pricing()
+        
+        # 5. Generate pricing recommendations
+        await self._generate_pricing_recommendations()
+        
+        # 6. Execute approved pricing changes
+        await self._execute_pricing_changes()
+        
+        # 7. Process reordering for low stock items
+        await self._process_reordering()
+        
+        # 8. Generate performance report
+        await self._generate_performance_report()
+        
+        # Update discoveries count
+        self.discoveries_count = len(self.pricing_recommendations) + len(self.reorder_alerts)
+        
+        self.logger.info(
+            "Inventory pricing cycle completed: %d items managed, %d pricing recommendations, %d reorder alerts",
+            len(self.inventory_items),
+            len(self.pricing_recommendations),
+            len(self.reorder_alerts)
+        )
 
     async def _sync_inventory_data(self) -> None:
         """Synchronize inventory data from all sales channels."""

@@ -14,8 +14,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+import httpx
+from pytrends.request import TrendReq
 
 from orchestrator.core.agent_base import AgentBase
 
@@ -24,122 +27,271 @@ class ProductResearchAgent(AgentBase):
     """Fetches trending products from AutoDS and Spocket APIs."""
 
     def __init__(self, name: str = "product_research") -> None:
-        super().__init__(name)
+        super().__init__(name, agent_type="product_research", description="Discovers trending products via multiple APIs")
         self.logger = logging.getLogger(self.name)
         self.trending_products: List[Dict[str, Any]] = []
 
-    async def run(self) -> None:
-        """Run the product research agent to fetch trending products."""
+    async def _execute_task(self) -> None:
+        """Execute the main product research task."""
         self.logger.info("Running product research agent")
         
-        try:
-            # Fetch trending products from both sources
-            autods_products = await self._fetch_autods_products()
-            spocket_products = await self._fetch_spocket_products()
-            
-            # Combine and process results
-            all_products = autods_products + spocket_products
-            self.trending_products = self._process_products(all_products)
-            
+        # Fetch trending products from both sources
+        autods_products = await self._fetch_autods_products()
+        spocket_products = await self._fetch_spocket_products()
+        
+        # Combine and process results
+        all_products = autods_products + spocket_products
+        self.trending_products = self._process_products(all_products)
+        
+        # Update discoveries count
+        self.discoveries_count = len(self.trending_products)
+        
+        self.logger.info(
+            "Found %d trending products (%d from AutoDS, %d from Spocket)",
+            len(self.trending_products),
+            len(autods_products),
+            len(spocket_products)
+        )
+        
+        # Log sample products for debugging
+        for i, product in enumerate(self.trending_products[:3]):
             self.logger.info(
-                "Found %d trending products (%d from AutoDS, %d from Spocket)",
-                len(self.trending_products),
-                len(autods_products),
-                len(spocket_products)
+                "Sample product %d: %s - $%.2f (margin: %.1f%%)",
+                i + 1,
+                product['title'],
+                product['price'],
+                product['margin_percent']
             )
-            
-            # Log sample products for debugging
-            for i, product in enumerate(self.trending_products[:3]):
-                self.logger.info(
-                    "Sample product %d: %s - $%.2f (margin: %.1f%%)",
-                    i + 1,
-                    product['title'],
-                    product['price'],
-                    product['margin_percent']
-                )
-            
-            # Update last run timestamp
-            self._last_run = asyncio.get_event_loop().time()
-            
-        except Exception as e:
-            self.logger.error("Error in product research run: %s", e)
-            raise
 
     async def _fetch_autods_products(self) -> List[Dict[str, Any]]:
-        """Stub function to fetch trending products from AutoDS API."""
+        """Fetch trending products from AutoDS API or simulate with enhanced stub."""
         self.logger.debug("Fetching products from AutoDS API")
         
-        # Simulate API call delay
-        await asyncio.sleep(0.5)
+        try:
+            # Check for AutoDS API credentials
+            api_key = os.getenv('AUTO_DS_API_KEY')
+            if not api_key:
+                self.logger.warning("AUTO_DS_API_KEY not found, using enhanced stub data")
+                return await self._autods_enhanced_stub()
+            
+            # Real AutoDS API implementation
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json'
+                }
+                
+                # AutoDS trending products endpoint
+                response = await client.get(
+                    'https://app.autods.com/api/v1/products/trending',
+                    headers=headers,
+                    params={
+                        'category': 'car-accessories',
+                        'limit': 20,
+                        'min_margin': 30
+                    },
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    products = []
+                    
+                    for item in data.get('products', []):
+                        products.append({
+                            'id': f"autods_{item.get('id')}",
+                            'title': item.get('title'),
+                            'source': 'AutoDS',
+                            'supplier_price': float(item.get('supplier_price', 0)),
+                            'suggested_price': float(item.get('suggested_retail_price', 0)),
+                            'category': item.get('category', 'General'),
+                            'trend_score': item.get('trend_score', 50),
+                            'image_url': item.get('main_image'),
+                            'supplier_name': item.get('supplier_name'),
+                            'shipping_time': item.get('shipping_time'),
+                            'rating': item.get('rating', 0)
+                        })
+                    
+                    self.logger.info(f"Successfully fetched {len(products)} products from AutoDS API")
+                    return products
+                else:
+                    self.logger.error(f"AutoDS API error: {response.status_code}")
+                    return await self._autods_enhanced_stub()
+                    
+        except Exception as e:
+            self.logger.error(f"Error fetching AutoDS products: {e}")
+            return await self._autods_enhanced_stub()
+
+    async def _autods_enhanced_stub(self) -> List[Dict[str, Any]]:
+        """Enhanced stub data for AutoDS products with realistic market data."""
+        await asyncio.sleep(0.5)  # Simulate API delay
         
-        # Stub data - replace with actual AutoDS API call
         stub_products = [
             {
                 'id': 'autods_001',
-                'title': 'Wireless Car Charger Mount',
+                'title': 'Wireless Car Charger Mount with Qi Technology',
                 'source': 'AutoDS',
                 'supplier_price': 12.50,
                 'suggested_price': 24.99,
                 'category': 'Car Electronics',
-                'trend_score': 85
+                'trend_score': 85,
+                'image_url': 'https://example.com/wireless-charger.jpg',
+                'supplier_name': 'TechSource Pro',
+                'shipping_time': '7-14 days',
+                'rating': 4.3
             },
             {
                 'id': 'autods_002', 
-                'title': 'LED Dashboard Lights Kit',
+                'title': 'LED Dashboard Ambient Lighting Kit RGB',
                 'source': 'AutoDS',
                 'supplier_price': 8.75,
                 'suggested_price': 19.99,
                 'category': 'Car Accessories',
-                'trend_score': 92
+                'trend_score': 92,
+                'image_url': 'https://example.com/led-kit.jpg',
+                'supplier_name': 'AutoLights Direct',
+                'shipping_time': '5-10 days',
+                'rating': 4.5
             },
             {
                 'id': 'autods_003',
-                'title': 'Bluetooth OBD2 Scanner',
+                'title': 'Bluetooth OBD2 Scanner Diagnostic Tool',
                 'source': 'AutoDS', 
                 'supplier_price': 15.30,
                 'suggested_price': 34.99,
                 'category': 'Car Electronics',
-                'trend_score': 78
+                'trend_score': 78,
+                'image_url': 'https://example.com/obd2-scanner.jpg',
+                'supplier_name': 'DiagnosticPro',
+                'shipping_time': '3-7 days',
+                'rating': 4.1
             }
         ]
         
-        self.logger.debug("Retrieved %d products from AutoDS", len(stub_products))
+        self.logger.debug(f"Using enhanced stub data: {len(stub_products)} products from AutoDS")
         return stub_products
 
     async def _fetch_spocket_products(self) -> List[Dict[str, Any]]:
-        """Stub function to fetch trending products from Spocket API.""" 
+        """Fetch trending products from Spocket API or simulate with enhanced stub.""" 
         self.logger.debug("Fetching products from Spocket API")
         
-        # Simulate API call delay
-        await asyncio.sleep(0.3)
+        try:
+            # Check for Spocket API credentials
+            api_key = os.getenv('SPOCKET_API_KEY')
+            if not api_key:
+                self.logger.warning("SPOCKET_API_KEY not found, using enhanced stub data")
+                return await self._spocket_enhanced_stub()
+            
+            # Real Spocket API implementation
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json'
+                }
+                
+                # Spocket products endpoint
+                response = await client.get(
+                    'https://api.spocket.co/api/v1/dropshipping/search/products',
+                    headers=headers,
+                    params={
+                        'category': 'automotive',
+                        'limit': 15,
+                        'sort': 'trending',
+                        'shipping_from': 'US,EU'
+                    },
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    products = []
+                    
+                    for item in data.get('data', []):
+                        products.append({
+                            'id': f"spocket_{item.get('id')}",
+                            'title': item.get('title'),
+                            'source': 'Spocket',
+                            'supplier_price': float(item.get('price', 0)),
+                            'suggested_price': float(item.get('price', 0)) * 2.5,  # 150% markup
+                            'category': item.get('category', 'General'),
+                            'trend_score': self._calculate_trend_score(item),
+                            'image_url': item.get('images', [{}])[0].get('src'),
+                            'supplier_name': item.get('supplier', {}).get('name'),
+                            'shipping_time': item.get('shipping_time'),
+                            'rating': item.get('rating', 0)
+                        })
+                    
+                    self.logger.info(f"Successfully fetched {len(products)} products from Spocket API")
+                    return products
+                else:
+                    self.logger.error(f"Spocket API error: {response.status_code}")
+                    return await self._spocket_enhanced_stub()
+                    
+        except Exception as e:
+            self.logger.error(f"Error fetching Spocket products: {e}")
+            return await self._spocket_enhanced_stub()
+
+    async def _spocket_enhanced_stub(self) -> List[Dict[str, Any]]:
+        """Enhanced stub data for Spocket products."""
+        await asyncio.sleep(0.3)  # Simulate API delay
         
-        # Stub data - replace with actual Spocket API call
         stub_products = [
             {
                 'id': 'spocket_001',
-                'title': 'Carbon Fiber Phone Holder',
+                'title': 'Carbon Fiber Phone Holder Dashboard Mount',
                 'source': 'Spocket',
                 'supplier_price': 9.99,
                 'suggested_price': 22.99,
                 'category': 'Car Accessories',
-                'trend_score': 88
+                'trend_score': 88,
+                'image_url': 'https://example.com/carbon-holder.jpg',
+                'supplier_name': 'CarbonTech Solutions',
+                'shipping_time': '3-5 days',
+                'rating': 4.4
             },
             {
                 'id': 'spocket_002',
-                'title': 'Solar Powered Car Ventilator',
+                'title': 'Solar Powered Car Ventilator Fan',
                 'source': 'Spocket',
                 'supplier_price': 18.45,
                 'suggested_price': 39.99,
                 'category': 'Car Electronics',
-                'trend_score': 91
+                'trend_score': 91,
+                'image_url': 'https://example.com/solar-fan.jpg',
+                'supplier_name': 'EcoAuto Innovations',
+                'shipping_time': '5-8 days',
+                'rating': 4.2
             }
         ]
         
-        self.logger.debug("Retrieved %d products from Spocket", len(stub_products))
+        self.logger.debug(f"Using enhanced stub data: {len(stub_products)} products from Spocket")
         return stub_products
 
+    def _calculate_trend_score(self, item: Dict) -> int:
+        """Calculate trend score based on product metrics."""
+        score = 50  # Base score
+        
+        # Factor in rating
+        if item.get('rating', 0) > 4.0:
+            score += 20
+        elif item.get('rating', 0) > 3.5:
+            score += 10
+        
+        # Factor in inventory
+        if item.get('inventory', 0) > 100:
+            score += 15
+        elif item.get('inventory', 0) > 50:
+            score += 10
+        
+        # Factor in shipping speed (US/EU preferred)
+        shipping_from = item.get('shipping_from', '').upper()
+        if 'US' in shipping_from or 'EU' in shipping_from:
+            score += 15
+        
+        return min(100, score)
+
     def _process_products(self, products: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Process and enrich product data with calculated margins."""
+        """Process and enrich product data with calculated margins and trend analysis."""
         processed = []
         
         for product in products:
@@ -149,22 +301,172 @@ class ProductResearchAgent(AgentBase):
             margin = suggested_price - supplier_price
             margin_percent = (margin / suggested_price) * 100
             
-            # Enrich product data
+            # Enhanced product data
             enriched_product = {
                 **product,
                 'price': suggested_price,
-                'cost': supplier_price,
                 'margin': margin,
                 'margin_percent': margin_percent,
+                'profit_potential': self._calculate_profit_potential(product),
+                'market_viability': self._assess_market_viability(product),
                 'processed_at': time.time()
             }
             
+            # Apply 5-factor scoring model
+            enriched_product['empire_score'] = self._calculate_empire_score(enriched_product)
+            
             processed.append(enriched_product)
         
-        # Sort by trend score (highest first)
-        processed.sort(key=lambda x: x['trend_score'], reverse=True)
+        # Sort by empire score (highest first)
+        processed.sort(key=lambda x: x['empire_score'], reverse=True)
         
         return processed
+
+    def _calculate_profit_potential(self, product: Dict[str, Any]) -> str:
+        """Calculate profit potential rating."""
+        margin_percent = ((product['suggested_price'] - product['supplier_price']) / product['suggested_price']) * 100
+        
+        if margin_percent >= 60:
+            return "EXCELLENT"
+        elif margin_percent >= 45:
+            return "GOOD"
+        elif margin_percent >= 30:
+            return "FAIR"
+        else:
+            return "LOW"
+
+    def _assess_market_viability(self, product: Dict[str, Any]) -> str:
+        """Assess market viability based on trend score and category."""
+        trend_score = product.get('trend_score', 50)
+        category = product.get('category', '').lower()
+        
+        # Bonus for high-demand categories
+        category_multiplier = 1.0
+        if 'electronics' in category or 'tech' in category:
+            category_multiplier = 1.2
+        elif 'accessories' in category:
+            category_multiplier = 1.1
+        
+        adjusted_score = trend_score * category_multiplier
+        
+        if adjusted_score >= 85:
+            return "HIGH"
+        elif adjusted_score >= 70:
+            return "MEDIUM"
+        else:
+            return "LOW"
+
+    def _calculate_empire_score(self, product: Dict[str, Any]) -> float:
+        """Calculate Empire 5-factor scoring model:
+        1. Profit Margin (30%)
+        2. Trend Score (25%) 
+        3. Market Viability (20%)
+        4. Supplier Reliability (15%)
+        5. Shipping Speed (10%)
+        """
+        scores = {}
+        
+        # Factor 1: Profit Margin (30%)
+        margin_percent = product.get('margin_percent', 0)
+        if margin_percent >= 60:
+            scores['margin'] = 100
+        elif margin_percent >= 45:
+            scores['margin'] = 80
+        elif margin_percent >= 30:
+            scores['margin'] = 60
+        else:
+            scores['margin'] = 20
+        
+        # Factor 2: Trend Score (25%)
+        scores['trend'] = product.get('trend_score', 50)
+        
+        # Factor 3: Market Viability (20%)
+        viability = product.get('market_viability', 'LOW')
+        viability_scores = {'HIGH': 90, 'MEDIUM': 70, 'LOW': 40}
+        scores['viability'] = viability_scores.get(viability, 40)
+        
+        # Factor 4: Supplier Reliability (15%)
+        rating = product.get('rating', 0)
+        if rating >= 4.5:
+            scores['reliability'] = 95
+        elif rating >= 4.0:
+            scores['reliability'] = 80
+        elif rating >= 3.5:
+            scores['reliability'] = 65
+        else:
+            scores['reliability'] = 40
+        
+        # Factor 5: Shipping Speed (10%)
+        shipping_time = product.get('shipping_time', '10+ days').lower()
+        if '1-3' in shipping_time or '3-5' in shipping_time:
+            scores['shipping'] = 90
+        elif '5-7' in shipping_time or '7-10' in shipping_time:
+            scores['shipping'] = 70
+        else:
+            scores['shipping'] = 40
+        
+        # Calculate weighted score
+        empire_score = (
+            scores['margin'] * 0.30 +
+            scores['trend'] * 0.25 +
+            scores['viability'] * 0.20 +
+            scores['reliability'] * 0.15 +
+            scores['shipping'] * 0.10
+        )
+        
+        return round(empire_score, 2)
+
+    async def get_trending_keywords(self, category: str = "car accessories") -> List[str]:
+        """Get trending keywords from Google Trends."""
+        try:
+            # Initialize pytrends
+            pytrends = TrendReq(hl='en-US', tz=360)
+            
+            # Build payload for category
+            base_keywords = [category, f"{category} 2024", f"best {category}"]
+            pytrends.build_payload(base_keywords, timeframe='today 3-m', geo='US')
+            
+            # Get related queries
+            related_queries = pytrends.related_queries()
+            trending_keywords = []
+            
+            for keyword in base_keywords:
+                if keyword in related_queries and related_queries[keyword]['top'] is not None:
+                    top_queries = related_queries[keyword]['top']['query'].tolist()
+                    trending_keywords.extend(top_queries[:5])  # Top 5 per keyword
+            
+            self.logger.info(f"Found {len(trending_keywords)} trending keywords for {category}")
+            return trending_keywords[:15]  # Return top 15 overall
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching trending keywords: {e}")
+            # Return default keywords if API fails
+            return ["wireless car charger", "dashboard camera", "car phone mount", 
+                   "bluetooth adapter", "car air freshener"]
+
+    async def get_daily_discoveries(self) -> int:
+        """Get count of high-scoring products discovered today."""
+        high_score_products = [p for p in self.trending_products if p.get('empire_score', 0) >= 75]
+        return len(high_score_products)
+
+    async def get_top_products(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get top products by Empire score."""
+        return sorted(self.trending_products, key=lambda x: x.get('empire_score', 0), reverse=True)[:limit]
+
+    async def _update_performance_metrics(self):
+        """Update agent performance metrics."""
+        await super()._update_performance_metrics()
+        
+        # Calculate success rate based on high-scoring products
+        if self.trending_products:
+            high_score_count = len([p for p in self.trending_products if p.get('empire_score', 0) >= 70])
+            self.success_rate = (high_score_count / len(self.trending_products)) * 100
+        else:
+            self.success_rate = 0.0
+        
+        # Update performance score based on discoveries and quality
+        quality_bonus = len([p for p in self.trending_products if p.get('empire_score', 0) >= 80])
+        self.performance_score = min(100, (self.discoveries_count * 2) + (quality_bonus * 5))
 
     async def health_check(self) -> Dict[str, Any]:
         """Return health status with agent-specific metrics."""
