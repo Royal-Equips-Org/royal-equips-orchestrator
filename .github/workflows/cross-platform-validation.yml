@@ -354,7 +354,7 @@ jobs:
             }
             
             $reportJson = $report | ConvertTo-Json -Depth 5 -Compress
-            Write-Host "ENVIRONMENT_REPORT=$reportJson" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Add-Content -Path $env:GITHUB_ENV -Value "ENVIRONMENT_REPORT=$reportJson" -Encoding utf8
             Write-Host (@{level="info"; message="Environment report generated"} | ConvertTo-Json -Compress)
           } else {
             echo '{"level":"info","message":"Generating environment report","platform":"Linux"}'
