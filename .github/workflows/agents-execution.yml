@@ -25,7 +25,7 @@ jobs:
   # Tier 1 Critical Agents - Must run 24/7
   critical-agents:
     name: 🚨 Tier 1 Critical Agents
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     strategy:
       matrix:
@@ -118,7 +118,7 @@ jobs:
   # Tier 2 Growth Agents - Run every hour
   growth-agents:
     name: 📈 Tier 2 Growth Agents
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     needs: critical-agents
     strategy:
@@ -161,7 +161,7 @@ jobs:
   # Self-healing and monitoring
   system-health:
     name: 🔧 System Health & Self-Healing
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     needs: [critical-agents, growth-agents]
     if: always()
     permissions:

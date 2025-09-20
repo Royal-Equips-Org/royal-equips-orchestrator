@@ -28,7 +28,7 @@ jobs:
     name: 🔍 System Health Check
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
 
     steps:
@@ -144,7 +144,7 @@ jobs:
     name: 🤖 Agent Health Monitoring
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     needs: system-health
     if: always()
     strategy:
@@ -218,7 +218,7 @@ jobs:
     name: 📊 Performance Metrics
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     needs: [system-health, agent-health]
     if: always()
 
@@ -282,7 +282,7 @@ jobs:
     name: 🔒 Security Monitoring
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     needs: system-health
     if: always()
 
@@ -337,7 +337,7 @@ jobs:
     name: 📋 Monitoring Summary
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     needs: [system-health, agent-health, performance-metrics, security-monitoring]
     if: always()
 

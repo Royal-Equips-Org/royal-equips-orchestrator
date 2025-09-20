@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-and-format:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     
     steps:
     - uses: actions/checkout@v5
@@ -35,7 +35,7 @@ jobs:
         black --check app/ wsgi.py
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     
     steps:
     - uses: actions/checkout@v5
@@ -66,7 +66,7 @@ jobs:
         fail_ci_if_error: false
 
   smoke-test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     
     steps:
     - uses: actions/checkout@v5

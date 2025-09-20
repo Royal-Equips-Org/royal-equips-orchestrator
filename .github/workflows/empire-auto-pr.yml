@@ -35,7 +35,7 @@ env:
 jobs:
   empire-autonomous-operations:
     name: '👑 Execute Autonomous Empire Operations'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     
     steps:
       - name: '📥 Checkout Repository'

@@ -13,7 +13,7 @@ permissions:
   pull-requests: write
 jobs:
   code-health:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     strategy: { matrix: { node: [20] } }
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
         run: |
           if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then pnpm -w run test -- --ci --reporter=dot || true; fi
   codeql:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,13 +60,13 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with: { sarif_file: trivy-results.sarif }
   gitleaks:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
       - uses: gitleaks/gitleaks-action@v2
         env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
   dep-audit:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
