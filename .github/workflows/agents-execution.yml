@@ -282,7 +282,7 @@ jobs:
             shell: pwsh
             platform: 'windows'
         exclude:
-          - ${{ github.event.inputs.platform == 'linux' }}
+          - ${{ github.event.inputs.platform == 'linux' && contains(matrix.platform, 'windows') }}
       fail-fast: false
     runs-on: ${{ fromJSON(matrix.os) }}
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
