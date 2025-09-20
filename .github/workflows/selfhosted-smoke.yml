@@ -43,7 +43,8 @@ jobs:
           if ($IsWindows -or $env:OS -like "*Windows*") {
             Write-Host (@{level="info"; message="Smoke test started"; platform="${{ matrix.platform }}"; os="${{ matrix.os }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
           } else {
-            echo '{"level":"info","message":"Smoke test started","platform":"${{ matrix.platform }}","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'          fi
+            echo '{"level":"info","message":"Smoke test started","platform":"${{ matrix.platform }}","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          fi
 
       - uses: actions/checkout@v4
       
