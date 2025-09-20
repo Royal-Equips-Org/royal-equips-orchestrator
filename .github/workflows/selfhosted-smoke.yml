@@ -1,5 +1,10 @@
 name: Self-hosted smoke
+
 on: workflow_dispatch
+
+permissions:
+  contents: read
+
 jobs:
   ping:
     runs-on: [self-hosted, Windows, X64]
