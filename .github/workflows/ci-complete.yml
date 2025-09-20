@@ -69,10 +69,10 @@ jobs:
           command: |
             if ($IsWindows -or $env:OS -like "*Windows*") {
               Write-Host (@{level="info"; message="Installing dependencies on Windows"} | ConvertTo-Json -Compress)
-              pnpm install --no-frozen-lockfile --ignore-scripts
+              pnpm install --frozen-lockfile --ignore-scripts
             } else {
               echo '{"level":"info","message":"Installing dependencies on Linux"}'
-              pnpm install --no-frozen-lockfile --ignore-scripts
+              pnpm install --frozen-lockfile --ignore-scripts
             fi
         
       - name: '🔍 Run ESLint with Self-Healing'
