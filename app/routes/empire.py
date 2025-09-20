@@ -629,7 +629,7 @@ def get_autonomous_decisions():
         logger.error(f"Failed to get autonomous decisions: {e}")
         return jsonify({
             'success': False,
-            'error': str(e),
+            'error': 'Internal server error',
             'timestamp': datetime.now().isoformat()
         }), 500
 
