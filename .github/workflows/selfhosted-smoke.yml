@@ -1,19 +1,276 @@
-name: Self-hosted smoke
+name: Self-hosted Smoke Test - Cross-Platform
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Target platform for smoke test'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+        - windows
+        - linux
+        - both
 
 permissions:
   contents: read
 
 jobs:
-  ping:
-    runs-on: [self-hosted, Windows, X64]
+  smoke-test:
+    name: 'Smoke Test - ${{ matrix.os }}'
+    strategy:
+      matrix:
+        include:
+          - os: '[self-hosted, Windows, X64]'
+            shell: pwsh
+            platform: 'windows'
+          - os: 'ubuntu-latest'
+            shell: bash
+            platform: 'linux'
+        exclude:
+          - ${{ github.event.inputs.platform == 'windows' && contains(matrix.platform, 'linux') }}
+          - ${{ github.event.inputs.platform == 'linux' && contains(matrix.platform, 'windows') }}
+    runs-on: ${{ fromJSON(matrix.os) }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Show runner info
+      - name: 'Structured Log - Smoke Test Start'
         run: |
-          $PSVersionTable
-          whoami
-          hostname
-      - name: Success
-        run: echo "Runner is alive 🚀"
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Smoke test started"; platform="${{ matrix.platform }}"; os="${{ matrix.os }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
+          } else {
+            echo '{"level":"info","message":"Smoke test started","platform":"${{ matrix.platform }}","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'          fi
+
+      - uses: actions/checkout@v4
+      
+      - name: 'Show Runner Info with Self-Healing'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 2
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Gathering Windows runner info"} | ConvertTo-Json -Compress)
+              Write-Host "=== PowerShell Version ==="
+              $PSVersionTable | Format-Table | Out-String
+              Write-Host (@{level="info"; message="PowerShell version displayed"} | ConvertTo-Json -Compress)
+              
+              Write-Host "=== Current User ==="
+              $currentUser = whoami
+              Write-Host $currentUser
+              Write-Host (@{level="info"; message="Current user"; user=$currentUser} | ConvertTo-Json -Compress)
+              
+              Write-Host "=== Hostname ==="
+              $hostname = hostname
+              Write-Host $hostname
+              Write-Host (@{level="info"; message="Hostname info"; hostname=$hostname} | ConvertTo-Json -Compress)
+              
+              Write-Host "=== System Resources ==="
+              $memory = Get-WmiObject -Class Win32_OperatingSystem | Select-Object @{Name="TotalMemoryGB";Expression={[math]::Round($_.TotalVisibleMemorySize/1MB,2)}}, @{Name="FreeMemoryGB";Expression={[math]::Round($_.FreePhysicalMemory/1MB,2)}}
+              Write-Host (@{level="info"; message="Memory info"; total_memory_gb=$memory.TotalMemoryGB; free_memory_gb=$memory.FreeMemoryGB} | ConvertTo-Json -Compress)
+              
+              $disk = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object @{Name="SizeGB";Expression={[math]::Round($_.Size/1GB,2)}}, @{Name="FreeSpaceGB";Expression={[math]::Round($_.FreeSpace/1GB,2)}}
+              Write-Host (@{level="info"; message="Disk info"; disk_size_gb=$disk.SizeGB; disk_free_gb=$disk.FreeSpaceGB} | ConvertTo-Json -Compress)
+            } else {
+              echo '{"level":"info","message":"Gathering Linux runner info"}'
+              echo "=== Shell Version ==="
+              echo "Bash version: $BASH_VERSION"
+              echo '{"level":"info","message":"Shell version displayed"}'
+              
+              echo "=== Current User ==="
+              current_user=$(whoami)
+              echo $current_user
+              echo '{"level":"info","message":"Current user","user":"'$current_user'"}'
+              
+              echo "=== Hostname ==="
+              hostname_info=$(hostname)
+              echo $hostname_info
+              echo '{"level":"info","message":"Hostname info","hostname":"'$hostname_info'"}'
+              
+              echo "=== System Resources ==="
+              if command -v free >/dev/null 2>&1; then
+                memory_info=$(free -h | grep '^Mem:')
+                echo "Memory: $memory_info"
+                echo '{"level":"info","message":"Memory info","details":"'$memory_info'"}'
+              fi
+              
+              if command -v df >/dev/null 2>&1; then
+                disk_info=$(df -h / | tail -1)
+                echo "Disk: $disk_info"
+                echo '{"level":"info","message":"Disk info","details":"'$disk_info'"}'
+              fi
+            fi
+
+      - name: 'Test Package Manager Availability'
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Testing package managers on Windows"} | ConvertTo-Json -Compress)
+            
+            # Test npm
+            try {
+              $npmVersion = npm --version
+              Write-Host (@{level="info"; message="npm available"; version=$npmVersion} | ConvertTo-Json -Compress)
+            } catch {
+              Write-Host (@{level="warn"; message="npm not available"} | ConvertTo-Json -Compress)
+            }
+            
+            # Test pnpm
+            try {
+              $pnpmVersion = pnpm --version
+              Write-Host (@{level="info"; message="pnpm available"; version=$pnpmVersion} | ConvertTo-Json -Compress)
+            } catch {
+              Write-Host (@{level="warn"; message="pnpm not available"} | ConvertTo-Json -Compress)
+            }
+            
+            # Test python
+            try {
+              $pythonVersion = python --version
+              Write-Host (@{level="info"; message="python available"; version=$pythonVersion} | ConvertTo-Json -Compress)
+            } catch {
+              Write-Host (@{level="warn"; message="python not available"} | ConvertTo-Json -Compress)
+            }
+            
+            # Test git
+            try {
+              $gitVersion = git --version
+              Write-Host (@{level="info"; message="git available"; version=$gitVersion} | ConvertTo-Json -Compress)
+            } catch {
+              Write-Host (@{level="warn"; message="git not available"} | ConvertTo-Json -Compress)
+            }
+          } else {
+            echo '{"level":"info","message":"Testing package managers on Linux"}'
+            
+            # Test npm
+            if command -v npm >/dev/null 2>&1; then
+              npm_version=$(npm --version)
+              echo '{"level":"info","message":"npm available","version":"'$npm_version'"}'
+            else
+              echo '{"level":"warn","message":"npm not available"}'
+            fi
+            
+            # Test pnpm
+            if command -v pnpm >/dev/null 2>&1; then
+              pnpm_version=$(pnpm --version)
+              echo '{"level":"info","message":"pnpm available","version":"'$pnpm_version'"}'
+            else
+              echo '{"level":"warn","message":"pnpm not available"}'
+            fi
+            
+            # Test python
+            if command -v python3 >/dev/null 2>&1; then
+              python_version=$(python3 --version)
+              echo '{"level":"info","message":"python available","version":"'$python_version'"}'
+            elif command -v python >/dev/null 2>&1; then
+              python_version=$(python --version)
+              echo '{"level":"info","message":"python available","version":"'$python_version'"}'
+            else
+              echo '{"level":"warn","message":"python not available"}'
+            fi
+            
+            # Test git
+            if command -v git >/dev/null 2>&1; then
+              git_version=$(git --version)
+              echo '{"level":"info","message":"git available","version":"'$git_version'"}'
+            else
+              echo '{"level":"warn","message":"git not available"}'
+            fi
+          fi
+
+      - name: 'Network Connectivity Test'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 3
+          max_attempts: 5
+          retry_wait_seconds: 10
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Testing network connectivity on Windows"} | ConvertTo-Json -Compress)
+              
+              # Test GitHub connectivity
+              try {
+                $response = Invoke-WebRequest -Uri "https://api.github.com" -TimeoutSec 10
+                Write-Host (@{level="info"; message="GitHub API accessible"; status_code=$response.StatusCode} | ConvertTo-Json -Compress)
+              } catch {
+                Write-Host (@{level="error"; message="GitHub API not accessible"; error=$_.Exception.Message} | ConvertTo-Json -Compress)
+                throw $_
+              }
+              
+              # Test npm registry connectivity
+              try {
+                $response = Invoke-WebRequest -Uri "https://registry.npmjs.org" -TimeoutSec 10
+                Write-Host (@{level="info"; message="npm registry accessible"; status_code=$response.StatusCode} | ConvertTo-Json -Compress)
+              } catch {
+                Write-Host (@{level="warn"; message="npm registry not accessible"; error=$_.Exception.Message} | ConvertTo-Json -Compress)
+              }
+            } else {
+              echo '{"level":"info","message":"Testing network connectivity on Linux"}'
+              
+              # Test GitHub connectivity
+              if curl -f -s --max-time 10 "https://api.github.com" >/dev/null; then
+                echo '{"level":"info","message":"GitHub API accessible"}'
+              else
+                echo '{"level":"error","message":"GitHub API not accessible"}'
+                exit 1
+              fi
+              
+              # Test npm registry connectivity
+              if curl -f -s --max-time 10 "https://registry.npmjs.org" >/dev/null; then
+                echo '{"level":"info","message":"npm registry accessible"}'
+              else
+                echo '{"level":"warn","message":"npm registry not accessible"}'
+              fi
+            fi
+
+      - name: 'Success Notification'
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Runner is alive and operational"; platform="Windows"} | ConvertTo-Json -Compress)
+            Write-Host "🚀 Windows Self-Hosted Runner is alive and ready!"
+          } else {
+            echo '{"level":"info","message":"Runner is alive and operational","platform":"Linux"}'
+            echo "🚀 Linux Runner is alive and ready!"
+          fi
+
+      - name: 'Structured Log - Smoke Test Complete'
+        if: always()
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Smoke test completed"; status="${{ job.status }}"; platform="${{ matrix.platform }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
+          } else {
+            echo '{"level":"info","message":"Smoke test completed","status":"${{ job.status }}","platform":"${{ matrix.platform }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          fi
+
+      - name: 'Notify on Failure'
+        if: failure() && (secrets.ORG_SLACK_WEBHOOK || vars.ORG_SLACK_WEBHOOK)
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ORG_SLACK_WEBHOOK || vars.ORG_SLACK_WEBHOOK }}
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="error"; message="Smoke test failed, sending notification"} | ConvertTo-Json -Compress)
+            $slackMessage = @{
+              text = "🚨 Royal Equips Runner Smoke Test Failed"
+              attachments = @(
+                @{
+                  color = "danger"
+                  fields = @(
+                    @{ title = "Platform"; value = "${{ matrix.platform }}"; short = $true }
+                    @{ title = "Runner"; value = "${{ matrix.os }}"; short = $true }
+                    @{ title = "Run ID"; value = "${{ github.run_id }}"; short = $true }
+                    @{ title = "Repository"; value = "${{ github.repository }}"; short = $true }
+                  )
+                }
+              )
+            } | ConvertTo-Json -Depth 5 -Compress
+            Invoke-RestMethod -Uri $env:SLACK_WEBHOOK_URL -Method Post -Body $slackMessage -ContentType "application/json"
+          } else {
+            echo '{"level":"error","message":"Smoke test failed, sending notification"}'
+            curl -X POST -H 'Content-type: application/json' \
+              --data '{"text":"🚨 Royal Equips Runner Smoke Test Failed: ${{ matrix.platform }} (Run #${{ github.run_id }})"}' \
+              "$SLACK_WEBHOOK_URL"
+          fi

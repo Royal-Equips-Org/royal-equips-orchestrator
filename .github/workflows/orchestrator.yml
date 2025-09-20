@@ -1,15 +1,31 @@
-﻿name: Empire Orchestrator
+name: Empire Orchestrator - Cross-Platform
 on:
   schedule: [{ cron: "0 * * * *" }]
   workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Target platform'
+        required: false
+        default: 'windows'
+        type: choice
+        options:
+        - windows
+        - linux
+        - both
 permissions:
   contents: read
 jobs:
   product_research:
     uses: ./.github/workflows/product-research.yml
+    with:
+      os: ${{ github.event.inputs.platform == 'linux' && '["ubuntu-latest"]' || (github.event.inputs.platform == 'both' && '["ubuntu-latest", "[self-hosted, Windows, X64]"]' || '["[self-hosted, Windows, X64]"]') }}
   order_processing:
     needs: [product_research]
     uses: ./.github/workflows/order-processing.yml
+    with:
+      os: ${{ github.event.inputs.platform == 'linux' && '["ubuntu-latest"]' || (github.event.inputs.platform == 'both' && '["ubuntu-latest", "[self-hosted, Windows, X64]"]' || '["[self-hosted, Windows, X64]"]') }}
   marketing_campaign:
     needs: [order_processing]
     uses: ./.github/workflows/marketing-campaign.yml
+    with:
+      os: ${{ github.event.inputs.platform == 'linux' && '["ubuntu-latest"]' || (github.event.inputs.platform == 'both' && '["ubuntu-latest", "[self-hosted, Windows, X64]"]' || '["[self-hosted, Windows, X64]"]') }}

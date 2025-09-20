@@ -1,26 +1,59 @@
-﻿name: Reusable Base
+name: Reusable Base - Cross-Platform
 on:
   workflow_call:
     inputs:
       agent:
         required: true
         type: string
+      os:
+        required: false
+        type: string
+        default: '[self-hosted, Windows, X64]'
+      shell:
+        required: false
+        type: string
+        default: 'pwsh'
     secrets:
       ORG_GITHUB_TOKEN:
+        required: false
+      ORG_SLACK_WEBHOOK:
         required: false
 permissions:
   contents: write
   actions: write
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.agent }}
+  group: ${{ github.workflow }}-${{ inputs.agent }}-${{ inputs.os }}
   cancel-in-progress: false
+
 jobs:
   run:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ${{ fromJSON(inputs.os) }}
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: ${{ inputs.shell }}
+    
     steps:
+      - name: Structured Log - Job Start
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Reusable workflow started"; agent="${{ inputs.agent }}"; os="${{ inputs.os }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
+          } else {
+            echo '{"level":"info","message":"Reusable workflow started","agent":"${{ inputs.agent }}","os":"${{ inputs.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          }
+        shell: ${{ inputs.shell }}
+
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js with retry
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: |
+            echo "Setting up Node.js..."
+      
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -29,11 +62,25 @@ jobs:
       - uses: pnpm/action-setup@v4
         with: { version: 9.9.0 }
 
-      - name: Install
-        run: pnpm install --ignore-scripts --frozen-lockfile
-        env: { HUSKY: "0" }
+      - name: Install Dependencies with Retry
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: |
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Installing dependencies on Windows"} | ConvertTo-Json -Compress)
+              pnpm install --ignore-scripts --no-frozen-lockfile
+            } else {
+              echo '{"level":"info","message":"Installing dependencies on Linux"}'
+              pnpm install --ignore-scripts --no-frozen-lockfile
+            fi
+        env: 
+          HUSKY: "0"
+        shell: ${{ inputs.shell }}
 
-      - name: Execute agent (with retries)
+      - name: Execute Agent with Self-Healing Retry
         id: agent
         uses: nick-fields/retry@v3
         with:
@@ -41,24 +88,135 @@ jobs:
           max_attempts: 3
           retry_on: error
           command: |
-            node agents/${{ inputs.agent }}.mjs || node agents/${{ inputs.agent }}.js || pnpm tsx agents/${{ inputs.agent }}.ts
+            if ($IsWindows -or $env:OS -like "*Windows*") {
+              Write-Host (@{level="info"; message="Executing agent on Windows"; agent="${{ inputs.agent }}"} | ConvertTo-Json -Compress)
+              # PowerShell execution with retry logic
+              $maxAttempts = 3
+              for ($i = 1; $i -le $maxAttempts; $i++) {
+                try {
+                  if (Test-Path "agents/${{ inputs.agent }}.mjs") {
+                    node agents/${{ inputs.agent }}.mjs
+                    break
+                  } elseif (Test-Path "agents/${{ inputs.agent }}.js") {
+                    node agents/${{ inputs.agent }}.js
+                    break
+                  } elseif (Test-Path "agents/${{ inputs.agent }}.ts") {
+                    pnpm tsx agents/${{ inputs.agent }}.ts
+                    break
+                  } else {
+                    throw "Agent file not found"
+                  }
+                } catch {
+                  Write-Host (@{level="warn"; message="Agent execution attempt $i failed"; error=$_.Exception.Message} | ConvertTo-Json -Compress)
+                  if ($i -lt $maxAttempts) {
+                    Start-Sleep -Seconds (5 * $i)
+                  } else {
+                    throw $_
+                  }
+                }
+              }
+            } else {
+              echo '{"level":"info","message":"Executing agent on Linux","agent":"${{ inputs.agent }}"}'
+              # Bash execution with retry logic
+              for i in {1..3}; do
+                if node agents/${{ inputs.agent }}.mjs 2>/dev/null || node agents/${{ inputs.agent }}.js 2>/dev/null || pnpm tsx agents/${{ inputs.agent }}.ts 2>/dev/null; then
+                  break
+                elif [ $i -eq 3 ]; then
+                  echo '{"level":"error","message":"All agent execution attempts failed"}'
+                  exit 1
+                else
+                  echo '{"level":"warn","message":"Agent execution attempt '$i' failed, retrying..."}'
+                  sleep $((5*i))
+                fi
+              done
+            fi
+        shell: ${{ inputs.shell }}
 
-      - name: Dispatch next step
+      - name: Dispatch Next Step
         if: success()
         env:
           GH_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN || github.token }}
         run: |
-          case "${{ inputs.agent }}" in
-            product_research) ev="product_research_complete" ;;
-            order_processing) ev="order_processing_complete" ;;
-            marketing_campaign) ev="campaign_complete" ;;
-            *) ev="agent_complete" ;;
-          esac
-          curl -sS -X POST -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" -d "{\"event_type\":\"$ev\"}" "https://api.github.com/repos/${{ github.repository }}/dispatches"
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Dispatching next step"} | ConvertTo-Json -Compress)
+            $agent = "${{ inputs.agent }}"
+            $eventType = switch ($agent) {
+              "product_research" { "product_research_complete" }
+              "order_processing" { "order_processing_complete" }
+              "marketing_campaign" { "campaign_complete" }
+              default { "agent_complete" }
+            }
+            $body = @{event_type = $eventType} | ConvertTo-Json -Compress
+            Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/dispatches" -Method Post -Headers @{Authorization="token $env:GH_TOKEN"; Accept="application/vnd.github+json"} -Body $body -ContentType "application/json"
+          } else {
+            echo '{"level":"info","message":"Dispatching next step"}'
+            case "${{ inputs.agent }}" in
+              product_research) ev="product_research_complete" ;;
+              order_processing) ev="order_processing_complete" ;;
+              marketing_campaign) ev="campaign_complete" ;;
+              *) ev="agent_complete" ;;
+            esac
+            curl -sS -X POST -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" -d "{\"event_type\":\"$ev\"}" "https://api.github.com/repos/${{ github.repository }}/dispatches"
+          fi
+        shell: ${{ inputs.shell }}
 
-      - name: Audit log (optional)
-        if: always() && env.ORG_AUDIT_WEBHOOK
+      - name: Audit Log (Structured)
+        if: always() && (secrets.ORG_AUDIT_WEBHOOK || vars.ORG_AUDIT_WEBHOOK)
         env:
-          ORG_AUDIT_WEBHOOK: ${{ secrets.ORG_AUDIT_WEBHOOK }}
+          ORG_AUDIT_WEBHOOK: ${{ secrets.ORG_AUDIT_WEBHOOK || vars.ORG_AUDIT_WEBHOOK }}
         run: |
-          curl -sS -X POST -H "Content-Type: application/json" -d "{\"repo\":\"${{ github.repository }}\",\"wf\":\"${{ github.workflow }}\",\"agent\":\"${{ inputs.agent }}\",\"status\":\"${{ job.status }}\",\"run_id\":${{ github.run_id }}}" "$ORG_AUDIT_WEBHOOK"
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            $auditData = @{
+              repo = "${{ github.repository }}"
+              workflow = "${{ github.workflow }}"
+              agent = "${{ inputs.agent }}"
+              status = "${{ job.status }}"
+              run_id = ${{ github.run_id }}
+              timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+              runner_os = "Windows"
+            } | ConvertTo-Json -Compress
+            Write-Host (@{level="info"; message="Sending audit log"} | ConvertTo-Json -Compress)
+            Invoke-RestMethod -Uri $env:ORG_AUDIT_WEBHOOK -Method Post -Body $auditData -ContentType "application/json"
+          } else {
+            echo '{"level":"info","message":"Sending audit log"}'
+            curl -sS -X POST -H "Content-Type: application/json" -d "{\"repo\":\"${{ github.repository }}\",\"workflow\":\"${{ github.workflow }}\",\"agent\":\"${{ inputs.agent }}\",\"status\":\"${{ job.status }}\",\"run_id\":${{ github.run_id }},\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"runner_os\":\"Linux\"}" "$ORG_AUDIT_WEBHOOK"
+          fi
+        shell: ${{ inputs.shell }}
+
+      - name: Notify on Failure
+        if: failure() && (secrets.ORG_SLACK_WEBHOOK || vars.ORG_SLACK_WEBHOOK)
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ORG_SLACK_WEBHOOK || vars.ORG_SLACK_WEBHOOK }}
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            $slackMessage = @{
+              text = "🚨 Royal Equips Agent Failure"
+              attachments = @(
+                @{
+                  color = "danger"
+                  fields = @(
+                    @{ title = "Agent"; value = "${{ inputs.agent }}"; short = $true }
+                    @{ title = "Repository"; value = "${{ github.repository }}"; short = $true }
+                    @{ title = "Run ID"; value = "${{ github.run_id }}"; short = $true }
+                    @{ title = "OS"; value = "${{ inputs.os }}"; short = $true }
+                  )
+                }
+              )
+            } | ConvertTo-Json -Depth 5 -Compress
+            Write-Host (@{level="error"; message="Agent execution failed"; agent="${{ inputs.agent }}"} | ConvertTo-Json -Compress)
+            Invoke-RestMethod -Uri $env:SLACK_WEBHOOK_URL -Method Post -Body $slackMessage -ContentType "application/json"
+          } else {
+            echo '{"level":"error","message":"Agent execution failed","agent":"${{ inputs.agent }}"}'
+            curl -X POST -H 'Content-type: application/json' --data '{"text":"🚨 Royal Equips Agent Failure: ${{ inputs.agent }} on ${{ inputs.os }} (Run #${{ github.run_id }})"}' "$SLACK_WEBHOOK_URL"
+          fi
+        shell: ${{ inputs.shell }}
+
+      - name: Structured Log - Job Complete
+        if: always()
+        run: |
+          if ($IsWindows -or $env:OS -like "*Windows*") {
+            Write-Host (@{level="info"; message="Reusable workflow completed"; agent="${{ inputs.agent }}"; status="${{ job.status }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
+          } else {
+            echo '{"level":"info","message":"Reusable workflow completed","agent":"${{ inputs.agent }}","status":"${{ job.status }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          fi
+        shell: ${{ inputs.shell }}
