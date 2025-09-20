@@ -10,6 +10,7 @@ Provides comprehensive empire-level system management including:
 """
 
 import logging
+import time
 from datetime import datetime
 from flask import Blueprint, jsonify, request, current_app
 from typing import Dict, Any, Optional
@@ -17,6 +18,7 @@ from typing import Dict, Any, Optional
 from app.services.health_service import get_health_service
 from app.services.empire_scanner import get_empire_scanner
 from app.services.empire_auto_healer import get_empire_auto_healer
+from app.services.autonomous_empire_agent import get_autonomous_empire_agent, start_autonomous_empire
 
 logger = logging.getLogger(__name__)
 
@@ -495,10 +497,141 @@ def not_found(error):
             '/empire/status',
             '/empire/healing/trigger',
             '/empire/healing/results',
-            '/empire/healing/status'
+            '/empire/healing/status',
+            '/empire/autonomous/start',
+            '/empire/autonomous/status', 
+            '/empire/autonomous/stop',
+            '/empire/autonomous/decisions'
         ],
         'timestamp': datetime.now().isoformat()
     }), 404
+
+
+@empire_bp.route('/autonomous/start', methods=['POST'])
+def start_autonomous_agent():
+    """
+    Start the autonomous empire management agent.
+    
+    Initiates continuous autonomous scanning, decision-making, and improvement.
+    """
+    try:
+        import asyncio
+        
+        # Start autonomous empire in background
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        async def start_agent():
+            agent = await start_autonomous_empire()
+            return agent.get_current_status()
+        
+        # Run in thread to avoid blocking
+        def run_async():
+            return loop.run_until_complete(start_agent())
+        
+        import threading
+        thread = threading.Thread(target=run_async, daemon=True)
+        thread.start()
+        
+        # Give it a moment to start
+        time.sleep(2)
+        
+        agent = get_autonomous_empire_agent()
+        status = agent.get_current_status()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Autonomous Empire Agent started successfully',
+            'agent_status': status,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to start autonomous agent: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@empire_bp.route('/autonomous/status', methods=['GET'])
+def get_autonomous_status():
+    """
+    Get current status of the autonomous empire agent.
+    
+    Returns agent metrics, recent decisions, and operational status.
+    """
+    try:
+        agent = get_autonomous_empire_agent()
+        status = agent.get_current_status()
+        
+        return jsonify({
+            'success': True,
+            'autonomous_status': status,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get autonomous status: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@empire_bp.route('/autonomous/stop', methods=['POST'])
+def stop_autonomous_agent():
+    """
+    Stop the autonomous empire management agent.
+    
+    Gracefully stops autonomous operations.
+    """
+    try:
+        agent = get_autonomous_empire_agent()
+        agent.stop_autonomous_operation()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Autonomous Empire Agent stopped successfully',
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to stop autonomous agent: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@empire_bp.route('/autonomous/decisions', methods=['GET'])
+def get_autonomous_decisions():
+    """
+    Get recent autonomous decisions made by the empire agent.
+    
+    Returns detailed decision history and outcomes.
+    """
+    try:
+        agent = get_autonomous_empire_agent()
+        status = agent.get_current_status()
+        
+        return jsonify({
+            'success': True,
+            'total_decisions': status.get('decisions_made', 0),
+            'recent_decisions': status.get('recent_decisions', []),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get autonomous decisions: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error',
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 
 @empire_bp.errorhandler(500)

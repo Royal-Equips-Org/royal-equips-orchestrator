@@ -74,6 +74,9 @@ def create_app(config: Optional[str] = None) -> Flask:
     # Register error handlers
     register_error_handlers(app)
 
+    # Initialize autonomous empire (after everything else is set up)
+    init_autonomous_empire(app)
+
     app.logger.info("Royal Equips Flask Orchestrator initialized successfully")
 
     return app
@@ -166,3 +169,18 @@ def register_error_handlers(app: Flask) -> None:
     from app.routes.errors import register_error_handlers as reg_errors
 
     reg_errors(app)
+
+
+def init_autonomous_empire(app: Flask) -> None:
+    """Initialize the autonomous empire management system."""
+    try:
+        from app.services.empire_startup import auto_start_autonomous_empire
+        
+        # Start autonomous empire with a 15-second delay to allow full app initialization
+        auto_start_autonomous_empire(delay_seconds=15)
+        
+        app.logger.info("🤖 Autonomous Empire initialization scheduled")
+        
+    except Exception as e:
+        app.logger.error(f"❌ Failed to initialize autonomous empire: {e}")
+        # Don't fail the entire app startup - empire can be started manually
