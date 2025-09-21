@@ -46,7 +46,7 @@ jobs:
       # Lint and test steps
       - name: Lint and test
         run: |
-          pnpm lint || echo "Linting found issues (pre-existing, not related to infrastructure)"
+          pnpm lint --max-warnings 0
           pnpm test
       
       # Fix 3: Enforce Conventional Commit standards with proper commitlint
