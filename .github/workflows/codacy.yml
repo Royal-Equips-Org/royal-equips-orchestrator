@@ -172,21 +172,21 @@ jobs:
               echo "Uploading Codacy SARIF results..."
               # Use GitHub CLI for better error handling
               gh api --method POST /repos/${{ github.repository }}/code-scanning/sarifs \
-                --field sarif="$(base64 -w0 codacy-results.sarif)" \
+                --field sarif="$(gzip -c codacy-results.sarif | base64 -w0)" \
                 --field ref="${{ github.ref }}" \
-                --field sha="${{ github.sha }}"
+                --field commit_sha="${{ github.sha }}"
             elif [ "${{ matrix.scan_type }}" = "secrets" ] && [ -f "gitleaks-results.sarif" ]; then
               echo "Uploading Gitleaks SARIF results..."
               gh api --method POST /repos/${{ github.repository }}/code-scanning/sarifs \
-                --field sarif="$(base64 -w0 gitleaks-results.sarif)" \
+                --field sarif="$(gzip -c gitleaks-results.sarif | base64 -w0)" \
                 --field ref="${{ github.ref }}" \
-                --field sha="${{ github.sha }}"
+                --field commit_sha="${{ github.sha }}"
             elif [ "${{ matrix.scan_type }}" = "dependencies" ] && [ -f "dependency-results.sarif" ]; then
               echo "Uploading Dependency SARIF results..."
               gh api --method POST /repos/${{ github.repository }}/code-scanning/sarifs \
-                --field sarif="$(base64 -w0 dependency-results.sarif)" \
+                --field sarif="$(gzip -c dependency-results.sarif | base64 -w0)" \
                 --field ref="${{ github.ref }}" \
-                --field sha="${{ github.sha }}"
+                --field commit_sha="${{ github.sha }}"
             fi
             
             echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","level":"info","agent":"security-scan","event":"sarif_upload_complete","scan_type":"${{ matrix.scan_type }}"}'
