@@ -648,7 +648,9 @@ def trigger_agent(agent_name):
             }), 400
         
         # Trigger the agent (this would actually trigger the real agent)
-        logger.info(f"Manually triggering {agent_name} agent")
+        # Sanitize agent_name before logging to prevent log injection
+        safe_agent_name = agent_name.replace('\r', '').replace('\n', '')
+        logger.info(f"Manually triggering {safe_agent_name} agent")
         
         return jsonify({
             "success": True,
