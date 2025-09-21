@@ -348,26 +348,25 @@ class SecurityAuditor:
         return audit_results
 
 def _redact_sensitive_data(results: dict) -> dict:
-    """Redact sensitive fields from audit results before outputting."""
+    """Redact sensitive fields from audit results before outputting (recursively)."""
     import copy
+    def recursive_redact(obj):
+        # Common sensitive keywords
+        sensitive_keys = {"secret", "api_key", "token", "password", "key", "value", "match", "matched", "secret_value"}
+        if isinstance(obj, dict):
+            for k in list(obj.keys()):
+                # Check if key name or string value contains sensitive info
+                if k.lower() in sensitive_keys or any(word in k.lower() for word in sensitive_keys):
+                    obj[k] = "[REDACTED]"
+                elif isinstance(obj[k], str) and any(word in obj[k].lower() for word in sensitive_keys):
+                    obj[k] = "[REDACTED]"
+                else:
+                    recursive_redact(obj[k])
+        elif isinstance(obj, list):
+            for item in obj:
+                recursive_redact(item)
     redacted = copy.deepcopy(results)
-    # Redact secret values in findings
-    if "findings" in redacted:
-        for finding in redacted["findings"]:
-            # Remove direct secret fields if present
-            if "description" in finding and "secret" in finding["description"].lower():
-                finding["description"] = "[REDACTED]"
-            if "secret_value" in finding:
-                finding["secret_value"] = "[REDACTED]"
-            if "value" in finding and isinstance(finding["value"], str):
-                finding["value"] = "[REDACTED]"
-    # Redact secrets in gitleaks findings if present
-    if "secrets_scan" in redacted:
-        gitleaks_findings = redacted["secrets_scan"].get("potential_secrets", [])
-        for item in gitleaks_findings:
-            for field in ("Secret", "Value", "Match", "Matched"):
-                if field in item:
-                    item[field] = "[REDACTED]"
+    recursive_redact(redacted)
     return redacted
 
 def main():
