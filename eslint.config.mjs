@@ -16,12 +16,17 @@ const IGNORE_PATTERNS = [
   "coverage/**",
   "vendor/**",
   "**/*.min.js",
+  "**/*.bundle.js",
+  "**/*.generated.js",
+  "**/*.generated.ts",
   "app/static/assets/**",
   "app/static/react-vendor*.js",
   "dashboard/.next/**",
   "dashboard/dist/**",
   "tools/royal-fix-agent/**",
-  "scripts/fix-agent.mjs"  // Temporarily ignore due to syntax issues
+  "scripts/fix-agent.mjs",  // Temporarily ignore due to syntax issues
+  "reports/**",
+  ".wrangler/**"
 ];
 
 /** @type {import('eslint').Linter.FlatConfig[]} */

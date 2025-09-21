@@ -42,7 +42,7 @@ jobs:
         env:
           HUSKY: 0
 
-      # Lint all code (ESLint/Prettier as per org standards)
+      # Lint source code only (exclude artifacts)
       - name: Lint
         run: pnpm lint
 
