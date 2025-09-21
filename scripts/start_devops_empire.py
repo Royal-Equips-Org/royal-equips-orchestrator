@@ -410,7 +410,7 @@ class DevOpsEmpireOrchestrator:
         
         logger.info("✅ DevOps Empire Orchestrator stopped")
     
-    def stop(self):
+    def stop_sync(self):
         """Synchronous stop method for signal handlers."""
         self.is_running = False
 
