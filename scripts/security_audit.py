@@ -374,7 +374,7 @@ def main():
         # Exit with error code if critical issues found
         critical_issues = results["summary"]["critical_issues"]
         if critical_issues > 0:
-            logger.error(f"❌ {critical_issues} critical security issues found!")
+            logger.error("❌ Critical security issues found! Review report for details.")
             sys.exit(1)
         
         logger.info("🏆 Security audit completed successfully!")
