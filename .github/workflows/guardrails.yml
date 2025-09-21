@@ -13,6 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.2
         with: {fetch-depth: 0}
+      - name: Set git user identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - name: Enforce signed commits
         run: |
           unsigned=$(git log --pretty='%H %G?' origin/${{ github.base_ref || 'HEAD' }}..HEAD | awk '$2!="G"')
@@ -21,7 +25,7 @@ jobs:
         run: |
           npx --yes @commitlint/cli@19 -V --from=origin/${{ github.base_ref || 'HEAD' }} --to=HEAD
       - name: Secret scan (trufflehog)
-        uses: trufflesecurity/trufflehog@v3
+        uses: trufflesecurity/trufflehog@v3.53.0
         with:
           path: .
           base: ${{ github.event.before || 'HEAD~1' }}
