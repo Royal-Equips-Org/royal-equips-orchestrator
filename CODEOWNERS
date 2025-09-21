@@ -1,0 +1,76 @@
+# Royal Equips Empire - Code Ownership
+
+# Global ownership - Default owners for everything
+* @Royal-Equips-Org/admin
+
+# Core Infrastructure
+/.github/ @Royal-Equips-Org/devops @Royal-Equips-Org/admin
+/docker-compose.yml @Royal-Equips-Org/devops
+/Dockerfile @Royal-Equips-Org/devops
+/nginx/ @Royal-Equips-Org/devops
+/infra/ @Royal-Equips-Org/devops
+
+# Security & Compliance
+/SECURITY.md @Royal-Equips-Org/security @Royal-Equips-Org/admin
+/.gitleaks.toml @Royal-Equips-Org/security
+/.pre-commit-config.yaml @Royal-Equips-Org/security
+/scripts/security_audit.py @Royal-Equips-Org/security
+
+# Core Application
+/app/ @Royal-Equips-Org/backend @Royal-Equips-Org/admin
+/orchestrator/ @Royal-Equips-Org/backend @Royal-Equips-Org/admin
+/wsgi.py @Royal-Equips-Org/backend
+
+# Command Center & Dashboard
+/app/routes/command_center.py @Royal-Equips-Org/frontend @Royal-Equips-Org/backend
+/apps/control-center/ @Royal-Equips-Org/frontend
+/templates/ @Royal-Equips-Org/frontend
+
+# Autonomous Agents
+/orchestrator/agents/ @Royal-Equips-Org/ai @Royal-Equips-Org/backend
+/agents/ @Royal-Equips-Org/ai
+/scripts/empire_autonomous_analyzer.py @Royal-Equips-Org/ai
+
+# Integrations
+/orchestrator/integrations/ @Royal-Equips-Org/integrations
+/edge-functions/ @Royal-Equips-Org/integrations
+
+# Database & Models
+/orchestrator/database/ @Royal-Equips-Org/database @Royal-Equips-Org/backend
+/data/ @Royal-Equips-Org/database
+
+# Testing & Quality
+/tests/ @Royal-Equips-Org/qa @Royal-Equips-Org/backend
+/test_data/ @Royal-Equips-Org/qa
+pytest.ini @Royal-Equips-Org/qa
+jest.config.mjs @Royal-Equips-Org/qa
+
+# Documentation
+/docs/ @Royal-Equips-Org/docs @Royal-Equips-Org/admin
+/README.md @Royal-Equips-Org/docs @Royal-Equips-Org/admin
+/CONTRIBUTING.md @Royal-Equips-Org/docs
+*.md @Royal-Equips-Org/docs
+
+# Package Management
+/requirements*.txt @Royal-Equips-Org/backend @Royal-Equips-Org/devops
+/package.json @Royal-Equips-Org/frontend @Royal-Equips-Org/devops
+/pnpm-lock.yaml @Royal-Equips-Org/frontend
+/pyproject.toml @Royal-Equips-Org/backend
+
+# Configuration
+/.env.example @Royal-Equips-Org/devops @Royal-Equips-Org/security
+/render.yaml @Royal-Equips-Org/devops
+/wrangler.toml @Royal-Equips-Org/devops
+
+# Scripts & Automation
+/scripts/ @Royal-Equips-Org/devops @Royal-Equips-Org/backend
+/tools/ @Royal-Equips-Org/devops
+
+# Empire Analysis & Intelligence
+/empire_intelligence/ @Royal-Equips-Org/ai @Royal-Equips-Org/admin
+/scripts/tech_stack_analyzer.py @Royal-Equips-Org/devops @Royal-Equips-Org/ai
+
+# Critical Empire Files (Require admin approval)
+/EMPIRE_INFRASTRUCTURE.md @Royal-Equips-Org/admin
+/EMPIRE_PROMPT.md @Royal-Equips-Org/admin
+/AUTONOMOUS_EMPIRE_INTEGRATION.md @Royal-Equips-Org/admin

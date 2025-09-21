@@ -117,7 +117,7 @@ jobs:
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
 
       - name: Run Trivy vulnerability scanner (filesystem)
-        uses: aquasecurity/trivy-action@6e7b396d6e8b019329bf2b557db1b18b45fd5b7d  # aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -126,7 +126,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Run Trivy vulnerability scanner (config)
-        uses: aquasecurity/trivy-action@6e7b396d6e8b019329bf2b557db1b18b45fd5b7d  # aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'config'
           scan-ref: '.'

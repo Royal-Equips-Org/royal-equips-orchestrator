@@ -11,7 +11,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+      - uses: actions/checkout@v4.1.2
         with: {fetch-depth: 0}
       - name: Enforce signed commits
         run: |
@@ -21,13 +21,13 @@ jobs:
         run: |
           npx --yes @commitlint/cli@19 -V --from=origin/${{ github.base_ref || 'HEAD' }} --to=HEAD
       - name: Secret scan (trufflehog)
-        uses: trufflesecurity/trufflehog@3d1da2a8999f3a2f9ca8ad6cf73cdbbbc2e6f623  # trufflesecurity/trufflehog@v3
+        uses: trufflesecurity/trufflehog@v3
         with:
           path: .
           base: ${{ github.event.before || 'HEAD~1' }}
           head: HEAD
       - name: Python setup
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v5
+        uses: actions/setup-python@v5
         with: {python-version: '3.11', cache: 'pip'}
       - run: pip install -r requirements.txt && pip install pytest pytest-asyncio pytest-cov bandit safety
       - name: Lint security
@@ -40,9 +40,9 @@ jobs:
         run: |
           pytest -q --disable-warnings --maxfail=1
       - name: Container SBOM + scan
-        uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a  # anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0
       - name: Trivy FS
-        uses: aquasecurity/trivy-action@6e7b396d6e8b019329bf2b557db1b18b45fd5b7d  # aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@master
         with: {scan-type: 'fs', scan-ref: '.'}
       - name: Require ADR/Docs on architectural changes
         run: |
