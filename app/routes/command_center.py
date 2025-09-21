@@ -664,7 +664,7 @@ def trigger_agent(agent_name):
         logger.error(f"Error triggering agent {safe_agent_name}: {e}")
         return jsonify({
             "success": False,
-            "error": str(e)
+            "error": "An internal error has occurred."
         }), 500
 
 @command_center_bp.route('/api/integrations/status')
