@@ -660,7 +660,8 @@ def trigger_agent(agent_name):
         })
         
     except Exception as e:
-        logger.error(f"Error triggering agent {agent_name}: {e}")
+        safe_agent_name = agent_name.replace('\r', '').replace('\n', '')
+        logger.error(f"Error triggering agent {safe_agent_name}: {e}")
         return jsonify({
             "success": False,
             "error": str(e)
