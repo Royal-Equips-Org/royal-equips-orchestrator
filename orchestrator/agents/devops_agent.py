@@ -13,7 +13,15 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import asdict
 
-from orchestrator.core.agent_base import BaseAgent
+# Try to import BaseAgent from orchestrator framework, fallback to minimal stub if not available
+try:
+    from orchestrator.core.agent_base import BaseAgent
+except ImportError:
+    class BaseAgent:
+        def __init__(self, *args, **kwargs):
+            pass
+        async def run(self, *args, **kwargs):
+            raise NotImplementedError("BaseAgent.run() not implemented. Please provide orchestrator.core.agent_base.BaseAgent.")
 
 # Import the DevOps service
 try:
