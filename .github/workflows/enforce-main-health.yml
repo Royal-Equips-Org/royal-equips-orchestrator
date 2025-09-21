@@ -12,7 +12,7 @@ jobs:
     outputs:
       result: ${{ steps.outcome.outputs.status }}
     steps:
-      - uses: actions/cache@v4
+      - uses: actions/cache@v3
 
       # Install pnpm globally (production best practice)
       - name: Install pnpm
