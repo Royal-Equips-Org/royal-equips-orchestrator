@@ -347,6 +347,29 @@ class SecurityAuditor:
         logger.info("✅ Security audit complete.")
         return audit_results
 
+def _redact_sensitive_data(results: dict) -> dict:
+    """Redact sensitive fields from audit results before outputting."""
+    import copy
+    redacted = copy.deepcopy(results)
+    # Redact secret values in findings
+    if "findings" in redacted:
+        for finding in redacted["findings"]:
+            # Remove direct secret fields if present
+            if "description" in finding and "secret" in finding["description"].lower():
+                finding["description"] = "[REDACTED]"
+            if "secret_value" in finding:
+                finding["secret_value"] = "[REDACTED]"
+            if "value" in finding and isinstance(finding["value"], str):
+                finding["value"] = "[REDACTED]"
+    # Redact secrets in gitleaks findings if present
+    if "secrets_scan" in redacted:
+        gitleaks_findings = redacted["secrets_scan"].get("potential_secrets", [])
+        for item in gitleaks_findings:
+            for field in ("Secret", "Value", "Match", "Matched"):
+                if field in item:
+                    item[field] = "[REDACTED]"
+    return redacted
+
 def main():
     parser = argparse.ArgumentParser(description="Royal Equips Security Auditor")
     parser.add_argument("--comprehensive", action="store_true", help="Run comprehensive audit")
@@ -364,15 +387,16 @@ def main():
     try:
         auditor = SecurityAuditor()
         results = auditor.run_comprehensive_audit()
+        safe_results = _redact_sensitive_data(results)
         
         if args.output_file:
             with open(args.output_file, 'w') as f:
-                json.dump(results, f, indent=2)
+                json.dump(safe_results, f, indent=2)
         else:
-            print(json.dumps(results, indent=2))
+            print(json.dumps(safe_results, indent=2))
         
         # Exit with error code if critical issues found
-        critical_issues = results["summary"]["critical_issues"]
+        critical_issues = safe_results["summary"]["critical_issues"]
         if critical_issues > 0:
             logger.error("❌ Critical security issues found! Review report for details.")
             sys.exit(1)
