@@ -344,7 +344,7 @@ class SecurityAuditor:
             }
         }
         
-        logger.info(f"✅ Security audit complete: {audit_results['summary']['total_findings']} findings")
+        logger.info("✅ Security audit complete.")
         return audit_results
 
 def main():
