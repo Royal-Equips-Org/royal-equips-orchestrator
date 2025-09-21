@@ -4,7 +4,7 @@
 # This script validates the multi-agent security orchestrator workflow
 # and provides operational readiness checks for enterprise deployment.
 
-set -u
+set -e -o pipefail -u
 
 WORKFLOW_FILE=".github/workflows/codacy.yml"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
