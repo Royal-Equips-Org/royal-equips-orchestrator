@@ -12,6 +12,8 @@ jobs:
   # Python Security & Quality
   python-security:
     name: 🐍 Python Security Scan
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
