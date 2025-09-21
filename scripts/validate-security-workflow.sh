@@ -187,19 +187,6 @@ check_pinned_versions() {
     fi
 }
 
-# Check branch configuration
-check_branch_config() {
-    log "DEBUG" "Checking branch configuration..."
-    
-    if grep -A5 "branches:" "$REPO_ROOT/$WORKFLOW_FILE" | grep -q "main"; then
-        log "INFO" "Main branch configuration found"
-        return 0
-    else
-        log "ERROR" "Main branch configuration not found"
-        return 1
-    fi
-}
-
 # Generate summary report
 generate_summary() {
     log "INFO" "=== Royal Equips Security Workflow Validation Summary ==="
