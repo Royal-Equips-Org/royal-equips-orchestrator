@@ -1,0 +1,1 @@
+{"type": "single_cycle_complete", "timestamp": 1157.458869383, "results": {"cycle_id": "29c55f4d-f6e3-4a20-a15d-b47208650d31", "start_time": "2025-09-21T17:07:11.944581+00:00", "unsigned_commits_found": 6, "commits_signed": 0, "branches_processed": 2, "prs_created": 0, "errors": [], "status": "completed", "end_time": "2025-09-21T17:07:12.002727+00:00"}}
