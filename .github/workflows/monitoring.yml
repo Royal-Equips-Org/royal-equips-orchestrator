@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -84,7 +84,7 @@ jobs:
       - name: Upload health report
         permissions:
           contents: read
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4
         if: always()
         with:
           name: health-report-${{ github.run_number }}
@@ -95,7 +95,7 @@ jobs:
         permissions:
           contents: read
         if: steps.parse-results.outputs.alert_level == 'critical'
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@28ba43ae48961b90ced0e6a1dd8a939903b29b62  # 8398a7/action-slack@v3
         with:
           status: failure
           title: "🚨 CRITICAL: Royal Equips Empire Health Alert"
@@ -113,7 +113,7 @@ jobs:
         permissions:
           contents: read
         if: steps.parse-results.outputs.alert_level == 'warning'
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@28ba43ae48961b90ced0e6a1dd8a939903b29b62  # 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
           title: "⚠️ Royal Equips Empire Health Warning"
@@ -128,7 +128,7 @@ jobs:
         permissions:
           contents: read
         if: steps.parse-results.outputs.alert_level == 'healthy' && github.event.inputs.detailed_report == 'true'
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@28ba43ae48961b90ced0e6a1dd8a939903b29b62  # 8398a7/action-slack@v3
         with:
           status: success
           title: "✅ Royal Equips Empire Health Report"
@@ -158,10 +158,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -206,7 +206,7 @@ jobs:
       - name: Upload agent logs
         permissions:
           contents: read
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4
         if: always()
         with:
           name: agent-logs-${{ matrix.agent }}-${{ github.run_number }}
@@ -224,10 +224,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -271,7 +271,7 @@ jobs:
       - name: Upload performance metrics
         permissions:
           contents: read
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4
         with:
           name: performance-metrics-${{ github.run_number }}
           path: performance-metrics.json
@@ -288,10 +288,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -323,7 +323,7 @@ jobs:
       - name: Upload security reports
         permissions:
           contents: read
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4
         if: always()
         with:
           name: security-reports-${{ github.run_number }}

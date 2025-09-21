@@ -37,23 +37,23 @@ jobs:
           echo '{"level":"info","message":"Python CI started","python_version":"${{ matrix.python-version }}","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
         fi
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
 
     - name: Set up Python ${{ matrix.python-version }} with Retry
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 5
         max_attempts: 3
         retry_on: error
         command: echo "Setting up Python..."
     
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
     - name: Cache pip dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a  # actions/cache@v4
       with:
         path: |
           ~/.cache/pip
@@ -64,7 +64,7 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Install dependencies with Self-Healing Retry
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 10
         max_attempts: 3
@@ -87,7 +87,7 @@ jobs:
           fi
 
     - name: Lint with Ruff (Cross-Platform)
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 5
         max_attempts: 3
@@ -102,7 +102,7 @@ jobs:
           fi
         
     - name: Check code formatting with Black
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 5
         max_attempts: 3
@@ -152,7 +152,7 @@ jobs:
       continue-on-error: true  # Make informational for now
 
     - name: Run tests with Self-Healing Retry
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 15
         max_attempts: 3
@@ -167,17 +167,17 @@ jobs:
           fi
       env:
         SHOPIFY_GRAPHQL_ENDPOINT: "https://test-shop.myshopify.com/admin/api/2024-01/graphql.json"
-        SHOPIFY_GRAPHQL_TOKEN: "test-token-12345"
+        SHOPIFY_GRAPHQL_TOKEN: ${{ secrets.TEST_SHOPIFY_TOKEN || 'test-placeholder-token' }}
         BIGQUERY_PROJECT_ID: "royal-commerce-ai-test"
         SUPABASE_URL: "https://test-project.supabase.co"
-        SUPABASE_SERVICE_ROLE_KEY: "test-supabase-key-12345"
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.TEST_SUPABASE_KEY || 'test-placeholder-key' }}
         ORCHESTRATOR_BASE_URL: "http://localhost:5000"
-        ORCHESTRATOR_HMAC_KEY: "test-hmac-key-12345"
+        ORCHESTRATOR_HMAC_KEY: ${{ secrets.TEST_HMAC_KEY || 'test-placeholder-hmac' }}
         REPO_ROOT: "/tmp/test-repo"
 
     - name: Upload coverage reports
       if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4
       with:
         name: coverage-reports
         path: |
@@ -218,23 +218,23 @@ jobs:
           echo '{"level":"info","message":"JavaScript CI started","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
         fi
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
     
     - name: Setup Node.js with Retry
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 5
         max_attempts: 3
         retry_on: error
         command: echo "Setting up Node.js..."
     
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v5
       with:
         node-version: '18'
         cache: 'npm'
         
     - name: Install dependencies with Self-Healing
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 10
         max_attempts: 3
@@ -327,22 +327,22 @@ jobs:
           echo '{"level":"info","message":"Integration tests started","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
         fi
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
 
     - name: Set up Python 3.11 with Retry
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 5
         max_attempts: 3
         retry_on: error
         command: echo "Setting up Python..."
     
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
       with:
         python-version: '3.11'
 
     - name: Install dependencies with Self-Healing
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
       with:
         timeout_minutes: 10
         max_attempts: 3

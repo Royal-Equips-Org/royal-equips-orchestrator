@@ -16,11 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy: { matrix: { node: [20] } }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with: { node-version: ${{ matrix.node }}, cache: "pnpm" }
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@129abb77bf5884e578fcaf1f37628e41622cc371  # pnpm/action-setup@v3
         with: { version: 9.9.0 }
       - name: Install (no scripts)
         run: pnpm install --ignore-scripts --frozen-lockfile
@@ -39,39 +39,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action@e2b3eafc8d227b0241d48be5f425d47c2d750a13  # github/codeql-action/init@v3
         with:
           languages: javascript,python,go
           build-mode: none
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action@e2b3eafc8d227b0241d48be5f425d47c2d750a13  # github/codeql-action/analyze@v3
   trivy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
       - uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: fs
           ignore-unfixed: true
           format: 'sarif'
           output: 'trivy-results.sarif'
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action@e2b3eafc8d227b0241d48be5f425d47c2d750a13  # github/codeql-action/upload-sarif@v3
         with: { sarif_file: trivy-results.sarif }
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+      - uses: gitleaks/gitleaks-action@cb7149c12c9c5c12944aa5ef5f624926def9ed98  # gitleaks/gitleaks-action@v2
         env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
   dep-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with: { node-version: 20 }
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@129abb77bf5884e578fcaf1f37628e41622cc371  # pnpm/action-setup@v3
         with: { version: 9.9.0 }
       - run: pnpm install --ignore-scripts --frozen-lockfile
       - name: Audit

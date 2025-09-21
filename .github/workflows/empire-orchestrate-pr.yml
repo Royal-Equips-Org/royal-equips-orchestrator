@@ -12,7 +12,7 @@ jobs:
   open-or-update-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         with: { fetch-depth: 0 }
       - name: Detect default branch
         id: def
@@ -24,7 +24,7 @@ jobs:
           git push -u origin "$BR" || true
       - name: Create or update PR
         id: pr
-        uses: actions-ecosystem/action-create-or-update-pull-request@v1
+        uses: actions-ecosystem/action-create-or-update-pull-request@2f3b4321e1b32aa4e28b9b94e7e8bc42fde9c0b4  # actions-ecosystem/action-create-or-update-pull-request@v1
         with:
           title: "chore(empire): auto-upgrade pipeline"
           body: |

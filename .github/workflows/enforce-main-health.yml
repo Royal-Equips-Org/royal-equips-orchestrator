@@ -12,7 +12,7 @@ jobs:
     outputs:
       result: ${{ steps.outcome.outputs.status }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
 
       # Install pnpm globally (production best practice)
       - name: Install pnpm
@@ -20,7 +20,7 @@ jobs:
 
       # Setup pnpm cache for faster installs (self-healing: cross-OS safe)
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a  # actions/cache@v4
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -67,7 +67,7 @@ jobs:
     if: needs.ci.outputs.result == 'failure'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         with:
           ref: "master"
           fetch-depth: 0

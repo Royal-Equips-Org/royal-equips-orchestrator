@@ -56,14 +56,14 @@ class DevelopmentConfig(Config):
     """Development configuration."""
 
     DEBUG = True
-    SECRET_KEY = "dev-secret-key"
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 
 
 class TestingConfig(Config):
     """Testing configuration."""
 
     TESTING = True
-    SECRET_KEY = "test-secret-key"
+    SECRET_KEY = os.getenv("SECRET_KEY", "test-secret-key-change-in-production")
     PORT = 5000  # Different port for testing
 
 

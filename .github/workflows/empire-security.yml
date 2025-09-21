@@ -26,17 +26,17 @@ jobs:
       
     steps:
       - name: '📥 Checkout Empire Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         with:
           fetch-depth: 0
           
       - name: '🔧 Setup Node.js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
       - name: '📦 Setup pnpm'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -56,21 +56,21 @@ jobs:
         
     steps:
       - name: '📥 Checkout Repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '🧬 Initialize CodeQL'
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action@e2b3eafc8d227b0241d48be5f425d47c2d750a13  # github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql/codeql-config.yml
           
       - name: '🔧 Setup Node.js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
       - name: '📦 Setup pnpm'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           
@@ -80,7 +80,7 @@ jobs:
           pnpm build
           
       - name: '🧬 Perform CodeQL Analysis'
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action@e2b3eafc8d227b0241d48be5f425d47c2d750a13  # github/codeql-action/analyze@v3
         with:
           category: "/language:${{matrix.language}}"
 
@@ -90,12 +90,12 @@ jobs:
     
     steps:
       - name: '📥 Checkout Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         with:
           fetch-depth: 0
           
       - name: '🔐 Run GitLeaks Secret Scan'
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@cb7149c12c9c5c12944aa5ef5f624926def9ed98  # gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
@@ -106,10 +106,10 @@ jobs:
     
     steps:
       - name: '📥 Checkout Repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '🔬 Run Trivy Vulnerability Scanner'
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@6e7b396d6e8b019329bf2b557db1b18b45fd5b7d  # aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -118,7 +118,7 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           
       - name: '📊 Upload Trivy Results to Security Tab'
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action@e2b3eafc8d227b0241d48be5f425d47c2d750a13  # github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
@@ -130,10 +130,10 @@ jobs:
     
     steps:
       - name: '📥 Checkout Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '📦 Dependency Review'
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@4081bf99e2866ebe428fc0477b69eb4fcda7220a  # actions/dependency-review-action@v4
         with:
           fail-on-severity: critical
           fail-on-score: 0.7
@@ -144,15 +144,15 @@ jobs:
     
     steps:
       - name: '📥 Checkout Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '🔧 Setup Node.js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
       - name: '📦 Setup pnpm'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           
@@ -186,7 +186,7 @@ jobs:
     
     steps:
       - name: '📥 Checkout Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '⚖️ Enforce Security Policies'
         run: |

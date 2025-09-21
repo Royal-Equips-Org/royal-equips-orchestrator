@@ -43,10 +43,10 @@ jobs:
           }
         shell: ${{ inputs.shell }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
 
       - name: Setup Node.js with retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -54,16 +54,16 @@ jobs:
           command: |
             echo "Setting up Node.js..."
       
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with: { version: 9.9.0 }
 
       - name: Install Dependencies with Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -82,7 +82,7 @@ jobs:
 
       - name: Execute Agent with Self-Healing Retry
         id: agent
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
