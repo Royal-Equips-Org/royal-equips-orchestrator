@@ -98,6 +98,11 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Set git user identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
       - name: 🔧 Auto-fix Commit Messages
         run: |

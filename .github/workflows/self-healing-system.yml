@@ -220,6 +220,7 @@ EOF
           name: health-diagnosis-report
           path: health-diagnosis.json
           retention-days: 7
+          if-no-files-found: warn
 
   auto-healing:
     name: 🔧 Automated Healing & Recovery

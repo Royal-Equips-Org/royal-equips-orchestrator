@@ -1,0 +1,73 @@
+# Example comprehensive workflow demonstrating all fixes from the problem statement
+name: Guardrails & Compliance
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+  security-events: write
+  checks: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      # Fix 1: Add git user identity configuration
+      - name: Set git user identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      # Fix 2: Use correct TruffleHog version (v3.53.0 instead of non-existent v3)
+      - name: TruffleHog Secret Scanner
+        uses: trufflesecurity/trufflehog@v3.53.0
+        with:
+          path: .
+          base: ${{ github.event.before || 'HEAD~1' }}
+          head: HEAD
+      
+      # Setup Node.js for lint and test
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          npm install -g pnpm
+          pnpm install --frozen-lockfile
+      
+      # Lint and test steps
+      - name: Lint and test
+        run: |
+          pnpm lint --max-warnings 0
+          pnpm test
+      
+      # Fix 3: Enforce Conventional Commit standards with proper commitlint
+      - name: Commitlint
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: 'commitlint.config.cjs'
+      
+      # Security scanning with Trivy
+      - name: Trivy Security Scanner
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      # Fix 4: Use correct CodeQL action version (v3 instead of SHA)
+      - name: Upload security results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-security-scan'
