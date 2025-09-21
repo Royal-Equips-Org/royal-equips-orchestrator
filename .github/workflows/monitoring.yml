@@ -90,6 +90,7 @@ jobs:
           name: health-report-${{ github.run_number }}
           path: health-report.json
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Slack notification - Critical
         permissions:
@@ -212,6 +213,7 @@ jobs:
           name: agent-logs-${{ matrix.agent }}-${{ github.run_number }}
           path: agent-health.log
           retention-days: 7
+          if-no-files-found: warn
 
   # Performance Metrics Collection
   performance-metrics:
@@ -276,6 +278,7 @@ jobs:
           name: performance-metrics-${{ github.run_number }}
           path: performance-metrics.json
           retention-days: 30
+          if-no-files-found: warn
 
   # Security Monitoring
   security-monitoring:
@@ -331,6 +334,7 @@ jobs:
             security-scan.json
             safety-report.json
           retention-days: 30
+          if-no-files-found: warn
 
   # Summary Report
   monitoring-summary:
