@@ -6,7 +6,7 @@ This implementation provides comprehensive cross-platform support for the Royal 
 
 ## 🎯 Implementation Scope
 
-### Workflows Updated (7/30 complete)
+### Workflows Updated (10/30 complete)
 - ✅ `_reusable-base.yml` - Enhanced with cross-platform support and structured logging
 - ✅ `ci-complete.yml` - Full CI pipeline with matrix strategy
 - ✅ `comprehensive-ci.yml` - Python testing across versions and platforms
@@ -14,6 +14,9 @@ This implementation provides comprehensive cross-platform support for the Royal 
 - ✅ `agents-execution.yml` - Enterprise agent execution framework
 - ✅ `selfhosted-smoke.yml` - Multi-platform smoke testing
 - ✅ `cross-platform-validation.yml` - **NEW** Comprehensive environment validation
+- ✅ `commitlint.yml` - **FIXED** Added explicit `shell: bash` for Bash syntax compatibility
+- ✅ `enforce-main-health.yml` - **FIXED** Added `shell: bash` to 3 steps with Bash syntax
+- ✅ `codacy.yml` - **FIXED** Switched to `ubuntu-latest` for Linux compatibility
 
 ### Features Implemented
 - ✅ **Cross-Shell Compatibility**: PowerShell for Windows, Bash for Linux
@@ -174,7 +177,7 @@ All 7 updated workflows pass YAML syntax validation:
 ## 🔄 Next Steps
 
 ### Remaining Work
-- [ ] Update remaining 23 workflow files for full compliance
+- [ ] Update remaining 20 workflow files for full compliance
 - [ ] Test workflows on actual self-hosted Windows runners
 - [ ] Configure organization-level secrets in GitHub
 - [ ] Set up Slack webhook for notifications
@@ -207,7 +210,7 @@ All 7 updated workflows pass YAML syntax validation:
 
 ## 🏆 Achievement Metrics
 
-- **7 Critical Workflows**: Successfully updated for cross-platform support
+- **10 Critical Workflows**: Successfully updated for cross-platform support
 - **100% YAML Validation**: All workflows pass syntax validation
 - **Enterprise Compliance**: Organization secrets and audit logging
 - **Self-Healing Capability**: 3-attempt retry with exponential backoff

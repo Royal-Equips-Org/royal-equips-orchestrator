@@ -30,6 +30,7 @@ jobs:
       # Install all dependencies (incl. devDependencies) for lint/test
       # Self-healing: If strict fails, fallback to fix-lockfile and rerun
       - name: Install dependencies
+        shell: bash
         run: |
           set -e
           pnpm install --frozen-lockfile --prod=false || (pnpm install --fix-lockfile --prod=false && pnpm install --frozen-lockfile --prod=false)
@@ -48,6 +49,7 @@ jobs:
 
       # Outcome detection for self-healing workflow
       - id: outcome
+        shell: bash
         run: |
           set -e
           if [ "${{ steps.lint.outcome }}" = "success" ] && [ "${{ steps.test.outcome }}" = "success" ]; then
@@ -70,6 +72,7 @@ jobs:
           ref: "master"
           fetch-depth: 0
       - name: Revert last commit on master
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
