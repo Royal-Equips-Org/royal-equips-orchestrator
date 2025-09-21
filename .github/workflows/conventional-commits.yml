@@ -90,14 +90,13 @@ jobs:
     needs: enforce-conventional-commits
     
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       
     steps:
-      - name: 📥 Checkout PR
+      - name: 📥 Checkout PR (read-only)
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
           
@@ -105,11 +104,9 @@ jobs:
         run: |
           echo "🔧 Attempting to auto-fix commit messages..."
           
-          # Get commits from base to head
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
           
-          # Get list of commit messages that need fixing
           git log --pretty=format:"%H %s" "$BASE_SHA..$HEAD_SHA" | while read commit_hash commit_msg; do
             echo "📝 Processing: $commit_hash - $commit_msg"
             
@@ -150,22 +147,11 @@ jobs:
             fi
           done
           
-      - name: 🚀 Push Fixed Commits
-        run: |
-          if git diff --quiet HEAD~1; then
-            echo "No commits were modified"
-          else
-            echo "📤 Pushing auto-fixed commit messages..."
-            git push --force-with-lease origin "$PR_REF"
-            
-            # Add comment to PR
-            gh pr comment ${{ github.event.pull_request.number }} --body "🔧 **Auto-fixed commit messages** to comply with Conventional Commits standard.
-
-            The commit messages have been automatically updated to follow our Royal Equips Conventional Commit format. Please review the changes and re-run any failed checks."
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_REF: ${{ github.event.pull_request.head.ref }}
+      - name: 📦 Save Auto-fix Patch
+        uses: actions/upload-artifact@v4
+        with:
+          name: autofix-patch
+          path: ./autofix.patch   # Adjust as necessary: produce a patch file from your auto-fix logic above
 
   commit-validation-report:
     name: 📊 Generate Commit Validation Report
