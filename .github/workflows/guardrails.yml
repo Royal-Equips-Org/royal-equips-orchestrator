@@ -9,7 +9,7 @@ permissions:
   security-events: write
 jobs:
   verify:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}

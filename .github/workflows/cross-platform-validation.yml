@@ -32,7 +32,7 @@ jobs:
           - os: 'ubuntu-latest'
             shell: bash
             platform: 'linux'
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
             platform: 'windows'
     runs-on: ${{ fromJSON(matrix.os) }}

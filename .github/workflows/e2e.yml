@@ -9,6 +9,6 @@ permissions:
 
 jobs:
   e2e:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - run: echo "ok"

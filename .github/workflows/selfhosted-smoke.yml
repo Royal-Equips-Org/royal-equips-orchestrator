@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
             platform: 'windows'
           - os: 'ubuntu-latest'

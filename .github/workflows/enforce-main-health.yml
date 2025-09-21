@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   ci:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     outputs:
       result: ${{ steps.outcome.outputs.status }}
     steps:
@@ -63,7 +63,7 @@ jobs:
   revert_if_failed:
     needs: [ci]
     if: needs.ci.outputs.result == 'failure'
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:

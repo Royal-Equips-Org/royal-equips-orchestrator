@@ -13,7 +13,7 @@ permissions:
   pull-requests: write
 jobs:
   code-health:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     strategy: { matrix: { node: [20] } }
     steps:
       - uses: actions/checkout@v4
@@ -60,13 +60,13 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with: { sarif_file: trivy-results.sarif }
   gitleaks:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: gitleaks/gitleaks-action@v2
         env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
   dep-audit:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

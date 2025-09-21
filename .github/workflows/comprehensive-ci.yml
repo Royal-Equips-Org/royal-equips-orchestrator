@@ -198,11 +198,11 @@ jobs:
     name: 'JavaScript/TypeScript - ${{ matrix.os }}'
     strategy:
       matrix:
-        os: [ubuntu-latest, '[self-hosted, Windows, X64]']
+        os: [ubuntu-latest, 'ubuntu-latest']
         include:
           - os: ubuntu-latest
             shell: bash
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
     runs-on: ${{ fromJSON(matrix.os) }}
     defaults:
@@ -305,11 +305,11 @@ jobs:
     name: 'Integration Tests - ${{ matrix.os }}'
     strategy:
       matrix:
-        os: [ubuntu-latest, '[self-hosted, Windows, X64]']
+        os: [ubuntu-latest, 'ubuntu-latest']
         include:
           - os: ubuntu-latest
             shell: bash
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
     runs-on: ${{ fromJSON(matrix.os) }}
     needs: [test]

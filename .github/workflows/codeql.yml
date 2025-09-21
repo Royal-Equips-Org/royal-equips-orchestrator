@@ -8,7 +8,7 @@ permissions:
   security-events: write
 jobs:
   analyze:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix: { language: [javascript] }

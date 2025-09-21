@@ -9,7 +9,7 @@ permissions:
 jobs:
   rerun-on-failure:
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
         with:

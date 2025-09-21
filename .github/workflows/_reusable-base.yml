@@ -8,11 +8,11 @@ on:
       os:
         required: false
         type: string
-        default: '[self-hosted, Windows, X64]'
+        default: 'ubuntu-latest'
       shell:
         required: false
         type: string
-        default: 'pwsh'
+        default: 'bash'
     secrets:
       ORG_GITHUB_TOKEN:
         required: false

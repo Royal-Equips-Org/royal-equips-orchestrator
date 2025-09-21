@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   orchestrate:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout full history
         uses: actions/checkout@v4

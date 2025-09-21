@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   lint-and-format:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v5
@@ -40,7 +40,7 @@ jobs:
         black --check app/ wsgi.py
 
   test:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v5
@@ -71,7 +71,7 @@ jobs:
         fail_ci_if_error: false
 
   smoke-test:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v5
