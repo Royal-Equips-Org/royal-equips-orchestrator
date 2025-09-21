@@ -41,21 +41,21 @@ env:
 jobs:
   empire-autonomous-operations:
     name: '👑 Execute Autonomous Empire Operations'
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     
     steps:
       - name: '📥 Checkout Repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: '🔧 Setup Node.js Environment'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
       - name: '📦 Setup pnpm Package Manager'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           
@@ -208,7 +208,7 @@ jobs:
           
       - name: '🔄 Create Autonomous PR'
         if: steps.agent_operations.outputs.changes_detected == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f  # peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: 'empire/autonomous-operations-${{ github.run_number }}'

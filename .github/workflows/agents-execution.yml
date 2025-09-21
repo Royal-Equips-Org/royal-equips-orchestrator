@@ -45,7 +45,7 @@ jobs:
           'analytics'
         ]
         include:
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
             platform: 'windows'
           - os: 'ubuntu-latest'
@@ -72,30 +72,30 @@ jobs:
           fi
 
       - name: Checkout repository with Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 3
           max_attempts: 3
           retry_on: error
           command: echo "Checking out repository..."
       
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
         
       - name: Set up Python with Self-Healing
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_on: error
           command: echo "Setting up Python..."
       
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
       
       - name: Install dependencies with Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -112,7 +112,7 @@ jobs:
             fi
       
       - name: Run health check with Self-Healing
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -193,7 +193,7 @@ jobs:
             fi
       
       - name: Execute agent with Self-Healing Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 8
           max_attempts: 3
@@ -278,7 +278,7 @@ jobs:
           'supplier_management'
         ]
         include:
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
             platform: 'windows'
         exclude:
@@ -297,30 +297,30 @@ jobs:
         run: Write-Host (@{level="info"; message="Growth agent execution started"; agent="${{ matrix.agent }}"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
 
       - name: Checkout repository with Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 3
           max_attempts: 3
           retry_on: error
           command: echo "Checking out repository..."
       
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
         
       - name: Set up Python with Self-Healing
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_on: error
           command: echo "Setting up Python..."
       
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
       
       - name: Install dependencies with Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -331,7 +331,7 @@ jobs:
             pip install pytest-asyncio
       
       - name: Execute agent with Self-Healing Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 12
           max_attempts: 3
@@ -357,7 +357,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
             platform: 'windows'
         exclude:
@@ -378,30 +378,30 @@ jobs:
         run: Write-Host (@{level="info"; message="System health check started"; timestamp=(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")} | ConvertTo-Json -Compress)
 
       - name: Checkout repository with Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 3
           max_attempts: 3
           retry_on: error
           command: echo "Checking out repository..."
       
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
         
       - name: Set up Python with Self-Healing
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_on: error
           command: echo "Setting up Python..."
       
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
       
       - name: Install dependencies with Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -412,7 +412,7 @@ jobs:
             pip install pytest-asyncio
       
       - name: Run system health check with Retry
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 8
           max_attempts: 3

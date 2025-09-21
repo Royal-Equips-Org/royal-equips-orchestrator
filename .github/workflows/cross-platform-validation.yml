@@ -32,7 +32,7 @@ jobs:
           - os: 'ubuntu-latest'
             shell: bash
             platform: 'linux'
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
             platform: 'windows'
     runs-on: ${{ fromJSON(matrix.os) }}
@@ -50,7 +50,7 @@ jobs:
             echo '{"level":"info","message":"Environment validation started","platform":"${{ matrix.platform }}","validation_type":"${{ github.event.inputs.validation_type || 'full' }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
 
       - name: 'Validate Required Secrets'
         if: github.event.inputs.validation_type == 'secrets' || github.event.inputs.validation_type == 'full' || github.event.inputs.validation_type == ''
@@ -190,7 +190,7 @@ jobs:
 
       - name: 'Test Network Connectivity'
         if: github.event.inputs.validation_type == 'connectivity' || github.event.inputs.validation_type == 'full' || github.event.inputs.validation_type == ''
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3

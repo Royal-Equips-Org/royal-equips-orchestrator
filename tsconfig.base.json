@@ -12,5 +12,5 @@
     "resolveJsonModule": true,
     "baseUrl": "."
   },
-  "include": ["packages","agents","services"]
+  "include": ["packages","agents","services","apps"]
 }

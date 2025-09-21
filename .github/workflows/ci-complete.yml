@@ -41,27 +41,27 @@ jobs:
           fi
 
       - name: '📥 Checkout Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '🔧 Setup Node.js with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_on: error
           command: echo "Setting up Node.js..."
       
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
       - name: '📦 Setup pnpm'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           
       - name: '🏗️ Install Dependencies with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -76,7 +76,7 @@ jobs:
             fi
         
       - name: '🔍 Run ESLint with Self-Healing'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -91,7 +91,7 @@ jobs:
             fi
         
       - name: '📘 Type Check with Self-Healing'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -140,27 +140,27 @@ jobs:
           fi
 
       - name: '📥 Checkout Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '🔧 Setup Node.js with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_on: error
           command: echo "Setting up Node.js..."
       
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
       - name: '📦 Setup pnpm'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           
       - name: '🏗️ Install Dependencies with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -175,7 +175,7 @@ jobs:
             fi
         
       - name: '🔨 Build All Packages with Self-Healing'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 15
           max_attempts: 3
@@ -190,7 +190,7 @@ jobs:
             fi
         
       - name: '🧪 Run Tests with Self-Healing'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 15
           max_attempts: 3
@@ -205,7 +205,7 @@ jobs:
             fi
         
       - name: '📊 Upload Build Artifacts'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ matrix.os }}
           path: |
@@ -235,27 +235,27 @@ jobs:
         run: echo '{"level":"info","message":"Agent Integration Tests started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
 
       - name: '📥 Checkout Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '🔧 Setup Node.js with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_on: error
           command: echo "Setting up Node.js..."
       
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
       - name: '📦 Setup pnpm'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           
       - name: '🏗️ Install Dependencies with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -265,7 +265,7 @@ jobs:
             pnpm install --no-frozen-lockfile --ignore-scripts
         
       - name: '🔨 Build Packages with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 15
           max_attempts: 3
@@ -296,7 +296,7 @@ jobs:
           done
           
       - name: '🧪 Test API Health with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 5
@@ -310,7 +310,7 @@ jobs:
             echo '{"level":"info","message":"All health checks passed"}'
           
       - name: '🤖 Test Agent Execution with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -338,27 +338,27 @@ jobs:
         run: echo '{"level":"info","message":"Empire Readiness Check started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
 
       - name: '📥 Checkout Code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
         
       - name: '🔧 Setup Node.js with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_on: error
           command: echo "Setting up Node.js..."
       
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
       - name: '📦 Setup pnpm'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe1e16644e0a8c7063aabeaafbe1de56b3e7da3e  # pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           
       - name: '🏗️ Install Dependencies with Retry'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -368,7 +368,7 @@ jobs:
             pnpm install --no-frozen-lockfile --ignore-scripts
         
       - name: '🔨 Build All with Self-Healing'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 15
           max_attempts: 3

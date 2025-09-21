@@ -39,7 +39,12 @@ export default [
       ...cfg.languageOptions,
       sourceType: "module",
       parserOptions: {
-        project: ["./tsconfig.base.json", "./tsconfig.tests.json"],
+        project: [
+          "./tsconfig.base.json", 
+          "./tsconfig.tests.json",
+          "./apps/*/tsconfig.json",
+          "./packages/*/tsconfig.json"
+        ],
         tsconfigRootDir: process.cwd(),
         ecmaVersion: 2022
       }

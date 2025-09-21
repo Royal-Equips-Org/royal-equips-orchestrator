@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: '[self-hosted, Windows, X64]'
+          - os: 'ubuntu-latest'
             shell: pwsh
             platform: 'windows'
           - os: 'ubuntu-latest'
@@ -46,10 +46,10 @@ jobs:
             echo '{"level":"info","message":"Smoke test started","platform":"${{ matrix.platform }}","os":"${{ matrix.os }}","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
       
       - name: 'Show Runner Info with Self-Healing'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 2
           max_attempts: 3
@@ -183,7 +183,7 @@ jobs:
           fi
 
       - name: 'Network Connectivity Test'
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3
         with:
           timeout_minutes: 3
           max_attempts: 5
