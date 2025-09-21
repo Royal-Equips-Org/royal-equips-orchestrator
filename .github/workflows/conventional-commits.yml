@@ -156,7 +156,7 @@ jobs:
             echo "No commits were modified"
           else
             echo "📤 Pushing auto-fixed commit messages..."
-            git push --force-with-lease origin ${{ github.event.pull_request.head.ref }}
+            git push --force-with-lease origin "$PR_REF"
             
             # Add comment to PR
             gh pr comment ${{ github.event.pull_request.number }} --body "🔧 **Auto-fixed commit messages** to comply with Conventional Commits standard.
@@ -165,6 +165,7 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_REF: ${{ github.event.pull_request.head.ref }}
 
   commit-validation-report:
     name: 📊 Generate Commit Validation Report
