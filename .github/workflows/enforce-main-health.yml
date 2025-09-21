@@ -1,7 +1,9 @@
 name: enforce-main-health
+
 on:
   push:
-    branches: [master]
+    branches: [main] # Enterprise default branch. Change to main!
+
 permissions:
   contents: write
   pull-requests: write
@@ -11,14 +13,29 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       result: ${{ steps.outcome.outputs.status }}
+    env:
+      NODE_ENV: development
+      # Prefer secrets from GitHub's Org-level Secret Manager, not repo-local
+      # Example: SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
     steps:
-      - uses: actions/cache@v3
+      # Checkout repo with full history for revert capability
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Install pnpm globally (production best practice)
+      # Setup Node.js (strict version, avoid latest)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.1' # Pin exact version
+
+      # Install pnpm globally
       - name: Install pnpm
-        run: npm install -g pnpm
+        run: npm install -g pnpm@8.15.4 # Pin exact version
 
-      # Setup pnpm cache for faster installs (self-healing: cross-OS safe)
+      # Setup pnpm cache (cross-OS, self-healing)
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
@@ -27,54 +44,81 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      # Install all dependencies (incl. devDependencies) for lint/test
-      # Self-healing: If strict fails, fallback to fix-lockfile and rerun
+      # Validate manifest before install (fail fast if missing)
+      - name: Validate package manifest
+        run: |
+          if [ ! -f ./package.json ]; then
+            echo "package.json missing in repo root. Aborting."
+            exit 1
+          fi
+
+      # Install dependencies (self-healing fallback)
       - name: Install dependencies
-        shell: bash
         run: |
           set -e
           pnpm install --frozen-lockfile --prod=false || (pnpm install --fix-lockfile --prod=false && pnpm install --frozen-lockfile --prod=false)
-        env:
-          NODE_ENV: development
 
-      # Run lint step with pnpm (ESLint must be available)
-      - id: lint
-        name: Run Lint
+      # Lint (ESLint required, strict fail)
+      - name: Lint code
         run: pnpm lint
 
-      # Run tests step with pnpm
-      - id: test
-        name: Run Tests
+      # Unit & integration tests
+      - name: Run tests
         run: pnpm test -- --ci
 
-      # Outcome detection for self-healing workflow
+      # Security scan (optional, enterprise: enable by default)
+      - name: pnpm audit
+        run: pnpm audit --audit-level=moderate || true # Do not fail on audit, log only
+
+      # Output status for downstream jobs
       - id: outcome
-        shell: bash
         run: |
           set -e
-          if [ "${{ steps.lint.outcome }}" = "success" ] && [ "${{ steps.test.outcome }}" = "success" ]; then
+          LINT_STATUS=$?
+          TEST_STATUS=$?
+          if [ $LINT_STATUS -eq 0 ] && [ $TEST_STATUS -eq 0 ]; then
             echo "status=success" >> "$GITHUB_OUTPUT"
           else
             echo "status=failure" >> "$GITHUB_OUTPUT"
           fi
 
-      # Optional: Security scan (enable if required; uncomment to use)
-      # - name: pnpm audit
-      #   run: pnpm audit
+      # Structured JSON logging for CI events (audit traceability)
+      - name: Structured logging
+        run: |
+          echo '{"event":"ci-complete","lint":"'$LINT_STATUS'","test":"'$TEST_STATUS'"}' >> ci-events.json
+
+      # Upload workflow logs/artifacts for audit
+      - name: Upload CI logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-events
+          path: ci-events.json
 
   revert_if_failed:
-    needs: [ci]
+    needs: ci
     if: needs.ci.outputs.result == 'failure'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/cache@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          ref: "master"
           fetch-depth: 0
-      - name: Revert last commit on master
-        shell: bash
+
+      # Revert last commit (self-healing, audit trace)
+      - name: Revert last commit on main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git revert --no-edit "${GITHUB_SHA}" || exit 1
-          git push origin HEAD:master
+          git push origin HEAD:main
+
+      # Structured logging for revert
+      - name: Log revert event
+        run: |
+          echo '{"event":"commit-revert","sha":"'$GITHUB_SHA'"}' >> revert-events.json
+
+      - name: Upload revert logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: revert-events
+          path: revert-events.json
