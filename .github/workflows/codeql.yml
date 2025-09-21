@@ -2,7 +2,23 @@
 on:
   push:
     branches: [master, main]
+    paths-ignore:
+      - app/static/assets/**
+      - dist/**
+      - build/**
+      - coverage/**
+      - reports/**
+      - '**/*.min.js'
+      - '**/*.bundle.js'
   pull_request:
+    paths-ignore:
+      - app/static/assets/**
+      - dist/**
+      - build/**
+      - coverage/**
+      - reports/**
+      - '**/*.min.js'
+      - '**/*.bundle.js'
 permissions:
   contents: read
   security-events: write

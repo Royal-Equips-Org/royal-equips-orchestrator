@@ -1,6 +1,6 @@
 import { Logger } from 'pino';
 import { BaseAgent } from './base-agent.js';
-import { AgentConfig, AgentStatus, AgentMessage, AgentExecutionResult } from './types.js';
+import { AgentStatus, AgentMessage, AgentExecutionResult } from './types.js';
 
 export class AgentOrchestrator {
   private agents = new Map<string, BaseAgent>();
@@ -67,7 +67,7 @@ export class AgentOrchestrator {
   /**
    * Start the orchestrator
    */
-  async start(): Promise<void> {
+  start(): void {
     if (this.isRunning) {
       this.logger.warn('Orchestrator already running');
       return;
@@ -77,7 +77,7 @@ export class AgentOrchestrator {
     this.logger.info('Starting agent orchestrator');
 
     // Start message processing loop
-    this.processMessages();
+    void this.processMessages();
 
     // Start health monitoring
     this.startHealthMonitoring();
@@ -86,7 +86,7 @@ export class AgentOrchestrator {
   /**
    * Stop the orchestrator
    */
-  async stop(): Promise<void> {
+  stop(): void {
     this.isRunning = false;
     this.logger.info('Stopping agent orchestrator');
   }
@@ -119,12 +119,14 @@ export class AgentOrchestrator {
   async emergencyStop(): Promise<void> {
     this.logger.warn('Emergency stop initiated');
     
-    const rollbackPromises = Array.from(this.agents.values()).map(async agent => {
+    const rollbackPromises = Array.from(this.agents.values()).map(async (agent) => {
       try {
         const status = agent.getStatus();
         if (status.status === 'active') {
           // TODO: Implement emergency rollback
           this.logger.info(`Initiating emergency rollback for agent: ${status.id}`);
+          // Simulate emergency rollback operation
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       } catch (error) {
         this.logger.error(`Emergency rollback failed for agent: ${agent.getStatus().id} - ${String(error)}`);
@@ -132,7 +134,7 @@ export class AgentOrchestrator {
     });
 
     await Promise.allSettled(rollbackPromises);
-    await this.stop();
+    this.stop();
   }
 
   /**
@@ -183,12 +185,12 @@ export class AgentOrchestrator {
    * Start health monitoring for all agents
    */
   private startHealthMonitoring(): void {
-    const monitorHealth = async () => {
+    const monitorHealth = (): void => {
       if (!this.isRunning) return;
 
       for (const [agentId, agent] of this.agents) {
         try {
-          const isHealthy = await agent.healthCheck();
+          const isHealthy = agent.healthCheck();
           if (!isHealthy) {
             this.logger.warn(`Agent health check failed: ${agentId}`);
           }
@@ -198,7 +200,7 @@ export class AgentOrchestrator {
       }
 
       // Schedule next health check
-      setTimeout(monitorHealth, 30000); // Every 30 seconds
+      setTimeout(() => monitorHealth(), 30000); // Every 30 seconds
     };
 
     monitorHealth();

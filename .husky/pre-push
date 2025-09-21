@@ -1,0 +1,21 @@
+# Skip hooks when explicitly requested or on CI
+if [ -n "$SKIP_HUSKY" ] || [ -n "$CI" ]; then
+  echo "Husky skipped"; exit 0
+fi
+
+# Type check and run tests before push
+if command -v pnpm >/dev/null 2>&1; then
+  echo "🔧 Running TypeScript type checking..."
+  pnpm typecheck || {
+    echo "❌ TypeScript type checking failed. Fix type errors before pushing."
+    exit 1
+  }
+  echo "✅ Type checking passed"
+  
+  echo "🧪 Running unit tests..."
+  pnpm test || {
+    echo "❌ Unit tests failed. Fix failing tests before pushing."
+    exit 1
+  }
+  echo "✅ All tests passed"
+fi
