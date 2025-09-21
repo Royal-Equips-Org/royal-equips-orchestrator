@@ -5,7 +5,6 @@ import {
   AgentExecutionResult,
   AgentStatus,
   AgentConfig,
-  AgentType,
   ExecutionMetrics
 } from './types.js';
 
@@ -96,7 +95,8 @@ export abstract class BaseAgent {
       return result;
 
     } catch (error) {
-      this.logger.error(`Agent execution failed: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Agent execution failed: ${errorMessage}`);
       this.updateStats(Date.now() - startTime, false);
       this.status.status = 'error';
       
@@ -129,12 +129,13 @@ export abstract class BaseAgent {
   /**
    * Health check for the agent
    */
-  async healthCheck(): Promise<boolean> {
+  healthCheck(): boolean {
     try {
       // Override in subclasses for specific health checks
       return this.status.health !== 'critical';
     } catch (error) {
-      this.logger.error(`Health check failed: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Health check failed: ${errorMessage}`);
       this.status.health = 'critical';
       return false;
     }
@@ -143,7 +144,7 @@ export abstract class BaseAgent {
   /**
    * Check if plan has approval (placeholder for approval system)
    */
-  private hasApproval(planId: string): boolean {
+  private hasApproval(_planId: string): boolean {
     // TODO: Implement approval system integration
     return false;
   }

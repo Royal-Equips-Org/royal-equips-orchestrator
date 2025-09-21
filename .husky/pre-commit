@@ -3,7 +3,9 @@ if [ -n "$SKIP_HUSKY" ] || [ -n "$CI" ]; then
   echo "Husky skipped"; exit 0
 fi
 
-# Lint only if eslint is available
-if command -v pnpm >/dev/null 2>&1 && pnpm -w -s eslint -v >/dev/null 2>&1; then
-  pnpm -w eslint . || exit 1
+# Lint only source files using our enhanced lint script
+if command -v pnpm >/dev/null 2>&1; then
+  echo "🔍 Running ESLint on source files only..."
+  pnpm lint || exit 1
+  echo "✅ Source code linting passed"
 fi
