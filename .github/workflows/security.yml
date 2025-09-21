@@ -186,6 +186,8 @@ jobs:
   # Commit Message Validation
   commit-lint:
     name: 📝 Commit Lint
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
