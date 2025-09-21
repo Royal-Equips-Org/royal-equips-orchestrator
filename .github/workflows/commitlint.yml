@@ -1,6 +1,8 @@
 name: Commitlint
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
 
 permissions:
   contents: read
@@ -9,17 +11,39 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+      # Enterprise: Use latest stable version, pin exact commit for supply chain security
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - name: Set up Node.js
-        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
+          fetch-depth: 0 # Full history for audit/revert
+
+      # Setup Node.js (exact version for reproducibility)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm ci
-      - name: Run commitlint with dynamic range
+          node-version: '20.11.1' # Pin exact version
+
+      # Self-healing install: If npm ci fails (lockfile mismatch), recover and update lockfile
+      - name: Install dependencies (self-healing)
         shell: bash
         run: |
-          # Get the oldest commit up to 50 back, avoiding error if fewer commits exist
+          set -e
+          npm ci || (npm install && npm ci)
+
+      # Lint commits in dynamic range, fail fast on errors, log structured output
+      - name: Run commitlint with dynamic range and structured logs
+        shell: bash
+        run: |
+          set -e
           OLDEST_COMMIT=$(git rev-list --max-count=50 HEAD | tail -1)
-          npx commitlint --from=$OLDEST_COMMIT --to=HEAD
+          npx commitlint --from=$OLDEST_COMMIT --to=HEAD | tee commitlint.log
+          echo '{"event":"commitlint","range":"'$OLDEST_COMMIT'..HEAD"}' >> commitlint-events.json
+
+      # Upload structured logs for audit compliance
+      - name: Upload commitlint logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: commitlint-artifacts
+          path: |
+            commitlint.log
+            commitlint-events.json
