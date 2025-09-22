@@ -188,25 +188,39 @@ export default function AIChatInterface() {
   }, [chatMessages]);
 
   const sendToAIRA = async (userMessage: string): Promise<AIRAResponse> => {
-    const response = await fetch(`${AIRA_API_URL}/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        message: userMessage,
-        context: {
-          timestamp: new Date().toISOString(),
-          source: 'command_center_ui'
-        }
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 15000); // 15 seconds timeout
+    try {
+      const response = await fetch(`${AIRA_API_URL}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message: userMessage,
+          context: {
+            timestamp: new Date().toISOString(),
+            source: 'command_center_ui'
+          }
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      throw new Error(`AIRA API Error: ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`AIRA API Error: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error('AIRA API request timed out. Please try again later.');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return response.json();
   };
 
   const handleSendMessage = async () => {
