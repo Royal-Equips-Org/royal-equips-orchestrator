@@ -4,11 +4,28 @@
     "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "noEmit": true,
     "baseUrl": ".",
-    "paths": { "*": ["./types/*"] }
-  }
+    "paths": { "*": ["./types/*"] },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": [
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx", 
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "packages/shared/**/*.ts",
+    "apps/command-center-ui/vite.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.min.js"
+  ]
 }

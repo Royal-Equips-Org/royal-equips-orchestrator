@@ -318,6 +318,24 @@ importers:
         specifier: ^5.6.3
         version: 5.6.3
 
+  packages/obs:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.16.11
+        version: 20.19.15
+      typescript:
+        specifier: ^5.6.3
+        version: 5.6.3
+
+  packages/shared:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.16.11
+        version: 20.19.15
+      typescript:
+        specifier: ^5.6.3
+        version: 5.6.3
+
 packages:
 
   '@alloc/quick-lru@5.2.0':

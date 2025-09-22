@@ -6,7 +6,7 @@
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r -F \"./**\" tsc -b --pretty false",
+    "typecheck": "tsc -p apps/command-center-ui/tsconfig.json --noEmit && tsc -p apps/orchestrator-api/tsconfig.json --noEmit && tsc -p apps/aira/tsconfig.json --noEmit && tsc -p apps/agent-executors/tsconfig.json --noEmit && tsc -p packages/agents-core/tsconfig.json --noEmit && tsc -p packages/connectors/tsconfig.json --noEmit && tsc -p packages/obs/tsconfig.json --noEmit && tsc -p packages/shared/tsconfig.json --noEmit",
     "test": "jest --runInBand --passWithNoTests",
     "prepare": "node -e \"process.exit((process.env.CI==='true'||process.env.NODE_ENV==='production')?0:1)\" || husky install",
     "fix-agent": "node scripts/fix-agent.mjs --watch",

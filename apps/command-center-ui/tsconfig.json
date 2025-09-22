@@ -3,6 +3,8 @@
   "compilerOptions": { 
     "jsx": "react-jsx", 
     "types": ["vite/client"],
+    "baseUrl": ".",
+    "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["./src/*"]
     }
