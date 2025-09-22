@@ -1,6 +1,6 @@
 /**
  * AIRA JSON Schemas - Strict schemas for deterministic responses
- * Based on the specification requirements for structured plan output
+ * Based on the specification requirements for structured plan output with enhanced business logic
  */
 
 import { z } from 'zod';
@@ -30,10 +30,12 @@ export const VerificationSchema = z.object({
   pass: z.boolean().describe('Whether verification passed')
 });
 
-// Approval request schema
+// Enhanced approval request schema with business context
 export const ApprovalRequestSchema = z.object({
   reason: z.string().describe('Reason approval is needed'),
-  risk: z.number().min(0).max(1).describe('Risk score (0-1)')
+  risk: z.number().min(0).max(1).describe('Risk score (0-1)'),
+  approver_role: z.string().optional().describe('Required approver role'),
+  estimated_time: z.string().optional().describe('Estimated approval time')
 });
 
 // Execution plan schema
@@ -42,10 +44,11 @@ export const ExecutionPlanSchema = z.object({
   actions: z.array(ActionSchema).describe('List of actions to execute')
 });
 
-// Risk assessment schema
+// Enhanced risk assessment schema with components
 export const RiskAssessmentSchema = z.object({
   score: z.number().min(0).max(1).describe('Risk score (0-1)'),
-  level: RiskLevel.describe('Risk level classification')
+  level: RiskLevel.describe('Risk level classification'),
+  components: z.record(z.number()).optional().describe('Risk component breakdown')
 });
 
 // Main AIRA Response schema - the core contract
@@ -61,16 +64,64 @@ export const AIRAResponseSchema = z.object({
   }).optional()
 });
 
-// Chat request schema
+// Chat request schema with enhanced validation
 export const ChatRequestSchema = z.object({
-  message: z.string().describe('Natural language input from user'),
+  message: z.string().min(3).max(2000).describe('Natural language input from user'),
   context: z.record(z.unknown()).optional().describe('Additional context')
 });
 
-// Execute request schema  
+// Execute request schema with enhanced validation
 export const ExecuteRequestSchema = z.object({
-  tool_calls: z.array(ToolCallSchema).describe('Tool calls to execute'),
+  tool_calls: z.array(ToolCallSchema).min(1).max(5).describe('Tool calls to execute'),
   approval_token: z.string().optional().describe('Approval token for gated execution')
+});
+
+// Tool execution options schema
+export const ToolExecutionOptionsSchema = z.object({
+  dryRun: z.boolean().default(false),
+  expectedDiff: z.string().optional(),
+  executionId: z.string(),
+  riskLevel: RiskLevel.optional()
+});
+
+// Execution summary schema for business reporting
+export const ExecutionSummarySchema = z.object({
+  totalTools: z.number(),
+  successCount: z.number(),
+  errorCount: z.number(),
+  skippedCount: z.number(),
+  duration: z.number(),
+  riskLevel: RiskLevel,
+  toolsUsed: z.array(z.string())
+});
+
+// Error response schema
+export const ErrorResponseSchema = z.object({
+  error: z.string(),
+  message: z.string(),
+  timestamp: z.string(),
+  requestId: z.string().optional(),
+  retryAfter: z.number().optional()
+});
+
+// Chat response schema for Command Center integration
+export const ChatResponseSchema = z.object({
+  content: z.string(),
+  agent_name: z.string(),
+  plan: z.any().optional(),
+  risk: z.any().optional(),
+  verifications: z.array(z.any()).optional(),
+  approvals: z.array(z.any()).optional(),
+  tool_calls: z.array(z.any()).optional(),
+  next_steps: z.array(z.string()).optional()
+});
+
+// Execute response schema
+export const ExecuteResponseSchema = z.object({
+  ok: z.boolean(),
+  results: z.array(z.any()),
+  execution_id: z.string(),
+  summary: ExecutionSummarySchema.optional()
 });
 
 // Export types
@@ -84,3 +135,8 @@ export type RiskAssessment = z.infer<typeof RiskAssessmentSchema>;
 export type AIRAResponse = z.infer<typeof AIRAResponseSchema>;
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 export type ExecuteRequest = z.infer<typeof ExecuteRequestSchema>;
+export type ToolExecutionOptions = z.infer<typeof ToolExecutionOptionsSchema>;
+export type ExecutionSummary = z.infer<typeof ExecutionSummarySchema>;
+export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+export type ChatResponse = z.infer<typeof ChatResponseSchema>;
+export type ExecuteResponse = z.infer<typeof ExecuteResponseSchema>;
