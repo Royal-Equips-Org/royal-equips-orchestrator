@@ -8,8 +8,14 @@
 import Fastify from 'fastify';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
+import staticFiles from '@fastify/static';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { chatRoute } from './routes/chat.js';
 import { executeRoute } from './routes/execute.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = Fastify({ 
   logger: {
@@ -33,6 +39,12 @@ await app.register(helmet, {
 await app.register(cors, {
   origin: ['http://localhost:3000', 'http://localhost:5173'], // Allow Command Center UI
   credentials: true
+});
+
+// Serve static files (Command Center demo)
+await app.register(staticFiles, {
+  root: join(__dirname, '../public'),
+  prefix: '/'
 });
 
 // Health check endpoint
