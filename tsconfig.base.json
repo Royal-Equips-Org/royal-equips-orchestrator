@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
-    "paths": { "*": ["./types/*"] },
+    "paths": { "@types/*": ["./types/*"] },
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
