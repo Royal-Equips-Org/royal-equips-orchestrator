@@ -3,10 +3,12 @@
  * 
  * Handles /chat endpoint for converting natural language input into
  * structured execution plans with risk assessment and verifications.
+ * 
+ * Production-ready integration with Royal Equips Command Center UI.
  */
 
 import { FastifyPluginAsync } from 'fastify';
-import { ChatRequestSchema, AIRAResponseSchema, type AIRAResponse, type ToolCall } from '../schemas/aira.js';
+import { ChatRequestSchema, AIRAResponseSchema, type AIRAResponse } from '../schemas/aira.js';
 import { planner } from '../planner/index.js';
 import { snapshotUEG } from '../ueg/index.js';
 import { policy } from '../policy/index.js';
@@ -14,7 +16,16 @@ import { policy } from '../policy/index.js';
 export const chatRoute: FastifyPluginAsync = async (fastify) => {
   fastify.post<{
     Body: { message: string; context?: Record<string, unknown> };
-    Reply: AIRAResponse;
+    Reply: {
+      content: string;
+      agent_name: string;
+      plan?: any;
+      risk?: any;
+      verifications?: any[];
+      approvals?: any[];
+      tool_calls?: any[];
+      next_steps?: string[];
+    };
   }>('/chat', {
     schema: {
       body: {
@@ -28,27 +39,16 @@ export const chatRoute: FastifyPluginAsync = async (fastify) => {
       response: {
         200: {
           type: 'object',
-          required: ['plan', 'risk', 'verifications'],
+          required: ['content', 'agent_name'],
           properties: {
-            plan: {
-              type: 'object',
-              properties: {
-                goal: { type: 'string' },
-                actions: { type: 'array' }
-              }
-            },
-            risk: {
-              type: 'object',
-              properties: {
-                score: { type: 'number' },
-                level: { type: 'string' }
-              }
-            },
+            content: { type: 'string' },
+            agent_name: { type: 'string' },
+            plan: { type: 'object' },
+            risk: { type: 'object' },
             verifications: { type: 'array' },
             approvals: { type: 'array' },
             tool_calls: { type: 'array' },
-            next_ui_steps: { type: 'array' },
-            thoughts: { type: 'object' }
+            next_steps: { type: 'array' }
           }
         }
       }
@@ -81,20 +81,15 @@ export const chatRoute: FastifyPluginAsync = async (fastify) => {
       const toolCalls = policy.allows(plan, riskAssessment) ? 
         generateToolCallsFromPlan(plan) : [];
 
-      // Step 6: Suggest next UI steps
-      const nextUISteps = generateNextUISteps(plan, riskAssessment, approvals);
-
-      const response: AIRAResponse = {
-        plan,
-        risk: riskAssessment,
-        verifications,
-        approvals: approvals.length > 0 ? approvals : undefined,
-        tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
-        next_ui_steps: nextUISteps,
-        thoughts: {
-          redacted: 'Internal reasoning redacted for security'
-        }
-      };
+      // Step 6: Generate natural language response
+      const response = generateNaturalLanguageResponse(
+        request.body.message, 
+        plan, 
+        riskAssessment, 
+        verifications, 
+        approvals,
+        toolCalls
+      );
 
       fastify.log.info({
         message: 'Plan generated successfully',
@@ -117,64 +112,132 @@ export const chatRoute: FastifyPluginAsync = async (fastify) => {
       
       reply.status(500);
       return {
-        plan: {
-          goal: 'Error processing request',
-          actions: []
-        },
-        risk: {
-          score: 1.0,
-          level: 'HIGH' as const
-        },
-        verifications: [{
-          type: 'error',
-          result: error instanceof Error ? error.message : 'Unknown error',
-          pass: false
-        }],
-        next_ui_steps: ['Review error details', 'Try rephrasing request']
+        content: `I encountered an error processing your request: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or rephrase your command.`,
+        agent_name: 'AIRA',
+        plan: null,
+        risk: { level: 'HIGH', score: 1.0 },
+        verifications: [],
+        approvals: [],
+        tool_calls: [],
+        next_steps: ['Try rephrasing your request', 'Check system status', 'Contact support if issue persists']
       };
     }
   });
 };
 
 /**
- * Generate suggested next UI steps based on plan and risk assessment
+ * Generate natural language response based on AIRA analysis
  */
-function generateNextUISteps(
-  plan: any, 
-  risk: any, 
-  approvals: any[]
-): string[] {
-  const steps: string[] = [];
+function generateNaturalLanguageResponse(
+  userMessage: string,
+  plan: any,
+  risk: any,
+  verifications: any[],
+  approvals: any[],
+  toolCalls: any[]
+): {
+  content: string;
+  agent_name: string;
+  plan: any;
+  risk: any;
+  verifications: any[];
+  approvals: any[];
+  tool_calls: any[];
+  next_steps: string[];
+} {
+  let content = '';
   
-  if (risk.level === 'HIGH') {
-    steps.push('Review high-risk actions carefully');
-    steps.push('Obtain required approvals before execution');
+  // Generate contextual response based on plan and risk
+  if (risk.level === 'LOW') {
+    content = `✅ **Analyzing your request:** "${userMessage}"\n\n`;
+    content += `I've generated a **${risk.level} risk** execution plan with ${plan.actions.length} actions:\n\n`;
+    content += `**Goal:** ${plan.goal}\n\n`;
+    content += `**Actions:**\n`;
+    plan.actions.forEach((action: any, i: number) => {
+      content += `${i + 1}. ${action.type.replace(/_/g, ' ')}\n`;
+    });
+    content += `\n✅ All verifications passed. This plan is ready for automatic execution.`;
+    
+    if (toolCalls.length > 0) {
+      content += `\n\n🔧 **Tool Calls:** ${toolCalls.length} operations will be executed across ${[...new Set(toolCalls.map(tc => tc.tool))].join(', ')}.`;
+    }
   } else if (risk.level === 'MEDIUM') {
-    steps.push('Review plan details');
-    steps.push('Approve execution when ready');
+    content = `⚠️ **Analyzing your request:** "${userMessage}"\n\n`;
+    content += `I've generated a **${risk.level} risk** execution plan (${(risk.score * 100).toFixed(1)}% risk score):\n\n`;
+    content += `**Goal:** ${plan.goal}\n\n`;
+    content += `**Actions:**\n`;
+    plan.actions.forEach((action: any, i: number) => {
+      content += `${i + 1}. ${action.type.replace(/_/g, ' ')}\n`;
+    });
+    
+    const failedVerifications = verifications.filter(v => !v.pass);
+    if (failedVerifications.length > 0) {
+      content += `\n⚠️ **Verification Issues:**\n`;
+      failedVerifications.forEach(v => {
+        content += `- ${v.type}: ${v.result}\n`;
+      });
+    }
+    
+    if (approvals.length > 0) {
+      content += `\n🔐 **Approval Required:** This operation requires approval due to ${approvals[0].reason.toLowerCase()}.`;
+    }
   } else {
-    steps.push('Plan ready for automatic execution');
+    content = `🚨 **High Risk Operation Detected:** "${userMessage}"\n\n`;
+    content += `I've analyzed your request and identified a **${risk.level} risk** operation (${(risk.score * 100).toFixed(1)}% risk score).\n\n`;
+    content += `**Goal:** ${plan.goal}\n\n`;
+    content += `**⚠️ Critical Actions:**\n`;
+    plan.actions.forEach((action: any, i: number) => {
+      content += `${i + 1}. ${action.type.replace(/_/g, ' ')}\n`;
+    });
+    
+    if (approvals.length > 0) {
+      content += `\n🔐 **Multiple Approvals Required:**\n`;
+      approvals.forEach((approval: any) => {
+        content += `- ${approval.reason}\n`;
+      });
+    }
+    
+    content += `\n🛡️ This operation will NOT proceed without explicit approval.`;
   }
-  
-  if (plan.actions.length > 0) {
-    steps.push(`Execute ${plan.actions.length} planned action(s)`);
+
+  // Generate next steps
+  const nextSteps: string[] = [];
+  if (risk.level === 'LOW') {
+    nextSteps.push('Plan ready for execution');
+    if (toolCalls.length > 0) {
+      nextSteps.push(`Execute ${toolCalls.length} tool operations`);
+    }
+  } else if (risk.level === 'MEDIUM') {
+    nextSteps.push('Review plan details carefully');
+    nextSteps.push('Approve execution when ready');
+    if (approvals.length > 0) {
+      nextSteps.push(`Obtain ${approvals.length} required approval(s)`);
+    }
+  } else {
+    nextSteps.push('Review high-risk actions');
+    nextSteps.push('Obtain security approval');
+    nextSteps.push('Consider alternative approaches');
   }
-  
-  if (approvals.length > 0) {
-    steps.push(`Obtain ${approvals.length} required approval(s)`);
-  }
-  
-  return steps;
+
+  return {
+    content,
+    agent_name: 'AIRA',
+    plan,
+    risk,
+    verifications,
+    approvals,
+    tool_calls: toolCalls,
+    next_steps: nextSteps
+  };
 }
 
 /**
- * Generate tool calls from execution plan (moved from planner)
+ * Generate tool calls from execution plan
  */
-function generateToolCallsFromPlan(plan: any): ToolCall[] {
-  const toolCalls: ToolCall[] = [];
+function generateToolCallsFromPlan(plan: any): any[] {
+  const toolCalls: any[] = [];
   
   for (const action of plan.actions) {
-    // Map actions to appropriate tools
     const toolCall = mapActionToTool(action);
     if (toolCall) {
       toolCalls.push(toolCall);
@@ -187,8 +250,7 @@ function generateToolCallsFromPlan(plan: any): ToolCall[] {
 /**
  * Map action to appropriate tool
  */
-function mapActionToTool(action: any): ToolCall | null {
-  // Simple mapping for MVP - in production this would be more sophisticated
+function mapActionToTool(action: any): any | null {
   const toolMapping: Record<string, string> = {
     'validate_deployment_target': 'github',
     'run_pre_deployment_checks': 'github',

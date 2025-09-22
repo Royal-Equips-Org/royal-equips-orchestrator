@@ -1,4 +1,4 @@
-// AI Chat Interface Component
+// AIRA AI Chat Interface Component - Production Integration
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -10,48 +10,60 @@ import {
   Zap,
   Brain,
   Search,
-  Settings
+  Settings,
+  AlertTriangle,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
-import { useChatMessages, useEmpireStore } from '@/store/empire-store';
+import { useEmpireStore } from '@/store/empire-store';
 import { cn } from '@/lib/utils';
-import type { ChatMessage } from '@/types/empire';
+import type { ChatMessage } from '@/store/empire-store';
 
-const mockMessages: ChatMessage[] = [
-  {
-    id: "msg_001",
-    role: "assistant",
-    content: "👑 Royal Equips Empire Command Center online. I'm your Master AI Assistant. How can I help you manage your empire today?",
-    timestamp: new Date(Date.now() - 300000),
-    agent_id: "master_ai"
-  },
-  {
-    id: "msg_002", 
-    role: "user",
-    content: "Show me the current status of all agents",
-    timestamp: new Date(Date.now() - 240000)
-  },
-  {
-    id: "msg_003",
-    role: "assistant", 
-    content: "Here's your current agent status:\n\n🔍 **Product Research Agent**: ACTIVE - 127 discoveries, 89% success rate\n🏭 **Supplier Intelligence**: ACTIVE - 89 suppliers vetted\n🤖 **Master Coordinator**: ACTIVE - Managing 6 workflows\n⚠️ **Marketing Agent**: ERROR - API connection failed\n\nWould you like me to restart the Marketing Agent?",
-    timestamp: new Date(Date.now() - 200000),
-    agent_id: "master_ai"
-  }
-];
+// AIRA API Configuration
+const AIRA_API_URL = 'http://localhost:10000';
+
+interface AIRAResponse {
+  content: string;
+  agent_name: string;
+  plan?: {
+    goal: string;
+    actions: Array<{
+      type: string;
+      args: Record<string, any>;
+    }>;
+  };
+  risk?: {
+    level: 'LOW' | 'MEDIUM' | 'HIGH';
+    score: number;
+  };
+  verifications?: Array<{
+    type: string;
+    result: string;
+    pass: boolean;
+  }>;
+  approvals?: Array<{
+    reason: string;
+    risk: number;
+  }>;
+  tool_calls?: Array<{
+    tool: string;
+    args: Record<string, any>;
+    dry_run: boolean;
+  }>;
+  next_steps?: string[];
+}
 
 function MessageBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === 'user';
-  const isAgent = message.role === 'agent';
+  const isUser = message.sender === 'user';
+  const isAI = message.sender === 'ai';
 
   const getAvatar = () => {
     if (isUser) return <User className="w-4 h-4" />;
-    if (isAgent) return <Zap className="w-4 h-4" />;
     return <Brain className="w-4 h-4" />;
   };
 
   const getAvatarBg = () => {
     if (isUser) return 'bg-blue-500';
-    if (isAgent) return 'bg-purple-500';
     return 'bg-green-500';
   };
 
@@ -66,7 +78,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     >
       {/* Avatar */}
       <div className={cn(
-        "w-8 h-8 rounded-full flex items-center justify-center text-white",
+        "w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0",
         getAvatarBg()
       )}>
         {getAvatar()}
@@ -74,16 +86,23 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 
       {/* Message */}
       <div className={cn(
-        "max-w-[70%] px-4 py-2 rounded-lg",
+        "max-w-[85%] px-4 py-3 rounded-lg",
         isUser 
           ? "bg-blue-500/20 text-blue-100 border border-blue-500/30" 
           : "bg-gray-800/50 text-gray-100 border border-gray-700"
       )}>
-        <div className="text-sm whitespace-pre-wrap">
+        <div className="text-sm whitespace-pre-wrap leading-relaxed">
           {message.content}
         </div>
-        <div className="text-xs opacity-50 mt-1">
-          {message.timestamp.toLocaleTimeString()}
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-600/30">
+          <div className="text-xs opacity-50">
+            {message.timestamp.toLocaleTimeString()}
+          </div>
+          {message.agentName && (
+            <div className="text-xs font-medium text-green-400">
+              {message.agentName}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -92,21 +111,21 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 
 function QuickActions({ onAction }: { onAction: (action: string) => void }) {
   const actions = [
-    { label: "Agent Status", icon: Bot, action: "status" },
-    { label: "Revenue Report", icon: Zap, action: "revenue" },
-    { label: "Product Research", icon: Search, action: "research" },
-    { label: "System Settings", icon: Settings, action: "settings" }
+    { label: "Agent Status", icon: Bot, action: "Show me the current status of all agents" },
+    { label: "Revenue Report", icon: Zap, action: "What's our current revenue progress and performance?" },
+    { label: "Product Research", icon: Search, action: "Run product research on trending items" },
+    { label: "System Health", icon: Settings, action: "Check the health status of all services" }
   ];
 
   return (
     <div className="flex flex-wrap gap-2 mb-4">
       {actions.map((action) => (
         <motion.button
-          key={action.action}
+          key={action.label}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => onAction(action.action)}
-          className="px-3 py-1 text-xs bg-gray-700/50 hover:bg-gray-600/50 rounded-full border border-gray-600 flex items-center space-x-1"
+          className="px-3 py-1 text-xs bg-gray-700/50 hover:bg-gray-600/50 rounded-full border border-gray-600 flex items-center space-x-1 transition-colors"
         >
           <action.icon className="w-3 h-3" />
           <span>{action.label}</span>
@@ -116,68 +135,131 @@ function QuickActions({ onAction }: { onAction: (action: string) => void }) {
   );
 }
 
+function AIRAStatusIndicator({ response }: { response?: AIRAResponse }) {
+  if (!response?.risk) return null;
+
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case 'LOW': return 'text-green-400 bg-green-500/20 border-green-500/30';
+      case 'MEDIUM': return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
+      case 'HIGH': return 'text-red-400 bg-red-500/20 border-red-500/30';
+      default: return 'text-gray-400 bg-gray-500/20 border-gray-500/30';
+    }
+  };
+
+  const getRiskIcon = (level: string) => {
+    switch (level) {
+      case 'LOW': return <CheckCircle className="w-3 h-3" />;
+      case 'MEDIUM': return <AlertTriangle className="w-3 h-3" />;
+      case 'HIGH': return <XCircle className="w-3 h-3" />;
+      default: return <AlertTriangle className="w-3 h-3" />;
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between px-3 py-2 mb-3 rounded-lg border bg-gray-800/30 border-gray-700">
+      <div className="flex items-center space-x-2">
+        <Brain className="w-4 h-4 text-hologram" />
+        <span className="text-sm font-medium text-hologram">AIRA Analysis</span>
+      </div>
+      <div className={cn(
+        "flex items-center space-x-1 px-2 py-1 rounded-full border text-xs font-medium",
+        getRiskColor(response.risk.level)
+      )}>
+        {getRiskIcon(response.risk.level)}
+        <span>{response.risk.level}</span>
+        <span className="opacity-70">({(response.risk.score * 100).toFixed(0)}%)</span>
+      </div>
+    </div>
+  );
+}
+
 export default function AIChatInterface() {
-  const chatMessages = useChatMessages();
-  const { addChatMessage } = useEmpireStore();
-  
-  // Use mock messages if none in store
-  const displayMessages = chatMessages.length > 0 ? chatMessages : mockMessages;
+  const { chatMessages, addChatMessage } = useEmpireStore();
   
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [lastAIRAResponse, setLastAIRAResponse] = useState<AIRAResponse | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [displayMessages]);
+  }, [chatMessages]);
+
+  const sendToAIRA = async (userMessage: string): Promise<AIRAResponse> => {
+    const response = await fetch(`${AIRA_API_URL}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        message: userMessage,
+        context: {
+          timestamp: new Date().toISOString(),
+          source: 'command_center_ui'
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AIRA API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  };
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || isProcessing) return;
 
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
-      role: 'user',
       content: message,
-      timestamp: new Date()
+      timestamp: new Date(),
+      sender: 'user'
     };
 
     addChatMessage(userMessage);
     setMessage('');
-    setIsTyping(true);
+    setIsProcessing(true);
+    setLastAIRAResponse(null);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "I'm analyzing that request for you...",
-        "Let me check the current empire status and get back to you.",
-        "Processing your command through the agent network...",
-        "That's an interesting question. Let me consult the relevant agents.",
-        "I'll need to run some calculations on that. Give me a moment..."
-      ];
+    try {
+      // Send to AIRA for processing
+      const airaResponse = await sendToAIRA(userMessage.content);
       
-      const aiResponse: ChatMessage = {
+      // Create AI response message
+      const aiMessage: ChatMessage = {
         id: `msg_${Date.now()}_ai`,
-        role: 'assistant',
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content: airaResponse.content,
         timestamp: new Date(),
-        agent_id: 'master_ai'
+        sender: 'ai',
+        agentName: airaResponse.agent_name || 'AIRA'
       };
       
-      addChatMessage(aiResponse);
-      setIsTyping(false);
-    }, 2000);
+      addChatMessage(aiMessage);
+      setLastAIRAResponse(airaResponse);
+
+    } catch (error) {
+      console.error('AIRA API Error:', error);
+      
+      // Fallback error response
+      const errorMessage: ChatMessage = {
+        id: `msg_${Date.now()}_error`,
+        content: `❌ I'm having trouble connecting to AIRA services. ${error instanceof Error ? error.message : 'Please try again later.'}`,
+        timestamp: new Date(),
+        sender: 'ai',
+        agentName: 'System'
+      };
+      
+      addChatMessage(errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleQuickAction = (action: string) => {
-    const actionMessages = {
-      status: "Show me the current status of all agents",
-      revenue: "What's our current revenue progress?", 
-      research: "Run product research on trending items",
-      settings: "Open system configuration panel"
-    };
-
-    setMessage(actionMessages[action as keyof typeof actionMessages] || action);
+    setMessage(action);
   };
 
   const toggleVoice = () => {
@@ -186,17 +268,35 @@ export default function AIChatInterface() {
   };
 
   return (
-    <div className="h-96 flex flex-col">
+    <div className="h-[500px] flex flex-col bg-black/40 backdrop-blur-md border border-cyan-500/30 rounded-lg">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <div className="flex items-center space-x-2">
+          <Brain className="w-5 h-5 text-hologram" />
+          <h3 className="text-lg font-semibold text-hologram">AIRA Assistant</h3>
+        </div>
+        <div className="text-xs text-gray-400">
+          Main Empire Agent
+        </div>
+      </div>
+
+      {/* AIRA Status */}
+      {lastAIRAResponse && (
+        <div className="px-4 pt-3">
+          <AIRAStatusIndicator response={lastAIRAResponse} />
+        </div>
+      )}
+
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         <AnimatePresence>
-          {displayMessages.map((msg) => (
+          {chatMessages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
         </AnimatePresence>
         
-        {/* Typing Indicator */}
-        {isTyping && (
+        {/* Processing Indicator */}
+        {isProcessing && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -205,11 +305,14 @@ export default function AIChatInterface() {
             <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">
               <Brain className="w-4 h-4" />
             </div>
-            <div className="bg-gray-800/50 px-4 py-2 rounded-lg border border-gray-700">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+            <div className="bg-gray-800/50 px-4 py-3 rounded-lg border border-gray-700">
+              <div className="flex items-center space-x-2">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-hologram rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-hologram rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-hologram rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                </div>
+                <span className="text-sm text-hologram">AIRA is analyzing...</span>
               </div>
             </div>
           </motion.div>
@@ -231,16 +334,18 @@ export default function AIChatInterface() {
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Ask me anything about your empire..."
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-hologram pr-10"
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              placeholder="Ask AIRA anything about your empire..."
+              disabled={isProcessing}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-hologram pr-10 disabled:opacity-50"
             />
             
             {/* Voice Button */}
             <button
               onClick={toggleVoice}
+              disabled={isProcessing}
               className={cn(
-                "absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded",
+                "absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded disabled:opacity-50",
                 isListening 
                   ? "text-red-400 bg-red-500/20" 
                   : "text-gray-400 hover:text-white"
@@ -254,7 +359,7 @@ export default function AIChatInterface() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSendMessage}
-            disabled={!message.trim()}
+            disabled={!message.trim() || isProcessing}
             className="px-4 py-2 bg-hologram hover:bg-hologram/80 text-black rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
           >
             <Send className="w-4 h-4" />
@@ -262,7 +367,7 @@ export default function AIChatInterface() {
         </div>
         
         <div className="text-xs text-gray-500 mt-2 text-center">
-          💡 Try: "Run product research", "Show agent status", "What's our revenue?"
+          💡 Try: "Deploy to production", "Check agent status", "Analyze sales performance"
         </div>
       </div>
     </div>
