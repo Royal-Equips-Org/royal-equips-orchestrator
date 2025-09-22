@@ -12,7 +12,9 @@
     "prepare": "node -e \"process.exit((process.env.CI==='true'||process.env.NODE_ENV==='production')?0:1)\" || husky install",
     "fix-agent": "node scripts/fix-agent.mjs --watch",
     "start:api": "pnpm --filter @royal-equips/orchestrator-api start",
-    "dev:api": "pnpm --filter @royal-equips/orchestrator-api dev"
+    "dev:api": "pnpm --filter @royal-equips/orchestrator-api dev",
+    "start:aira": "pnpm --filter @royal-equips/aira start",
+    "dev:aira": "pnpm --filter @royal-equips/aira dev"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

@@ -306,24 +306,11 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
   chatMessages: [
     {
       id: '1',
-      content: 'Welcome to the Royal Equips Empire Command Center! I\'m your Master AI Agent ready to help manage your autonomous e-commerce empire.',
+      content: '👑 Welcome to the Royal Equips Empire Command Center! I\'m AIRA, your Main Empire Agent, ready to orchestrate all domains with omniscient context and natural language planning.',
       timestamp: new Date(Date.now() - 300000),
       sender: 'ai',
-      agentName: 'Master Agent',
-    },
-    {
-      id: '2',
-      content: 'Show me the current agent status',
-      timestamp: new Date(Date.now() - 240000),
-      sender: 'user',
-    },
-    {
-      id: '3',
-      content: 'Empire Status: 6 agents deployed, 5 active, 1 deploying, 1 error. Revenue: $2.4M (2.4% to $100M target). System health: 99.2%. Recommend reviewing Marketing Orchestrator.',
-      timestamp: new Date(Date.now() - 180000),
-      sender: 'ai',
-      agentName: 'Master Agent',
-    },
+      agentName: 'AIRA',
+    }
   ],
   
   alerts: [
@@ -401,17 +388,8 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
     
     get().addChatMessage(userMessage);
     
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        content: `Processing: "${content}". Empire systems responding...`,
-        timestamp: new Date(),
-        sender: 'ai',
-        agentName: 'Master Agent',
-      };
-      get().addChatMessage(aiResponse);
-    }, 1000);
+    // Production implementation will be handled by AIChatInterface component
+    // which connects directly to AIRA API
   },
   
   addAlert: (alert: Omit<EmergencyAlert, 'id' | 'timestamp'>) => {
@@ -434,3 +412,11 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
     }));
   },
 }));
+
+// Convenience hooks for accessing specific parts of the store
+export const useEmpireMetrics = () => useEmpireStore(state => state.metrics);
+export const useAgents = () => useEmpireStore(state => state.agents);
+export const useProductOpportunities = () => useEmpireStore(state => state.productOpportunities);
+export const useChatMessages = () => useEmpireStore(state => state.chatMessages);
+export const useMarketingCampaigns = () => useEmpireStore(state => state.marketingCampaigns);
+export const useAlerts = () => useEmpireStore(state => state.alerts);
