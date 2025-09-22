@@ -213,17 +213,23 @@ function validateExecutionRequest(body: any): { valid: boolean; error?: string }
   }
 
   // Business rule: Check for conflicting operations
-  const hasDestructiveOps = body.tool_calls.some((tc: any) => 
+  // Precompute stringified args for each tool call to avoid repeated JSON.stringify
+  const toolCallsWithStrArgs = body.tool_calls.map((tc: any) => ({
+    ...tc,
+    _strArgs: JSON.stringify(tc.args)
+  }));
+
+  const hasDestructiveOps = toolCallsWithStrArgs.some((tc: any) => 
     ['delete', 'drop', 'truncate', 'remove'].some(op => 
       tc.tool.toLowerCase().includes(op) || 
-      JSON.stringify(tc.args).toLowerCase().includes(op)
+      tc._strArgs.toLowerCase().includes(op)
     )
   );
 
-  const hasCreationOps = body.tool_calls.some((tc: any) => 
+  const hasCreationOps = toolCallsWithStrArgs.some((tc: any) => 
     ['create', 'deploy', 'add', 'insert'].some(op => 
       tc.tool.toLowerCase().includes(op) || 
-      JSON.stringify(tc.args).toLowerCase().includes(op)
+      tc._strArgs.toLowerCase().includes(op)
     )
   );
 
