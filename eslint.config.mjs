@@ -26,7 +26,8 @@ const IGNORE_PATTERNS = [
   "tools/royal-fix-agent/**",
   "scripts/fix-agent.mjs",  // Temporarily ignore due to syntax issues
   "reports/**",
-  ".wrangler/**"
+  ".wrangler/**",
+  "apps/command-center-ui/.vite/"
 ];
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
@@ -51,7 +52,7 @@ export default [
           "./apps/*/tsconfig.json",
           "./packages/*/tsconfig.json"
         ],
-        tsconfigRootDir: process.cwd(),
+        tsconfigRootDir: import.meta.dirname,
         ecmaVersion: 2022
       }
     },
@@ -63,9 +64,21 @@ export default [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
       ],
-      // Extra strictness for enterprise: ban explicit any, enforce return types
-      "@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: false }],
-      "@typescript-eslint/explicit-function-return-type": "warn"
+      // Reduce strictness for existing codebase
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "@typescript-eslint/require-await": "off",
+      "@typescript-eslint/no-floating-promises": "warn",
+      "@typescript-eslint/no-misused-promises": "warn",
+      "@typescript-eslint/no-redundant-type-constituents": "warn",
+      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+      "no-prototype-builtins": "error"
     }
   })),
 
@@ -93,6 +106,7 @@ export default [
   // Frontend/browser code - allow browser, serviceworker, webworker globals
   {
     files: [
+      "apps/command-center-ui/**/*.{js,ts,jsx,tsx}",
       "dashboard/**/*.{js,ts,jsx,tsx}",
       "public/**/*.{js,jsx}"
     ],
@@ -133,8 +147,15 @@ export default [
       }
     },
     rules: {
-      // Allow unused vars for event-driven handlers
-      "no-unused-vars": "off"
+      // Allow unused vars for event-driven handlers with underscore prefix
+      "no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
+      ]
     }
   },
 

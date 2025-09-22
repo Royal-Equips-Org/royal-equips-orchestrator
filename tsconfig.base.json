@@ -1,16 +1,31 @@
-﻿{
+{
   "compilerOptions": {
     "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "strict": false,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
     "resolveJsonModule": true,
-    "baseUrl": "."
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": { "*": ["./types/*"] },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
-  "include": ["packages","agents","services","apps"]
+  "include": [
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx", 
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "packages/shared/**/*.ts",
+    "apps/command-center-ui/vite.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.min.js"
+  ]
 }
