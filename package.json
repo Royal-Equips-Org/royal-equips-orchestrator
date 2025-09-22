@@ -5,9 +5,8 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
-    "lint": "eslint --max-warnings=0 \"{src,apps,packages,edge-functions}/**/*.{js,jsx,ts,tsx}\"",
-    "lint:fix": "eslint --max-warnings=0 \"{src,apps,packages,edge-functions}/**/*.{js,jsx,ts,tsx}\" --fix",
-    "typecheck": "tsc -p tsconfig.base.json --noEmit",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r -F \"./**\" tsc -b --pretty false",
     "test": "jest --runInBand --passWithNoTests",
     "prepare": "node -e \"process.exit((process.env.CI==='true'||process.env.NODE_ENV==='production')?0:1)\" || husky install",
     "fix-agent": "node scripts/fix-agent.mjs --watch",

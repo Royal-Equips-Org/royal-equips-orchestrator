@@ -1,21 +1,12 @@
 {
-  "name": "@royal-equips/agents-core",
+  "name": "@royal-equips/obs",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": "./dist/index.js",
-    "./types": "./dist/types.js"
-  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "jest",
     "lint": "eslint \"src/**/*.ts\""
-  },
-  "dependencies": {
-    "zod": "^3.23.8",
-    "pino": "^9.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",
