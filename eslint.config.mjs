@@ -77,6 +77,7 @@ export default [
       "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/no-misused-promises": "warn",
       "@typescript-eslint/no-redundant-type-constituents": "warn",
+      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
       "no-prototype-builtins": "error"
     }
   })),
