@@ -1,8 +1,6 @@
 // Basic types for empire functionality
 export type AgentStatus = 'active' | 'paused' | 'completed' | 'draft';
 
-// Basic types for empire functionality
-export type AgentStatus = 'active' | 'paused' | 'completed' | 'draft';
 
 export interface Agent {
   id: string;
