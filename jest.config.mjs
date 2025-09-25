@@ -20,7 +20,8 @@ export default {
     "app/static/assets/",
     "vendor/",
     ".next/",
-    "reports/"
+    "reports/",
+    "apps/command-center-ui/" // Exclude vitest tests - they use their own test runner
   ],
   passWithNoTests: true
 };
