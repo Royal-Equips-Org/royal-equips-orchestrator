@@ -6,15 +6,7 @@
  */
 
 import { ExecutionPlan } from '../schemas/aira.js';
-
-// Define UEG (Unified Empire Graph) interface for better type safety
-interface UEGSnapshot {
-  timestamp: string;
-  systems: Record<string, unknown>;
-  metrics: Record<string, number>;
-  [key: string]: unknown;
-}
-
+import { UEGSnapshot } from '../ueg/index.ts';
 /**
  * Main planner function - converts NL to structured execution plan
  */
