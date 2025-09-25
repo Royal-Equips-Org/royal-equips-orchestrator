@@ -5,14 +5,14 @@
  * with proper reasoning, critique loops, and hallucination guards.
  */
 
-import { ExecutionPlan, ToolCall } from '../schemas/aira.js';
-
+import { ExecutionPlan } from '../schemas/aira.js';
+import { UEGSnapshot } from '../ueg/index.js';
 /**
  * Main planner function - converts NL to structured execution plan
  */
 export async function planner(
   message: string, 
-  ueg: any, 
+  ueg: UEGSnapshot, 
   context?: Record<string, unknown>
 ): Promise<ExecutionPlan> {
   
@@ -71,7 +71,7 @@ function analyzeIntent(message: string): string {
 function generatePlan(
   intent: string, 
   message: string, 
-  ueg: any, 
+  ueg: UEGSnapshot, 
   context?: Record<string, unknown>
 ): ExecutionPlan {
   

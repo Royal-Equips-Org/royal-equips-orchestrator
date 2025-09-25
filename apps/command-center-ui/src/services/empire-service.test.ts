@@ -10,7 +10,10 @@ vi.mock('./api-client', () => ({
   }
 }));
 
-const mockApiClient = apiClient.apiClient as any;
+const mockApiClient = apiClient.apiClient as {
+  get: ReturnType<typeof vi.fn>;
+  post: ReturnType<typeof vi.fn>;
+};
 
 describe('EmpireService', () => {
   let empireService: EmpireService;

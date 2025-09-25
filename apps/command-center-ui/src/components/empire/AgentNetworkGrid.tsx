@@ -1,6 +1,6 @@
 // Agent Network Grid Component
 import { motion } from 'framer-motion';
-import { Cpu, Activity, AlertTriangle, CheckCircle, Clock, Zap, RefreshCw } from 'lucide-react';
+import { Cpu, Activity, AlertTriangle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import { useEmpireStore, useLoadingStates, useErrorStates } from '@/store/empire-store';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';

@@ -7,8 +7,8 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
-import { ExecuteRequestSchema, type ToolCall } from '../schemas/aira.js';
-import { tools } from '../tools/index.js';
+import { type ToolCall, type ExecutionSummary } from '../schemas/aira.js';
+import { tools, type ToolResult } from '../tools/index.js';
 import { validateApproval } from '../policy/approvals.js';
 
 // Business constants for execution logic
@@ -37,7 +37,7 @@ export const executeRoute: FastifyPluginAsync = async (fastify) => {
 
   fastify.post<{
     Body: { tool_calls: ToolCall[]; approval_token?: string };
-    Reply: { ok: boolean; results: any[]; execution_id: string; summary?: ExecutionSummary };
+    Reply: { ok: boolean; results: ToolResult[]; execution_id: string; summary?: ExecutionSummary };
   }>('/execute', {
     schema: {
       body: {

@@ -15,7 +15,15 @@ vi.mock('../services/empire-service', () => ({
   }
 }));
 
-const mockEmpireService = empireService.empireService as any;
+const mockEmpireService = empireService.empireService as {
+  fetchMetrics: ReturnType<typeof vi.fn>;
+  fetchAgents: ReturnType<typeof vi.fn>;
+  fetchProductOpportunities: ReturnType<typeof vi.fn>;
+  fetchMarketingCampaigns: ReturnType<typeof vi.fn>;
+  approveProduct: ReturnType<typeof vi.fn>;
+  rejectProduct: ReturnType<typeof vi.fn>;
+  sendChatMessage: ReturnType<typeof vi.fn>;
+};
 
 describe('EmpireStore', () => {
   beforeEach(() => {
@@ -77,8 +85,30 @@ describe('EmpireStore', () => {
     });
 
     it('should set loading state during fetch', async () => {
-      let resolvePromise: (value: any) => void;
-      const promise = new Promise((resolve) => {
+      let resolvePromise: (value: {
+        total_agents: number;
+        active_agents: number;
+        total_opportunities: number;
+        approved_products: number;
+        revenue_progress: number;
+        target_revenue: number;
+        automation_level: number;
+        system_uptime: number;
+        daily_discoveries: number;
+        profit_margin_avg: number;
+      }) => void;
+      const promise = new Promise<{
+        total_agents: number;
+        active_agents: number;
+        total_opportunities: number;
+        approved_products: number;
+        revenue_progress: number;
+        target_revenue: number;
+        automation_level: number;
+        system_uptime: number;
+        daily_discoveries: number;
+        profit_margin_avg: number;
+      }>((resolve) => {
         resolvePromise = resolve;
       });
       

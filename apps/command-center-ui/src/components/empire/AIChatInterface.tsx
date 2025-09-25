@@ -55,7 +55,6 @@ interface AIRAResponse {
 
 function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.sender === 'user';
-  const isAI = message.sender === 'ai';
 
   const getAvatar = () => {
     if (isUser) return <User className="w-4 h-4" />;
@@ -190,7 +189,7 @@ export default function AIChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  const sendToAIRA = async (userMessage: string): Promise<AIRAResponse> => {
+  const _sendToAIRA = async (userMessage: string): Promise<AIRAResponse> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       controller.abort();

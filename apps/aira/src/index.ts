@@ -139,4 +139,7 @@ const start = async () => {
   }
 };
 
-start();
+start().catch((err) => {
+  console.error('Failed to start AIRA service:', err);
+  process.exit(1);
+});

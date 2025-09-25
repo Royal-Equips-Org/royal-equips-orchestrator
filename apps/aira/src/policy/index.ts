@@ -10,7 +10,8 @@ import {
   RiskAssessment, 
   Verification, 
   ApprovalRequest,
-  RiskLevel 
+  RiskLevel,
+  Action
 } from '../schemas/aira.js';
 
 // Business configuration for policy engine
@@ -374,7 +375,7 @@ async function runDependencyCheck(plan: ExecutionPlan): Promise<Verification> {
 /**
  * Enhanced risk calculation functions
  */
-function calculateActionRisk(actions: any[]): number {
+function calculateActionRisk(actions: Action[]): number {
   const riskScores: Record<string, number> = {
     'delete': 0.8,
     'drop': 0.9,
