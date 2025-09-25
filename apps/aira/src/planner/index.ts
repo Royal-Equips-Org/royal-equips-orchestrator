@@ -6,7 +6,7 @@
  */
 
 import { ExecutionPlan } from '../schemas/aira.js';
-import { UEGSnapshot } from '../ueg/index.ts';
+import { UEGSnapshot } from '../ueg/index.js';
 /**
  * Main planner function - converts NL to structured execution plan
  */
