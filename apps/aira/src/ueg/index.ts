@@ -12,7 +12,7 @@ export interface UEGEntity {
   id: string;
   type: 'repo' | 'service' | 'workflow' | 'dataset' | 'table' | 'secret' | 'env' | 'endpoint' | 'dashboard' | 'campaign' | 'product' | 'order' | 'customer' | 'incident';
   name: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   relationships: UEGRelationship[];
   lastUpdated: string;
 }
@@ -20,7 +20,7 @@ export interface UEGEntity {
 export interface UEGRelationship {
   type: 'produces' | 'consumes' | 'deploys_to' | 'protects' | 'depends_on' | 'alerts_to';
   targetId: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UEGSnapshot {
