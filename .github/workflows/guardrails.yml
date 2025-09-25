@@ -7,49 +7,107 @@ on:
 permissions:
   contents: read
   security-events: write
+  actions: read
+  id-token: write
+  checks: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHON_VERSION: "3.12"
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
     steps:
+      # Checkout full history for accurate diff + audit
       - uses: actions/checkout@v4.1.2
-        with: {fetch-depth: 0}
+        with:
+          fetch-depth: 0
+
+      # Set bot identity for audit traceability
       - name: Set git user identity
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Enforce signed commits (GPG)
       - name: Enforce signed commits
         run: |
-          unsigned=$(git log --pretty='%H %G?' origin/${{ github.base_ref || 'HEAD' }}..HEAD | awk '$2!="G"')
-          if [ -n "$unsigned" ]; then echo "Unsigned commits found"; echo "$unsigned"; exit 1; fi
+          unsigned=$(git log --pretty='%H %G?' origin/${{ github.base_ref || 'main' }}..HEAD | awk '$2!="G"')
+          if [ -n "$unsigned" ]; then
+            echo "Unsigned commits found:"
+            echo "$unsigned"
+            exit 1
+          fi
+
+      # Conventional commit compliance
       - name: Enforce Conventional Commits
         run: |
-          npx --yes @commitlint/cli@19 -V --from=origin/${{ github.base_ref || 'HEAD' }} --to=HEAD
+          npx --yes @commitlint/cli@19 -V --from=origin/${{ github.base_ref || 'main' }} --to=HEAD
+
+      # Secret scanning with TruffleHog
       - name: Secret scan (trufflehog)
         uses: trufflesecurity/trufflehog@v3.53.0
         with:
           path: .
           base: ${{ github.event.before || 'HEAD~1' }}
           head: HEAD
+
+      # Python setup (version pinning)
       - name: Python setup
         uses: actions/setup-python@v5
-        with: {python-version: '3.11', cache: 'pip'}
-      - run: pip install -r requirements.txt && pip install pytest pytest-asyncio pytest-cov bandit safety
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      # Install + audit dependencies
+      - name: Install & audit Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov bandit safety
+          pip check
+          safety check -r requirements.txt --full-report || true
+
+      # Lint security
       - name: Lint security
         run: |
           bandit -r platform -q || true
-          safety check -r requirements.txt --full-report || true
+
+      # Run unit and integration tests (fail fast)
       - name: Unit + integration tests
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: |
-          pytest -q --disable-warnings --maxfail=1
+          pytest -q --disable-warnings --maxfail=1 --cov=platform
+
+      # Container SBOM (Software Bill of Materials) + scan
       - name: Container SBOM + scan
         uses: anchore/sbom-action@v0
+
+      # Trivy filesystem scan (vuln & compliance)
       - name: Trivy FS
         uses: aquasecurity/trivy-action@master
-        with: {scan-type: 'fs', scan-ref: '.'}
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+
+      # Require ADR/Docs for architectural changes
       - name: Require ADR/Docs on architectural changes
         run: |
-          if git diff --name-only origin/${{ github.base_ref || 'HEAD' }}..HEAD | grep -E 'platform/(core|agents|database)|nginx/|monitoring/'; then
+          if git diff --name-only origin/${{ github.base_ref || 'main' }}..HEAD | grep -E 'platform/(core|agents|database)|nginx/|monitoring/'; then
             git diff --name-only | grep -qE '^docs/|^ADR' || (echo "Missing docs/ADR for arch change" && exit 1)
           fi
+
+      # Advanced Security: code scanning (if enabled in repo settings)
+      - name: CodeQL Analyze
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/security'
+
+      # Audit log for full workflow run (traceability)
+      - name: Workflow audit log
+        run: |
+          echo "Workflow completed at $(date -u)" | tee -a .github/workflow-audit.log
+          git status
+          git log -n 5 --oneline
