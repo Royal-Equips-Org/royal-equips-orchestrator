@@ -9,7 +9,13 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
-import { ChatRequestSchema, AIRAResponseSchema, type AIRAResponse, type ExecutionPlan, type Verification } from '../schemas/aira.js';
+import { 
+  type ExecutionPlan, 
+  type Verification,
+  type RiskAssessment,
+  type ApprovalRequest,
+  type ToolCall
+} from '../schemas/aira.js';
 import { planner } from '../planner/index.js';
 import { snapshotUEG } from '../ueg/index.js';
 import { policy } from '../policy/index.js';
@@ -43,11 +49,11 @@ export const chatRoute: FastifyPluginAsync = async (fastify) => {
     Reply: {
       content: string;
       agent_name: string;
-      plan?: any;
-      risk?: any;
-      verifications?: any[];
-      approvals?: any[];
-      tool_calls?: any[];
+      plan?: ExecutionPlan;
+      risk?: RiskAssessment;
+      verifications?: Verification[];
+      approvals?: ApprovalRequest[];
+      tool_calls?: ToolCall[];
       next_steps?: string[];
     };
   }>('/chat', {
@@ -102,14 +108,14 @@ export const chatRoute: FastifyPluginAsync = async (fastify) => {
       // Additional business logic validation
       const validation = validateChatRequest(request.body);
       if (!validation.valid) {
-        reply.status(400).send({
+        await reply.status(400).send({
           content: `❌ ${validation.error}`,
           agent_name: 'AIRA'
         });
         return;
       }
     }
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const startTime = Date.now();
     const requestContext = {
       requestId: request.id,
@@ -180,7 +186,7 @@ export const chatRoute: FastifyPluginAsync = async (fastify) => {
 /**
  * Business logic for request validation
  */
-function validateChatRequest(body: any): { valid: boolean; error?: string } {
+function validateChatRequest(body: { message?: unknown }): { valid: boolean; error?: string } {
   if (!body.message || typeof body.message !== 'string') {
     return { valid: false, error: 'Message is required and must be a string' };
   }
@@ -216,18 +222,18 @@ async function processAIRARequest(params: {
   context?: Record<string, unknown>;
   requestId: string;
   startTime: number;
-  logger: any;
+  logger: { debug: (obj: object) => void };
 }): Promise<{
   content: string;
   agent_name: string;
-  plan: any;
-  risk: any;
-  verifications: any[];
-  approvals: any[];
-  tool_calls: any[];
+  plan: ExecutionPlan;
+  risk: RiskAssessment;
+  verifications: Verification[];
+  approvals: ApprovalRequest[];
+  tool_calls: ToolCall[];
   next_steps: string[];
 }> {
-  const { message, context, requestId, startTime, logger } = params;
+  const { message, context, requestId, startTime: _startTime, logger } = params;
 
   // Step 1: Snapshot current Unified Empire Graph (UEG) with timeout
   logger.debug({ requestId, step: 'ueg_snapshot' });
@@ -284,7 +290,7 @@ async function processAIRARequest(params: {
 /**
  * Create standardized error response
  */
-function createErrorResponse(error: unknown, requestId: string) {
+function createErrorResponse(error: unknown, _requestId: string) {
   const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
   
   // Business logic for error classification
@@ -323,19 +329,19 @@ function createErrorResponse(error: unknown, requestId: string) {
  */
 function generateNaturalLanguageResponse(
   userMessage: string,
-  plan: any,
-  risk: any,
-  verifications: any[],
-  approvals: any[],
-  toolCalls: any[]
+  plan: ExecutionPlan,
+  risk: RiskAssessment,
+  verifications: Verification[],
+  approvals: ApprovalRequest[],
+  toolCalls: ToolCall[]
 ): {
   content: string;
   agent_name: string;
-  plan: any;
-  risk: any;
-  verifications: any[];
-  approvals: any[];
-  tool_calls: any[];
+  plan: ExecutionPlan;
+  risk: RiskAssessment;
+  verifications: Verification[];
+  approvals: ApprovalRequest[];
+  tool_calls: ToolCall[];
   next_steps: string[];
 } {
   let content = '';
@@ -349,7 +355,7 @@ function generateNaturalLanguageResponse(
     content += `I've generated a **${risk.level} risk** execution plan with ${plan.actions.length} actions (${confidenceScore}% confidence):\n\n`;
     content += `**Goal:** ${plan.goal}\n\n`;
     content += `**Actions:**\n`;
-    plan.actions.forEach((action: any, i: number) => {
+    plan.actions.forEach((action, i: number) => {
       content += `${i + 1}. ${formatActionName(action.type)}\n`;
     });
     content += `\n✅ All verifications passed. This plan is ready for automatic execution.`;
@@ -363,7 +369,7 @@ function generateNaturalLanguageResponse(
     content += `I've generated a **${risk.level} risk** execution plan (${(risk.score * 100).toFixed(1)}% risk score, ${confidenceScore}% confidence):\n\n`;
     content += `**Goal:** ${plan.goal}\n\n`;
     content += `**Actions Required:**\n`;
-    plan.actions.forEach((action: any, i: number) => {
+    plan.actions.forEach((action, i: number) => {
       content += `${i + 1}. ${formatActionName(action.type)}\n`;
     });
     
@@ -385,13 +391,13 @@ function generateNaturalLanguageResponse(
     content += `**Critical Risk Assessment:** ${risk.level} risk operation (${(risk.score * 100).toFixed(1)}% risk score, ${confidenceScore}% confidence)\n\n`;
     content += `**Goal:** ${plan.goal}\n\n`;
     content += `**⚠️ Critical Actions Required:**\n`;
-    plan.actions.forEach((action: any, i: number) => {
+    plan.actions.forEach((action, i: number) => {
       content += `${i + 1}. ${formatActionName(action.type)} ⚠️\n`;
     });
     
     if (approvals.length > 0) {
       content += `\n🔐 **Multiple Approvals Required (${approvals.length}):**\n`;
-      approvals.forEach((approval: any, i: number) => {
+      approvals.forEach((approval, i: number) => {
         content += `${i + 1}. ${approval.reason}\n`;
       });
     }
@@ -417,7 +423,7 @@ function generateNaturalLanguageResponse(
 /**
  * Business logic for calculating confidence score
  */
-function calculateConfidenceScore(verifications: any[]): number {
+function calculateConfidenceScore(verifications: Verification[]): number {
   if (verifications.length === 0) return 50;
   
   const passedCount = verifications.filter(v => v.pass).length;
@@ -438,7 +444,7 @@ function formatActionName(actionType: string): string {
 /**
  * Generate contextual next steps
  */
-function generateNextSteps(riskLevel: string, toolCallCount: number, approvalCount: number, verifications: any[]): string[] {
+function generateNextSteps(riskLevel: string, toolCallCount: number, approvalCount: number, verifications: Verification[]): string[] {
   const steps: string[] = [];
   
   if (riskLevel === 'LOW') {
@@ -472,8 +478,8 @@ function generateNextSteps(riskLevel: string, toolCallCount: number, approvalCou
 /**
  * Generate tool calls from execution plan (Enhanced)
  */
-function generateToolCallsFromPlan(plan: any): any[] {
-  const toolCalls: any[] = [];
+function generateToolCallsFromPlan(plan: ExecutionPlan): ToolCall[] {
+  const toolCalls: ToolCall[] = [];
   
   for (const action of plan.actions) {
     const toolCall = mapActionToTool(action);
@@ -488,7 +494,7 @@ function generateToolCallsFromPlan(plan: any): any[] {
 /**
  * Map action to appropriate tool (Enhanced with better patterns)
  */
-function mapActionToTool(action: any): any | null {
+function mapActionToTool(action: { type: string; args?: Record<string, unknown>; dry_run?: boolean }): ToolCall | null {
   const toolMapping: Record<string, string> = {
     // Deployment operations
     'validate_deployment_target': 'github',
