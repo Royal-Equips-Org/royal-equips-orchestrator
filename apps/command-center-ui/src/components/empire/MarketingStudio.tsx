@@ -17,7 +17,7 @@ interface Campaign {
   productTitle: string;
   type: 'facebook' | 'instagram' | 'google' | 'tiktok' | 'twitter';
   format: 'image' | 'video' | 'carousel' | 'story';
-  status: 'active' | 'paused' | 'completed' | 'draft';
+  status: 'active' | 'paused' | 'completed' | 'draft' | 'error';
   budget: number;
   reach: number;
   clicks: number;
@@ -253,7 +253,6 @@ export function MarketingStudio() {
       setCampaigns(prev => [newCampaign, ...prev]);
     }
 
-    setCampaigns(prev => [newCampaign, ...prev]);
     setIsGenerating(false);
   };
 
@@ -359,9 +358,10 @@ export function MarketingStudio() {
       active: 'text-green-400',
       paused: 'text-yellow-400',
       completed: 'text-blue-400',
-      draft: 'text-gray-400'
+      draft: 'text-gray-400',
+      error: 'text-red-400'
     };
-    return colors[status];
+    return colors[status] || 'text-gray-400';
   };
 
   return (

@@ -6,7 +6,7 @@ import { useEmpireMetrics } from '@/store/empire-store';
 export default function RevenueTracker() {
   const metrics = useEmpireMetrics();
 
-  const currentRevenue = metrics?.current_revenue || 0;
+  const currentRevenue = metrics?.revenue_progress || 0;
   const targetRevenue = metrics?.target_revenue || 100000000; // $100M
   const progress = (currentRevenue / targetRevenue) * 100;
   

@@ -24,47 +24,53 @@ export default function ProductOpportunityCards() {
     {
       id: "opp_1",
       title: "Portable Solar Power Bank with Wireless Charging",
+      description: "Eco-friendly portable charging solution with solar panels and wireless charging capability.",
       price_range: "$25-$35",
       trend_score: 87,
       profit_potential: "High",
-      source_platform: "AliExpress",
+      platform: "AliExpress",
       search_volume: 45000,
       competition_level: "Medium",
       seasonal_factor: "Year-round",
       supplier_leads: ["SolarTech Co.", "GreenPower Ltd."],
       market_insights: "Growing demand for sustainable tech accessories",
-      approval_status: "pending",
-      discovered_at: new Date()
+      confidence_score: 87,
+      profit_margin: 45,
+      monthly_searches: 45000
     },
     {
       id: "opp_2",
       title: "Smart Fitness Tracker with Heart Monitor", 
+      description: "Advanced fitness tracking device with heart rate monitoring, GPS, and smartphone integration.",
       price_range: "$45-$65",
       trend_score: 92,
       profit_potential: "High",
-      source_platform: "Amazon",
+      platform: "Amazon",
       search_volume: 67000,
       competition_level: "High",
       seasonal_factor: "Q1 peak",
       supplier_leads: ["FitTech Corp.", "HealthGadgets Inc."],
       market_insights: "Health tech market expanding rapidly",
-      approval_status: "pending", 
-      discovered_at: new Date()
+      confidence_score: 92,
+      profit_margin: 52,
+      monthly_searches: 67000
     },
     {
       id: "opp_3",
       title: "LED Gaming Mouse Pad RGB",
+      description: "Smart LED mouse pad with app control, multiple colors, and music sync.",
       price_range: "$15-$25",
       trend_score: 74,
       profit_potential: "Medium",
-      source_platform: "DHgate", 
+      platform: "DHgate", 
       search_volume: 23000,
       competition_level: "Low",
       seasonal_factor: "Holiday peak",
       supplier_leads: ["GameTech Ltd.", "RGB Solutions"],
       market_insights: "Gaming accessories steady growth",
-      approval_status: "pending",
-      discovered_at: new Date()
+      confidence_score: 74,
+      profit_margin: 38, 
+      monthly_searches: 23000
     }
   ];
 
@@ -161,7 +167,7 @@ export default function ProductOpportunityCards() {
         <div className="mb-4">
           <h4 className="text-xl font-bold text-white mb-2">{currentOpportunity.title}</h4>
           <div className="flex items-center space-x-4 text-sm text-gray-400">
-            <span>Source: {currentOpportunity.source_platform}</span>
+            <span>Source: {currentOpportunity.platform}</span>
             <span>•</span>
             <span>Competition: {currentOpportunity.competition_level}</span>
           </div>
