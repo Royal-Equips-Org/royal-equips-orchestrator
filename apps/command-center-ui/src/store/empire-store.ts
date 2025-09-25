@@ -10,14 +10,6 @@ import {
 } from '../types/empire';
 
 // Re-export for backward compatibility
-// export { 
-//   Agent, 
-//   EmpireMetrics, 
-//   ProductOpportunity, 
-//   MarketingCampaign, 
-//   ChatMessage, 
-//   EmergencyAlert 
-// } from '../types/empire';
 import { empireService } from '../services/empire-service';
 import { logger } from '../services/log';
 
