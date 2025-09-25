@@ -233,7 +233,7 @@ async function processAIRARequest(params: {
   tool_calls: ToolCall[];
   next_steps: string[];
 }> {
-  const { message, context, requestId, startTime: _startTime, logger } = params;
+  const { message, context, requestId, logger } = params;
 
   // Step 1: Snapshot current Unified Empire Graph (UEG) with timeout
   logger.debug({ requestId, step: 'ueg_snapshot' });
