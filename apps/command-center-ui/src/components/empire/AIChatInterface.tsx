@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useEmpireStore } from '@/store/empire-store';
 import { cn } from '@/lib/utils';
-import type { ChatMessage } from '@/types/empire';
+import type { ChatMessage } from '@/store/empire-store';
 
 // AIRA API Configuration
 const AIRA_API_URL = 'http://localhost:10000';

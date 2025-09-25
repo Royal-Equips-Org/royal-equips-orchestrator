@@ -3,8 +3,20 @@ import { motion } from 'framer-motion';
 import { Cpu, Activity, AlertTriangle, CheckCircle, Clock, Zap, RefreshCw } from 'lucide-react';
 import { useEmpireStore, useLoadingStates, useErrorStates } from '@/store/empire-store';
 import { cn } from '@/lib/utils';
-import type { Agent } from '@/types/empire';
 import { useEffect } from 'react';
+
+type Agent = {
+  id: string;
+  name: string;
+  type: 'research' | 'supplier' | 'marketing' | 'analytics' | 'automation' | 'monitoring';
+  status: 'active' | 'inactive' | 'deploying' | 'error';
+  performance_score: number;
+  discoveries_count: number;
+  success_rate: number;
+  last_execution?: Date;
+  health: 'good' | 'warning' | 'critical';
+  emoji: string;
+};
 
 function getStatusColor(status: Agent['status']) {
   switch (status) {
