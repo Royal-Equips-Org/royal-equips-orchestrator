@@ -12,7 +12,7 @@ import {
   Star
 } from 'lucide-react';
 import { useProductOpportunities, useEmpireStore } from '@/store/empire-store';
-import type { ProductOpportunity } from '@/store/empire-store';
+import type { ProductOpportunity } from '@/types/empire';
 
 export default function ProductOpportunityCards() {
   const opportunities = useProductOpportunities();
