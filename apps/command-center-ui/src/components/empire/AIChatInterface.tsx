@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useEmpireStore } from '@/store/empire-store';
 import { cn } from '@/lib/utils';
-import type { ChatMessage } from '@/store/empire-store';
+import type { ChatMessage } from '@/types/empire';
 
 // AIRA API Configuration
 const AIRA_API_URL = 'http://localhost:10000';
@@ -175,7 +175,10 @@ function AIRAStatusIndicator({ response }: { response?: AIRAResponse }) {
 }
 
 export default function AIChatInterface() {
-  const { chatMessages, addChatMessage } = useEmpireStore();
+  const { chatMessages, sendUserChat } = useEmpireStore(state => ({
+    chatMessages: state.chatMessages,
+    sendUserChat: state.sendUserChat
+  }));
   
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -226,47 +229,16 @@ export default function AIChatInterface() {
   const handleSendMessage = async () => {
     if (!message.trim() || isProcessing) return;
 
-    const userMessage: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      content: message,
-      timestamp: new Date(),
-      sender: 'user'
-    };
-
-    addChatMessage(userMessage);
     setMessage('');
     setIsProcessing(true);
     setLastAIRAResponse(null);
 
     try {
-      // Send to AIRA for processing
-      const airaResponse = await sendToAIRA(userMessage.content);
-      
-      // Create AI response message
-      const aiMessage: ChatMessage = {
-        id: `msg_${Date.now()}_ai`,
-        content: airaResponse.content,
-        timestamp: new Date(),
-        sender: 'ai',
-        agentName: airaResponse.agent_name || 'AIRA'
-      };
-      
-      addChatMessage(aiMessage);
-      setLastAIRAResponse(airaResponse);
-
+      // Use the store's sendUserChat method which handles optimistic updates
+      await sendUserChat(message);
     } catch (error) {
-      console.error('AIRA API Error:', error);
-      
-      // Fallback error response
-      const errorMessage: ChatMessage = {
-        id: `msg_${Date.now()}_error`,
-        content: `❌ I'm having trouble connecting to AIRA services. ${error instanceof Error ? error.message : 'Please try again later.'}`,
-        timestamp: new Date(),
-        sender: 'ai',
-        agentName: 'System'
-      };
-      
-      addChatMessage(errorMessage);
+      console.error('Chat send error:', error);
+      // Error handling is done in the store
     } finally {
       setIsProcessing(false);
     }

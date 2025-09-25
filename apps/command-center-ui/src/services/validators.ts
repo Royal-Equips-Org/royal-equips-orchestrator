@@ -130,8 +130,8 @@ export function isMarketingCampaign(obj: unknown): obj is MarketingCampaign {
     isNumber(campaign.conversions) &&
     isNumber(campaign.roas) &&
     isValidDate(campaign.created_at) &&
-    campaign.content &&
-    typeof campaign.content === 'object'
+    typeof campaign.content === 'object' &&
+    campaign.content !== null
   );
 }
 
