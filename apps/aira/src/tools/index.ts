@@ -10,22 +10,22 @@
  * - Communication (email, Slack, Discord)
  */
 
-import { ToolExecutionOptions, RiskLevel } from '../schemas/aira.js';
+import { ToolExecutionOptions } from '../schemas/aira.js';
 
 export interface ToolResult {
   success: boolean;
-  data?: any;
+  data?: Record<string, unknown>;
   error?: string;
   diff?: string;
-  rollbackData?: any;
+  rollbackData?: Record<string, unknown>;
   duration?: number;
 }
 
 export interface Tool {
   name: string;
   version: string;
-  run(args: Record<string, any>, options: ToolExecutionOptions): Promise<ToolResult>;
-  rollback?(rollbackData: any, options: ToolExecutionOptions): Promise<ToolResult>;
+  run(args: Record<string, unknown>, options: ToolExecutionOptions): Promise<ToolResult>;
+  rollback?(rollbackData: Record<string, unknown>, options: ToolExecutionOptions): Promise<ToolResult>;
   healthCheck?(): Promise<boolean>;
 }
 
@@ -34,7 +34,7 @@ const githubTool: Tool = {
   name: 'github',
   version: '1.0.0',
   
-  async run(args: Record<string, any>, options: ToolExecutionOptions): Promise<ToolResult> {
+  async run(args: Record<string, unknown>, options: ToolExecutionOptions): Promise<ToolResult> {
     const startTime = Date.now();
     
     if (options.dryRun) {
@@ -77,7 +77,7 @@ const gcpTool: Tool = {
   name: 'gcp',
   version: '1.0.0',
   
-  async run(args: Record<string, any>, options: ToolExecutionOptions): Promise<ToolResult> {
+  async run(args: Record<string, unknown>, options: ToolExecutionOptions): Promise<ToolResult> {
     const startTime = Date.now();
     
     if (options.dryRun) {
@@ -121,7 +121,7 @@ const supabaseTool: Tool = {
   name: 'supabase',
   version: '1.0.0',
   
-  async run(args: Record<string, any>, options: ToolExecutionOptions): Promise<ToolResult> {
+  async run(args: Record<string, unknown>, options: ToolExecutionOptions): Promise<ToolResult> {
     const startTime = Date.now();
     
     if (options.dryRun) {
@@ -163,7 +163,7 @@ const shopifyTool: Tool = {
   name: 'shopify',
   version: '1.0.0',
   
-  async run(args: Record<string, any>, options: ToolExecutionOptions): Promise<ToolResult> {
+  async run(args: Record<string, unknown>, options: ToolExecutionOptions): Promise<ToolResult> {
     const startTime = Date.now();
     
     if (options.dryRun) {
@@ -205,7 +205,7 @@ const stripeTool: Tool = {
   name: 'stripe',
   version: '1.0.0',
   
-  async run(args: Record<string, any>, options: ToolExecutionOptions): Promise<ToolResult> {
+  async run(args: Record<string, unknown>, options: ToolExecutionOptions): Promise<ToolResult> {
     const startTime = Date.now();
     
     if (options.dryRun) {
@@ -247,7 +247,7 @@ const monitoringTool: Tool = {
   name: 'monitoring',
   version: '1.0.0',
   
-  async run(args: Record<string, any>, options: ToolExecutionOptions): Promise<ToolResult> {
+  async run(args: Record<string, unknown>, options: ToolExecutionOptions): Promise<ToolResult> {
     const startTime = Date.now();
     
     if (options.dryRun) {
