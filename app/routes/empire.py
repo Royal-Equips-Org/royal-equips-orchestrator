@@ -43,6 +43,8 @@ def log_request_completion(response):
         duration_ms = (time.time() - g.start_time) * 1000
         # Sanitize user-controlled fields to prevent log injection
         def sanitize_log_field(value: str) -> str:
+            # Remove explicit newlines and carriage returns to guard against log injection
+            value = value.replace('\r', '').replace('\n', '')
             # Remove all control characters (ASCII < 32 except tab) and DEL (127)
             return ''.join(ch for ch in value if 32 <= ord(ch) <= 126)
         safe_method = sanitize_log_field(request.method)
