@@ -661,14 +661,14 @@ def api_get_empire_metrics():
         
         # Format metrics for the frontend
         metrics = {
-            'totalRevenue': '$127,450.00',
-            'activeAgents': 5,
+            'totalRevenue': empire_health.get('total_revenue', current_app.config.get('DEFAULT_TOTAL_REVENUE', '$0.00')),
+            'activeAgents': empire_health.get('active_agents', current_app.config.get('DEFAULT_ACTIVE_AGENTS', 0)),
             'systemHealth': empire_health.get('overall_health', 'UNKNOWN'),
             'securityScore': empire_health.get('security_score', 0),
             'performanceScore': empire_health.get('performance_score', 0),
-            'ordersProcessed': 1247,
-            'conversionRate': 3.8,
-            'uptime': '99.97%'
+            'ordersProcessed': empire_health.get('orders_processed', current_app.config.get('DEFAULT_ORDERS_PROCESSED', 0)),
+            'conversionRate': empire_health.get('conversion_rate', current_app.config.get('DEFAULT_CONVERSION_RATE', 0.0)),
+            'uptime': empire_health.get('uptime', current_app.config.get('DEFAULT_UPTIME', '0%'))
         }
         
         return jsonify({
