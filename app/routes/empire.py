@@ -25,6 +25,9 @@ logger = logging.getLogger(__name__)
 # Create empire blueprint
 empire_bp = Blueprint('empire', __name__, url_prefix='/empire')
 
+# Create API empire blueprint for frontend integration
+api_empire_bp = Blueprint('api_empire', __name__, url_prefix='/api/empire')
+
 
 @empire_bp.route('/health', methods=['GET'])
 def get_empire_health():
@@ -643,3 +646,325 @@ def internal_error(error):
         'message': 'An unexpected error occurred in the empire management system',
         'timestamp': datetime.now().isoformat()
     }), 500
+
+
+# ==========================================
+# API EMPIRE ENDPOINTS FOR FRONTEND
+# ==========================================
+
+@api_empire_bp.route('/metrics', methods=['GET'])
+def api_get_empire_metrics():
+    """Get empire metrics for the command center UI."""
+    try:
+        health_service = get_health_service()
+        empire_health = health_service.check_empire_health()
+        
+        # Format metrics for the frontend
+        metrics = {
+            'totalRevenue': '$127,450.00',
+            'activeAgents': 5,
+            'systemHealth': empire_health.get('overall_health', 'UNKNOWN'),
+            'securityScore': empire_health.get('security_score', 0),
+            'performanceScore': empire_health.get('performance_score', 0),
+            'ordersProcessed': 1247,
+            'conversionRate': 3.8,
+            'uptime': '99.97%'
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': metrics,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"API empire metrics failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@api_empire_bp.route('/agents', methods=['GET'])
+def api_get_empire_agents():
+    """Get active agents for the command center UI."""
+    try:
+        # Mock agent data - in real implementation, this would query actual agents
+        agents = [
+            {
+                'id': 'product-research-agent',
+                'name': 'Product Research Agent',
+                'type': 'research',
+                'status': 'active',
+                'lastRun': datetime.now().isoformat(),
+                'performance': 94.2,
+                'description': 'Analyzes market trends and identifies profitable products'
+            },
+            {
+                'id': 'inventory-pricing-agent',
+                'name': 'Inventory & Pricing Agent',
+                'type': 'optimization',
+                'status': 'active',
+                'lastRun': datetime.now().isoformat(),
+                'performance': 97.8,
+                'description': 'Optimizes inventory levels and pricing strategies'
+            },
+            {
+                'id': 'marketing-automation-agent',
+                'name': 'Marketing Automation Agent',
+                'type': 'marketing',
+                'status': 'active',
+                'lastRun': datetime.now().isoformat(),
+                'performance': 91.5,
+                'description': 'Manages and optimizes marketing campaigns'
+            },
+            {
+                'id': 'order-fulfillment-agent',
+                'name': 'Order Fulfillment Agent',
+                'type': 'fulfillment',
+                'status': 'active',
+                'lastRun': datetime.now().isoformat(),
+                'performance': 98.9,
+                'description': 'Handles order processing and fulfillment automation'
+            },
+            {
+                'id': 'analytics-agent',
+                'name': 'Analytics Agent',
+                'type': 'analytics',
+                'status': 'active',
+                'lastRun': datetime.now().isoformat(),
+                'performance': 96.3,
+                'description': 'Provides real-time analytics and business insights'
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'data': agents,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"API empire agents failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@api_empire_bp.route('/opportunities', methods=['GET'])
+def api_get_product_opportunities():
+    """Get product opportunities for the command center UI."""
+    try:
+        # Mock product opportunities data
+        opportunities = [
+            {
+                'id': 'opp-001',
+                'title': 'Smart Home Security Kit',
+                'category': 'Electronics',
+                'profit_margin': 45.2,
+                'demand_score': 87,
+                'competition_level': 'Medium',
+                'estimated_revenue': '$25,000',
+                'source': 'Market Analysis',
+                'status': 'pending',
+                'discovered_at': datetime.now().isoformat()
+            },
+            {
+                'id': 'opp-002',  
+                'title': 'Wireless Gaming Headset',
+                'category': 'Gaming',
+                'profit_margin': 38.7,
+                'demand_score': 92,
+                'competition_level': 'High',
+                'estimated_revenue': '$18,500',
+                'source': 'Trend Analysis',
+                'status': 'pending',
+                'discovered_at': datetime.now().isoformat()
+            },
+            {
+                'id': 'opp-003',
+                'title': 'Eco-friendly Water Bottle',
+                'category': 'Lifestyle',
+                'profit_margin': 52.1,
+                'demand_score': 78,
+                'competition_level': 'Low',
+                'estimated_revenue': '$12,300',
+                'source': 'Sustainability Trends',
+                'status': 'approved',
+                'discovered_at': datetime.now().isoformat()
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'data': opportunities,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"API product opportunities failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@api_empire_bp.route('/campaigns', methods=['GET'])
+def api_get_marketing_campaigns():
+    """Get marketing campaigns for the command center UI."""
+    try:
+        # Mock campaign data
+        campaigns = [
+            {
+                'id': 'camp-001',
+                'name': 'Holiday Electronics Promo',
+                'platform': 'Facebook Ads',
+                'status': 'active',
+                'budget': '$5,000',
+                'spent': '$3,240',
+                'impressions': 245800,
+                'clicks': 9432,
+                'conversions': 187,
+                'roas': 4.2,
+                'start_date': '2024-01-01',
+                'end_date': '2024-01-31'
+            },
+            {
+                'id': 'camp-002',
+                'name': 'Gaming Gear Showcase',
+                'platform': 'Google Ads',
+                'status': 'active',
+                'budget': '$3,500',
+                'spent': '$2,890',
+                'impressions': 178500,
+                'clicks': 7234,
+                'conversions': 156,
+                'roas': 3.8,
+                'start_date': '2024-01-05',
+                'end_date': '2024-01-28'
+            },
+            {
+                'id': 'camp-003',
+                'name': 'Eco-Lifestyle Campaign',
+                'platform': 'Instagram',
+                'status': 'paused',
+                'budget': '$2,000',
+                'spent': '$1,450',
+                'impressions': 95600,
+                'clicks': 3821,
+                'conversions': 89,
+                'roas': 2.9,
+                'start_date': '2024-01-10',
+                'end_date': '2024-01-25'
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'data': campaigns,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"API marketing campaigns failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@api_empire_bp.route('/opportunities/<product_id>/approve', methods=['POST'])
+def api_approve_product(product_id):
+    """Approve a product opportunity."""
+    try:
+        logger.info(f'Approving product opportunity: {product_id}')
+        
+        # In real implementation, this would update the product status
+        return jsonify({
+            'success': True,
+            'message': f'Product {product_id} approved successfully',
+            'product_id': product_id,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"API approve product failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@api_empire_bp.route('/opportunities/<product_id>/reject', methods=['POST'])
+def api_reject_product(product_id):
+    """Reject a product opportunity."""
+    try:
+        data = request.get_json() or {}
+        reason = data.get('reason', 'No reason provided')
+        
+        logger.info(f'Rejecting product opportunity: {product_id}, reason: {reason}')
+        
+        # In real implementation, this would update the product status
+        return jsonify({
+            'success': True,
+            'message': f'Product {product_id} rejected',
+            'product_id': product_id,
+            'reason': reason,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"API reject product failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@api_empire_bp.route('/chat', methods=['POST'])
+def api_empire_chat():
+    """Handle chat messages with ARIA assistant."""
+    try:
+        data = request.get_json()
+        if not data or 'content' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Message content is required'
+            }), 400
+        
+        content = data['content']
+        logger.info(f'Processing chat message: {content[:100]}...')
+        
+        # Mock ARIA response - in real implementation, this would interface with the AI
+        response = {
+            'id': f'msg-{int(datetime.now().timestamp())}',
+            'content': f'I understand you said: "{content}". As your ARIA assistant, I\'m monitoring all empire systems. How can I help optimize your e-commerce operations today?',
+            'type': 'response',
+            'timestamp': datetime.now().isoformat(),
+            'context': {
+                'empire_status': 'operational',
+                'active_agents': 5,
+                'system_health': 'excellent'
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': response,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"API empire chat failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
