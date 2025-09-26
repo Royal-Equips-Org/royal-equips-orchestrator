@@ -41,10 +41,13 @@ def log_request_completion(response):
     """Log request completion with correlation ID and timing."""
     if hasattr(g, 'correlation_id') and hasattr(g, 'start_time'):
         duration_ms = (time.time() - g.start_time) * 1000
+        # Sanitize user-controlled fields to prevent log injection
+        safe_method = request.method.replace('\n', '').replace('\r', '')
+        safe_path = request.path.replace('\n', '').replace('\r', '')
         logger.info(f"Request completed", extra={
             'correlation_id': g.correlation_id,
-            'method': request.method,
-            'path': request.path,
+            'method': safe_method,
+            'path': safe_path,
             'status_code': response.status_code,
             'duration_ms': round(duration_ms, 2)
         })
