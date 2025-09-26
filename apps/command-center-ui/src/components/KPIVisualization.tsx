@@ -165,6 +165,7 @@ const KPIVisualization: React.FC<KPIVisualizationProps> = ({ metrics }) => {
         color="#000"
         anchorX="center"
         anchorY="middle"
+        font="https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxM.woff"
       >
         ROYAL
       </Text>
