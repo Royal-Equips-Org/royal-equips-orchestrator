@@ -51,7 +51,7 @@ export const OPPORTUNITIES_RETRY_OPTIONS: RetryOptions = {
 };
 
 export function calculateDelay(attempt: number, options: RetryOptions): number {
-  let delay = options.baseDelay * Math.pow(options.exponentialBase, attempt - 1);
+  let delay = options.baseDelay * (options.exponentialBase ** (attempt - 1));
   
   // Apply maximum delay limit
   delay = Math.min(delay, options.maxDelay);
