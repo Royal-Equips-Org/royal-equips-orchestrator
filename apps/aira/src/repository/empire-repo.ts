@@ -308,34 +308,44 @@ class EmpireRepository {
     return [...this.campaigns];
   }
 
+  // Simulate transaction abstraction for future database implementation
+  private runInTransaction<T>(fn: () => T): T {
+    // In-memory: just run the function. Replace with DB transaction logic later.
+    return fn();
+  }
+
   approveOpportunity(id: string): boolean {
-    const opportunity = this.opportunities.find(o => o.id === id);
-    if (opportunity) {
-      // Remove from opportunities (simulate approval flow)
-      this.opportunities = this.opportunities.filter(o => o.id !== id);
-      this.metrics.approved_products += 1;
-      this.updateMetrics();
-      return true;
-    }
-    return false;
+    return this.runInTransaction(() => {
+      const opportunity = this.opportunities.find(o => o.id === id);
+      if (opportunity) {
+        // Remove from opportunities (simulate approval flow)
+        this.opportunities = this.opportunities.filter(o => o.id !== id);
+        this.metrics.approved_products += 1;
+        this.updateMetrics();
+        return true;
+      }
+      return false;
+    });
   }
 
   rejectOpportunity(id: string, reason?: string): boolean {
-    const opportunity = this.opportunities.find(o => o.id === id);
-    if (opportunity) {
-      // Remove from opportunities (simulate rejection flow)
-      this.opportunities = this.opportunities.filter(o => o.id !== id);
-      this.updateMetrics();
-      const sanitizedId = String(id).replace(/[\n\r]/g, '');
-      const sanitizedReason = reason ? String(reason).replace(/[\n\r]/g, '') : 'No reason provided';
-      console.log({
-        event: 'opportunity_rejected',
-        opportunityId: sanitizedId,
-        reason: sanitizedReason
-      });
-      return true;
-    }
-    return false;
+    return this.runInTransaction(() => {
+      const opportunity = this.opportunities.find(o => o.id === id);
+      if (opportunity) {
+        // Remove from opportunities (simulate rejection flow)
+        this.opportunities = this.opportunities.filter(o => o.id !== id);
+        this.updateMetrics();
+        const sanitizedId = String(id).replace(/[\n\r]/g, '');
+        const sanitizedReason = reason ? String(reason).replace(/[\n\r]/g, '') : 'No reason provided';
+        console.log({
+          event: 'opportunity_rejected',
+          opportunityId: sanitizedId,
+          reason: sanitizedReason
+        });
+        return true;
+      }
+      return false;
+    });
   }
 }
 
