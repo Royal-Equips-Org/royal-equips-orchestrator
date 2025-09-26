@@ -4,7 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import { Text, Sphere, Line } from '@react-three/drei';
 import { Vector3 } from 'three';
 import * as THREE from 'three';
-// import { useActiveAgents } from '@/store/empire-store';
+import type { Agent } from '@/types/empire';
 
 function AgentNode({ position, status, label, type }: {
   position: [number, number, number];
@@ -145,17 +145,33 @@ function CentralHub() {
   );
 }
 
-export default function EmpireVisualization3D() {
-  // const activeAgents = useActiveAgents();
-  // TODO: Use activeAgents data when implementing dynamic agent positioning
-  const agentPositions = useMemo(() => [
-    { id: 'research', position: [2, 1, 0] as [number, number, number], label: 'Research', type: 'research', status: 'active' as const },
-    { id: 'supplier', position: [-2, 1, 0] as [number, number, number], label: 'Supplier Intel', type: 'supplier', status: 'active' as const },
-    { id: 'coordinator', position: [0, 2, 1] as [number, number, number], label: 'Master Agent', type: 'automation', status: 'active' as const },
-    { id: 'analytics', position: [1.5, -1.5, 1] as [number, number, number], label: 'Analytics', type: 'analytics', status: 'deploying' as const },
-    { id: 'pricing', position: [-1.5, -1.5, 1] as [number, number, number], label: 'Pricing', type: 'analytics', status: 'inactive' as const },
-    { id: 'marketing', position: [0, -2, -1] as [number, number, number], label: 'Marketing', type: 'marketing', status: 'error' as const },
-  ], []);
+interface EmpireVisualization3DProps {
+  agents?: Agent[];
+}
+
+export default function EmpireVisualization3D({ agents = [] }: EmpireVisualization3DProps) {
+  // Generate agent positions algorithmically from live data
+  const agentPositions = useMemo(() => {
+    if (agents.length === 0) {
+      return [];
+    }
+    
+    return agents.map((agent, index) => {
+      const angle = (index * Math.PI * 2) / agents.length;
+      const radius = 2.5;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const y = (Math.random() - 0.5) * 1; // Add some vertical variation
+      
+      return {
+        id: agent.id,
+        position: [x, y, z] as [number, number, number],
+        label: agent.name,
+        type: agent.type,
+        status: agent.status,
+      };
+    });
+  }, [agents]);
 
   // Connection lines between agents and hub
   const connections = useMemo(() => 

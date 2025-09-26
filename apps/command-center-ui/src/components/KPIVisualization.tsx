@@ -2,15 +2,10 @@ import React, { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Text, Box, Sphere, Cylinder } from '@react-three/drei'
 import * as THREE from 'three'
-
-interface SystemMetrics {
-  agents_active: number
-  requests_total: number
-  uptime_seconds: number
-}
+import type { EmpireMetrics } from '@/types/empire'
 
 interface KPIVisualizationProps {
-  metrics: SystemMetrics | null
+  metrics: EmpireMetrics | null
 }
 
 const FloatingKPI: React.FC<{ 
@@ -150,18 +145,18 @@ const KPIVisualization: React.FC<KPIVisualizationProps> = ({ metrics }) => {
     }
   })
 
-  const agentPositions: Array<{ pos: [number, number, number], name: string, active: boolean }> = [
-    { pos: [3, 2, 0], name: "ProductResearch", active: true },
-    { pos: [-3, 2, 0], name: "Pricing", active: false },
-    { pos: [0, 3, 2], name: "Inventory", active: true },
-    { pos: [2, -2, -1], name: "Orders", active: true },
-    { pos: [-2, -2, 1], name: "Observer", active: true },
-  ]
-
+  // Remove hardcoded agent positions - these will be handled by the parent 3D scene
   return (
     <group ref={centerRef}>
       {/* Central Hub */}
       <Sphere args={[0.5, 32, 32]} position={[0, 0, 0]}>
+        <meshStandardMaterial 
+          color="#FFD700" 
+          transparent 
+          opacity={0.7}
+          emissive="#FFD700"
+          emissiveIntensity={0.3}
+        />
       </Sphere>
       
       <Text
@@ -170,59 +165,38 @@ const KPIVisualization: React.FC<KPIVisualizationProps> = ({ metrics }) => {
         color="#000"
         anchorX="center"
         anchorY="middle"
-        font="/fonts/RobotoMono-Bold.ttf"
       >
         ROYAL
       </Text>
 
-      {/* KPI Displays */}
+      {/* KPI Displays - using real metrics */}
       <FloatingKPI
         position={[0, 4, 0]}
-        value={metrics?.agents_active || 0}
+        value={metrics?.active_agents || 0}
         label="Active Agents"
         color="#00FFFF"
       />
       
       <FloatingKPI
         position={[4, 0, 0]}
-        value={metrics?.requests_total || 0}
-        label="API Requests"
+        value={metrics?.total_opportunities || 0}
+        label="Opportunities"
         color="#00FF00"
       />
       
       <FloatingKPI
         position={[-4, 0, 0]}
-        value={metrics ? Math.floor(metrics.uptime_seconds / 60) : 0}
-        label="Uptime (min)"
+        value={metrics ? `${metrics.system_uptime}%` : '0%'}
+        label="System Uptime"
         color="#FFFF00"
       />
 
       <FloatingKPI
         position={[0, -4, 0]}
-        value="€2,347"
-        label="Revenue Today"
+        value={metrics ? `$${(metrics.revenue_progress / 1000000).toFixed(1)}M` : '$0M'}
+        label="Revenue Progress"
         color="#FF00FF"
       />
-
-      {/* Agent Nodes */}
-      {agentPositions.map((agent, index) => (
-        <AgentNode
-          key={index}
-          position={agent.pos}
-          active={agent.active}
-          name={agent.name}
-        />
-      ))}
-
-      {/* Network Connections */}
-      {agentPositions.map((agent, index) => (
-        <NetworkConnection
-          key={`connection-${index}`}
-          start={[0, 0, 0]}
-          end={agent.pos}
-          active={agent.active}
-        />
-      ))}
 
       {/* Holographic Grid */}
       <gridHelper args={[10, 10, "#00FFFF", "#003333"]} position={[0, -3, 0]} />
