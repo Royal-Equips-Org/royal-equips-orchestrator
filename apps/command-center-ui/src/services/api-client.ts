@@ -60,13 +60,18 @@ class ApiClient {
   }
 
   private getBaseUrl(): string {
+    const API_URL = import.meta.env.VITE_API_URL;
+    if (API_URL && API_URL.trim()) {
+      return API_URL.trim();
+    }
+    
     if (import.meta.env.VITE_API_BASE_URL) {
       return import.meta.env.VITE_API_BASE_URL;
     }
     
     return import.meta.env.PROD 
       ? 'https://api.royalequips.com'
-      : 'http://localhost:8000';
+      : 'http://localhost:10000';
   }
 
   private getAuthToken(): string | null {

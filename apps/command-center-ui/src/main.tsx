@@ -1,10 +1,13 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
+import { createRoot } from 'react-dom/client'
+import App from './App'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles/globals.css'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+const el = document.getElementById('root')
+if (!el) throw new Error('Missing #root element')
+
+createRoot(el).render(
+  <ErrorBoundary>
     <App />
-  </React.StrictMode>,
+  </ErrorBoundary>
 )

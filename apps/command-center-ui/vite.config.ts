@@ -5,10 +5,14 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  base: '/',            // explicit base path
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  build: { 
+    sourcemap: true     // enable sourcemaps for debugging
   },
   server: {
     port: 3000,
