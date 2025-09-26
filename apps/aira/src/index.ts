@@ -12,7 +12,6 @@ import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 // import { chatRoute } from './routes/chat.js';
-// import { executeRoute } from './routes/execute.js';
 import { metricsRoute } from './routes/metrics.js';
 import { agentsRoute } from './routes/agents.js';
 import { opportunitiesRoute } from './routes/opportunities.js';
