@@ -873,8 +873,10 @@ def api_reject_product(product_id):
     try:
         data = request.get_json() or {}
         reason = data.get('reason', 'No reason provided')
-        
-        logger.info(f'Rejecting product opportunity: {product_id}, reason: {reason}')
+        # Sanitize user-controlled values to prevent log injection
+        sanitized_product_id = str(product_id).replace('\n', '').replace('\r', '')[:100]
+        sanitized_reason = str(reason).replace('\n', '').replace('\r', '')[:100]
+        logger.info(f'Rejecting product opportunity: {sanitized_product_id}, reason: {sanitized_reason}')
         
         # In real implementation, this would update the product status
         return jsonify({
