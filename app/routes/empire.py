@@ -892,7 +892,7 @@ def api_reject_product(product_id):
         logger.error(f"API reject product failed: {e}")
         return jsonify({
             'success': False,
-            'error': str(e),
+            'error': 'An internal error has occurred.',
             'timestamp': datetime.now().isoformat()
         }), 500
 
