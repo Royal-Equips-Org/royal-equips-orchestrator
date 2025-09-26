@@ -10,6 +10,7 @@ import {
 } from '../types/empire';
 
 // Re-export for backward compatibility
+export type { ChatMessage } from '../types/empire';
 import { empireService } from '../services/empire-service';
 import { logger } from '../services/log';
 

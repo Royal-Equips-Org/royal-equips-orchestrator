@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EmpireService } from './empire-service';
-import * as apiClient from './api-client';
+import { apiClient } from './api-client';
 
-// Mock the api client
+// Mock the apiClient methods
 vi.mock('./api-client', () => ({
   apiClient: {
     get: vi.fn(),
@@ -10,10 +10,8 @@ vi.mock('./api-client', () => ({
   }
 }));
 
-const mockApiClient = apiClient.apiClient as {
-  get: ReturnType<typeof vi.fn>;
-  post: ReturnType<typeof vi.fn>;
-};
+// Use vitest's mocked utility to get proper typing
+const mockApiClient = vi.mocked(apiClient);
 
 describe('EmpireService', () => {
   let empireService: EmpireService;
