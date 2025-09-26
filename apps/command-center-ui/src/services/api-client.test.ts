@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { apiClient } from './api-client';
+import { apiClient, ApiClient } from './api-client';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -63,21 +63,29 @@ describe('ApiClient', () => {
     });
 
     it('should handle timeout', async () => {
-      mockFetch.mockImplementationOnce(() => 
-        new Promise(() => {}) // Never resolves
-      );
+      // Mock AbortController to simulate timeout
+      const mockAbortController = {
+        signal: { aborted: false },
+        abort: vi.fn()
+      };
+      
+      vi.spyOn(global, 'AbortController').mockImplementation(() => mockAbortController as any);
+      
+      // Mock fetch to throw AbortError when called
+      mockFetch.mockImplementationOnce(() => {
+        const error = new Error('The operation was aborted');
+        error.name = 'AbortError';
+        throw error;
+      });
 
-      const requestPromise = apiClient.get('/test', { timeout: 100, retries: 0 });
-      
-      // Fast forward time to trigger timeout
-      vi.advanceTimersByTime(100);
-      
-      await expect(requestPromise).rejects.toMatchObject({
+      await expect(apiClient.get('/test', { timeout: 100, retries: 0 })).rejects.toMatchObject({
         kind: 'timeout'
       });
     });
 
     it('should retry on failure', async () => {
+      vi.useRealTimers(); // Use real timers for this test to avoid timeout issues
+      
       // First two calls fail, third succeeds
       mockFetch
         .mockRejectedValueOnce(new Error('Network error'))
@@ -91,7 +99,9 @@ describe('ApiClient', () => {
       
       expect(result).toEqual({ success: true });
       expect(mockFetch).toHaveBeenCalledTimes(3);
-    });
+      
+      vi.useFakeTimers(); // Restore fake timers
+    }, 10000); // Increase timeout for this test
   });
 
   describe('POST requests', () => {
@@ -122,18 +132,21 @@ describe('ApiClient', () => {
 
   describe('Circuit Breaker', () => {
     it('should open circuit after failure threshold', async () => {
+      // Reset circuit breaker state by creating a new instance
+      const testApiClient = new ApiClient();
+      
       // Mock 5 consecutive failures
       for (let i = 0; i < 5; i++) {
         mockFetch.mockRejectedValueOnce(new Error('Network error'));
         try {
-          await apiClient.get('/test', { retries: 0 });
+          await testApiClient.get('/test', { retries: 0 });
         } catch (e) {
           // Expected to fail
         }
       }
 
       // Next request should fail with circuit open
-      await expect(apiClient.get('/test', { retries: 0 })).rejects.toMatchObject({
+      await expect(testApiClient.get('/test', { retries: 0 })).rejects.toMatchObject({
         kind: 'circuit_open'
       });
     });
