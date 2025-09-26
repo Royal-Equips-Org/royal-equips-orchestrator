@@ -695,11 +695,17 @@ def api_get_empire_metrics():
         # Revenue calculations (in raw numbers, not formatted strings)
         revenue_progress = empire_health.get('revenue_progress', 0)
         if isinstance(revenue_progress, str):
-            # Extract number from string format like "$1.2M"
+            # Extract number and unit from string format like "$1.2M", "$800K", "$2.5B"
             import re
-            match = re.search(r'(\d+(?:\.\d+)?)', revenue_progress)
-            revenue_progress = float(match.group(1)) * 1000000 if match else 0
-        
+            match = re.search(r'(\d+(?:\.\d+)?)([KMB])?', revenue_progress, re.IGNORECASE)
+            if match:
+                number = float(match.group(1))
+                unit = match.group(2)
+                multipliers = {'K': 1_000, 'M': 1_000_000, 'B': 1_000_000_000}
+                multiplier = multipliers.get(unit.upper(), 1) if unit else 1
+                revenue_progress = number * multiplier
+            else:
+                revenue_progress = 0
         # Format metrics matching frontend EmpireMetrics interface
         metrics = {
             'total_agents': total_agents,
