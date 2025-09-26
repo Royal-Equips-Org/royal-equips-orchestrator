@@ -57,8 +57,8 @@ Transform traditional e-commerce operations into a completely autonomous, self-h
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-- PostgreSQL/Supabase
-- Redis
+- PostgreSQL/Supabase (optional)
+- Redis (optional)
 
 ### Installation
 
@@ -73,6 +73,9 @@ pip install -r requirements.txt
 # For development (includes additional tools)
 pip install -r requirements-dev.txt
 
+# Install frontend dependencies
+pnpm install
+
 # Set up environment variables
 cp .env.example .env
 # Edit .env with your API keys and credentials
@@ -80,8 +83,15 @@ cp .env.example .env
 
 ### Environment Variables
 
+#### Backend (Flask App)
 Required for production operation:
 ```bash
+# Flask Configuration
+FLASK_ENV=production
+SECRET_KEY=your-secret-key-change-in-production
+PORT=10000
+HOST=0.0.0.0
+
 # E-commerce Platform
 SHOPIFY_STORE=your-store.myshopify.com
 SHOPIFY_ACCESS_TOKEN=your_access_token
@@ -96,37 +106,53 @@ KLAVIYO_API_KEY=your_klaviyo_key
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
 
-# Database & Cache
+# AI Services
+OPENAI_API_KEY=your_openai_key
+
+# Database & Cache (optional)
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_key
 REDIS_URL=your_redis_url
 ```
 
+#### Frontend (Command Center UI)
+Required environment variables in `apps/command-center-ui/.env.local`:
+```bash
+# API Configuration - REQUIRED
+VITE_API_BASE_URL=http://localhost:10000
+
+# For production deployment
+VITE_API_BASE_URL=https://your-backend-domain.com
+```
+
 ### Running the System
 
+#### Backend (Flask/Python)
 ```bash
-# Run comprehensive system test
-python3 test_empire_system.py
+# Run the Flask backend
+python3 wsgi.py
 
-# Start individual agents
-python3 -c "
-import asyncio
-from orchestrator.agents.product_research import ProductResearchAgent
+# Or with Gunicorn for production
+gunicorn wsgi:app --bind 0.0.0.0:10000
+```
 
-async def run():
-    agent = ProductResearchAgent()
-    await agent.initialize()
-    await agent.run()
-    print(f'Discovered {agent.discoveries_count} products')
+#### Frontend (React/TypeScript)
+```bash
+# Development server
+cd apps/command-center-ui
+pnpm run dev
 
-asyncio.run(run())
-"
+# Production build
+pnpm run build
+```
 
-# Use Make commands for development
-make setup    # Setup development environment
-make test     # Run tests
-make lint     # Run linting
-make ci       # Complete CI pipeline
+#### Full Development Setup
+```bash
+# Terminal 1: Backend
+python3 wsgi.py
+
+# Terminal 2: Frontend  
+cd apps/command-center-ui && pnpm run dev
 ```
 
 ## 📊 Performance Metrics

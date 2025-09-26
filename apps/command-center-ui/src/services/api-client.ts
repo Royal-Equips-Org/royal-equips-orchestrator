@@ -5,6 +5,12 @@ import { logger } from './log';
 interface RequestOptions extends RequestInit {
   timeout?: number;
   retries?: number;
+  correlationId?: string;
+}
+
+// Generate correlation ID for request tracking
+function generateCorrelationId(): string {
+  return `req-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 class CircuitBreaker {
@@ -87,6 +93,7 @@ export class ApiClient {
   ): Promise<Response> {
     const timeout = options.timeout || this.defaultTimeout;
     const controller = new AbortController();
+    const correlationId = options.correlationId || generateCorrelationId();
     
     const timeoutId = setTimeout(() => {
       controller.abort();
@@ -98,6 +105,8 @@ export class ApiClient {
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
+          'X-Request-ID': correlationId,
+          'X-Client-Version': '1.0.0',
           ...this.getAuthHeaders(),
           ...options.headers,
         },

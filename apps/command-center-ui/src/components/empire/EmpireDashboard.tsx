@@ -194,51 +194,6 @@ export default function EmpireDashboard() {
           </div>
         </motion.div>
 
-        {/* Product Opportunities */}
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="col-span-12 lg:col-span-8"
-        >
-          <div className="bg-black/40 backdrop-blur-md border border-cyan-500/30 rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              💎 Product Opportunities
-            </h3>
-            <div className="bg-black/30 border border-cyan-500/20 rounded-lg p-4">
-              <h4 className="text-xl font-bold text-white mb-2">
-                Portable Solar Power Bank with Wireless Charging
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-400">87</div>
-                  <div className="text-xs text-gray-400">Trend Score</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-white">$25-$35</div>
-                  <div className="text-xs text-gray-400">Price Range</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-400">45K</div>
-                  <div className="text-xs text-gray-400">Monthly Searches</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-400">High</div>
-                  <div className="text-xs text-gray-400">Profit Potential</div>
-                </div>
-              </div>
-              <div className="flex space-x-4">
-                <button className="flex-1 py-2 px-4 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 transition-colors">
-                  Reject
-                </button>
-                <button className="flex-1 py-2 px-4 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg hover:bg-green-600/30 transition-colors">
-                  Approve for Shopify
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* AI Chat Interface */}
         <motion.div 
           initial={{ y: 100, opacity: 0 }}
