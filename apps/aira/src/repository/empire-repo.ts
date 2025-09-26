@@ -328,7 +328,11 @@ class EmpireRepository {
       this.updateMetrics();
       const sanitizedId = String(id).replace(/[\n\r]/g, '');
       const sanitizedReason = reason ? String(reason).replace(/[\n\r]/g, '') : 'No reason provided';
-      console.log(`Rejected opportunity [user-input:${sanitizedId}]: [user-input:${sanitizedReason}]`);
+      console.log({
+        event: 'opportunity_rejected',
+        opportunityId: sanitizedId,
+        reason: sanitizedReason
+      });
       return true;
     }
     return false;
