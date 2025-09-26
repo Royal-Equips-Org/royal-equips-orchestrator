@@ -113,7 +113,7 @@ export const useToast = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = (toast: Omit<ToastMessage, 'id'>) => {
-    const id = `toast-${Date.now()}-${Math.random()}`;
+    const id = `toast-${crypto.randomUUID()}`;
     setToasts(prev => [...prev, { ...toast, id }]);
   };
 
