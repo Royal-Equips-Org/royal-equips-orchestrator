@@ -93,7 +93,10 @@ class EmpireRepository {
     };
   }
 
-  // TODO: Replace with database operations
+  // TODO: Migrate in-memory store to Postgres/Supabase.
+  // Migration plan: Implement a Postgres/Supabase adapter for all CRUD operations.
+  // Strategy: Phase 1 - implement read/write for agents; Phase 2 - migrate metrics, opportunities, campaigns.
+  // Timeline: Target completion by end of Q2 2024. See issue #123 for details.
   seed() {
     console.log('🌱 Seeding Empire Repository with sample data...');
     
