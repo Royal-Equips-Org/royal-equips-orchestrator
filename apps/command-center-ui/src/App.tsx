@@ -4,12 +4,13 @@ import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
 function App() {
-  const { isConnected } = useEmpireStore();
+  const { isConnected, refreshAll } = useEmpireStore();
 
   useEffect(() => {
-    // Initialize empire systems
+    // Initialize empire systems and load all data
     console.log('Royal Equips Empire Command Center - Initialized');
-  }, []);
+    refreshAll();
+  }, [refreshAll]);
 
   return (
     <div className="min-h-screen bg-black">

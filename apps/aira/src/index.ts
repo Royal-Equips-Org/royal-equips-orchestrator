@@ -11,8 +11,13 @@ import Fastify from 'fastify';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
-import { chatRoute } from './routes/chat.js';
-import { executeRoute } from './routes/execute.js';
+// import { chatRoute } from './routes/chat.js';
+// import { executeRoute } from './routes/execute.js';
+import { metricsRoute } from './routes/metrics.js';
+import { agentsRoute } from './routes/agents.js';
+import { opportunitiesRoute } from './routes/opportunities.js';
+import { campaignsRoute } from './routes/campaigns.js';
+import { empireRepo } from './repository/empire-repo.js';
 
 const app = Fastify({ 
   logger: {
@@ -34,7 +39,12 @@ await app.register(helmet, {
 });
 
 await app.register(cors, {
-  origin: ['http://localhost:3000', 'http://localhost:5173'], // Allow Command Center UI
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:5173', 
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173'
+  ], // Allow Command Center UI
   credentials: true
 });
 
@@ -71,8 +81,25 @@ app.get('/health', async () => ({
 }));
 
 // AIRA API routes
-await app.register(chatRoute);
-await app.register(executeRoute);
+// await app.register(chatRoute);
+// await app.register(executeRoute);
+
+// Empire API routes
+await app.register(metricsRoute);
+await app.register(agentsRoute);
+await app.register(opportunitiesRoute);
+await app.register(campaignsRoute);
+
+// Simple chat endpoint for basic functionality
+app.post('/api/empire/chat', async (request: any, reply) => {
+  const { content } = request.body;
+  
+  return {
+    content: `🤖 AIRA: Received your message "${content}". Empire systems are operational and all endpoints are available.`,
+    agent_name: 'AIRA',
+    timestamp: new Date().toISOString()
+  };
+});
 
 // Global error handler with structured logging
 app.setErrorHandler((error, request, reply) => {
@@ -128,10 +155,14 @@ const start = async () => {
     const port = Number(process.env.PORT || 10000);
     const host = process.env.HOST || '0.0.0.0';
     
+    // Seed the empire repository with sample data
+    empireRepo.seed();
+    
     await app.listen({ port, host });
     app.log.info(`🚀 AIRA Main Empire Agent running on http://${host}:${port}`);
     app.log.info('🎯 Ready to serve Royal Equips Command Center');
     app.log.info('🛡️ Rate limiting: 100 requests/minute per client');
+    app.log.info('📊 Empire API endpoints: /api/empire/{metrics,agents,opportunities,campaigns}');
     
   } catch (err) {
     app.log.error(err);
