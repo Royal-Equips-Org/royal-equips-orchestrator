@@ -965,6 +965,6 @@ def api_empire_chat():
         logger.error(f"API empire chat failed: {e}")
         return jsonify({
             'success': False,
-            'error': str(e),
+            'error': 'An internal error has occurred.',
             'timestamp': datetime.now().isoformat()
         }), 500
