@@ -326,7 +326,9 @@ class EmpireRepository {
       // Remove from opportunities (simulate rejection flow)
       this.opportunities = this.opportunities.filter(o => o.id !== id);
       this.updateMetrics();
-      console.log(`Rejected opportunity ${id}: ${reason || 'No reason provided'}`);
+      const sanitizedId = String(id).replace(/[\n\r]/g, '');
+      const sanitizedReason = reason ? String(reason).replace(/[\n\r]/g, '') : 'No reason provided';
+      console.log(`Rejected opportunity [user-input:${sanitizedId}]: [user-input:${sanitizedReason}]`);
       return true;
     }
     return false;
