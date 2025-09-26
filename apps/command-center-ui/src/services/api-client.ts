@@ -10,7 +10,7 @@ interface RequestOptions extends RequestInit {
 
 // Generate correlation ID for request tracking
 function generateCorrelationId(): string {
-  return `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `req-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 class CircuitBreaker {
