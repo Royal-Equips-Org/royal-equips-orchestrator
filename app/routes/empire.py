@@ -697,8 +697,8 @@ def api_get_empire_metrics():
         if isinstance(revenue_progress, str):
             # Extract number from string format like "$1.2M"
             import re
-            match = re.search(r'[\d.]+', revenue_progress)
-            revenue_progress = float(match.group()) * 1000000 if match else 0
+            match = re.search(r'(\d+(?:\.\d+)?)', revenue_progress)
+            revenue_progress = float(match.group(1)) * 1000000 if match else 0
         
         # Format metrics matching frontend EmpireMetrics interface
         metrics = {
