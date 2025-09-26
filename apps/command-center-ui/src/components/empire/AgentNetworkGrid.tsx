@@ -172,7 +172,7 @@ export default function AgentNetworkGrid() {
     if (agents.length === 0 && !agentsLoading && !agentsError) {
       loadAgents();
     }
-  }, []); // Empty dependency array - only run on mount
+  }, [agents.length, agentsLoading, agentsError, loadAgents]);
 
   // Group agents by status for stats
   const agentStats = {
