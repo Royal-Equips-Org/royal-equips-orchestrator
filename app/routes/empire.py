@@ -690,54 +690,20 @@ def api_get_empire_metrics():
 def api_get_empire_agents():
     """Get active agents for the command center UI."""
     try:
-        # Mock agent data - in real implementation, this would query actual agents
-        agents = [
-            {
-                'id': 'product-research-agent',
-                'name': 'Product Research Agent',
-                'type': 'research',
-                'status': 'active',
-                'lastRun': datetime.now().isoformat(),
-                'performance': 94.2,
-                'description': 'Analyzes market trends and identifies profitable products'
-            },
-            {
-                'id': 'inventory-pricing-agent',
-                'name': 'Inventory & Pricing Agent',
-                'type': 'optimization',
-                'status': 'active',
-                'lastRun': datetime.now().isoformat(),
-                'performance': 97.8,
-                'description': 'Optimizes inventory levels and pricing strategies'
-            },
-            {
-                'id': 'marketing-automation-agent',
-                'name': 'Marketing Automation Agent',
-                'type': 'marketing',
-                'status': 'active',
-                'lastRun': datetime.now().isoformat(),
-                'performance': 91.5,
-                'description': 'Manages and optimizes marketing campaigns'
-            },
-            {
-                'id': 'order-fulfillment-agent',
-                'name': 'Order Fulfillment Agent',
-                'type': 'fulfillment',
-                'status': 'active',
-                'lastRun': datetime.now().isoformat(),
-                'performance': 98.9,
-                'description': 'Handles order processing and fulfillment automation'
-            },
-            {
-                'id': 'analytics-agent',
-                'name': 'Analytics Agent',
-                'type': 'analytics',
-                'status': 'active',
-                'lastRun': datetime.now().isoformat(),
-                'performance': 96.3,
-                'description': 'Provides real-time analytics and business insights'
-            }
-        ]
+        # Query real agent data from the autonomous agent service
+        agent_service = get_autonomous_empire_agent()
+        agents_raw = agent_service.list_agents()  # Assumes this returns a list of agent dicts
+        agents = []
+        for agent in agents_raw:
+            agents.append({
+                'id': agent.get('id', ''),
+                'name': agent.get('name', ''),
+                'type': agent.get('type', ''),
+                'status': agent.get('status', 'unknown'),
+                'lastRun': agent.get('last_run', datetime.now().isoformat()),
+                'performance': agent.get('performance', 0.0),
+                'description': agent.get('description', '')
+            })
         
         return jsonify({
             'success': True,
