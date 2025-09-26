@@ -906,7 +906,9 @@ def api_empire_chat():
             }), 400
         
         content = data['content']
-        logger.info(f'Processing chat message: {content[:100]}...')
+        # Sanitize input before logging to prevent log injection
+        sanitized_content = content[:100].replace('\n', '').replace('\r', '')
+        logger.info(f'Processing chat message: {sanitized_content}...')
         
         # Connect to ARIA agent infrastructure to get genuine response
         agent = get_autonomous_empire_agent()
