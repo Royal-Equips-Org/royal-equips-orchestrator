@@ -42,10 +42,14 @@ def log_request_completion(response):
     if hasattr(g, 'correlation_id') and hasattr(g, 'start_time'):
         duration_ms = (time.time() - g.start_time) * 1000
         # Sanitize user-controlled fields to prevent log injection
-        safe_method = request.method.replace('\n', '').replace('\r', '')
-        safe_path = request.path.replace('\n', '').replace('\r', '')
+        def sanitize_log_field(value: str) -> str:
+            # Remove all control characters (ASCII < 32 except tab) and DEL (127)
+            return ''.join(ch for ch in value if 32 <= ord(ch) <= 126)
+        safe_method = sanitize_log_field(request.method)
+        safe_path = sanitize_log_field(request.path)
+        safe_correlation_id = sanitize_log_field(str(g.correlation_id))
         logger.info(f"Request completed", extra={
-            'correlation_id': g.correlation_id,
+            'correlation_id': safe_correlation_id,
             'method': safe_method,
             'path': safe_path,
             'status_code': response.status_code,
