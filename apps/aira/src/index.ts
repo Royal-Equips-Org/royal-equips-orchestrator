@@ -90,9 +90,20 @@ await app.register(opportunitiesRoute);
 await app.register(campaignsRoute);
 
 // Simple chat endpoint for basic functionality
-app.post('/api/empire/chat', async (request: any, reply) => {
+interface EmpireChatRequestBody {
+  content: string;
+}
+
+app.post('/api/empire/chat', async (request: Fastify.Request<{ Body: EmpireChatRequestBody }>, reply) => {
   const { content } = request.body;
-  
+
+  if (typeof content !== 'string' || !content.trim()) {
+    reply.status(400).send({
+      error: 'Invalid request: "content" must be a non-empty string.',
+      timestamp: new Date().toISOString()
+    });
+    return;
+  }
   return {
     content: `🤖 AIRA: Received your message "${content}". Empire systems are operational and all endpoints are available.`,
     agent_name: 'AIRA',
