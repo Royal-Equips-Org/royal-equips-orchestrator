@@ -312,13 +312,42 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
         )
       }));
     } catch (error) {
-      // Replace placeholder with error message
+      // Enhanced error classification based on error type
+      let errorMessage = 'Sorry, I encountered an error processing your request. Please try again.';
+      
+      if (error && typeof error === 'object' && 'kind' in error) {
+        const serviceError = error as ServiceError;
+        switch (serviceError.kind) {
+          case 'timeout':
+            errorMessage = 'Request timed out. AIRA agent is taking longer than expected. Please try again.';
+            break;
+          case 'circuit_open':
+            errorMessage = 'AIRA service is temporarily unavailable. Please try again in a few moments.';
+            break;
+          case 'network':
+            errorMessage = 'Network connection error. Please check your connection and try again.';
+            break;
+          case 'http':
+            if (serviceError.status === 503) {
+              errorMessage = 'AIRA agent service is temporarily unavailable. Please try again later.';
+            } else if (serviceError.status === 504) {
+              errorMessage = 'Request timeout. AIRA is processing complex requests. Please try again.';
+            } else {
+              errorMessage = `AIRA agent error (${serviceError.status}). Please try rephrasing your request.`;
+            }
+            break;
+          default:
+            errorMessage = 'AIRA agent processing error. Please try rephrasing your request.';
+        }
+      }
+      
+      // Replace placeholder with classified error message
       set(state => ({
         chatMessages: state.chatMessages.map(msg =>
           msg.id === placeholderId
             ? {
                 ...msg,
-                content: 'Sorry, I encountered an error processing your request. Please try again.',
+                content: errorMessage,
                 status: 'error'
               }
             : msg
@@ -327,7 +356,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
       
       get().addAlert({
         type: 'warning',
-        message: 'Failed to send chat message',
+        message: 'Chat service error - connection issues detected',
         resolved: false,
       });
     }

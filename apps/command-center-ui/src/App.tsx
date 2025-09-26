@@ -1,10 +1,14 @@
 import { useEffect } from 'react'
 import EmpireDashboard from './components/empire/EmpireDashboard'
+import { ToastContainer } from './components/ui/Toast'
+import NetworkStatusBar from './components/ui/NetworkStatusBar'
+import { ToastProvider, useToastContext } from './contexts/ToastContext'
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
-function App() {
+function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
+  const { toasts, removeToast } = useToastContext();
 
   useEffect(() => {
     // Initialize empire systems and load all data
@@ -14,13 +18,20 @@ function App() {
 
   return (
     <div className="min-h-screen bg-black">
-      {!isConnected && (
-        <div className="fixed top-4 right-4 z-50 bg-yellow-600/20 border border-yellow-600/50 text-yellow-400 px-4 py-2 rounded-lg">
-          ⚠️ Connecting to Empire API...
-        </div>
-      )}
-      <EmpireDashboard />
+      <NetworkStatusBar />
+      <div className="pt-12"> {/* Add padding to account for fixed status bar */}
+        <EmpireDashboard />
+      </div>
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   )
 }
 

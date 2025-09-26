@@ -12,83 +12,30 @@ import {
   Star
 } from 'lucide-react';
 import { useProductOpportunities, useEmpireStore } from '@/store/empire-store';
+import { useToastContext } from '@/contexts/ToastContext';
 import type { ProductOpportunity } from '@/types/empire';
 
 export default function ProductOpportunityCards() {
   const opportunities = useProductOpportunities();
-  const { approveProduct, rejectProduct } = useEmpireStore();
+  const { approveProduct, rejectProduct, oppsLoading, oppsError } = useEmpireStore();
+  const { success, error } = useToastContext();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Mock data if no opportunities available
-  const mockOpportunities: ProductOpportunity[] = [
-    {
-      id: "opp_1",
-      title: "Portable Solar Power Bank with Wireless Charging",
-      description: "Eco-friendly portable charging solution with solar panels and wireless charging capability.",
-      price_range: "$25-$35",
-      trend_score: 87,
-      profit_potential: "High",
-      platform: "AliExpress",
-      search_volume: 45000,
-      competition_level: "Medium",
-      seasonal_factor: "Year-round",
-      supplier_leads: ["SolarTech Co.", "GreenPower Ltd."],
-      market_insights: "Growing demand for sustainable tech accessories",
-      confidence_score: 87,
-      profit_margin: 45,
-      monthly_searches: 45000
-    },
-    {
-      id: "opp_2",
-      title: "Smart Fitness Tracker with Heart Monitor", 
-      description: "Advanced fitness tracking device with heart rate monitoring, GPS, and smartphone integration.",
-      price_range: "$45-$65",
-      trend_score: 92,
-      profit_potential: "High",
-      platform: "Amazon",
-      search_volume: 67000,
-      competition_level: "High",
-      seasonal_factor: "Q1 peak",
-      supplier_leads: ["FitTech Corp.", "HealthGadgets Inc."],
-      market_insights: "Health tech market expanding rapidly",
-      confidence_score: 92,
-      profit_margin: 52,
-      monthly_searches: 67000
-    },
-    {
-      id: "opp_3",
-      title: "LED Gaming Mouse Pad RGB",
-      description: "Smart LED mouse pad with app control, multiple colors, and music sync.",
-      price_range: "$15-$25",
-      trend_score: 74,
-      profit_potential: "Medium",
-      platform: "DHgate", 
-      search_volume: 23000,
-      competition_level: "Low",
-      seasonal_factor: "Holiday peak",
-      supplier_leads: ["GameTech Ltd.", "RGB Solutions"],
-      market_insights: "Gaming accessories steady growth",
-      confidence_score: 74,
-      profit_margin: 38, 
-      monthly_searches: 23000
-    }
-  ];
-
-  const displayOpportunities = opportunities.length > 0 ? opportunities : mockOpportunities;
-  const currentOpportunity = displayOpportunities[currentIndex];
+  const currentOpportunity = opportunities[currentIndex];
 
   const handleApprove = async () => {
     if (currentOpportunity) {
       try {
         await approveProduct(currentOpportunity.id);
+        success('Product Approved', `${currentOpportunity.title} has been approved for deployment`);
         // Move to next opportunity
-        if (currentIndex < displayOpportunities.length - 1) {
+        if (currentIndex < opportunities.length - 1) {
           setCurrentIndex(currentIndex + 1);
         } else {
           setCurrentIndex(0);
         }
-      } catch (error) {
-        console.error('Failed to approve product:', error);
+      } catch (err) {
+        error('Approval Failed', 'Failed to approve product. Please try again.');
       }
     }
   };
@@ -97,14 +44,15 @@ export default function ProductOpportunityCards() {
     if (currentOpportunity) {
       try {
         await rejectProduct(currentOpportunity.id, 'Manual rejection from UI');
+        success('Product Rejected', `${currentOpportunity.title} has been rejected`);
         // Move to next opportunity
-        if (currentIndex < displayOpportunities.length - 1) {
+        if (currentIndex < opportunities.length - 1) {
           setCurrentIndex(currentIndex + 1);
         } else {
           setCurrentIndex(0);
         }
-      } catch (error) {
-        console.error('Failed to reject product:', error);
+      } catch (err) {
+        error('Rejection Failed', 'Failed to reject product. Please try again.');
       }
     }
   };
@@ -126,7 +74,37 @@ export default function ProductOpportunityCards() {
     }
   };
 
-  if (!currentOpportunity) {
+  if (oppsLoading) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-gray-400 mb-4">
+          <div className="animate-spin w-16 h-16 mx-auto border-4 border-cyan-500 border-t-transparent rounded-full"></div>
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">Loading Opportunities</h3>
+        <p className="text-gray-400">Analyzing market opportunities...</p>
+      </div>
+    );
+  }
+
+  if (oppsError) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-gray-400 mb-4">
+          <Info className="w-16 h-16 mx-auto" />
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">Failed to Load Opportunities</h3>
+        <p className="text-gray-400 mb-4">{oppsError}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-4 py-2 bg-cyan-600/20 text-cyan-400 border border-cyan-600/30 rounded-lg hover:bg-cyan-600/30 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!currentOpportunity || opportunities.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-400 mb-4">
@@ -145,7 +123,7 @@ export default function ProductOpportunityCards() {
         <div>
           <h3 className="text-lg font-semibold text-white">Product Opportunities</h3>
           <p className="text-sm text-gray-400">
-            {currentIndex + 1} of {displayOpportunities.length} opportunities
+            {currentIndex + 1} of {opportunities.length} opportunities
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -259,7 +237,7 @@ export default function ProductOpportunityCards() {
 
       {/* Navigation */}
       <div className="flex justify-center space-x-2">
-        {displayOpportunities.map((_, index) => (
+        {opportunities.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
