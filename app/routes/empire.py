@@ -848,7 +848,8 @@ def api_get_marketing_campaigns():
 def api_approve_product(product_id):
     """Approve a product opportunity."""
     try:
-        logger.info(f'Approving product opportunity: {product_id}')
+        sanitized_product_id = str(product_id).replace('\n', '').replace('\r', '')[:100]
+        logger.info(f'Approving product opportunity: {sanitized_product_id}')
         
         # In real implementation, this would update the product status
         return jsonify({
