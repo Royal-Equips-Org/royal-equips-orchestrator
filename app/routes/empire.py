@@ -746,10 +746,10 @@ def api_get_empire_agents():
         })
         
     except Exception as e:
-        logger.error(f"API empire agents failed: {e}")
+        logger.exception("API empire agents failed")
         return jsonify({
             'success': False,
-            'error': str(e),
+            'error': 'Internal error. Unable to fetch empire agents.',
             'timestamp': datetime.now().isoformat()
         }), 500
 
