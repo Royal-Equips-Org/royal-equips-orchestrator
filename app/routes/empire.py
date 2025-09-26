@@ -681,7 +681,7 @@ def api_get_empire_metrics():
         logger.error(f"API empire metrics failed: {e}")
         return jsonify({
             'success': False,
-            'error': str(e),
+            'error': 'Internal server error',
             'timestamp': datetime.now().isoformat()
         }), 500
 
