@@ -28,6 +28,10 @@ function isValidDate(value: unknown): value is Date {
   return value instanceof Date && !isNaN(value.getTime());
 }
 
+function isValidDateString(value: unknown): boolean {
+  return isString(value) && !isNaN(Date.parse(value));
+}
+
 function isValidAgentStatus(value: unknown): value is AgentStatus {
   return isString(value) && ['active', 'inactive', 'deploying', 'error'].includes(value);
 }
@@ -79,7 +83,7 @@ export function isAgent(obj: unknown): obj is Agent {
     isNumber(agent.success_rate) &&
     isValidHealthStatus(agent.health) &&
     isString(agent.emoji) &&
-    (agent.last_execution === undefined || isValidDate(agent.last_execution))
+    (agent.last_execution === undefined || isValidDateString(agent.last_execution))
   );
 }
 
@@ -129,7 +133,7 @@ export function isMarketingCampaign(obj: unknown): obj is MarketingCampaign {
     isNumber(campaign.clicks) &&
     isNumber(campaign.conversions) &&
     isNumber(campaign.roas) &&
-    isValidDate(campaign.created_at) &&
+    isValidDateString(campaign.created_at) &&
     typeof campaign.content === 'object' &&
     campaign.content !== null
   );

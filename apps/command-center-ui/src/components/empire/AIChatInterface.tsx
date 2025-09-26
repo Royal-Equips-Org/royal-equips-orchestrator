@@ -15,7 +15,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import { useEmpireStore } from '@/store/empire-store';
+import { useEmpireStore, useChatMessages } from '@/store/empire-store';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types/empire';
 
@@ -174,10 +174,8 @@ function AIRAStatusIndicator({ response }: { response?: AIRAResponse }) {
 }
 
 export default function AIChatInterface() {
-  const { chatMessages, sendUserChat } = useEmpireStore(state => ({
-    chatMessages: state.chatMessages,
-    sendUserChat: state.sendUserChat
-  }));
+  const chatMessages = useChatMessages();
+  const sendUserChat = useEmpireStore(state => state.sendUserChat);
   
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);

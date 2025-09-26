@@ -49,7 +49,7 @@ class CircuitBreaker {
   }
 }
 
-class ApiClient {
+export class ApiClient {
   private baseUrl: string;
   private defaultTimeout = 10000; // 10 seconds
   private circuitBreaker = new CircuitBreaker();
@@ -120,25 +120,27 @@ class ApiClient {
     requestFn: () => Promise<T>,
     maxRetries = 3
   ): Promise<T> {
-    let lastError: Error;
+    let lastError: unknown;
+    const totalAttempts = Math.max(1, maxRetries + 1); // At least 1 attempt, then maxRetries more
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= totalAttempts; attempt++) {
       try {
         const result = await requestFn();
         this.circuitBreaker.recordSuccess();
         return result;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error;
         
-        if (attempt === maxRetries) {
+        if (attempt === totalAttempts) {
           this.circuitBreaker.recordFailure();
           break;
         }
 
         // Exponential backoff: 300ms, 600ms, 1200ms
         const delay = 300 * Math.pow(2, attempt - 1);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         logger.warn(`Request attempt ${attempt} failed, retrying in ${delay}ms`, {
-          error: lastError.message,
+          error: errorMessage,
           attempt,
           maxRetries
         });
@@ -147,12 +149,12 @@ class ApiClient {
       }
     }
 
-    throw lastError!;
+    throw lastError;
   }
 
   private createError(error: unknown, context: string): ServiceError {
     if (error instanceof Error) {
-      if (error.name === 'AbortError') {
+      if (error.name === 'AbortError' || error.message.includes('aborted')) {
         return {
           kind: 'timeout',
           message: `Request timeout in ${context}`

@@ -1,7 +1,7 @@
 // Agent Network Grid Component
 import { motion } from 'framer-motion';
 import { Cpu, Activity, AlertTriangle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
-import { useEmpireStore, useLoadingStates, useErrorStates } from '@/store/empire-store';
+import { useEmpireStore } from '@/store/empire-store';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
 
@@ -164,8 +164,8 @@ function EmptyState() {
 export default function AgentNetworkGrid() {
   const agents = useEmpireStore(state => state.agents);
   const loadAgents = useEmpireStore(state => state.loadAgents);
-  const { agentsLoading } = useLoadingStates();
-  const { agentsError } = useErrorStates();
+  const agentsLoading = useEmpireStore(state => state.agentsLoading);
+  const agentsError = useEmpireStore(state => state.agentsError);
 
   // Load agents on mount
   useEffect(() => {

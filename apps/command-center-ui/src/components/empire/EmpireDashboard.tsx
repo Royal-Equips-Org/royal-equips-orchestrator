@@ -2,16 +2,18 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Globe, Users } from 'lucide-react';
-import EmpireVisualization3D from './EmpireVisualization3D';
+import CommandCenter3DScene from '../three/CommandCenter3DScene';
 import AgentNetworkGrid from './AgentNetworkGrid';
 import RevenueTracker from './RevenueTracker';
 import ProductOpportunityCards from './ProductOpportunityCards';
 import AIChatInterface from './AIChatInterface';
 import EmergencyControls from './EmergencyControls';
 import { MarketingStudio } from './MarketingStudio';
+import { useEmpireStore } from '@/store/empire-store';
 
 export default function EmpireDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { metrics, agents, isConnected } = useEmpireStore();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -53,14 +55,24 @@ export default function EmpireDashboard() {
 
           <div className="flex items-center space-x-4">
             {/* Connection Status */}
-            <div className="flex items-center space-x-2 px-3 py-1 rounded-full text-xs bg-green-500/20 text-green-400">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="uppercase font-medium">CONNECTED</span>
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs ${
+              isConnected 
+                ? 'bg-green-500/20 text-green-400' 
+                : 'bg-red-500/20 text-red-400'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                isConnected ? 'bg-green-400' : 'bg-red-400'
+              }`} />
+              <span className="uppercase font-medium">
+                {isConnected ? 'CONNECTED' : 'OFFLINE'}
+              </span>
             </div>
 
             {/* Active Agents */}
             <div className="text-right">
-              <div className="text-xl font-bold text-cyan-400">5</div>
+              <div className="text-xl font-bold text-cyan-400">
+                {agents?.length || 0}
+              </div>
               <div className="text-xs opacity-70">Active Agents</div>
             </div>
           </div>
@@ -84,20 +96,34 @@ export default function EmpireDashboard() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Revenue Progress</span>
-                <span className="text-xl font-bold text-green-400">$2.4M</span>
+                <span className="text-xl font-bold text-green-400">
+                  ${metrics ? (metrics.revenue_progress / 1000000).toFixed(1) : '0'}M
+                </span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
-                <div className="bg-gradient-to-r from-green-400 to-cyan-400 h-2 rounded-full" style={{width: '2.4%'}}></div>
+                <div 
+                  className="bg-gradient-to-r from-green-400 to-cyan-400 h-2 rounded-full" 
+                  style={{
+                    width: `${metrics ? ((metrics.revenue_progress / metrics.target_revenue) * 100).toFixed(1) : 0}%`
+                  }}
+                />
               </div>
-              <div className="text-sm text-gray-400">2.4% toward $100M target</div>
+              <div className="text-sm text-gray-400">
+                {metrics ? ((metrics.revenue_progress / metrics.target_revenue) * 100).toFixed(1) : 0}% toward 
+                ${metrics ? (metrics.target_revenue / 1000000).toFixed(0) : '100'}M target
+              </div>
               
               <div className="grid grid-cols-2 gap-4 mt-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-cyan-400">234</div>
+                  <div className="text-2xl font-bold text-cyan-400">
+                    {metrics?.approved_products || 0}
+                  </div>
                   <div className="text-xs text-gray-400">Products Approved</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-400">65%</div>
+                  <div className="text-2xl font-bold text-yellow-400">
+                    {metrics?.automation_level || 0}%
+                  </div>
                   <div className="text-xs text-gray-400">Automation Level</div>
                 </div>
               </div>
@@ -118,16 +144,9 @@ export default function EmpireDashboard() {
               Agent Network Status
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[
-                { name: "Product Research", emoji: "🔍", status: "active", score: 94 },
-                { name: "Supplier Intelligence", emoji: "🏭", status: "active", score: 87 },
-                { name: "Master Coordinator", emoji: "🤖", status: "active", score: 98 },
-                { name: "Market Analysis", emoji: "📊", status: "deploying", score: 0 },
-                { name: "Pricing Strategy", emoji: "💰", status: "inactive", score: 76 },
-                { name: "Marketing Orchestrator", emoji: "📱", status: "error", score: 65 }
-              ].map((agent, index) => (
+              {agents.length > 0 ? agents.map((agent, index) => (
                 <motion.div
-                  key={agent.name}
+                  key={agent.id}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 * index }}
@@ -150,9 +169,27 @@ export default function EmpireDashboard() {
                     </span>
                   </div>
                   <div className="text-sm font-medium text-white mb-1">{agent.name}</div>
-                  <div className="text-lg font-bold text-cyan-400">{agent.score}</div>
+                  <div className="text-lg font-bold text-cyan-400">{agent.performance_score}</div>
                 </motion.div>
-              ))}
+              )) : (
+                // Fallback while loading
+                [...Array(3)].map((_, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 * index }}
+                    className="p-3 rounded-lg border bg-gray-500/10 border-gray-500/30"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-2xl">⚙️</span>
+                      <span className="text-xs uppercase font-bold text-gray-400">LOADING</span>
+                    </div>
+                    <div className="text-sm font-medium text-white mb-1">Loading...</div>
+                    <div className="text-lg font-bold text-cyan-400">--</div>
+                  </motion.div>
+                ))
+              )}
             </div>
           </div>
         </motion.div>
@@ -249,7 +286,13 @@ export default function EmpireDashboard() {
           transition={{ delay: 0.9 }}
           className="col-span-12 lg:col-span-8"
         >
-          <EmpireVisualization3D />
+          <div className="bg-black/40 backdrop-blur-md border border-cyan-500/30 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <Globe className="w-5 h-5 mr-2 text-purple-400" />
+              Empire Network Visualization
+            </h3>
+            <CommandCenter3DScene className="rounded-lg" />
+          </div>
         </motion.div>
 
         {/* Agent Network Grid */}
