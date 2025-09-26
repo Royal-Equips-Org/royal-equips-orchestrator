@@ -578,11 +578,15 @@ class InventoryPricingAgent(BaseAgent):
                         # In a real implementation, you would call:
                         # result = await shopify_client.update_product_variant(variant_input)
                         
-                        # For now, log the intended change
+                        # Functionality not yet implemented
                         self.logger.info(
                             f"Would update {update['sku']} price from ${update['current_price']:.2f} "
                             f"to ${update['new_price']:.2f} ({update['price_change_percent']:+.1f}%) "
                             f"Reason: {update['reason']}"
+                        )
+                        raise NotImplementedError(
+                            "Shopify product variant price update not implemented. "
+                            "Uncomment and implement the API call to enable this functionality."
                         )
                         
                         changes_applied += 1
