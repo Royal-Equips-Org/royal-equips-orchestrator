@@ -942,17 +942,15 @@ def api_empire_chat():
         content = data['content']
         logger.info(f'Processing chat message: {content[:100]}...')
         
-        # Mock ARIA response - in real implementation, this would interface with the AI
+        # Connect to ARIA agent infrastructure to get genuine response
+        agent = get_autonomous_empire_agent()
+        agent_response = agent.chat(content)  # Assumes agent has a .chat() method
         response = {
-            'id': f'msg-{int(datetime.now().timestamp())}',
-            'content': f'I understand you said: "{content}". As your ARIA assistant, I\'m monitoring all empire systems. How can I help optimize your e-commerce operations today?',
-            'type': 'response',
-            'timestamp': datetime.now().isoformat(),
-            'context': {
-                'empire_status': 'operational',
-                'active_agents': 5,
-                'system_health': 'excellent'
-            }
+            'id': agent_response.get('id', f'msg-{int(datetime.now().timestamp())}'),
+            'content': agent_response.get('content', ''),
+            'type': agent_response.get('type', 'response'),
+            'timestamp': agent_response.get('timestamp', datetime.now().isoformat()),
+            'context': agent_response.get('context', {})
         }
         
         return jsonify({
