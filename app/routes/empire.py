@@ -11,8 +11,9 @@ Provides comprehensive empire-level system management including:
 
 import logging
 import time
+import uuid
 from datetime import datetime
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, g
 from typing import Dict, Any, Optional
 
 from app.services.health_service import get_health_service
@@ -27,6 +28,28 @@ empire_bp = Blueprint('empire', __name__, url_prefix='/empire')
 
 # Create API empire blueprint for frontend integration
 api_empire_bp = Blueprint('api_empire', __name__, url_prefix='/api/empire')
+
+# Middleware to add correlation ID support
+@api_empire_bp.before_request
+def add_correlation_id():
+    """Add correlation ID to track requests across services."""
+    g.correlation_id = request.headers.get('X-Request-ID') or str(uuid.uuid4())
+    g.start_time = time.time()
+
+@api_empire_bp.after_request
+def log_request_completion(response):
+    """Log request completion with correlation ID and timing."""
+    if hasattr(g, 'correlation_id') and hasattr(g, 'start_time'):
+        duration_ms = (time.time() - g.start_time) * 1000
+        logger.info(f"Request completed", extra={
+            'correlation_id': g.correlation_id,
+            'method': request.method,
+            'path': request.path,
+            'status_code': response.status_code,
+            'duration_ms': round(duration_ms, 2)
+        })
+        response.headers['X-Request-ID'] = g.correlation_id
+    return response
 
 
 @empire_bp.route('/health', methods=['GET'])
@@ -656,6 +679,9 @@ def internal_error(error):
 def api_get_empire_metrics():
     """Get empire metrics for the command center UI."""
     try:
+        correlation_id = getattr(g, 'correlation_id', 'unknown')
+        logger.info('Processing empire metrics request', extra={'correlation_id': correlation_id})
+        
         health_service = get_health_service()
         empire_health = health_service.check_empire_health()
         
@@ -685,14 +711,29 @@ def api_get_empire_metrics():
             'profit_margin_avg': empire_health.get('profit_margin_avg', 0.0)
         }
         
-        return jsonify({
-            'success': True,
-            'data': metrics,
-            'timestamp': datetime.now().isoformat()
+        # Wrap in success response format to match frontend expectations
+        if 'data' not in metrics:
+            response_data = {
+                'success': True,
+                'data': metrics,
+                'timestamp': datetime.now().isoformat()
+            }
+        else:
+            response_data = metrics
+        
+        logger.info('Empire metrics retrieved successfully', extra={
+            'correlation_id': correlation_id,
+            'metrics_count': len(metrics)
         })
         
+        return jsonify(response_data)
+        
     except Exception as e:
-        logger.error(f"API empire metrics failed: {e}")
+        correlation_id = getattr(g, 'correlation_id', 'unknown')
+        logger.error('API empire metrics failed', extra={
+            'correlation_id': correlation_id,
+            'error': str(e)
+        })
         return jsonify({
             'success': False,
             'error': 'Internal server error',

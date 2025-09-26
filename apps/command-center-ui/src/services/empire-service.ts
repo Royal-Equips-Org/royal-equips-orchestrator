@@ -17,13 +17,16 @@ import {
   isAIRAResponse
 } from './validators';
 import { logger } from './log';
+import { retryMetrics, retryAgents, retryOpportunities, retryCampaigns } from './retry-policy';
 
 export class EmpireService {
   async fetchMetrics(): Promise<EmpireMetrics> {
     try {
       logger.info('Fetching empire metrics');
-      const data = await apiClient.get('/api/empire/metrics');
-      return validateAndTransform(data, isEmpireMetrics, 'EmpireMetrics');
+      return await retryMetrics(async () => {
+        const data = await apiClient.get('/api/empire/metrics');
+        return validateAndTransform(data, isEmpireMetrics, 'EmpireMetrics');
+      });
     } catch (error) {
       logger.error('Failed to fetch metrics', { error: String(error) });
       throw error;
@@ -33,8 +36,10 @@ export class EmpireService {
   async fetchAgents(): Promise<Agent[]> {
     try {
       logger.info('Fetching agents');
-      const data = await apiClient.get('/api/empire/agents');
-      return validateAndTransform(data, isAgentArray, 'Agent[]');
+      return await retryAgents(async () => {
+        const data = await apiClient.get('/api/empire/agents');
+        return validateAndTransform(data, isAgentArray, 'Agent[]');
+      });
     } catch (error) {
       logger.error('Failed to fetch agents', { error: String(error) });
       throw error;
@@ -44,8 +49,10 @@ export class EmpireService {
   async fetchProductOpportunities(): Promise<ProductOpportunity[]> {
     try {
       logger.info('Fetching product opportunities');
-      const data = await apiClient.get('/api/empire/opportunities');
-      return validateAndTransform(data, isProductOpportunityArray, 'ProductOpportunity[]');
+      return await retryOpportunities(async () => {
+        const data = await apiClient.get('/api/empire/opportunities');
+        return validateAndTransform(data, isProductOpportunityArray, 'ProductOpportunity[]');
+      });
     } catch (error) {
       logger.error('Failed to fetch product opportunities', { error: String(error) });
       throw error;
@@ -55,8 +62,10 @@ export class EmpireService {
   async fetchMarketingCampaigns(): Promise<MarketingCampaign[]> {
     try {
       logger.info('Fetching marketing campaigns');
-      const data = await apiClient.get('/api/empire/campaigns');
-      return validateAndTransform(data, isMarketingCampaignArray, 'MarketingCampaign[]');
+      return await retryCampaigns(async () => {
+        const data = await apiClient.get('/api/empire/campaigns');
+        return validateAndTransform(data, isMarketingCampaignArray, 'MarketingCampaign[]');
+      });
     } catch (error) {
       logger.error('Failed to fetch marketing campaigns', { error: String(error) });
       throw error;

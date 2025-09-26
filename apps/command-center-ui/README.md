@@ -5,101 +5,236 @@ A modern React application for managing the Royal Equips Empire with real-time a
 ## Features
 
 - **Agent Network Grid**: Monitor and manage AI agents with real-time status updates
-- **Product Opportunity Cards**: Review and approve/reject product opportunities 
+- **Product Opportunity Cards**: Review and approve/reject product opportunities with toast notifications
 - **Revenue Tracker**: Track empire revenue progress and metrics
-- **AI Chat Interface**: Communicate with AIRA (AI Royal Assistant)
+- **AI Chat Interface**: Communicate with AIRA with enhanced error classification  
 - **Marketing Studio**: Create and manage marketing campaigns
+- **3D Empire Visualization**: Interactive 3D visualization of the agent network
+- **Network Status Bar**: Unified service status monitoring
+- **Toast Notifications**: User feedback for actions and errors
 - **Emergency Controls**: Emergency stop and autopilot controls
 
 ## Environment Setup
 
 ### Required Environment Variables
 
-Create a `.env` file in the project root with:
+Create a `.env.local` file in the app directory:
 
 ```bash
-# API Configuration
-VITE_API_BASE_URL=http://localhost:8000
+# API Configuration - REQUIRED
+VITE_API_BASE_URL=http://localhost:10000
 
-# Optional: Separate AIRA API URL
-VITE_AIRA_API_URL=http://localhost:10000
+# Alternative API URL (fallback)
+VITE_API_URL=http://localhost:10000
+
+# For production deployment (Cloudflare Pages)
+VITE_API_BASE_URL=https://your-aira-backend.onrender.com
 ```
 
-### Authentication
+### Production Environment (Cloudflare Pages)
 
-The application expects an authentication token to be stored in localStorage:
+In Cloudflare Pages Environment Variables, set:
+
+```bash
+VITE_API_BASE_URL=https://your-backend-domain.com
+```
+
+### Authentication (Optional)
+
+The application optionally uses authentication tokens stored in localStorage:
 
 ```javascript
 localStorage.setItem('empire_token', 'your-auth-token');
 ```
 
-## Backend API Endpoints
+## Backend API Requirements
 
-The application expects the following REST API endpoints:
+The application requires these REST API endpoints with specific response formats:
 
-| Purpose | Method | Path | Description |
-|---------|--------|------|-------------|
-| Metrics | GET | `/api/empire/metrics` | Returns EmpireMetrics object |
-| Agents | GET | `/api/empire/agents` | Returns array of Agent objects |
-| Product Opportunities | GET | `/api/empire/opportunities` | Returns array of ProductOpportunity objects |
-| Marketing Campaigns | GET | `/api/empire/campaigns` | Returns array of MarketingCampaign objects |
-| Approve Product | POST | `/api/empire/opportunities/:id/approve` | Approves a product opportunity |
-| Reject Product | POST | `/api/empire/opportunities/:id/reject` | Rejects a product opportunity (body: `{ reason }`) |
-| Send Chat | POST | `/api/empire/chat` | Sends chat message (body: `{ content }`) |
+### Core Data Endpoints
 
-## Data Flow
+| Purpose | Method | Path | Response Type | Description |
+|---------|--------|------|--------------|-------------|
+| Metrics | GET | `/api/empire/metrics` | `{ success: boolean, data: EmpireMetrics }` | Empire performance metrics |
+| Agents | GET | `/api/empire/agents` | `{ success: boolean, data: Agent[] }` | Active agent network status |
+| Opportunities | GET | `/api/empire/opportunities` | `{ success: boolean, data: ProductOpportunity[] }` | Product opportunities |
+| Campaigns | GET | `/api/empire/campaigns` | `{ success: boolean, data: MarketingCampaign[] }` | Marketing campaigns |
 
-1. **Service Layer**: `src/services/empire-service.ts` handles all API communication
-2. **State Management**: Zustand store (`src/store/empire-store.ts`) manages application state with loading/error states
-3. **Type Safety**: TypeScript types in `src/types/empire.ts` ensure data consistency
-4. **Validation**: Runtime type guards in `src/services/validators.ts` validate API responses
-5. **Error Handling**: Circuit breaker pattern with retries and timeout handling
+### Action Endpoints  
 
-## Development
+| Purpose | Method | Path | Response | Description |
+|---------|--------|------|----------|-------------|
+| Approve Product | POST | `/api/empire/opportunities/:id/approve` | 204 No Content | Idempotent approval |
+| Reject Product | POST | `/api/empire/opportunities/:id/reject` | 204 No Content | Idempotent rejection (body: `{ reason }`) |
+| Send Chat | POST | `/api/empire/chat` | `{ success: boolean, data: AIRAResponse }` | Chat with AIRA assistant |
 
-```bash
-# Install dependencies
-npm install
+### Error Response Format
 
-# Start development server
-npm run dev
+All endpoints should return errors in this format:
 
-# Build for production
-npm run build
+```json
+{
+  "success": false,
+  "error": "Human-readable error message",
+  "error_type": "timeout|connection|agent_error|internal",
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
 
-# Run tests
-npm run test
+### CORS Configuration
 
-# Run tests in watch mode
-npm run test:watch
+Backend must allow:
+- Origins: Frontend domains (localhost:5173 for dev, production domains)
+- Methods: GET, POST, PUT, DELETE, OPTIONS
+- Headers: Content-Type, Authorization, X-Request-ID, X-Client-Version
 
-# Run tests with UI
-npm run test:ui
+## Data Types
+
+### Core TypeScript Interfaces
+
+```typescript
+interface EmpireMetrics {
+  total_agents: number;
+  active_agents: number;
+  total_opportunities: number;
+  approved_products: number;
+  revenue_progress: number;
+  target_revenue: number;
+  automation_level: number;
+  system_uptime: number;
+  daily_discoveries: number;
+  profit_margin_avg: number;
+}
+
+interface Agent {
+  id: string;
+  name: string;
+  type: 'research' | 'supplier' | 'marketing' | 'analytics' | 'automation' | 'monitoring';
+  status: 'active' | 'inactive' | 'deploying' | 'error';
+  performance_score: number;
+  discoveries_count: number;
+  success_rate: number;
+  last_execution?: Date;
+  health: 'good' | 'warning' | 'critical';
+  emoji: string;
+}
+
+interface ProductOpportunity {
+  id: string;
+  title: string;
+  description: string;
+  price_range: string;
+  trend_score: number;
+  profit_potential: 'High' | 'Medium' | 'Low';
+  platform: string;
+  supplier_leads: string[];
+  market_insights: string;
+  search_volume?: number;
+  competition_level: string;
+  confidence_score: number;
+  profit_margin: number;
+  monthly_searches: number;
+}
 ```
 
 ## Architecture
 
-- **Frontend**: React 18 + TypeScript + Vite
+### Frontend Stack
+- **Framework**: React 18 + TypeScript + Vite
 - **State Management**: Zustand for global state
 - **Styling**: Tailwind CSS with custom components
 - **Animation**: Framer Motion
 - **3D Graphics**: Three.js + React Three Fiber
 - **Testing**: Vitest + Testing Library
-- **HTTP Client**: Custom fetch wrapper with resilience patterns
+- **Build**: Vite with TypeScript compilation
 
-## Error Handling
+### HTTP Client Features
+- **Circuit Breaker**: Auto-failover when backend is unhealthy
+- **Retry Policies**: Exponential backoff with jitter
+- **Correlation IDs**: Request tracking across services
+- **Timeout Handling**: Configurable per-request timeouts
+- **Error Classification**: Detailed error type discrimination
 
-The application implements several resilience patterns:
+### State Management Architecture
+1. **Services Layer**: `src/services/empire-service.ts` - API communication with retry policies
+2. **Store Layer**: `src/store/empire-store.ts` - Zustand global state with loading/error states
+3. **Validation Layer**: `src/services/validators.ts` - Runtime type guards for API responses
+4. **Component Layer**: React components with optimistic updates
 
-- **Circuit Breaker**: Fails fast when backend is unhealthy
-- **Retry Logic**: Exponential backoff for transient failures
-- **Timeout Handling**: Configurable request timeouts
-- **Loading States**: Proper loading and error UI states
-- **Graceful Degradation**: Fallback behavior when services are unavailable
+## Development
 
-## Empty State Behavior
+```bash
+# Install dependencies
+pnpm install
 
-- **Agents**: Shows "No agents registered yet" when empty
-- **Opportunities**: Shows "No pending opportunities" when empty  
-- **Metrics**: Shows placeholder blocks with "—" when null
-- **Error States**: Retry buttons and descriptive error messages
+# Start development server
+pnpm run dev
+
+# Build for production
+pnpm run build
+
+# Run tests
+pnpm run test
+
+# Run tests in watch mode
+pnpm run test:watch
+
+# Run tests with UI
+pnpm run test:ui
+
+# Lint code
+pnpm run lint
+```
+
+## Error Handling & Resilience
+
+### Circuit Breaker Pattern
+- Fails fast after 5 consecutive failures
+- Auto-recovery after 30 seconds
+- Half-open state for gradual recovery
+
+### Retry Policies
+- **Metrics**: Linear backoff (500ms base, 1.5x multiplier, max 2 retries)
+- **Agents**: Exponential backoff (300ms base, 2x multiplier, max 3 retries)  
+- **Opportunities**: Exponential backoff (400ms base, 2x multiplier, max 3 retries)
+- **Non-retryable**: 4xx HTTP errors, validation errors
+
+### Error Classification
+- **Timeout**: Request exceeded configured timeout
+- **Network**: Network connectivity issues
+- **HTTP**: Server returned error status (with status code)
+- **Circuit Open**: Circuit breaker is open
+- **Validation**: Data format validation failed
+
+### User Experience
+- **Loading States**: Skeleton loaders and spinners
+- **Error States**: Retry buttons with descriptive messages
+- **Empty States**: Call-to-action messaging when no data
+- **Toast Notifications**: Success/error feedback for user actions
+- **Network Status Bar**: Real-time service health monitoring
+
+## Production Deployment
+
+### Cloudflare Pages Setup
+1. Connect GitHub repository
+2. Set build command: `pnpm run build`  
+3. Set build output directory: `dist`
+4. Configure environment variables:
+   ```bash
+   VITE_API_BASE_URL=https://your-backend.com
+   ```
+
+### Performance Considerations
+- Bundle size: ~1.3MB (compressed ~384KB)
+- Code splitting recommended for routes
+- Tree shaking enabled for unused code elimination
+- Vite optimizations for fast HMR in development
+
+## Testing
+
+- **Unit Tests**: Services, utilities, and pure functions
+- **Component Tests**: React component rendering and interactions  
+- **Integration Tests**: Store actions and API communication
+- **E2E Tests**: Critical user flows (manual testing recommended)
+
+Current test coverage: 20/20 tests passing
