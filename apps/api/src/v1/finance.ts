@@ -3,7 +3,10 @@ import Stripe from "stripe";
 
 const financeRoutes: FastifyPluginAsync = async (app) => {
   // Initialize Stripe client
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_demo');
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is required to initialize Stripe.');
+  }
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   app.get("/finance/stripe/balance", async () => {
     try {
