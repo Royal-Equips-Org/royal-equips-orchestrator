@@ -325,12 +325,19 @@ class ShopifyGraphQLClient:
             
             # Convert variants connection to list
             if "variants" in node and isinstance(node["variants"], dict):
-                node["variants"] = [variant_edge["node"] for variant_edge in node["variants"]["edges"]]
+                node["variants"] = self._extract_nodes_from_connection(node["variants"])
             
             # Convert images connection to list
             if "images" in node and isinstance(node["images"], dict):
-                node["images"] = [image_edge["node"] for image_edge in node["images"]["edges"]]
+                node["images"] = self._extract_nodes_from_connection(node["images"])
         
+
+    @staticmethod
+    def _extract_nodes_from_connection(connection: dict) -> list:
+        """Extracts the list of nodes from a Shopify connection dict (edges/node pattern)."""
+        if not isinstance(connection, dict) or "edges" not in connection:
+            return []
+        return [edge["node"] for edge in connection["edges"]]
         return ProductConnection.model_validate(products_data)
     
     async def get_product_by_id(self, product_id: str) -> Optional[Product]:
