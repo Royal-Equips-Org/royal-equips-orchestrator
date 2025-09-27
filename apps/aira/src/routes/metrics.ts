@@ -65,8 +65,8 @@ export const metricsRoute: FastifyPluginAsync = async (app) => {
         const stateValue = snapshot.state === 'closed' ? 0 : 
                           snapshot.state === 'half_open' ? 1 : 2;
         circuitBreakerState.set(stateValue);
-        circuitBreakerFailures.inc(0); // Keep counter alive
-        circuitBreakerSuccesses.inc(0); // Keep counter alive
+        // Removed unnecessary zero increments for counters
+        // Removed unnecessary zero increments for counters
       }
 
       // Update business metrics (replace with real data)
