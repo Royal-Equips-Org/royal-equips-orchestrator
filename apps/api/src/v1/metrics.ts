@@ -2,8 +2,11 @@ import { FastifyPluginAsync } from 'fastify';
 import { register } from 'prom-client';
 import fs from 'fs/promises';
 import path from 'path';
-
+import rateLimit from '@fastify/rate-limit';
 const metricsRoutes: FastifyPluginAsync = async (app) => {
+  // Register rate limit plugin
+  await app.register(rateLimit);
+
   app.get("/metrics", async (_, reply) => {
     reply.type("text/plain");
     return await register.metrics();
@@ -33,7 +36,12 @@ const metricsRoutes: FastifyPluginAsync = async (app) => {
   }
 
   // KPIs summary endpoint for Command Center
-  app.get("/summary/kpis", async () => {
+  app.get("/summary/kpis", {
+    preHandler: app.rateLimit({
+      max: 100, // max 100 requests per window
+      timeWindow: 15 * 60 * 1000 // 15 minutes
+    })
+  }, async () => {
     try {
       const [productsData, analysisData] = await Promise.all([
         getLatestShopifyData('products'),
