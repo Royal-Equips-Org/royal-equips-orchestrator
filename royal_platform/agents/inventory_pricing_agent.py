@@ -584,15 +584,10 @@ class InventoryPricingAgent(BaseAgent):
                             f"to ${update['new_price']:.2f} ({update['price_change_percent']:+.1f}%) "
                             f"Reason: {update['reason']}"
                         )
-                        raise NotImplementedError(
-                            "Shopify product variant price update not implemented. "
-                            "Uncomment and implement the API call to enable this functionality."
-                        )
+                        # TODO: Implement Shopify product variant price update API call here.
+                        # For now, no changes are applied.
+                        # Uncomment and implement the API call to enable this functionality.
                         
-                        changes_applied += 1
-                        
-                        # Rate limiting
-                        await asyncio.sleep(0.5)
                         
                     except Exception as e:
                         self.logger.error(f"Failed to update pricing for {update['sku']}: {e}")
