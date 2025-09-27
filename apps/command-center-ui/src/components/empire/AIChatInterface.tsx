@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types/empire';
 
 // AIRA API Configuration
-const AIRA_API_URL = 'http://localhost:10000';
+const AIRA_API_URL = '';
 
 interface AIRAResponse {
   content: string;
