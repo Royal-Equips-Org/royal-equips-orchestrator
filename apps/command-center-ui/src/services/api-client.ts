@@ -15,43 +15,104 @@ function generateCorrelationId(): string {
 
 class CircuitBreaker {
   private failureCount = 0;
+  private successCount = 0;
   private lastFailureTime = 0;
+  private lastSuccessTime = 0;
   private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
+  private halfOpenCalls = 0;
 
   constructor(
     private failureThreshold = 5,
-    private timeout = 30000 // 30 seconds
+    private timeout = 30000, // 30 seconds
+    private minimumRequests = 10,
+    private halfOpenMaxCalls = 3
   ) {}
 
   canExecute(): boolean {
+    const currentTime = Date.now();
+    
     if (this.state === 'CLOSED') {
       return true;
     }
     
     if (this.state === 'OPEN') {
-      if (Date.now() - this.lastFailureTime > this.timeout) {
+      if (currentTime - this.lastFailureTime > this.timeout) {
         this.state = 'HALF_OPEN';
+        this.halfOpenCalls = 0;
+        logger.info('Circuit breaker transitioning to HALF_OPEN for recovery probe');
         return true;
       }
       return false;
     }
     
-    // HALF_OPEN state
+    // HALF_OPEN state - limit concurrent calls
+    if (this.halfOpenCalls >= this.halfOpenMaxCalls) {
+      return false;
+    }
+    
     return true;
   }
 
   recordSuccess() {
-    this.failureCount = 0;
-    this.state = 'CLOSED';
+    this.successCount++;
+    this.lastSuccessTime = Date.now();
+    
+    if (this.state === 'HALF_OPEN') {
+      // Need consecutive successes to close circuit
+      if (this.successCount >= 3) {
+        this.state = 'CLOSED';
+        this.failureCount = 0;
+        this.successCount = 0;
+        this.halfOpenCalls = 0;
+        logger.info('Circuit breaker CLOSED after successful recovery');
+      }
+    } else if (this.state === 'CLOSED') {
+      // Gradually reduce failure count on success
+      if (this.failureCount > 0) {
+        this.failureCount = Math.max(0, this.failureCount - 1);
+      }
+    }
   }
 
   recordFailure() {
     this.failureCount++;
     this.lastFailureTime = Date.now();
+    this.successCount = 0; // Reset success count on failure
     
-    if (this.failureCount >= this.failureThreshold) {
+    if (this.state === 'HALF_OPEN') {
+      // Any failure in half-open immediately opens circuit
       this.state = 'OPEN';
+      this.halfOpenCalls = 0;
+      logger.warn('Circuit breaker OPEN - failure during recovery probe');
+      return;
     }
+    
+    // Check if we should trip the circuit (only for CLOSED state)
+    const totalRequests = this.failureCount + this.successCount;
+    if (totalRequests >= this.minimumRequests) {
+      const failureRate = this.failureCount / totalRequests;
+      
+      // Trip on high failure rate OR consecutive failures
+      if (failureRate > 0.5 || this.failureCount >= this.failureThreshold) {
+        if (this.state === 'CLOSED') {
+          this.state = 'OPEN';
+          logger.warn(`Circuit breaker OPEN - failure rate: ${(failureRate * 100).toFixed(1)}%, failures: ${this.failureCount}/${totalRequests}`);
+        }
+      }
+    }
+  }
+
+  getStatus() {
+    const totalRequests = this.failureCount + this.successCount;
+    return {
+      state: this.state,
+      failureCount: this.failureCount,
+      successCount: this.successCount,
+      totalRequests,
+      failureRate: totalRequests > 0 ? this.failureCount / totalRequests : 0,
+      halfOpenCalls: this.halfOpenCalls,
+      nextRecoveryAttempt: this.state === 'OPEN' ? new Date(this.lastFailureTime + this.timeout) : null
+    };
   }
 }
 
