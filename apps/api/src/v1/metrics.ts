@@ -5,7 +5,7 @@ import path from 'path';
 import rateLimit from '@fastify/rate-limit';
 const metricsRoutes: FastifyPluginAsync = async (app) => {
   // Register rate limit plugin
-  await app.register(rateLimit);
+  // await app.register(rateLimit); // Removed to avoid plugin conflict
 
   app.get("/metrics", async (_, reply) => {
     reply.type("text/plain");
