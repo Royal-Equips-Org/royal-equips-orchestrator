@@ -91,11 +91,8 @@ export class RedisCircuitBreaker {
         await this.reset();
       }
     } else if (state === 'closed') {
-      // Reset failure count on success in closed state
-      const failureCount = await this.getFailureCount();
-      if (failureCount > 0) {
-        await this.redis.decr(this.getKey('failures'));
-      }
+      // Reset failure count on success in closed state (atomic)
+      await this.redis.set(this.getKey('failures'), 0);
     }
   }
 
