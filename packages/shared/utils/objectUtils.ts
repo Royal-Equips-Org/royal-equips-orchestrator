@@ -18,7 +18,7 @@ export function hasOwnProperty<T>(obj: T, key: PropertyKey): key is keyof T {
  * @param obj - Object to check
  * @param key - Property key to check
  */
-export function hasOwn<T>(obj: T, key: PropertyKey): key is keyof T {
+export function hasOwn<T extends object>(obj: T, key: PropertyKey): key is keyof T {
   // Use Object.hasOwn if available (Node 16.9+, modern browsers)
   if (typeof Object.hasOwn === 'function') {
     return Object.hasOwn(obj, key);
