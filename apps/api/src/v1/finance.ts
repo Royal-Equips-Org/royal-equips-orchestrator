@@ -2,20 +2,47 @@ import { FastifyPluginAsync } from 'fastify';
 import Stripe from "stripe";
 
 const financeRoutes: FastifyPluginAsync = async (app) => {
-  // Initialize Stripe client
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY environment variable is required to initialize Stripe.');
+  // Initialize Stripe client only if secret key is available
+  let stripe: any = null;
+  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_demo') {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   }
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   app.get("/finance/stripe/balance", async () => {
     try {
-      const balance = await stripe.balance.retrieve();
-      
-      return { 
-        balance,
-        success: true 
-      };
+      if (stripe) {
+        const balance = await stripe.balance.retrieve();
+        return { 
+          balance,
+          success: true 
+        };
+      } else {
+        // Return mock data if Stripe is not configured
+        return {
+          balance: {
+            available: [
+              {
+                amount: 125000,
+                currency: 'usd',
+                source_types: {
+                  card: 125000
+                }
+              }
+            ],
+            pending: [
+              {
+                amount: 25000,
+                currency: 'usd',
+                source_types: {
+                  card: 25000
+                }
+              }
+            ]
+          },
+          success: true,
+          mock: true
+        };
+      }
     } catch (error) {
       app.log.error('Stripe balance fetch failed');
       
