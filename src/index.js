@@ -1,8 +1,8 @@
 /**
- * Cloudflare Worker: /api/* proxy naar upstream.
+ * Cloudflare Worker: Route everything to upstream backend for single entrypoint
  * Env:
- *  - UPSTREAM_API_BASE (bv. https://aira.internal:10000)
- *  - ALLOWED_ORIGINS (komma gescheiden lijst)
+ *  - UPSTREAM_API_BASE (e.g. https://api.royal-equips.com:10000)
+ *  - ALLOWED_ORIGINS (comma separated list)
  */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -22,34 +22,15 @@ app.use('*', cors({
 app.get('/health', (c) => {
   return c.json({
     ok: true,
-    worker: "cloudflare-api-proxy",
+    worker: "cloudflare-single-entrypoint-proxy",
     timestamp: new Date().toISOString(),
     environment: c.env?.CF_ENVIRONMENT || 'unknown',
     upstreamConfigured: !!c.env?.UPSTREAM_API_BASE
   });
 });
 
-// Handle CORS preflight requests
-app.options('/api/*', (c) => {
-  const allowedOrigins = (c.env?.ALLOWED_ORIGINS || '*').split(',').map(s => s.trim());
-  const origin = c.req.header('Origin') || '';
-  const allowOrigin = allowedOrigins.includes('*') || allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': allowOrigin,
-      'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Expose-Headers': '*',
-      'Access-Control-Max-Age': '86400'
-    }
-  });
-});
-
-// API proxy - forward all /api/* requests to backend with enhanced SSE and binary support
-app.all('/api/*', async (c) => {
+// Route EVERYTHING to backend - single entrypoint
+app.all('*', async (c) => {
   const upstreamApiBase = c.env.UPSTREAM_API_BASE;
 
   if (!upstreamApiBase) {
@@ -64,8 +45,7 @@ app.all('/api/*', async (c) => {
     const backendUrl = new URL(upstreamApiBase);
 
     // Build target URL: backend base + current path + query
-    const targetPath = url.pathname.replace('/api', '') || '/';
-    const targetUrl = new URL(targetPath + url.search, backendUrl);
+    const targetUrl = new URL(url.pathname + url.search, backendUrl);
 
     // Prepare request headers - remove accept-encoding to avoid compression mismatches
     const headers = new Headers(c.req.raw.headers);
@@ -86,7 +66,7 @@ app.all('/api/*', async (c) => {
     headers.set('x-request-id', requestId);
 
     // Create upstream request
-    const upstreamInit: RequestInit = {
+    const upstreamInit = {
       method: c.req.method,
       headers,
       redirect: 'follow'
@@ -136,7 +116,7 @@ app.all('/api/*', async (c) => {
     });
 
   } catch (error) {
-    console.error('API proxy error:', error);
+    console.error('Single entrypoint proxy error:', error);
     return c.json({
       error: "Upstream request failed",
       details: String(error),
@@ -144,16 +124,6 @@ app.all('/api/*', async (c) => {
       path: c.req.path
     }, 502);
   }
-});
-
-// Fallback route
-app.all('*', (c) => {
-  return c.json({
-    error: "Not found",
-    path: c.req.path,
-    method: c.req.method,
-    timestamp: new Date().toISOString()
-  }, 404);
 });
 
 export default app;
