@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Text3D, Sphere, Line } from '@react-three/drei';
+import { OrbitControls, Text3D, Sphere } from '@react-three/drei';
 import { Brain, Cpu, Network, Zap, Activity, Target } from 'lucide-react';
 import { useEmpireStore } from '@/store/empire-store';
 
