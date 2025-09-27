@@ -12,13 +12,21 @@ DATABASE_URL = os.getenv(
 )
 
 # Create engine with connection pooling
-engine = create_engine(
-    DATABASE_URL,
-    pool_size=20,
-    max_overflow=10,
-    pool_pre_ping=True,
-    pool_recycle=300,
-)
+if DATABASE_URL.startswith("sqlite"):
+    # SQLite does not support these pool options
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        pool_pre_ping=True,
+    )
+else:
+    engine = create_engine(
+        DATABASE_URL,
+        pool_size=20,
+        max_overflow=10,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
 
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
