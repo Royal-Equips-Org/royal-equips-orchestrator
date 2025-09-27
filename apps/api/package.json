@@ -25,7 +25,8 @@
     "prom-client": "^15.1.0",
     "ky": "^1.2.3",
     "p-retry": "^6.2.0",
-    "stripe": "^14.9.0"
+    "stripe": "^14.9.0",
+    "@royal-equips/shopify-client": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",

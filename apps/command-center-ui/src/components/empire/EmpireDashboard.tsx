@@ -1,7 +1,7 @@
 // Royal Equips Empire Command Center - Main Dashboard
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Globe, Users } from 'lucide-react';
+import { Globe, Users, Package, TrendingUp, BarChart3, Settings } from 'lucide-react';
 import CommandCenter3DScene from '../three/CommandCenter3DScene';
 import AgentNetworkGrid from './AgentNetworkGrid';
 import RevenueTracker from './RevenueTracker';
@@ -9,10 +9,23 @@ import ProductOpportunityCards from './ProductOpportunityCards';
 import AIChatInterface from './AIChatInterface';
 import EmergencyControls from './EmergencyControls';
 import { MarketingStudio } from './MarketingStudio';
+import ProductsPage from './ProductsPage';
 import { useEmpireStore } from '@/store/empire-store';
+
+type DashboardView = 'overview' | 'products' | 'agents' | 'marketing' | 'analytics' | 'settings';
+
+const navigationItems = [
+  { id: 'overview', label: 'Overview', icon: Globe },
+  { id: 'products', label: 'Products', icon: Package },
+  { id: 'agents', label: 'Agents', icon: Users },
+  { id: 'marketing', label: 'Marketing', icon: TrendingUp },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'settings', label: 'Settings', icon: Settings },
+];
 
 export default function EmpireDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentView, setCurrentView] = useState<DashboardView>('overview');
   const { metrics, agents, isConnected } = useEmpireStore();
 
   useEffect(() => {
@@ -20,65 +33,35 @@ export default function EmpireDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="scanner-line absolute w-full h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-30"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-black to-purple-900/10"></div>
-      </div>
-
-      {/* Header */}
-      <motion.header 
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="bg-black/40 backdrop-blur-md border-b border-cyan-500/30 p-6 mb-6 relative z-10"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center"
-            >
-              👑
-            </motion.div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-1">
-                ROYAL EQUIPS EMPIRE COMMAND CENTER
-              </h1>
-              <p className="text-sm opacity-70">
-                Autonomous E-commerce Empire • {currentTime.toLocaleString()}
-              </p>
-            </div>
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'products':
+        return <ProductsPage />;
+      case 'agents':
+        return <AgentNetworkGrid />;
+      case 'marketing':
+        return <MarketingStudio />;
+      case 'analytics':
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-cyan-400 mb-6">Analytics Dashboard</h2>
+            <p className="text-gray-400">Analytics coming soon...</p>
           </div>
-
-          <div className="flex items-center space-x-4">
-            {/* Connection Status */}
-            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs ${
-              isConnected 
-                ? 'bg-green-500/20 text-green-400' 
-                : 'bg-red-500/20 text-red-400'
-            }`}>
-              <div className={`w-2 h-2 rounded-full ${
-                isConnected ? 'bg-green-400' : 'bg-red-400'
-              }`} />
-              <span className="uppercase font-medium">
-                {isConnected ? 'CONNECTED' : 'OFFLINE'}
-              </span>
-            </div>
-
-            {/* Active Agents */}
-            <div className="text-right">
-              <div className="text-xl font-bold text-cyan-400">
-                {agents?.length || 0}
-              </div>
-              <div className="text-xs opacity-70">Active Agents</div>
-            </div>
+        );
+      case 'settings':
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-cyan-400 mb-6">System Settings</h2>
+            <p className="text-gray-400">Settings panel coming soon...</p>
           </div>
-        </div>
-      </motion.header>
+        );
+      default:
+        return renderOverviewDashboard();
+    }
+  };
 
+  const renderOverviewDashboard = () => (
+    <>
       {/* Main Grid Layout */}
       <div className="grid grid-cols-12 gap-6 px-6 pb-6">
         {/* Empire Status */}
@@ -149,47 +132,40 @@ export default function EmpireDashboard() {
                   key={agent.id}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 * index }}
-                  className={`p-3 rounded-lg border ${
-                    agent.status === 'active' ? 'bg-green-500/10 border-green-500/30' :
-                    agent.status === 'deploying' ? 'bg-yellow-500/10 border-yellow-500/30' :
-                    agent.status === 'error' ? 'bg-red-500/10 border-red-500/30' :
-                    'bg-gray-500/10 border-gray-500/30'
-                  }`}
+                  transition={{ delay: 0.4 + index * 0.1 }}
+                  className="bg-gray-800/50 rounded-lg p-4 border border-gray-700"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl">{agent.emoji}</span>
-                    <span className={`text-xs uppercase font-bold ${
-                      agent.status === 'active' ? 'text-green-400' :
-                      agent.status === 'deploying' ? 'text-yellow-400' :
-                      agent.status === 'error' ? 'text-red-400' :
-                      'text-gray-400'
-                    }`}>
+                    <div className={`w-3 h-3 rounded-full ${
+                      agent.status === 'active' ? 'bg-green-400' : 
+                      agent.status === 'inactive' ? 'bg-yellow-400' : 'bg-red-400'
+                    }`} />
+                    <span className="text-xs uppercase font-medium text-gray-400">
                       {agent.status}
                     </span>
                   </div>
-                  <div className="text-sm font-medium text-white mb-1">{agent.name}</div>
-                  <div className="text-lg font-bold text-cyan-400">{agent.performance_score}</div>
+                  <h4 className="font-medium text-white mb-1">{agent.name}</h4>
+                  <p className="text-xs text-gray-400">
+                    Last: {agent.last_execution ? new Date(agent.last_execution).toLocaleTimeString() : '--'}
+                  </p>
                 </motion.div>
               )) : (
-                // Fallback while loading
-                [...Array(3)].map((_, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 * index }}
-                    className="p-3 rounded-lg border bg-gray-500/10 border-gray-500/30"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl">⚙️</span>
-                      <span className="text-xs uppercase font-bold text-gray-400">LOADING</span>
-                    </div>
-                    <div className="text-sm font-medium text-white mb-1">Loading...</div>
-                    <div className="text-lg font-bold text-cyan-400">--</div>
-                  </motion.div>
-                ))
+                <div className="col-span-full text-center py-8">
+                  <Users className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-400">Loading agents...</p>
+                </div>
               )}
+            </div>
+
+            {/* Quick Action: View Products */}
+            <div className="mt-6 pt-4 border-t border-gray-700">
+              <button
+                onClick={() => setCurrentView('products')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <Package className="w-5 h-5" />
+                <span>View Live Products Catalog</span>
+              </button>
             </div>
           </div>
         </motion.div>
@@ -198,64 +174,66 @@ export default function EmpireDashboard() {
         <motion.div 
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="col-span-12 lg:col-span-4"
+          transition={{ delay: 0.4 }}
+          className="col-span-12 lg:col-span-8"
         >
           <AIChatInterface />
         </motion.div>
 
-        {/* Marketing Studio - Full Width */}
+        {/* Marketing Studio */}
         <motion.div 
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="col-span-12"
+          transition={{ delay: 0.5 }}
+          className="col-span-12 lg:col-span-4"
         >
           <MarketingStudio />
         </motion.div>
 
         {/* Revenue Tracker */}
         <motion.div 
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="col-span-12 lg:col-span-6"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="col-span-12"
         >
           <RevenueTracker />
         </motion.div>
 
-        {/* Product Opportunities */}
+        {/* Product Opportunity Cards */}
         <motion.div 
-          initial={{ x: 100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="col-span-12 lg:col-span-6"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="col-span-12 lg:col-span-8"
         >
           <ProductOpportunityCards />
         </motion.div>
 
-        {/* 3D Empire Visualization */}
+        {/* 3D Visualization */}
         <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="col-span-12 lg:col-span-8"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="col-span-12"
         >
           <div className="bg-black/40 backdrop-blur-md border border-cyan-500/30 rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Globe className="w-5 h-5 mr-2 text-purple-400" />
+              <Globe className="w-5 h-5 mr-2 text-cyan-400" />
               Empire Network Visualization
             </h3>
-            <CommandCenter3DScene className="rounded-lg" />
+            <div className="h-96 rounded-lg overflow-hidden">
+              <CommandCenter3DScene />
+            </div>
           </div>
         </motion.div>
 
         {/* Agent Network Grid */}
         <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 1.0 }}
-          className="col-span-12 lg:col-span-4"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.9 }}
+          className="col-span-12 lg:col-span-8"
         >
           <AgentNetworkGrid />
         </motion.div>
@@ -264,12 +242,97 @@ export default function EmpireDashboard() {
         <motion.div 
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.1 }}
-          className="col-span-12"
+          transition={{ delay: 1.0 }}
+          className="col-span-12 lg:col-span-4"
         >
           <EmergencyControls />
         </motion.div>
       </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="scanner-line absolute w-full h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-30"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-black to-purple-900/10"></div>
+      </div>
+
+      {/* Header with Navigation */}
+      <motion.header 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="bg-black/40 backdrop-blur-md border-b border-cyan-500/30 p-6 mb-6 relative z-10"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-6">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center"
+            >
+              👑
+            </motion.div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-1">
+                ROYAL EQUIPS EMPIRE COMMAND CENTER
+              </h1>
+              <p className="text-sm opacity-70">
+                Autonomous E-commerce Empire • {currentTime.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {/* Connection Status */}
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs ${
+              isConnected 
+                ? 'bg-green-500/20 text-green-400' 
+                : 'bg-red-500/20 text-red-400'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                isConnected ? 'bg-green-400' : 'bg-red-400'
+              }`} />
+              <span className="uppercase font-medium">
+                {isConnected ? 'CONNECTED' : 'OFFLINE'}
+              </span>
+            </div>
+
+            {/* Active Agents */}
+            <div className="text-right">
+              <div className="text-xl font-bold text-cyan-400">
+                {agents?.length || 0}
+              </div>
+              <div className="text-xs opacity-70">Active Agents</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <nav className="flex space-x-1">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrentView(item.id as DashboardView)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  currentView === item.id
+                    ? 'bg-cyan-600 text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </motion.header>
+
+      {/* Main Content */}
+      {renderCurrentView()}
     </div>
   );
 }
