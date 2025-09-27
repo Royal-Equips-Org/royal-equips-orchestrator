@@ -1,6 +1,19 @@
 // API client with timeout, retries, and circuit breaker
 import { ServiceError } from '../types/empire';
 import { logger } from './log';
+import { getConfig } from '../lib/runtime-config';
+
+export class APIClientError extends Error {
+  kind: 'timeout' | 'http' | 'network' | 'parse' | 'circuit_open';
+  status?: number;
+  constructor(msg: string, kind: APIClientError['kind'], status?: number, cause?: unknown) {
+    super(msg);
+    this.name = 'APIClientError';
+    this.kind = kind;
+    this.status = status;
+    this.cause = cause;
+  }
+}
 
 interface RequestOptions extends RequestInit {
   timeout?: number;
@@ -127,18 +140,14 @@ export class ApiClient {
   }
 
   private getBaseUrl(): string {
-    const API_URL = import.meta.env.VITE_API_URL;
-    if (API_URL && API_URL.trim()) {
-      return API_URL.trim();
+    try {
+      const config = getConfig();
+      return config.apiRelativeBase;
+    } catch (error) {
+      // Fallback if config not loaded yet (should not happen in normal flow)
+      console.warn('Config not loaded, using fallback API base URL');
+      return '/api';
     }
-    
-    if (import.meta.env.VITE_API_BASE_URL) {
-      return import.meta.env.VITE_API_BASE_URL;
-    }
-    
-    return import.meta.env.PROD 
-      ? 'https://api.royalequips.com'
-      : 'http://localhost:10000';
   }
 
   private getAuthToken(): string | null {
@@ -311,6 +320,44 @@ export class ApiClient {
       }
     }, options.retries);
   }
+
+  /**
+   * Get circuit breaker status
+   */
+  getCircuitBreakerStatus() {
+    return this.circuitBreaker.getStatus();
+  }
+
+  /**
+   * Reset circuit breaker state via admin endpoint
+   */
+  async resetCircuitBreaker(): Promise<void> {
+    try {
+      const config = getConfig();
+      const url = new URL(config.circuitBreaker.resetEndpoint, this.baseUrl).toString();
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to reset circuit breaker: ${response.status} ${response.statusText}`);
+      }
+
+      // Reset local circuit breaker state as well
+      this.circuitBreaker = new CircuitBreaker();
+      logger.info('Circuit breaker reset successfully');
+    } catch (error) {
+      logger.error('Failed to reset circuit breaker', undefined, error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();
+
+/**
+ * Reset circuit breaker and refresh all data
+ */
+export async function circuitReset(): Promise<void> {
+  await apiClient.resetCircuitBreaker();
+}
