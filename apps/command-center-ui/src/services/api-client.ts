@@ -334,7 +334,8 @@ export class ApiClient {
   async resetCircuitBreaker(): Promise<void> {
     try {
       const config = getConfig();
-      const response = await this.fetchWithTimeout(`${this.baseUrl}${config.circuitBreaker.resetEndpoint}`, {
+      const url = new URL(config.circuitBreaker.resetEndpoint, this.baseUrl).toString();
+      const response = await this.fetchWithTimeout(url, {
         method: 'POST',
       });
 
