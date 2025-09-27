@@ -40,7 +40,7 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
     // Check Redis connection
     try {
       const start = Date.now();
-      const redisHealth = await (app as any).redisHealthCheck();
+      const redisHealth = await app.redis.healthCheck();
       checks.redis.healthy = redisHealth.healthy;
       checks.redis.latency = Date.now() - start;
       if (!redisHealth.healthy) {
