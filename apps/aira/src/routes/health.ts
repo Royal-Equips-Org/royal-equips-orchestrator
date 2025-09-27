@@ -1,5 +1,11 @@
 import { FastifyPluginAsync, FastifyReply } from 'fastify';
 
+declare module 'fastify' {
+  interface FastifyInstance {
+    redisHealthCheck(): Promise<{ healthy: boolean; response?: any; error?: string }>;
+  }
+}
+
 async function shopifyPing(): Promise<boolean> {
   // Real implementatie: call Shopify GraphQL / simple REST endpoint
   // Placeholder: just resolve true (geen mock data leakage, enkel reachability)
@@ -19,7 +25,7 @@ async function shopifyPing(): Promise<boolean> {
 }
 
 export const healthRoutes: FastifyPluginAsync = async (app) => {
-  // Lightweight liveness probe
+  // Lightweight liveness probe - no rate limiting needed as it doesn't access database
   app.get('/v1/healthz', async () => {
     return {
       status: 'ok',
@@ -29,8 +35,20 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
     };
   });
 
-  // Comprehensive readiness check
-  app.get('/v1/readyz', async (request, reply: FastifyReply) => {
+  // Comprehensive readiness check - add specific rate limiting for database access
+  app.get('/v1/readyz', {
+    config: {
+      rateLimit: {
+        max: 20, // Max 20 requests per window
+        timeWindow: '1 minute', // Per minute for health checks
+        skipOnError: false,
+        keyGenerator: (request) => {
+          // Use IP for health endpoint rate limiting
+          return `health:${request.ip}`;
+        }
+      }
+    }
+  }, async (request, reply: FastifyReply) => {
     const checks = {
       redis: { healthy: false, latency: 0, error: null as string | null },
       shopify: { healthy: false, error: null as string | null },
@@ -40,7 +58,7 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
     // Check Redis connection
     try {
       const start = Date.now();
-      const redisHealth = await app.redis.healthCheck();
+      const redisHealth = await app.redisHealthCheck();
       checks.redis.healthy = redisHealth.healthy;
       checks.redis.latency = Date.now() - start;
       if (!redisHealth.healthy) {
