@@ -271,10 +271,7 @@ export default function EmpireDashboard() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
       </div>
-    </div>
     );
   };
 
@@ -380,4 +377,5 @@ export default function EmpireDashboard() {
       </div>
     </div>
   );
+}
 }
