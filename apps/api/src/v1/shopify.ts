@@ -134,7 +134,9 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
   // Function to get the latest shopify data file
   async function getLatestShopifyData(type: 'products' | 'analysis') {
     try {
-      const dataDir = path.join(process.cwd(), '../../shopify_data');
+      const dataDir = process.env.SHOPIFY_DATA_DIR
+        ? path.resolve(process.env.SHOPIFY_DATA_DIR)
+        : path.join(process.cwd(), '../../shopify_data');
       const files = await fs.readdir(dataDir);
       const typeFiles = files.filter(f => f.startsWith(`${type}_`) && f.endsWith('.json'));
       
