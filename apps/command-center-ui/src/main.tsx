@@ -5,6 +5,11 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { loadRuntimeConfig, RuntimeConfig } from './lib/runtime-config';
 import './styles/globals.css';
 
+// Disable service worker to prevent caching issues
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+}
+
 interface AppBootstrapProps {
   children: React.ReactNode;
 }
