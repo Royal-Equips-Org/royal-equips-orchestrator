@@ -1,4 +1,3 @@
-# .github/workflows/conventional-commits.yml
 name: 🔍 Conventional Commits Enforcement
 
 on:
@@ -22,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: 🌐 Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -31,15 +30,16 @@ jobs:
           
       - name: 📦 Install Commitlint
         run: |
+          set -euo pipefail
           npm install -g @commitlint/cli @commitlint/config-conventional
           
       - name: 🔍 Validate Commit Messages
         run: |
+          set -euo pipefail
           # For pull requests, check commits from base to head
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-            
             echo "🔍 Checking commits from $BASE_SHA to $HEAD_SHA"
             npx commitlint --from="$BASE_SHA" --to="$HEAD_SHA" --verbose
           else
@@ -47,10 +47,11 @@ jobs:
             echo "🔍 Checking last commit"
             git log -1 --pretty=format:"%s" | npx commitlint
           fi
-          
+
       - name: 📋 Commit Message Guidelines
         if: failure()
         run: |
+          set -euo pipefail
           echo "❌ Commit message validation failed!"
           echo ""
           echo "📝 Royal Equips Conventional Commit Standards:"
@@ -80,7 +81,6 @@ jobs:
           echo ""
           echo "🔧 Breaking changes: Add '!' after type or include 'BREAKING CHANGE:' in footer"
           echo "📦 Scopes: (agents), (api), (security), (docs), (ci), (integrations)"
-          
           exit 1
 
   auto-fix-commit-messages:
@@ -88,10 +88,10 @@ jobs:
     runs-on: ubuntu-latest
     if: failure() && github.event_name == 'pull_request'
     needs: enforce-conventional-commits
-    
+
     permissions:
       contents: read
-      
+
     steps:
       - name: 📥 Checkout PR (read-only)
         uses: actions/checkout@v4
@@ -101,61 +101,61 @@ jobs:
 
       - name: Set git user identity
         run: |
+          set -euo pipefail
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
+      
       - name: 🔧 Auto-fix Commit Messages
         run: |
+          set -euo pipefail
           echo "🔧 Attempting to auto-fix commit messages..."
-          
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          
-          git log --pretty=format:"%H %s" "$BASE_SHA..$HEAD_SHA" | while read commit_hash commit_msg; do
-            echo "📝 Processing: $commit_hash - $commit_msg"
-            
-            # Auto-categorize based on keywords
+          # Store autofix patch
+          PATCH_FILE="./autofix.patch"
+          > "$PATCH_FILE"
+          git log --pretty=format:"%H %s" "$BASE_SHA..$HEAD_SHA" | while read -r commit_hash commit_msg; do
+            # Use keywords to categorize, fallback to 'chore'
             new_msg=""
-            if echo "$commit_msg" | grep -qi "fix\|bug\|error\|issue"; then
+            if echo "$commit_msg" | grep -Eiq "fix|bug|error|issue"; then
               new_msg="fix: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "add\|new\|implement\|create"; then
+            elif echo "$commit_msg" | grep -Eiq "add|new|implement|create"; then
               new_msg="feat: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "doc\|readme"; then
+            elif echo "$commit_msg" | grep -Eiq "doc|readme"; then
               new_msg="docs: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "test"; then
+            elif echo "$commit_msg" | grep -Eiq "test"; then
               new_msg="test: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "security\|auth\|vuln"; then
+            elif echo "$commit_msg" | grep -Eiq "security|auth|vuln"; then
               new_msg="security: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "empire\|autonomous\|agent"; then
+            elif echo "$commit_msg" | grep -Eiq "empire|autonomous|agent"; then
               new_msg="empire: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "refactor\|restructure"; then
+            elif echo "$commit_msg" | grep -Eiq "refactor|restructure"; then
               new_msg="refactor: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "style\|format"; then
+            elif echo "$commit_msg" | grep -Eiq "style|format"; then
               new_msg="style: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "perf\|optimize\|performance"; then
+            elif echo "$commit_msg" | grep -Eiq "perf|optimize|performance"; then
               new_msg="perf: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "ci\|workflow\|action"; then
+            elif echo "$commit_msg" | grep -Eiq "ci|workflow|action"; then
               new_msg="ci: $commit_msg"
-            elif echo "$commit_msg" | grep -qi "build\|deploy"; then
+            elif echo "$commit_msg" | grep -Eiq "build|deploy"; then
               new_msg="build: $commit_msg"
             else
               new_msg="chore: $commit_msg"
             fi
-            
-            # Clean up the message (remove redundant words)
-            new_msg=$(echo "$new_msg" | sed 's/fix: fix/fix:/g' | sed 's/feat: add/feat:/g' | sed 's/docs: update/docs:/g')
-            
+            # Clean redundant prefixes
+            new_msg=$(echo "$new_msg" | sed -E 's/fix: ?fix/fix:/g;s/feat: ?add/feat:/g;s/docs: ?update/docs:/g')
             if [ "$commit_msg" != "$new_msg" ]; then
               echo "✅ Auto-fixing: '$commit_msg' -> '$new_msg'"
               git commit --amend -m "$new_msg" --no-edit
+              git format-patch -1 "$commit_hash" >> "$PATCH_FILE"
             fi
           done
-          
+
       - name: 📦 Save Auto-fix Patch
         uses: actions/upload-artifact@v4
         with:
           name: autofix-patch
-          path: ./autofix.patch   # Adjust as necessary: produce a patch file from your auto-fix logic above
+          path: ./autofix.patch
 
   commit-validation-report:
     name: 📊 Generate Commit Validation Report
@@ -171,13 +171,13 @@ jobs:
           
       - name: 📊 Generate Report
         run: |
+          set -euo pipefail
           echo "# 📊 Commit Message Validation Report" > commit-report.md
           echo "" >> commit-report.md
           echo "**Repository:** ${{ github.repository }}" >> commit-report.md
           echo "**Branch:** ${{ github.ref_name }}" >> commit-report.md
           echo "**Timestamp:** $(date -u)" >> commit-report.md
           echo "" >> commit-report.md
-          
           if [ "${{ needs.enforce-conventional-commits.result }}" = "success" ]; then
             echo "✅ **Status:** All commit messages comply with Conventional Commits standard" >> commit-report.md
             echo "" >> commit-report.md
@@ -189,13 +189,11 @@ jobs:
             echo "" >> commit-report.md
             echo "💡 **Tip:** Use our conventional commit types: feat, fix, docs, security, empire, etc." >> commit-report.md
           fi
-          
           echo "" >> commit-report.md
           echo "---" >> commit-report.md
           echo "*Generated by Royal Equips Empire Automation System*" >> commit-report.md
-          
           cat commit-report.md
-          
+
       - name: 📄 Upload Report
         uses: actions/upload-artifact@v4
         with:
