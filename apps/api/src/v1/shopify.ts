@@ -477,6 +477,6 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
       });
     }
   });
-}; // Close the async (app) => { function
+}; // End of shopifyRoutes FastifyPluginAsync
 
 export default shopifyRoutes;
