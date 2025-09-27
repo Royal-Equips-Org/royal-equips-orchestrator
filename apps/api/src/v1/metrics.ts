@@ -37,7 +37,7 @@ const metricsRoutes: FastifyPluginAsync = async (app) => {
 
   // KPIs summary endpoint for Command Center
   app.get("/summary/kpis", {
-    preHandler: app.rateLimit({
+    preHandler: rateLimit({
       max: 100, // max 100 requests per window
       timeWindow: 15 * 60 * 1000 // 15 minutes
     })
