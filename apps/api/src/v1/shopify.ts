@@ -283,8 +283,8 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     };
     
     const topic = imageTopics[matchedCategory as keyof typeof imageTopics] || 'product';
-    return `https://images.unsplash.com/photo-1${Math.floor(Math.random() * 999999999)}?w=800&h=600&fit=crop&auto=format&q=80&${topic}`;
-  }
+    // Use Unsplash's random image endpoint with topics as query
+    return `https://source.unsplash.com/800x600/?${topic}`;
 
   function generateProductDescription(product: any): string {
     return product.description || `Premium ${product.title} - Expertly crafted with attention to detail and superior quality. Perfect for discerning customers who appreciate excellence. Features advanced functionality and elegant design that sets it apart from ordinary products.`;
