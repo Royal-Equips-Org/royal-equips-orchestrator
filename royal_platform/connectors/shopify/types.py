@@ -329,6 +329,3 @@ class InventoryAdjustQuantitiesPayload(BaseModel):
 
 
 # Update forward references
-ProductConnection.model_rebuild()
-CustomerConnection.model_rebuild()  
-OrderConnection.model_rebuild()
