@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-    "noEmit": true,
+    "declaration": true,
     "composite": true
   },
   "include": ["src", "src/**/*.ts", "src/**/*.tsx"],
