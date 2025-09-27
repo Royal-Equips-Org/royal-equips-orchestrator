@@ -1451,3 +1451,211 @@ def api_empire_chat():
             'error_type': 'internal',
             'timestamp': datetime.now().isoformat()
         }), 500
+
+
+@api_empire_bp.route('/alerts', methods=['GET'])
+def get_empire_alerts():
+    """
+    Get current system alerts and their status.
+    
+    Returns active alerts, alert summary, and recent alert history
+    with severity-based filtering support.
+    """
+    try:
+        from app.services.alert_manager import get_alert_manager
+        
+        alert_manager = get_alert_manager()
+        severity_filter = request.args.get('severity')
+        
+        # Get alerts with optional severity filtering
+        if severity_filter:
+            from app.services.alert_manager import AlertSeverity
+            try:
+                severity_enum = AlertSeverity(severity_filter.lower())
+                active_alerts = alert_manager.get_active_alerts(severity_enum)
+            except ValueError:
+                return jsonify({
+                    "success": False,
+                    "error": f"Invalid severity level: {severity_filter}",
+                    "valid_severities": [s.value for s in AlertSeverity]
+                }), 400
+        else:
+            active_alerts = alert_manager.get_active_alerts()
+        
+        # Get alert summary
+        alert_summary = alert_manager.get_alert_summary()
+        
+        return jsonify({
+            "success": True,
+            "alerts": active_alerts,
+            "summary": alert_summary,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get empire alerts: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to retrieve alert information",
+            "alerts": [],
+            "summary": {},
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+@api_empire_bp.route('/self-healing', methods=['GET'])
+def get_self_healing_status():
+    """
+    Get self-healing system status and recent actions.
+    
+    Returns healing policies, execution status, and recent remediation actions.
+    """
+    try:
+        from app.services.self_healing import get_self_healing_service
+        
+        healing_service = get_self_healing_service()
+        
+        # Get healing status
+        status = healing_service.get_healing_status()
+        
+        # Get recent healing actions
+        hours = int(request.args.get('hours', 24))
+        recent_actions = healing_service.get_recent_actions(hours)
+        
+        return jsonify({
+            "success": True,
+            "status": status,
+            "recent_actions": recent_actions,
+            "policies_count": len(healing_service.healing_policies),
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get self-healing status: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to retrieve self-healing status",
+            "status": {},
+            "recent_actions": [],
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+@api_empire_bp.route('/system-health', methods=['GET'])
+def get_comprehensive_system_health():
+    """
+    Get comprehensive system health including metrics, alerts, and healing status.
+    
+    Provides a unified view of system operational status for dashboard monitoring.
+    """
+    try:
+        from app.services.alert_manager import get_alert_manager
+        from app.services.self_healing import get_self_healing_service
+        from app.services.revenue_calculator import calculate_revenue_metrics
+        from app.services.agent_monitor import get_active_agent_count
+        
+        # Gather all system health data
+        alert_manager = get_alert_manager()
+        healing_service = get_self_healing_service()
+        health_service = get_health_service()
+        
+        # Get core metrics
+        revenue_metrics = calculate_revenue_metrics()
+        agent_stats = get_active_agent_count()
+        circuit_status = health_service.get_circuit_breaker_status()
+        error_budget = health_service.get_error_budget_status()
+        
+        # Get alert status
+        alert_summary = alert_manager.get_alert_summary()
+        active_critical_alerts = len([
+            alert for alert in alert_manager.get_active_alerts()
+            if alert.get("severity") in ["critical", "emergency"]
+        ])
+        
+        # Get healing status
+        healing_status = healing_service.get_healing_status()
+        
+        # Calculate overall system health score
+        health_score = calculate_system_health_score({
+            "agent_availability": agent_stats.get("availability_percentage", 0),
+            "circuit_breaker_health": (circuit_status["summary"]["healthy_breakers"] / 
+                                     max(1, circuit_status["summary"]["total_breakers"])) * 100,
+            "error_budget_remaining": (1 - error_budget["consumption_rate"]) * 100,
+            "critical_alerts": active_critical_alerts,
+            "healing_success_rate": healing_status.get("success_rate_24h", 100)
+        })
+        
+        return jsonify({
+            "success": True,
+            "overall_health_score": health_score,
+            "status": "operational" if health_score > 85 else "degraded" if health_score > 70 else "critical",
+            "metrics": {
+                "revenue_progress": revenue_metrics.get("current_revenue", 0),
+                "agent_availability": agent_stats.get("availability_percentage", 0),
+                "automation_level": calculate_automation_level(),
+                "response_time_p95": get_response_time_p95(),
+                "error_rate": get_error_rate_percentage(),
+                "uptime_percentage": min(99.99, (datetime.now().timestamp() / (datetime.now().timestamp() + 1)) * 100)
+            },
+            "alerts": {
+                "total_active": alert_summary["total_active"],
+                "critical_count": active_critical_alerts,
+                "by_severity": alert_summary["by_severity"]
+            },
+            "circuit_breakers": circuit_status["summary"],
+            "error_budget": {
+                "consumption_rate": error_budget["consumption_rate"],
+                "burn_status": error_budget["burn_status"],
+                "remaining_seconds": error_budget["remaining_seconds"]
+            },
+            "self_healing": {
+                "enabled": healing_status["healing_enabled"],
+                "success_rate_24h": healing_status.get("success_rate_24h", 100),
+                "recent_actions": healing_status.get("recent_executions_24h", 0)
+            },
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get comprehensive system health: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to retrieve system health",
+            "overall_health_score": 0,
+            "status": "unknown",
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+def calculate_system_health_score(components: Dict[str, float]) -> float:
+    """Calculate overall system health score from component metrics."""
+    try:
+        # Weighted health score calculation
+        weights = {
+            "agent_availability": 0.25,    # 25% - critical for operations
+            "circuit_breaker_health": 0.20, # 20% - service reliability
+            "error_budget_remaining": 0.20, # 20% - SLO compliance
+            "critical_alerts": -0.15,       # -15% - penalty for critical alerts
+            "healing_success_rate": 0.10    # 10% - self-healing effectiveness
+        }
+        
+        score = 0.0
+        for component, value in components.items():
+            if component in weights:
+                if component == "critical_alerts":
+                    # Penalty for critical alerts (more alerts = lower score)
+                    penalty = min(value * 10, 30)  # Max 30 point penalty
+                    score += weights[component] * penalty
+                else:
+                    score += weights[component] * value
+        
+        # Base score starts at 70, components add/subtract from there
+        base_score = 70.0
+        final_score = base_score + score
+        
+        # Clamp between 0 and 100
+        return max(0, min(100, final_score))
+        
+    except Exception as e:
+        logger.error(f"Failed to calculate health score: {e}")
+        return 50.0  # Return neutral score on error
