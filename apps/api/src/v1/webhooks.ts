@@ -13,8 +13,11 @@ const webhooksRoutes: FastifyPluginAsync = async (app) => {
 
       // Get raw body for HMAC verification
       const rawBody = JSON.stringify(request.body);
-      const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET || 'demo_secret';
-      
+      const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        app.log.error('SHOPIFY_WEBHOOK_SECRET environment variable is not set');
+        throw new Error("Webhook secret not configured");
+      }
       // Verify HMAC
       const computedMac = crypto
         .createHmac("sha256", webhookSecret)
