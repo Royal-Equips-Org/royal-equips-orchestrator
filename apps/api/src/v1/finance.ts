@@ -4,7 +4,8 @@ import Stripe from "stripe";
 const financeRoutes: FastifyPluginAsync = async (app) => {
   // Initialize Stripe client only if secret key is available
   let stripe: any = null;
-  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_demo') {
+  const useStripeMock = process.env.STRIPE_USE_MOCK === 'true';
+  if (process.env.STRIPE_SECRET_KEY && !useStripeMock) {
     stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   }
 
