@@ -2,11 +2,16 @@ import { FastifyPluginAsync } from 'fastify';
 import fs from 'fs/promises';
 import path from 'path';
 
+// Utility function to get the shopify data directory path
+function getShopifyDataDir() {
+  return path.join(process.cwd(), '../../shopify_data');
+}
+
 const opportunitiesRoutes: FastifyPluginAsync = async (app) => {
   // Function to get the latest shopify analysis data
   async function getLatestAnalysisData() {
     try {
-      const dataDir = path.join(process.cwd(), '../../shopify_data');
+      const dataDir = getShopifyDataDir();
       const files = await fs.readdir(dataDir);
       const analysisFiles = files.filter(f => f.startsWith('analysis_summary_') && f.endsWith('.json'));
       
