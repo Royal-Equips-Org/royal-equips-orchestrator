@@ -53,13 +53,6 @@ const revenue24h = new client.Gauge({
 });
 
 // Add default metrics (process, nodejs)
-registry.registerMetric(httpCounter);
-registry.registerMetric(httpDuration);
-registry.registerMetric(circuitBreakerState);
-registry.registerMetric(circuitBreakerFailures);
-registry.registerMetric(circuitBreakerSuccesses);
-registry.registerMetric(activeUsers);
-registry.registerMetric(revenue24h);
 client.collectDefaultMetrics({ register: registry });
 
 export const metricsRoute: FastifyPluginAsync = async (app) => {
