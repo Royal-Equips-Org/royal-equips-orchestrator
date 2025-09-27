@@ -329,11 +329,11 @@ class TestInventoryPricingAgent:
         )
         
         assert isinstance(result, list)
-        if result:
-            update = result[0]
-            assert 'new_price' in update
-            assert 'reason' in update
-            assert update['new_price'] > update['current_price']  # Should increase price for low stock
+        assert result, "Expected at least one pricing update"
+        update = result[0]
+        assert 'new_price' in update
+        assert 'reason' in update
+        assert update['new_price'] > update['current_price']  # Should increase price for low stock
     
     def test_health_status(self, pricing_agent):
         """Test pricing agent health status."""
