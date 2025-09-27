@@ -4,13 +4,22 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+import sys
+
+# Determine environment
+ENV = os.getenv("ENV", "development").lower()
 
 # Database URL from environment  
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "sqlite:///./royal_equips.db"  # SQLite for local development
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    if ENV in ("development", "dev", "test", "testing"):
+        DATABASE_URL = "sqlite:///./royal_equips.db"  # SQLite for local development/testing
+    else:
+        sys.stderr.write(
+            "ERROR: DATABASE_URL environment variable must be set in production.\n"
+        )
+        sys.exit(1)
 # Create engine with connection pooling
 if DATABASE_URL.startswith("sqlite"):
     # SQLite does not support these pool options
