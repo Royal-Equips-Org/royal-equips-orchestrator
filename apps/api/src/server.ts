@@ -11,7 +11,7 @@ app.register(api, { prefix: "/v1" });
 // Serve built UI from ../web/dist (dev) or ./dist-web (production)
 const webRoot = process.env.NODE_ENV === 'production' 
   ? path.join(process.cwd(), "./dist-web")
-  : path.join(process.cwd(), "../web/dist");
+  : path.join(process.cwd(), process.env.WEB_DIST_PATH || "../web/dist");
 app.register(staticPlugin, { root: webRoot, prefix: "/" });
 
 // SPA fallback for HTML requests
