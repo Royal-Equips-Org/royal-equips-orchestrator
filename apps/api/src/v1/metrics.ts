@@ -15,7 +15,7 @@ const metricsRoutes: FastifyPluginAsync = async (app) => {
   // Function to get latest shopify data for KPIs
   async function getLatestShopifyData(type: 'products' | 'analysis') {
     try {
-      const dataDir = path.join(process.cwd(), '../../shopify_data');
+      const dataDir = getShopifyDataDir();
       const files = await fs.readdir(dataDir);
       const typeFiles = files.filter(f => f.startsWith(`${type}_`) && f.endsWith('.json'));
       
