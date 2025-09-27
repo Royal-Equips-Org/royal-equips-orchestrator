@@ -1,0 +1,18 @@
+{
+  "$schema": "./config.schema.json",
+  "apiRelativeBase": "/api",
+  "featureFlags": {
+    "enable3D": true,
+    "enableMetricsPolling": true,
+    "enableCircuitBreaker": true,
+    "enableHealthMonitoring": true
+  },
+  "polling": {
+    "metricsInterval": 30000,
+    "healthCheckInterval": 10000
+  },
+  "circuitBreaker": {
+    "enabled": true,
+    "resetEndpoint": "/api/admin/circuit/reset"
+  }
+}

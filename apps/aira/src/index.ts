@@ -11,12 +11,22 @@ import Fastify from 'fastify';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
-// import { chatRoute } from './routes/chat.js';
+import redisPlugin from './plugins/redis.js';
+import { RedisCircuitBreaker } from './lib/circuit-breaker.js';
+import { healthRoutes } from './routes/health.js';
+import { systemRoutes } from './routes/system.js';
+import { adminCircuitRoutes } from './routes/admin-circuit.js';
 import { metricsRoute } from './routes/metrics.js';
 import { agentsRoute } from './routes/agents.js';
 import { opportunitiesRoute } from './routes/opportunities.js';
 import { campaignsRoute } from './routes/campaigns.js';
 import { empireRepo } from './repository/empire-repo.js';
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    circuit: RedisCircuitBreaker;
+  }
+}
 
 const app = Fastify({ 
   logger: {
@@ -71,6 +81,26 @@ await app.register(rateLimit, {
   }
 });
 
+// Register Redis plugin
+await app.register(redisPlugin, {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD,
+  db: parseInt(process.env.REDIS_DB || '0')
+});
+
+// Initialize circuit breaker after Redis is available
+app.addHook('onReady', async () => {
+  app.decorate('circuit', new RedisCircuitBreaker(app.redis, {
+    failureThreshold: 5,
+    recoveryTimeout: 60000, // 60 seconds
+    minimumRequests: 10,
+    halfOpenMaxCalls: 3,
+    keyPrefix: 'aira_cb'
+  }));
+  app.log.info('Circuit breaker initialized');
+});
+
 // Health check endpoint
 app.get('/health', async () => ({ 
   ok: true, 
@@ -79,11 +109,10 @@ app.get('/health', async () => ({
   timestamp: new Date().toISOString() 
 }));
 
-// AIRA API routes
-// await app.register(chatRoute);
-// await app.register(executeRoute);
-
-// Empire API routes
+// Register all route modules
+await app.register(healthRoutes);
+await app.register(systemRoutes);
+await app.register(adminCircuitRoutes);
 await app.register(metricsRoute);
 await app.register(agentsRoute);
 await app.register(opportunitiesRoute);
