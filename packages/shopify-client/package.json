@@ -1,0 +1,21 @@
+{
+  "name": "@royal-equips/shopify-client",
+  "version": "1.0.0",
+  "description": "GraphQL-first Shopify client with REST fallback",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "ky": "^1.2.3",
+    "p-retry": "^6.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "typescript": "^5.6.3"
+  }
+}

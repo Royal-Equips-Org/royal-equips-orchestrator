@@ -24,7 +24,7 @@ export class EmpireService {
     try {
       logger.info('Fetching empire metrics');
       return await retryMetrics(async () => {
-        const data = await apiClient.get('/api/empire/metrics');
+        const data = await apiClient.get('/v1/system/status');
         return validateAndTransform(data, isEmpireMetrics, 'EmpireMetrics');
       });
     } catch (error) {
@@ -37,7 +37,7 @@ export class EmpireService {
     try {
       logger.info('Fetching agents');
       return await retryAgents(async () => {
-        const data = await apiClient.get('/api/empire/agents');
+        const data = await apiClient.get('/v1/agents');
         return validateAndTransform(data, isAgentArray, 'Agent[]');
       });
     } catch (error) {
@@ -50,7 +50,7 @@ export class EmpireService {
     try {
       logger.info('Fetching product opportunities');
       return await retryOpportunities(async () => {
-        const data = await apiClient.get('/api/empire/opportunities');
+        const data = await apiClient.get('/v1/opportunities');
         return validateAndTransform(data, isProductOpportunityArray, 'ProductOpportunity[]');
       });
     } catch (error) {
@@ -63,7 +63,7 @@ export class EmpireService {
     try {
       logger.info('Fetching marketing campaigns');
       return await retryCampaigns(async () => {
-        const data = await apiClient.get('/api/empire/campaigns');
+        const data = await apiClient.get('/v1/marketing/campaigns/all');
         return validateAndTransform(data, isMarketingCampaignArray, 'MarketingCampaign[]');
       });
     } catch (error) {
@@ -75,7 +75,7 @@ export class EmpireService {
   async approveProduct(productId: string): Promise<void> {
     try {
       logger.info('Approving product', { productId });
-      await apiClient.post(`/api/empire/opportunities/${productId}/approve`);
+      await apiClient.post(`/v1/opportunities/${productId}/approve`);
     } catch (error) {
       logger.error('Failed to approve product', { productId, error: String(error) });
       throw error;
@@ -85,7 +85,7 @@ export class EmpireService {
   async rejectProduct(productId: string, reason?: string): Promise<void> {
     try {
       logger.info('Rejecting product', { productId, reason });
-      await apiClient.post(`/api/empire/opportunities/${productId}/reject`, { reason });
+      await apiClient.post(`/v1/opportunities/${productId}/reject`, { reason });
     } catch (error) {
       logger.error('Failed to reject product', { productId, reason, error: String(error) });
       throw error;
@@ -95,7 +95,7 @@ export class EmpireService {
   async sendChatMessage(content: string): Promise<AIRAResponse> {
     try {
       logger.info('Sending chat message', { messageLength: content.length });
-      const data = await apiClient.post('/api/empire/chat', { content });
+      const data = await apiClient.post('/v1/chat', { content });
       return validateAndTransform(data, isAIRAResponse, 'AIRAResponse');
     } catch (error) {
       logger.error('Failed to send chat message', { error: String(error) });
