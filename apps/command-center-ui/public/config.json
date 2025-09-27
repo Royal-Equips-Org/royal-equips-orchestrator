@@ -1,6 +1,6 @@
 {
   "$schema": "./config.schema.json",
-  "apiRelativeBase": "/api",
+  "apiRelativeBase": "/v1",
   "featureFlags": {
     "enable3D": true,
     "enableMetricsPolling": true,
@@ -13,6 +13,6 @@
   },
   "circuitBreaker": {
     "enabled": true,
-    "resetEndpoint": "/api/admin/circuit/reset"
+    "resetEndpoint": "/v1/admin/circuit/reset"
   }
 }

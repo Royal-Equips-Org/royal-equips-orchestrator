@@ -1,64 +1,28 @@
 import Fastify from "fastify";
-import fastifyStatic from "@fastify/static";
-import helmet from "@fastify/helmet";
-import cors from "@fastify/cors";
-import rateLimit from "@fastify/rate-limit";
+import staticPlugin from "@fastify/static";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import v1Routes from "./v1/index.js";
+import api from "./v1/index.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = Fastify({ 
-  logger: {
-    level: 'info',
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'HH:MM:ss Z',
-        ignore: 'pid,hostname'
-      }
-    }
-  }
-});
-
-// Security and CORS middleware
-await app.register(helmet, {
-  contentSecurityPolicy: false // Allow for development
-});
-
-await app.register(cors, {
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:5173', 
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:5173'
-  ],
-  credentials: true
-});
-
-// Rate limiting middleware
-await app.register(rateLimit, {
-  max: 100,
-  timeWindow: '1 minute'
-});
+const app = Fastify({ logger: true });
 
 // API routes
-app.register(v1Routes, { prefix: "/v1" });
+app.register(api, { prefix: "/v1" });
 
-// Serve built UI from ../web/dist (or ../command-center-ui/dist)
-const publicDir = path.join(__dirname, "../../web/dist");
-app.register(fastifyStatic, { root: publicDir, prefix: "/" });
+// Serve built UI from ../web/dist (dev) or ./dist-web (production)
+const webRoot = process.env.NODE_ENV === 'production' 
+  ? path.join(process.cwd(), "./dist-web")
+  : path.join(process.cwd(), process.env.WEB_DIST_PATH || "../web/dist");
+app.register(staticPlugin, { root: webRoot, prefix: "/" });
 
-// SPA fallback
+// SPA fallback for HTML requests
 app.setNotFoundHandler((req, reply) => {
-  if (req.raw.method === "GET" && req.raw.headers.accept?.includes("text/html")) {
-    return reply.sendFile("index.html");
-  }
+  const wantsHtml = req.method === "GET" && (req.headers.accept || "").includes("text/html");
+  if (wantsHtml) return reply.sendFile("index.html");
   reply.code(404).send({ error: "not_found" });
 });
+
+// Version endpoint
+app.get("/version", (_req, r) => r.send({ release: process.env.RELEASE || "dev" }));
 
 // Start server
 const start = async () => {
@@ -68,7 +32,7 @@ const start = async () => {
     
     await app.listen({ host, port });
     app.log.info(`🚀 Royal Equips API Server running on http://${host}:${port}`);
-    app.log.info(`📖 Serving UI from ${publicDir}`);
+    app.log.info(`📖 Serving UI from ${webRoot}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
