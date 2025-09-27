@@ -285,7 +285,7 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     const topic = imageTopics[matchedCategory as keyof typeof imageTopics] || 'product';
     // Use Unsplash's random image endpoint with topics as query
     return `https://source.unsplash.com/800x600/?${topic}`;
-  }
+  } // End of generateProductImage
 
   function generateProductDescription(product: any): string {
     return product.description || `Premium ${product.title} - Expertly crafted with attention to detail and superior quality. Perfect for discerning customers who appreciate excellence. Features advanced functionality and elegant design that sets it apart from ordinary products.`;
