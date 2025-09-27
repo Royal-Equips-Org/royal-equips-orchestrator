@@ -569,26 +569,26 @@ class InventoryPricingAgent(BaseAgent):
             for update in pricing_updates:
                 if update.get('approved', False):
                     try:
-                        # Update product variant price
+                        # Update product variant price on Shopify
                         variant_input = {
                             'id': update['variant_id'],
                             'price': str(update['new_price'])
                         }
                         
-                        # In a real implementation, you would call:
-                        # result = await shopify_client.update_product_variant(variant_input)
+                        # Call Shopify API to update the product variant price
+                        result = await shopify_client.update_product_variant(variant_input)
                         
-                        # Functionality not yet implemented
-                        self.logger.info(
-                            f"Would update {update['sku']} price from ${update['current_price']:.2f} "
-                            f"to ${update['new_price']:.2f} ({update['price_change_percent']:+.1f}%) "
-                            f"Reason: {update['reason']}"
-                        )
-                        # TODO: Implement Shopify product variant price update API call here.
-                        # For now, no changes are applied.
-                        # Uncomment and implement the API call to enable this functionality.
-                        
-                        
+                        if result and result.get('success', False):
+                            changes_applied += 1
+                            self.logger.info(
+                                f"Updated {update['sku']} price from ${update['current_price']:.2f} "
+                                f"to ${update['new_price']:.2f} ({update['price_change_percent']:+.1f}%) "
+                                f"Reason: {update['reason']}"
+                            )
+                        else:
+                            self.logger.warning(
+                                f"Failed to update {update['sku']} price on Shopify. Response: {result}"
+                            )
                     except Exception as e:
                         self.logger.error(f"Failed to update pricing for {update['sku']}: {e}")
                         continue
