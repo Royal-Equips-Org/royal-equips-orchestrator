@@ -343,7 +343,7 @@ class AgentRun(Base):
     
     # Logs and metadata
     logs = Column(JSONB)
-    agent_metadata = Column(JSONB)  # Renamed to avoid SQLAlchemy conflict
+    agent_metadata = Column(JSONB)  # Originally named 'metadata', but renamed to avoid conflict with SQLAlchemy's reserved 'metadata' attribute on declarative base classes.
     error_details = Column(Text)
     
     __table_args__ = (
