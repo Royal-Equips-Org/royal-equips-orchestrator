@@ -70,9 +70,12 @@ app.all('/api/*', async (c) => {
     const targetPath = url.pathname.replace('/api', '') || '/';
     const targetUrl = new URL(targetPath + url.search, backendUrl);
 
-    // Prepare request headers - remove accept-encoding to avoid compression mismatches
+    // Prepare request headers - remove accept-encoding only for SSE/streaming requests
     const headers = new Headers(c.req.raw.headers);
-    headers.delete('accept-encoding'); // Always remove to ensure clean pass-through
+    const acceptHeader = c.req.header('Accept') || '';
+    if (acceptHeader.includes('text/event-stream') || acceptHeader.includes('text/plain')) {
+      headers.delete('accept-encoding'); // Remove only for SSE/streaming
+    }
 
     // Set forwarding headers with better IP detection
     const cfConnectingIp = c.req.header('CF-Connecting-IP');
