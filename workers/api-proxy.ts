@@ -11,7 +11,7 @@ const app = new Hono();
 
 // CORS middleware with configurable origins
 app.use('*', cors({
-  origin: (origin) => {
+  origin: (origin, c) => {
     const allowedOrigins = (c.env?.ALLOWED_ORIGINS || '*').split(',').map(s => s.trim());
     return allowedOrigins.includes('*') || allowedOrigins.includes(origin);
   },
