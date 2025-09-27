@@ -29,54 +29,114 @@ class CircuitState(Enum):
 
 @dataclass
 class CircuitBreaker:
-    """Simple circuit breaker implementation."""
+    """Enhanced circuit breaker with adaptive thresholds and intelligent recovery."""
 
     failure_threshold: int = 5
     recovery_timeout: int = 60
     failure_count: int = 0
+    success_count: int = 0
     state: CircuitState = CircuitState.CLOSED
     last_failure_time: float = 0
+    last_success_time: float = 0
+    minimum_requests: int = 20  # Minimum requests before tripping
+    half_open_max_calls: int = 5  # Max calls in half-open state
+    half_open_calls: int = 0  # Current calls in half-open state
 
     def call(self, func: Callable, *args, **kwargs) -> Any:
-        """Execute function with circuit breaker protection."""
+        """Execute function with adaptive circuit breaker protection."""
+        current_time = time.time()
 
         # Check if we should transition from OPEN to HALF_OPEN
         if (
             self.state == CircuitState.OPEN
-            and time.time() - self.last_failure_time > self.recovery_timeout
+            and current_time - self.last_failure_time > self.recovery_timeout
         ):
             self.state = CircuitState.HALF_OPEN
-            self.failure_count = 0
+            self.half_open_calls = 0
+            logger.info(f"Circuit breaker transitioning to HALF_OPEN for recovery probe")
 
         # Block requests if circuit is OPEN
         if self.state == CircuitState.OPEN:
-            raise Exception("Circuit breaker is OPEN")
+            raise Exception("Circuit breaker is OPEN - service temporarily unavailable")
+
+        # In HALF_OPEN state, limit concurrent calls
+        if self.state == CircuitState.HALF_OPEN:
+            if self.half_open_calls >= self.half_open_max_calls:
+                raise Exception("Circuit breaker HALF_OPEN - max probe calls exceeded")
+            self.half_open_calls += 1
 
         try:
             result = func(*args, **kwargs)
 
-            # Success - reset circuit if it was HALF_OPEN
+            # Success handling
+            self.success_count += 1
+            self.last_success_time = current_time
+            
             if self.state == CircuitState.HALF_OPEN:
-                self.state = CircuitState.CLOSED
-                self.failure_count = 0
+                # Need consecutive successes to close circuit
+                if self.success_count >= 5:  # 5 consecutive successes
+                    self.state = CircuitState.CLOSED
+                    self.failure_count = 0
+                    self.success_count = 0
+                    self.half_open_calls = 0
+                    logger.info(f"Circuit breaker CLOSED after successful recovery")
+            elif self.state == CircuitState.CLOSED:
+                # Reset failure count on success in closed state
+                if self.failure_count > 0:
+                    self.failure_count = max(0, self.failure_count - 1)
 
             return result
 
         except Exception as e:
             self.failure_count += 1
-            self.last_failure_time = time.time()
+            self.last_failure_time = current_time
+            self.success_count = 0  # Reset success count on failure
 
-            # Transition to OPEN if threshold exceeded
-            if self.failure_count >= self.failure_threshold:
+            # Adaptive threshold based on recent request volume
+            total_requests = self.failure_count + self.success_count
+            
+            # Only trip if we have minimum request volume and exceed failure rate
+            if total_requests >= self.minimum_requests:
+                failure_rate = self.failure_count / total_requests
+                
+                # Adaptive threshold: 50% failure rate OR 5 consecutive failures
+                if failure_rate > 0.5 or self.failure_count >= self.failure_threshold:
+                    if self.state != CircuitState.OPEN:
+                        self.state = CircuitState.OPEN
+                        logger.warning(f"Circuit breaker OPEN - failure rate: {failure_rate:.2%}, "
+                                     f"failures: {self.failure_count}/{total_requests}")
+
+            # In HALF_OPEN, any failure immediately opens circuit
+            if self.state == CircuitState.HALF_OPEN:
                 self.state = CircuitState.OPEN
+                self.half_open_calls = 0
+                logger.warning(f"Circuit breaker OPEN - failure during recovery probe")
 
             raise e
+
+    def get_state_info(self) -> Dict[str, Any]:
+        """Get detailed circuit breaker state information."""
+        total_requests = self.failure_count + self.success_count
+        failure_rate = self.failure_count / total_requests if total_requests > 0 else 0
+        
+        return {
+            "state": self.state.value,
+            "failure_count": self.failure_count,
+            "success_count": self.success_count,
+            "total_requests": total_requests,
+            "failure_rate": failure_rate,
+            "last_failure_time": self.last_failure_time,
+            "last_success_time": self.last_success_time,
+            "half_open_calls": self.half_open_calls if self.state == CircuitState.HALF_OPEN else None,
+            "next_recovery_attempt": self.last_failure_time + self.recovery_timeout if self.state == CircuitState.OPEN else None
+        }
 
 
 class HealthService:
     """Health monitoring service with dependency checks and empire-level analysis."""
 
     def __init__(self):
+        # Enhanced circuit breakers with adaptive thresholds
         self.circuit_breakers = {
             "shopify": CircuitBreaker(
                 failure_threshold=current_app.config.get(
@@ -85,6 +145,7 @@ class HealthService:
                 recovery_timeout=current_app.config.get(
                     "CIRCUIT_BREAKER_RECOVERY_TIMEOUT", 60
                 ) if current_app else 60,
+                minimum_requests=20
             ),
             "bigquery": CircuitBreaker(
                 failure_threshold=current_app.config.get(
@@ -93,6 +154,7 @@ class HealthService:
                 recovery_timeout=current_app.config.get(
                     "CIRCUIT_BREAKER_RECOVERY_TIMEOUT", 60
                 ) if current_app else 60,
+                minimum_requests=10
             ),
             "github": CircuitBreaker(
                 failure_threshold=current_app.config.get(
@@ -101,11 +163,87 @@ class HealthService:
                 recovery_timeout=current_app.config.get(
                     "CIRCUIT_BREAKER_RECOVERY_TIMEOUT", 60
                 ) if current_app else 60,
+                minimum_requests=15
             ),
+            "agent_registry": CircuitBreaker(
+                failure_threshold=3,
+                recovery_timeout=30,  # Faster recovery for critical service
+                minimum_requests=10
+            ),
+            "metrics_aggregation": CircuitBreaker(
+                failure_threshold=8,  # More tolerance for metrics
+                recovery_timeout=45,
+                minimum_requests=25
+            ),
+            "revenue_calculation": CircuitBreaker(
+                failure_threshold=2,  # Low tolerance for revenue failures
+                recovery_timeout=30,
+                minimum_requests=5
+            )
         }
         self._empire_health_cache = {}
         self._last_empire_scan = None
         self._empire_scan_interval = timedelta(hours=6)  # Scan every 6 hours
+        
+        # Error budget tracking (99.99% SLO = 4.32 min/month downtime)
+        self._error_budget = {
+            "monthly_budget_seconds": 259.2,  # 4.32 min in seconds
+            "current_month_errors": 0,
+            "last_reset": datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        }
+
+    def get_circuit_breaker_status(self) -> Dict[str, Any]:
+        """Get detailed status of all circuit breakers."""
+        status = {}
+        for name, breaker in self.circuit_breakers.items():
+            status[name] = breaker.get_state_info()
+        return {
+            "circuit_breakers": status,
+            "timestamp": datetime.now().isoformat(),
+            "summary": {
+                "total_breakers": len(self.circuit_breakers),
+                "open_breakers": len([b for b in self.circuit_breakers.values() if b.state == CircuitState.OPEN]),
+                "half_open_breakers": len([b for b in self.circuit_breakers.values() if b.state == CircuitState.HALF_OPEN]),
+                "healthy_breakers": len([b for b in self.circuit_breakers.values() if b.state == CircuitState.CLOSED])
+            }
+        }
+
+    def get_error_budget_status(self) -> Dict[str, Any]:
+        """Get current error budget consumption."""
+        current_time = datetime.now()
+        
+        # Reset monthly counter if needed
+        current_month_start = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if current_month_start > self._error_budget["last_reset"]:
+            self._error_budget["current_month_errors"] = 0
+            self._error_budget["last_reset"] = current_month_start
+        
+        # Calculate consumption rate
+        consumption_rate = self._error_budget["current_month_errors"] / self._error_budget["monthly_budget_seconds"]
+        
+        # Determine burn rate status
+        if consumption_rate > 0.9:
+            burn_status = "CRITICAL"
+        elif consumption_rate > 0.7:
+            burn_status = "HIGH"
+        elif consumption_rate > 0.5:
+            burn_status = "MODERATE"
+        else:
+            burn_status = "HEALTHY"
+        
+        return {
+            "monthly_budget_seconds": self._error_budget["monthly_budget_seconds"],
+            "consumed_seconds": self._error_budget["current_month_errors"],
+            "remaining_seconds": max(0, self._error_budget["monthly_budget_seconds"] - self._error_budget["current_month_errors"]),
+            "consumption_rate": consumption_rate,
+            "burn_status": burn_status,
+            "last_reset": self._error_budget["last_reset"].isoformat(),
+            "next_reset": (current_month_start + timedelta(days=32)).replace(day=1).isoformat()
+        }
+
+    def record_error_budget_consumption(self, duration_seconds: float):
+        """Record error budget consumption."""
+        self._error_budget["current_month_errors"] += duration_seconds
 
     def check_readiness(self) -> Dict[str, Any]:
         """

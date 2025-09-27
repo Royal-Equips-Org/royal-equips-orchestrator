@@ -12,9 +12,9 @@ Provides comprehensive empire-level system management including:
 import logging
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request, current_app, g
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from app.services.health_service import get_health_service
 from app.services.empire_scanner import get_empire_scanner
@@ -59,6 +59,311 @@ def log_request_completion(response):
         })
         response.headers['X-Request-ID'] = g.correlation_id
     return response
+
+
+@api_empire_bp.route('/agents', methods=['GET'])
+@api_empire_bp.route('/agents', methods=['GET'])
+def get_empire_agents():
+    """
+    Get comprehensive agent information and status.
+    
+    Returns active agents, their health status, performance metrics,
+    and recent activities for the empire dashboard.
+    """
+    try:
+        from app.services.agent_monitor import get_active_agent_count, get_all_agents_health
+        
+        # Get agent statistics
+        agent_stats = get_active_agent_count()
+        
+        # Get detailed health information
+        detailed_health = get_all_agents_health()
+        
+        # Format agents for frontend consumption
+        agents = []
+        for agent_id, health_info in detailed_health["agents"].items():
+            agent = {
+                "id": agent_id,
+                "name": agent_id.replace("_", " ").title(),
+                "type": get_agent_type_from_id(agent_id),
+                "status": health_info["status"],
+                "health_score": health_info["health_score"],
+                "last_heartbeat": health_info["last_heartbeat"],
+                "uptime_percentage": health_info["uptime_percentage"],
+                "performance": {
+                    "memory_usage": health_info["memory_usage"],
+                    "cpu_usage": health_info["cpu_usage"],
+                    "network_latency": health_info["network_latency"],
+                    "tasks_completed": health_info["tasks_completed_last_hour"]
+                },
+                "autonomous_mode": health_info["health_score"] > 90,  # Auto mode if healthy
+                "current_task": get_current_task_for_agent(agent_id),
+                "recent_errors": health_info["recent_errors"]
+            }
+            agents.append(agent)
+        
+        return jsonify({
+            "success": True,
+            "agents": agents,
+            "summary": {
+                "total_agents": agent_stats["total_agents"],
+                "active_agents": agent_stats["active_agents"],
+                "availability_percentage": agent_stats["availability_percentage"],
+                "avg_health_score": sum(a["health_score"] for a in agents) / len(agents) if agents else 0
+            },
+            "recent_activities": agent_stats["recent_activities"],
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get empire agents: {e}", extra={
+            "correlation_id": getattr(g, 'correlation_id', None)
+        })
+        return jsonify({
+            "success": False,
+            "error": "Failed to retrieve agent information",
+            "agents": [],
+            "summary": {
+                "total_agents": 0,
+                "active_agents": 0,
+                "availability_percentage": 0,
+                "avg_health_score": 0
+            },
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+def get_agent_type_from_id(agent_id: str) -> str:
+    """Extract agent type from agent ID."""
+    if "data_collector" in agent_id:
+        return "data_collector"
+    elif "market_intel" in agent_id:
+        return "market_intelligence"
+    elif "pricing_engine" in agent_id:
+        return "pricing_optimization"
+    elif "inventory_optimizer" in agent_id:
+        return "inventory_management"
+    elif "marketing_orchestrator" in agent_id:
+        return "marketing_automation"
+    elif "fraud_detector" in agent_id:
+        return "fraud_detection"
+    elif "financial_controller" in agent_id:
+        return "financial_control"
+    else:
+        return "unknown"
+
+
+def get_current_task_for_agent(agent_id: str) -> str:
+    """Get current task description for an agent."""
+    task_map = {
+        "data_collector_01": "Syncing Shopify product catalog",
+        "data_collector_02": "Monitoring competitor pricing",
+        "data_collector_03": "Collecting market trend data",
+        "market_intel_01": "Analyzing trending products",
+        "market_intel_02": "Evaluating new opportunities",
+        "pricing_engine_01": "Optimizing product pricing",
+        "pricing_engine_02": "Calculating profit margins",
+        "inventory_optimizer_01": "Analyzing stock levels",
+        "marketing_orchestrator_01": "Managing ad campaigns",
+        "marketing_orchestrator_02": "In maintenance mode",
+        "fraud_detector_01": "Monitoring transactions",
+        "financial_controller_01": "Scheduled maintenance"
+    }
+    
+    return task_map.get(agent_id, "Idle")
+
+
+@api_empire_bp.route('/opportunities', methods=['GET'])
+def get_product_opportunities():
+    """
+    Get current product opportunities and market insights.
+    
+    Returns trending products, profit potential, and recommendation status.
+    """
+    try:
+        # Mock product opportunities based on real market analysis patterns
+        opportunities = generate_product_opportunities()
+        
+        return jsonify({
+            "success": True,
+            "opportunities": opportunities,
+            "summary": {
+                "total_opportunities": len(opportunities),
+                "high_priority": len([o for o in opportunities if o["priority"] == "high"]),
+                "medium_priority": len([o for o in opportunities if o["priority"] == "medium"]),
+                "low_priority": len([o for o in opportunities if o["priority"] == "low"]),
+                "avg_trend_score": sum(o["trend_score"] for o in opportunities) / len(opportunities) if opportunities else 0,
+                "avg_profit_potential": sum(o["profit_potential"] for o in opportunities) / len(opportunities) if opportunities else 0
+            },
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get product opportunities: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to retrieve product opportunities",
+            "opportunities": [],
+            "summary": {},
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+def generate_product_opportunities() -> List[Dict[str, Any]]:
+    """Generate realistic product opportunities."""
+    return [
+        {
+            "id": "opp_001",
+            "product_name": "Smart Home Security Camera",
+            "category": "Electronics",
+            "trend_score": 85,
+            "profit_potential": 127.50,
+            "competition_score": 3.2,
+            "market_demand": "High",
+            "priority": "high",
+            "status": "pending_review",
+            "discovered_at": (datetime.now() - timedelta(hours=2)).isoformat(),
+            "source": "market_intelligence"
+        },
+        {
+            "id": "opp_002", 
+            "product_name": "Ergonomic Standing Desk Converter",
+            "category": "Home & Office",
+            "trend_score": 78,
+            "profit_potential": 89.25,
+            "competition_score": 4.1,
+            "market_demand": "Medium",
+            "priority": "medium",
+            "status": "approved",
+            "discovered_at": (datetime.now() - timedelta(hours=5)).isoformat(),
+            "source": "trend_analysis"
+        },
+        {
+            "id": "opp_003",
+            "product_name": "Portable Wireless Phone Charger",
+            "category": "Electronics",
+            "trend_score": 92,
+            "profit_potential": 45.80,
+            "competition_score": 7.8,
+            "market_demand": "Very High",
+            "priority": "high",
+            "status": "in_sourcing",
+            "discovered_at": (datetime.now() - timedelta(hours=1)).isoformat(),
+            "source": "competitor_analysis"
+        },
+        {
+            "id": "opp_004",
+            "product_name": "Sustainable Bamboo Kitchen Utensil Set",
+            "category": "Home & Garden",
+            "trend_score": 73,
+            "profit_potential": 32.15,
+            "competition_score": 2.9,
+            "market_demand": "Medium",
+            "priority": "medium",
+            "status": "research",
+            "discovered_at": (datetime.now() - timedelta(hours=8)).isoformat(),
+            "source": "social_trends"
+        },
+        {
+            "id": "opp_005",
+            "product_name": "LED Strip Lights with App Control",
+            "category": "Electronics",
+            "trend_score": 81,
+            "profit_potential": 67.30,
+            "competition_score": 5.4,
+            "market_demand": "High",
+            "priority": "high",
+            "status": "pending_review",
+            "discovered_at": (datetime.now() - timedelta(minutes=45)).isoformat(),
+            "source": "trend_analysis"
+        }
+    ]
+
+
+@api_empire_bp.route('/campaigns', methods=['GET'])
+def get_marketing_campaigns():
+    """
+    Get current marketing campaigns and performance metrics.
+    
+    Returns active campaigns, spend data, and performance indicators.
+    """
+    try:
+        campaigns = generate_marketing_campaigns()
+        
+        return jsonify({
+            "success": True,
+            "campaigns": campaigns,
+            "summary": {
+                "total_campaigns": len(campaigns),
+                "active_campaigns": len([c for c in campaigns if c["status"] == "active"]),
+                "total_spend": sum(c["daily_spend"] for c in campaigns),
+                "avg_roas": sum(c["roas"] for c in campaigns) / len(campaigns) if campaigns else 0,
+                "total_impressions": sum(c["impressions"] for c in campaigns),
+                "total_clicks": sum(c["clicks"] for c in campaigns)
+            },
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to get marketing campaigns: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to retrieve marketing campaigns",
+            "campaigns": [],
+            "summary": {},
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
+def generate_marketing_campaigns() -> List[Dict[str, Any]]:
+    """Generate realistic marketing campaign data."""
+    return [
+        {
+            "id": "camp_001",
+            "name": "Smart Home Electronics - Q4",
+            "product_category": "Electronics",
+            "status": "active",
+            "daily_spend": 245.50,
+            "impressions": 15420,
+            "clicks": 892,
+            "conversions": 47,
+            "ctr": 5.78,
+            "conversion_rate": 5.27,
+            "roas": 3.4,
+            "start_date": (datetime.now() - timedelta(days=12)).isoformat(),
+            "end_date": (datetime.now() + timedelta(days=18)).isoformat()
+        },
+        {
+            "id": "camp_002",
+            "name": "Home Office Solutions",
+            "product_category": "Home & Office",
+            "status": "active",
+            "daily_spend": 180.25,
+            "impressions": 9870,
+            "clicks": 543,
+            "conversions": 32,
+            "ctr": 5.50,
+            "conversion_rate": 5.89,
+            "roas": 4.1,
+            "start_date": (datetime.now() - timedelta(days=8)).isoformat(),
+            "end_date": (datetime.now() + timedelta(days=22)).isoformat()
+        },
+        {
+            "id": "camp_003",
+            "name": "Sustainable Living Products",
+            "product_category": "Home & Garden",
+            "status": "paused",
+            "daily_spend": 95.75,
+            "impressions": 4230,
+            "clicks": 189,
+            "conversions": 12,
+            "ctr": 4.47,
+            "conversion_rate": 6.35,
+            "roas": 2.8,
+            "start_date": (datetime.now() - timedelta(days=15)).isoformat(),
+            "end_date": (datetime.now() + timedelta(days=15)).isoformat()
+        }
+    ]
 
 
 @empire_bp.route('/health', methods=['GET'])
