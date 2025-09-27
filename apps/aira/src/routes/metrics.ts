@@ -83,7 +83,7 @@ export const metricsRoute: FastifyPluginAsync = async (app) => {
       const metrics = await registry.metrics();
       reply.type('text/plain').send(metrics);
     } catch (error) {
-      app.log.error('Failed to generate metrics:', error);
+      app.log.error({ error }, 'Failed to generate metrics');
       reply.code(500).send('Failed to generate metrics');
     }
   });

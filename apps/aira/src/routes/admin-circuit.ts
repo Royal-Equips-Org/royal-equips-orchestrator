@@ -1,10 +1,10 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyReply } from 'fastify';
 
 export const adminCircuitRoutes: FastifyPluginAsync = async (app) => {
   // Get circuit breaker state
-  app.get('/v1/admin/circuit/state', async () => {
+  app.get('/v1/admin/circuit/state', async (request, reply: FastifyReply) => {
     if (!app.circuit) {
-      return app.code(503).send({
+      return reply.code(503).send({
         error: 'Circuit breaker not available',
         timestamp: new Date().toISOString()
       });
@@ -18,8 +18,8 @@ export const adminCircuitRoutes: FastifyPluginAsync = async (app) => {
         service: 'aira'
       };
     } catch (error) {
-      app.log.error('Failed to get circuit breaker state:', error);
-      return app.code(500).send({
+      app.log.error({ error }, 'Failed to get circuit breaker state');
+      return reply.code(500).send({
         error: 'Failed to retrieve circuit breaker state',
         details: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
@@ -28,9 +28,9 @@ export const adminCircuitRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // Reset circuit breaker
-  app.post('/v1/admin/circuit/reset', async () => {
+  app.post('/v1/admin/circuit/reset', async (request, reply: FastifyReply) => {
     if (!app.circuit) {
-      return app.code(503).send({
+      return reply.code(503).send({
         error: 'Circuit breaker not available',
         timestamp: new Date().toISOString()
       });
@@ -47,8 +47,8 @@ export const adminCircuitRoutes: FastifyPluginAsync = async (app) => {
         newState: await app.circuit.snapshot()
       };
     } catch (error) {
-      app.log.error('Failed to reset circuit breaker:', error);
-      return app.code(500).send({
+      app.log.error({ error }, 'Failed to reset circuit breaker');
+      return reply.code(500).send({
         error: 'Failed to reset circuit breaker',
         details: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()

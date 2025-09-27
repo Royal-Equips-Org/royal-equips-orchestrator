@@ -346,7 +346,7 @@ export class ApiClient {
       this.circuitBreaker = new CircuitBreaker();
       logger.info('Circuit breaker reset successfully');
     } catch (error) {
-      logger.error('Failed to reset circuit breaker:', error);
+      logger.error('Failed to reset circuit breaker', undefined, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }

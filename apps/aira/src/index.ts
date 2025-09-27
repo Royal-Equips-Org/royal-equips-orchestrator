@@ -123,8 +123,8 @@ interface EmpireChatRequestBody {
   content: string;
 }
 
-app.post('/api/empire/chat', async (request: Fastify.Request<{ Body: EmpireChatRequestBody }>, reply) => {
-  const { content } = request.body;
+app.post('/api/empire/chat', async (request, reply) => {
+  const { content } = request.body as EmpireChatRequestBody;
 
   if (typeof content !== 'string' || !content.trim()) {
     reply.status(400).send({

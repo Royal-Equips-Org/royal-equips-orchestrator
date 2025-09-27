@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyReply } from 'fastify';
 
 async function shopifyPing(): Promise<boolean> {
   // Real implementatie: call Shopify GraphQL / simple REST endpoint
@@ -30,7 +30,7 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // Comprehensive readiness check
-  app.get('/v1/readyz', async () => {
+  app.get('/v1/readyz', async (request, reply: FastifyReply) => {
     const checks = {
       redis: { healthy: false, latency: 0, error: null as string | null },
       shopify: { healthy: false, error: null as string | null },
@@ -75,7 +75,7 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
     const allHealthy = checks.redis.healthy && checks.shopify.healthy && checks.circuitBreaker.healthy;
     const status = allHealthy ? 200 : 503;
 
-    return app.code(status).send({
+    return reply.code(status).send({
       status: allHealthy ? 'ready' : 'not ready',
       timestamp: new Date().toISOString(),
       checks,
