@@ -1,4 +1,6 @@
 name: Single Origin Smoke Tests
+permissions:
+  contents: read
 
 on:
   push:
