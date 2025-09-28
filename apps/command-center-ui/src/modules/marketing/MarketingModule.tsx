@@ -1,7 +1,7 @@
-"""
+/*
 Marketing Automation Module - Elite Command Center UI
 Real-time marketing performance monitoring and campaign management
-"""
+*/
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';

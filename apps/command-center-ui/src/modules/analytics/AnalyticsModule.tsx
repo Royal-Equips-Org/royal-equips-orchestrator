@@ -528,21 +528,6 @@ export default function AnalyticsModule() {
       </div>
     </div>
   );
-    </div>
-  );
-          category: 'business'
-        },
-        {
-          id: 'uptime',
-          title: 'System Uptime',
-          value: formatUptime(processedMetrics.uptime),
-          change: processedMetrics.uptime,
-          trend: 'up',
-          category: 'performance'
-        }
-      ];
-
-      // Add empire-specific insights if available
       if (empireData?.empire_health) {
         analyticsInsights.push({
           id: 'empire_readiness',
