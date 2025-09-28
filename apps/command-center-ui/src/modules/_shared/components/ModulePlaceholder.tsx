@@ -109,7 +109,7 @@ export const ModulePlaceholder: React.FC<ModulePlaceholderProps> = ({
           <span
             className={clsx(
               'relative inline-flex rounded-full h-2 w-2',
-              config.bgColor.replace('bg-', 'bg-').replace('/10', '')
+              config.bgColor.replace('/10', '')
             )}
           />
         </span>
