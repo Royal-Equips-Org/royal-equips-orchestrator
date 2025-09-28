@@ -40,16 +40,34 @@ export default function ShopifyDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const { isConnected } = useEmpireStore();
 
+  // Helper to add timeout to fetch
+  const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout: number = 10000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return response;
+    } catch (error: any) {
+      clearTimeout(id);
+      // If aborted, treat as service unavailable
+      if (error.name === 'AbortError') {
+        return { ok: false, status: 408, json: () => Promise.resolve({}) };
+      }
+      return { ok: false, status: 503, json: () => Promise.resolve({}) };
+    }
+  };
+
   // Fetch real Shopify data
   const fetchShopifyMetrics = async () => {
     try {
       setLoading(true);
       
-      // Call real API endpoints
+      // Call real API endpoints with timeout
       const [ordersRes, productsRes, customersRes] = await Promise.all([
-        fetch('/api/v1/shopify/orders').catch(() => ({ ok: false, status: 503, json: () => Promise.resolve({}) })),
-        fetch('/api/v1/shopify/products').catch(() => ({ ok: false, status: 503, json: () => Promise.resolve({}) })),
-        fetch('/api/v1/shopify/customers').catch(() => ({ ok: false, status: 503, json: () => Promise.resolve({}) }))
+        fetchWithTimeout('/api/v1/shopify/orders'),
+        fetchWithTimeout('/api/v1/shopify/products'),
+        fetchWithTimeout('/api/v1/shopify/customers')
       ]);
 
       // Check if any API calls failed
