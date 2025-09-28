@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, Suspense, lazy } from 'react'
 import EmpireDashboard from './components/empire/EmpireDashboard'
-import ShopifyDashboard from './components/shopify/ShopifyDashboard'
+import ShopifyDashboard from './components/shopify/ShopifyDashboard'  
 import NavigationBar from './components/navigation/NavigationBar'
 import { ToastContainer } from './components/ui/Toast'
 import { ToastProvider, useToastContext } from './contexts/ToastContext'
@@ -8,6 +8,12 @@ import { NavigationProvider, useNavigation } from './contexts/NavigationContext'
 import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
+
+// Lazy load modules for better performance
+const AiraModule = lazy(() => import('./modules/aira/AiraModule'));
+const AnalyticsModule = lazy(() => import('./modules/analytics/AnalyticsModule'));
+const AgentsModule = lazy(() => import('./modules/agents/AgentsModule'));
+const DashboardModule = lazy(() => import('./modules/dashboard/DashboardModule'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
@@ -44,7 +50,37 @@ function AppContent() {
 
   // Render current module content
   const renderCurrentModule = () => {
+    const loadingFallback = (moduleName: string) => (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-cyan-400 text-lg">Loading {moduleName}...</div>
+      </div>
+    );
+
     switch (state.currentModule) {
+      case 'aira':
+        return (
+          <Suspense fallback={loadingFallback('AIRA')}>
+            <AiraModule />
+          </Suspense>
+        );
+      case 'analytics':
+        return (
+          <Suspense fallback={loadingFallback('Analytics')}>
+            <AnalyticsModule />
+          </Suspense>
+        );
+      case 'agents':
+        return (
+          <Suspense fallback={loadingFallback('Agents')}>
+            <AgentsModule />
+          </Suspense>
+        );
+      case 'dashboard':
+        return (
+          <Suspense fallback={loadingFallback('Dashboard')}>
+            <DashboardModule />
+          </Suspense>
+        );
       case 'shopify':
         return <ShopifyDashboard />;
       case 'products':
@@ -53,10 +89,6 @@ function AppContent() {
         return <div className="h-full flex items-center justify-center text-hologram">Orders Module - Coming Soon</div>;
       case 'customers':
         return <div className="h-full flex items-center justify-center text-hologram">Customers Module - Coming Soon</div>;
-      case 'dashboard':
-        return <div className="h-full flex items-center justify-center text-hologram">Overview Dashboard - Coming Soon</div>;
-      case 'analytics':
-        return <div className="h-full flex items-center justify-center text-hologram">Analytics Module - Coming Soon</div>;
       case 'monitoring':
         return <div className="h-full flex items-center justify-center text-hologram">System Monitoring - Coming Soon</div>;
       case 'settings':

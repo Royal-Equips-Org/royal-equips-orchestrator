@@ -30,6 +30,16 @@ export const navigationModules: NavigationModule[] = [
   
   // Intelligence & Analytics
   {
+    id: 'aira',
+    label: 'AIRA',
+    icon: Brain,
+    description: 'AI Empire Agent',
+    color: '#00FFFF',
+    path: '/aira',
+    category: 'intelligence',
+    isNew: true
+  },
+  {
     id: 'neural',
     label: 'NEURAL',
     icon: Brain,
@@ -64,6 +74,15 @@ export const navigationModules: NavigationModule[] = [
     color: '#FFD700',
     path: '/analytics',
     category: 'analytics'
+  },
+  {
+    id: 'agents',
+    label: 'AGENTS',
+    icon: Users,
+    description: 'AI Agent Management',
+    color: '#FF69B4',
+    path: '/agents',
+    category: 'intelligence'
   },
   
   // Operational Modules
@@ -174,6 +193,7 @@ export const moduleCategories = {
 export const quickAccessModules = [
   'command',
   'dashboard', 
+  'aira',
   'shopify',
   'products',
   'analytics'
