@@ -135,11 +135,18 @@ export class ApiClient {
   private circuitBreaker = new CircuitBreaker();
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || this.getBaseUrl();
+    this.baseUrl = baseUrl || this.getBaseUrlInternal();
     logger.setContext({ apiClient: true, baseUrl: this.baseUrl });
   }
 
-  private getBaseUrl(): string {
+  /**
+   * Get the base URL for API calls
+   */
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
+  private getBaseUrlInternal(): string {
     try {
       const config = getConfig();
       return config.apiRelativeBase;
