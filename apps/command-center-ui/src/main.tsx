@@ -5,9 +5,13 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { loadRuntimeConfig, RuntimeConfig } from './lib/runtime-config';
 import './styles/globals.css';
 
-// Disable service worker to prevent caching issues
+// Service worker and hard cache bust to prevent caching issues
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+  // Clear all caches
+  if ('caches' in window) {
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+  }
 }
 
 interface AppBootstrapProps {

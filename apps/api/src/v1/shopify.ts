@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import * as fs from 'fs/promises';
+import path from 'node:path';
 
 // Simple Shopify GraphQL client
 class ShopifyGraphQL {
@@ -325,13 +326,13 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
           
           // Process and enhance the real data
           const processedOrders = {
-            ...orders,
+            ...(orders as any),
             success: true,
             source: 'live_shopify',
             analytics: (() => {
               const today = new Date();
-              const metrics = (orders.orders?.edges ?? []).reduce(
-                (acc, edge: any) => {
+              const metrics = ((orders as any).orders?.edges ?? []).reduce(
+                (acc: any, edge: any) => {
                   acc.total_orders += 1;
                   const createdAt = new Date(edge.node.createdAt);
                   if (createdAt.toDateString() === today.toDateString()) {
@@ -351,7 +352,8 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
 
           return reply.send(processedOrders);
         } catch (error) {
-          app.log.warn('Live Shopify orders API failed:', error);
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          app.log.warn(`Live Shopify orders API failed: ${errorMsg}`);
           // Return structured error instead of mock data
           return reply.code(503).send({
             error: 'Shopify API connection failed',
@@ -372,7 +374,8 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
         setup_required: true
       });
     } catch (error) {
-      app.log.error('Shopify orders fetch failed:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Shopify orders fetch failed: ${errorMsg}`);
       return reply.code(500).send({ 
         error: 'Internal server error', 
         success: false 
@@ -391,34 +394,35 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
           
           // Process and enhance the real customer data
           const processedCustomers = {
-            ...customers,
+            ...(customers as any),
             success: true,
             source: 'live_shopify',
             analytics: {
-              total_customers: customers.customers?.edges?.length || 0,
-              new_customers: customers.customers?.edges?.filter((edge: any) => {
+              total_customers: (customers as any).customers?.edges?.length || 0,
+              new_customers: (customers as any).customers?.edges?.filter((edge: any) => {
                 const createdAt = new Date(edge.node.createdAt);
                 const monthAgo = new Date();
                 monthAgo.setMonth(monthAgo.getMonth() - 1);
                 return createdAt > monthAgo;
               }).length || 0,
-              returning_customers: customers.customers?.edges?.filter((edge: any) => 
+              returning_customers: (customers as any).customers?.edges?.filter((edge: any) => 
                 edge.node.ordersCount > 1
               ).length || 0,
-              total_spent: customers.customers?.edges?.reduce((sum: number, edge: any) => 
+              total_spent: (customers as any).customers?.edges?.reduce((sum: number, edge: any) => 
                 sum + parseFloat(edge.node.totalSpent || '0'), 0
               ) || 0,
-              avg_lifetime_value: customers.customers?.edges?.length > 0 
-                ? (customers.customers.edges.reduce((sum: number, edge: any) => 
+              avg_lifetime_value: (customers as any).customers?.edges?.length > 0 
+                ? ((customers as any).customers.edges.reduce((sum: number, edge: any) => 
                     sum + parseFloat(edge.node.totalSpent || '0'), 0
-                  ) / customers.customers.edges.length) 
+                  ) / (customers as any).customers.edges.length) 
                 : 0
             }
           };
 
           return reply.send(processedCustomers);
         } catch (error) {
-          app.log.warn('Live Shopify customers API failed:', error);
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          app.log.warn(`Live Shopify customers API failed: ${errorMsg}`);
           return reply.code(503).send({
             error: 'Shopify API connection failed',
             message: 'Unable to connect to Shopify customers endpoint. Please check your API credentials.',
@@ -438,7 +442,8 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
         setup_required: true
       });
     } catch (error) {
-      app.log.error('Shopify customers fetch failed:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Shopify customers fetch failed: ${errorMsg}`);
       return reply.code(500).send({ 
         error: 'Internal server error', 
         success: false 

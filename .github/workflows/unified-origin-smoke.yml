@@ -1,0 +1,108 @@
+name: Unified Origin Smoke Tests
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+      - 'apps/command-center-ui/**'
+      - '.github/workflows/unified-origin-smoke.yml'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+      - 'apps/command-center-ui/**'
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+      
+      - name: Enable Corepack
+        run: corepack enable
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build API
+        run: |
+          cd apps/api
+          pnpm build
+      
+      - name: Build Web UI
+        run: |
+          cd apps/web
+          pnpm build
+      
+      - name: Start unified server in background
+        run: |
+          cd apps/api
+          NODE_ENV=development WEB_DIST_PATH="../web/dist" PORT=10000 node dist/server.js &
+          echo $! > server.pid
+          sleep 5
+      
+      - name: Test unified origin deployment
+        run: |
+          set -e
+          
+          echo "Testing UI is served from backend with correct cache headers..."
+          # UI comes from backend with no-store cache header
+          curl -fsS -I http://localhost:10000/ | grep -q "cache-control: no-store"
+          echo "✅ UI served with no-store cache header"
+          
+          # Check that index.html contains the expected title
+          curl -fsS http://localhost:10000/ | grep -q "<title>ROYAL EQUIPS EMPIRE COMMAND CENTER</title>" || \
+            curl -fsS http://localhost:10000/ | grep -q "Royal Equips" || \
+            curl -fsS http://localhost:10000/ | grep -q "Command Center"
+          echo "✅ UI HTML content served correctly"
+          
+          echo "Testing API endpoints..."
+          # Version endpoint returns commit info
+          curl -fsS http://localhost:10000/version | jq -e '.release'
+          echo "✅ Version endpoint accessible"
+          
+          # Health endpoints return 200
+          curl -fsS http://localhost:10000/v1/healthz | jq -e '.status == "ok"'
+          echo "✅ Health endpoint OK"
+          
+          # Readiness check returns proper structure
+          curl -fsS http://localhost:10000/v1/readyz | jq -e '.status and .dependencies'
+          echo "✅ Readiness endpoint OK"
+          
+          # Circuit breaker reset works
+          curl -fsS -X POST http://localhost:10000/v1/admin/circuit/reset | jq -e '.ok == true'
+          echo "✅ Circuit breaker reset endpoint OK"
+          
+          echo "Testing static assets have proper cache headers..."
+          # Try to find a static asset (CSS or JS) and check it has immutable cache
+          ASSET_URL=$(curl -s http://localhost:10000/ | grep -oE '/assets/[^"]*\.(css|js)' | head -1 || echo "")
+          if [ -n "$ASSET_URL" ]; then
+            curl -fsS -I "http://localhost:10000$ASSET_URL" | grep -q "cache-control.*immutable"
+            echo "✅ Static assets have immutable cache headers"
+          else
+            echo "ℹ️  No static assets found to test (may be inlined)"
+          fi
+          
+          echo "All smoke tests passed! ✅"
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ -f apps/api/server.pid ]; then
+            kill $(cat apps/api/server.pid) || true
+            rm apps/api/server.pid || true
+          fi
+          # Kill any remaining node processes on port 10000
+          pkill -f "node.*dist/server.js" || true
