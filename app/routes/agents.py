@@ -18,34 +18,67 @@ from flask import Blueprint, Response, current_app, jsonify, request
 agents_bp = Blueprint("agents", __name__)
 logger = logging.getLogger(__name__)
 
-# In-memory storage (TODO: Replace with Redis/Database)
-agent_sessions: Dict[str, Dict] = {}
-agent_messages: Dict[str, List[Dict]] = {}
+# Production storage with Redis backend
+import redis
+from core.secrets.secret_provider import UnifiedSecretResolver
+
+try:
+    secrets = UnifiedSecretResolver()
+    redis_url = secrets.get_secret('REDIS_URL') or 'redis://localhost:6379'
+    redis_client = redis.from_url(redis_url, decode_responses=True)
+    redis_client.ping()  # Test connection
+    logger.info("Connected to Redis for agent session storage")
+    USE_REDIS = True
+except Exception as e:
+    logger.warning(f"Redis not available, using in-memory storage: {e}")
+    redis_client = None
+    USE_REDIS = False
+    # Fallback to in-memory for development
+    agent_sessions: Dict[str, Dict] = {}
+    agent_messages: Dict[str, List[Dict]] = {}
 
 
 @agents_bp.route("/session", methods=["POST"])
 def create_agent_session():
-    """Create a new agent chat session."""
+    """Create a new agent chat session with persistent storage."""
     try:
+        data = request.get_json() or {}
+        agent_type = data.get("agent_type", "general")
+        user_id = data.get("user_id", "anonymous")
+        
         session_id = str(uuid.uuid4())
-
-        agent_sessions[session_id] = {
+        session_data = {
             "id": session_id,
+            "agent_type": agent_type,
+            "user_id": user_id,
             "created_at": datetime.now().isoformat(),
             "status": "active",
+            "message_count": 0
         }
 
-        agent_messages[session_id] = []
+        if USE_REDIS:
+            # Store in Redis with 1 hour expiry
+            redis_client.hset(f"session:{session_id}", mapping=session_data)
+            redis_client.expire(f"session:{session_id}", 3600)
+            redis_client.delete(f"messages:{session_id}")  # Clear any existing messages
+        else:
+            # Fallback to in-memory
+            agent_sessions[session_id] = session_data
+            agent_messages[session_id] = []
 
-        logger.info(f"Created agent session: {session_id}")
+        logger.info(f"Created agent session: {session_id} for type {agent_type}")
 
         # Update metrics
         from app.routes.metrics import increment_metric, set_metric
 
         increment_metric("agent_sessions")
-        set_metric("agent_sessions", len(agent_sessions))
+        if USE_REDIS:
+            active_sessions = len(redis_client.keys("session:*"))
+        else:
+            active_sessions = len(agent_sessions)
+        set_metric("agent_sessions", active_sessions)
 
-        return jsonify({"session_id": session_id}), 201
+        return jsonify({"session_id": session_id, "session": session_data}), 201
 
     except Exception as e:
         logger.error(f"Failed to create agent session: {e}")

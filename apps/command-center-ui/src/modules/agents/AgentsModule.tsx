@@ -80,24 +80,39 @@ export default function AgentsModule() {
         metricsData = await metricsResponse.json();
       }
 
-      // Process empire agents data into UI format
-      const processedAgents: Agent[] = agentsData.map((agent: any, index: number) => ({
-        id: agent.id || `agent_${index}`,
-        name: agent.name || `Agent ${index + 1}`,
-        type: agent.type || 'General Purpose',
-        status: agent.status === 'active' ? 'active' : agent.status === 'error' ? 'error' : 'idle',
-        health: agent.health || Math.floor(85 + Math.random() * 15), // Would come from real health checks
-        lastActivity: agent.lastActivity || new Date().toISOString(),
-        totalTasks: agent.totalTasks || Math.floor(Math.random() * 100),
-        completedTasks: agent.completedTasks || Math.floor(Math.random() * 80),
-        errorCount: agent.errorCount || Math.floor(Math.random() * 5),
-        performance: {
-          avgResponseTime: agent.performance?.avgResponseTime || Math.floor(50 + Math.random() * 200),
-          successRate: agent.performance?.successRate || (90 + Math.random() * 10),
-          throughput: agent.performance?.throughput || Math.floor(10 + Math.random() * 50)
-        },
-        capabilities: agent.capabilities || ['Task Processing', 'Data Analysis', 'Communication']
-      }));
+      // Process empire agents data with real business metrics
+      const processedAgents: Agent[] = agentsData.map((agent: any, index: number) => {
+        // Calculate real performance metrics from agent data
+        const totalExecutions = agent.total_executions || 0;
+        const successfulExecutions = agent.successful_executions || 0;
+        const failedExecutions = agent.failed_executions || 0;
+        const avgExecutionTime = agent.avg_execution_time || 0;
+        
+        // Real success rate calculation
+        const successRate = totalExecutions > 0 ? (successfulExecutions / totalExecutions) * 100 : 0;
+        
+        // Real health calculation based on error rate and performance
+        const errorRate = totalExecutions > 0 ? (failedExecutions / totalExecutions) * 100 : 0;
+        const health = Math.max(0, Math.min(100, 100 - errorRate));
+        
+        return {
+          id: agent.id,
+          name: agent.name,
+          type: agent.type || agent.agent_type,
+          status: agent.status as 'active' | 'idle' | 'error' | 'stopped',
+          health: Math.floor(health),
+          lastActivity: agent.last_execution || agent.updated_at || new Date().toISOString(),
+          totalTasks: totalExecutions,
+          completedTasks: successfulExecutions,
+          errorCount: failedExecutions,
+          performance: {
+            avgResponseTime: Math.floor(avgExecutionTime * 1000), // Convert to ms
+            successRate: Math.floor(successRate * 10) / 10, // Round to 1 decimal
+            throughput: agent.throughput_per_hour || 0
+          },
+          capabilities: agent.capabilities || this.getAgentCapabilities(agent.type || agent.agent_type)
+        };
+      });
 
       // Add system-level agents based on metrics
       if (metricsData?.active_sessions > 0) {
@@ -177,11 +192,28 @@ export default function AgentsModule() {
     
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-    return `${Math.floor(diffMins / 1440)}d ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
   };
 
-  useEffect(() => {
+  const getAgentCapabilities = (agentType: string): string[] => {
+    const capabilityMap: Record<string, string[]> = {
+      'product_research': ['Product Discovery', 'Market Analysis', 'Trend Identification', 'Competitor Research'],
+      'inventory_forecasting': ['Demand Prediction', 'Stock Management', 'Prophet Forecasting', 'Shopify Integration'],
+      'marketing_automation': ['Email Campaigns', 'Customer Segmentation', 'A/B Testing', 'Behavioral Triggers'],
+      'order_management': ['Risk Assessment', 'Supplier Routing', 'Tracking Sync', 'Return Processing'],
+      'pricing_optimizer': ['Competitive Analysis', 'Dynamic Pricing', 'Margin Optimization', 'Market Intelligence'],
+      'analytics': ['Revenue Analytics', 'Performance Tracking', 'Business Intelligence', 'Report Generation'],
+      'customer_support': ['AI Chat', 'Ticket Resolution', 'Knowledge Base', 'Escalation Management'],
+      'security': ['Fraud Detection', 'Risk Assessment', 'Compliance Monitoring', 'Threat Analysis']
+    };
+    
+    return capabilityMap[agentType] || ['Task Processing', 'Data Analysis', 'Automation'];
+  };  useEffect(() => {
     fetchAgentData();
     
     // Set up real-time updates

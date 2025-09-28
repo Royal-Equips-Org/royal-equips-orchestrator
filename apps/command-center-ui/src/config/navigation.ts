@@ -155,6 +155,16 @@ export const navigationModules: NavigationModule[] = [
     category: 'operations'
   },
   {
+    id: 'customer-support',
+    label: 'SUPPORT',
+    icon: Users,
+    description: 'AI-Powered Customer Support & Service Automation',
+    color: '#00BFFF',
+    path: '/customer-support',
+    category: 'operations',
+    isNew: true
+  },
+  {
     id: 'revenue',
     label: 'REVENUE',
     icon: DollarSign,
@@ -168,10 +178,11 @@ export const navigationModules: NavigationModule[] = [
     id: 'inventory',
     label: 'INVENTORY',
     icon: Package,
-    description: 'Supply Chain & Stock Management',
+    description: 'AI-Powered Inventory Intelligence & ML Forecasting',
     color: '#FF8C00',
     path: '/inventory',
-    category: 'operations'
+    category: 'operations',
+    isNew: true
   },
   
   // System & Utilities

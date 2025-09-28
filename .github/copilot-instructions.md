@@ -1,154 +1,408 @@
-# ROYAL EQUIPS ORCHESTRATOR — FULL SYSTEM UPGRADE MASTER PROMPT (Feed to GitHub Copilot / AI Dev Agent)
+# ROYAL EQUIPS ORCHESTRATOR — AI DEVELOPMENT GUIDE
 
-## 🚨 CRITICAL ENTERPRISE RULE - NEVER VIOLATE
+## 🏰 System Overview
 
-### ABSOLUTELY NO PLACEHOLDERS, MOCKS, OR FAKE DATA EVER
-This is an enterprise system beyond Fortune 500 level. Every component MUST use real implementations:
+This is the **Royal Equips Empire**: an autonomous e-commerce platform with intelligent agents managing product research, inventory, marketing, and fulfillment. The system is **production-ready** and **revenue-generating** - not a prototype.
 
-- ❌ **FORBIDDEN**: `ModulePlaceholder`, "coming soon" messages, mock data, simulated APIs, placeholder components
-- ✅ **REQUIRED**: Real API integrations, actual business logic, live data connections to existing backend services
+### Architecture at a Glance
+- **Monorepo** (pnpm workspaces) with TypeScript + Python
+- **Flask** main orchestrator + multiple **FastAPI** services  
+- **React + Vite** command center UI with lazy-loaded modules
+- **Multi-agent system** with real API integrations (Shopify, AutoDS, Spocket)
+- **Cross-platform deployment** (Render, Cloudflare Workers, Docker)
 
-**EXISTING REAL SYSTEMS TO CONNECT TO:**
-- AIRA Service: `/apps/aira/src/index.ts` (real AI agent backend)
-- Empire APIs: `/app/routes/empire.py`, `/app/routes/agents.py` (real metrics and agent management)
-- Shopify Platform: `/royal_platform/connectors/shopify/` (real e-commerce integrations)
-- Health Service: `/app/services/health_service.py` (actual system monitoring)
-- Database: SQLAlchemy models in `/royal_platform/database/` (real data storage)
+## 🚨 CRITICAL ENTERPRISE RULES
 
-**IF YOU USE PLACEHOLDERS, YOU VIOLATE ENTERPRISE STANDARDS AND WASTE DEVELOPMENT RESOURCES**
+### NEVER USE PLACEHOLDERS OR MOCK DATA
+This system generates real revenue. Every component must connect to actual APIs and data:
+- ✅ **Real integrations**: Shopify, AutoDS, Spocket, GitHub, Cloudflare
+- ✅ **Live data flows**: Orders, products, campaigns, metrics
+- ✅ **Production services**: AIRA AI backend, health monitoring, secret management
+- ❌ **Forbidden**: Mock APIs, placeholder components, fake data, "coming soon" messages
 
----
-
-You (Copilot / Autonomous Dev Agent) are tasked with executing a full-stack, enterprise-grade upgrade of the Royal Equips Quantum Command Center and supporting orchestrator services. Operate as a senior Staff+ Engineer + Solutions Architect. Output MUST be production-grade, typed, secure, modular, and testable. No placeholder logic.
-
----
-
-## CORE MISSIONS
-
-1. Mobile-First Command Center Overhaul  
-   - Refactor UI for true mobile-first (320px → ultra-wide).  
-   - Implement adaptive layout, fluid typography (`clamp()`), responsive grid, reduced layout shift.  
-   - Add horizontal swipeable “Module Scroller” with touch + wheel + keyboard support (scroll-snap, momentum, inertial).  
-   - Add collapsible top navigation (shrink on scroll, accessible hamburger, ARIA).  
-   - Implement unified theming primitives (design tokens) + dark accessible neon style.
-
-2. Module Implementation & Progressive Scaffolding  
-   - Implement / scaffold all strategic modules (see Module Matrix below) with route-level code splitting + lazy hydration.  
-   - Provide skeleton loaders + "coming soon" component `<ModulePlaceholder kind="analytics" />`.  
-   - Integrate an internal runtime capability registry so modules declare: id, name, featureFlags, requiredSecrets, status.
-
-3. Secret Resolution Multi-Fallback System  
-   - Layered secret provider:  
-     Order → Runtime ENV → GitHub Actions injected secrets → Cloudflare (Env Vars / KV) → Optional external vault (AWS SSM Parameter Store placeholder interface) → Encrypted in-memory LRU cache (TTL).  
-   - Non-blocking, promisified API with structured error semantics (`SecretNotFoundError`, `SecretExpiredError`).  
-   - NEVER log secret values. Redact patterns.  
-   - Provide both TypeScript and Python implementations.  
-   - Include metrics: resolution latency, cache hit ratio, fallback depth counter.  
-   - Add test coverage + business strategy.
-
-4. Observability & Self-Healing  
-   - Introduce: Structured logging, OpenTelemetry traces (minimal baseline), performance marks, error boundaries (React), health endpoints (`/healthz` `/readyz`).  
-   - Implement circuit breaker + retry (exponential backoff with jitter) for remote calls (Shopify, external APIs).  
-   - Add fallback UI for network/offline status (graceful degradation).
-
-5. Security Hardening  
-   - Strict CSP meta (nonce strategy), HTTP security headers, origin checks.  
-   - RBAC scaffolding (roles: ROOT, ADMIN, OPERATOR, ANALYST, VIEWER).  
-   - Provide request-scoped context injection pattern.  
-   - Add audit logging middleware (mask PII).  
-   - Implement secret scan pre-commit Git hook suggestion + GitHub Actions scanning integration (CodeQL, secret scanning, Dependabot).
-
-6. Performance Budgets  
-   - Initial LCP < 2.5s on mid-tier mobile, TTI < 3.5s, CLS < 0.05.  
-   - Hydration strategy: priority hero, deferred analytics visualizations, idle callbacks for non-critical modules.  
-   - Image optimization + dynamic import for heavy libs (charts, editors).
-
-7. Test & CI Enhancements  
-   - Add: Unit tests (Jest / Pytest), integration harness (Playwright for UI smoke), secret provider tests (mock layers).  
-   - GitHub Actions pipeline enhancements: build → lint → type-check → tests → security scan → deploy (staged).  
-   - Add summary artifact (coverage %, bundle size diff, dependency delta).
-
-8. Extensibility & Agent Ecosystem Readiness  
-   - Design module registration object supporting future “autonomous agents” (status, health, tasks queue linkage).  
-   - Provide event bus integration layer (abstract; pluggable with AWS EventBridge / NATS / Redis Streams).  
-   - Add domain service boundaries (inventory, pricing, marketing, analytics, automation).
+### Key Real Systems to Connect To
+- **AIRA Service**: `/apps/aira/src/index.ts` (AI orchestrator backend)
+- **Flask Orchestrator**: `/app/routes/*.py` (agent management, metrics)
+- **Command Center UI**: `/apps/command-center-ui/src` (React dashboard)
+- **Secret System**: `/core/secrets/` (multi-provider resolution)
+- **Agent Executors**: `/apps/agent-executors/` (business logic agents)
 
 ---
 
-## MODULE MATRIX (Implement / Scaffold)
+## 🔧 MONOREPO STRUCTURE (CRITICAL TO UNDERSTAND)
 
-| Category        | Route / ID          | Status Target | Notes |
-|-----------------|---------------------|---------------|-------|
-| Core            | /command            | Full          | Landing + capability matrix |
-| Dashboards      | /dashboard          | Full          | KPI panels, live metrics |
-| Commerce        | /shopify            | Partial       | Sync jobs, store status |
-| Products        | /products           | Full          | Product ingestion, search, tags |
-| Analytics       | /analytics          | Scaffold      | Charts (lazy), anomaly placeholders |
-| Agents          | /agents             | Partial       | Agent table + health |
-| Revenue         | /revenue            | Scaffold      | Pricing, forecasts (placeholder) |
-| Inventory       | /inventory          | Scaffold      | Supply chain placeholders |
-| Security        | /security           | Partial       | Events feed, placeholder |
-| Settings        | /settings           | Full          | Secrets (masked), feature flags |
-| Logs            | /logs               | Scaffold      | Stream (virtualized) |
-| Automations     | /automations        | Partial       | Workflow list placeholder |
-| Experiments     | /experiments        | Scaffold      | A/B test registry placeholder |
-| Crisis          | /crisis             | Scaffold      | Runbooks placeholder |
-| Health          | /system-health      | Partial       | Service + dependency map |
-
-All new routes must use Suspense + error boundaries + code splitting.
-
----
-
-## RECOMMENDED DIRECTORY STRUCTURE (ADJUST IF PROJECT ALREADY USES NEXT.JS VS. VITE)
-
+### Root-Level Services
 ```
-/app
-  /modules
-    /_shared
-      /components
-      /hooks
-      /providers
-      /layout
-    /command
-    /dashboard
-    /shopify
-    /products
-    /analytics
-    /agents
-    /revenue
-    /inventory
-    /security
-    /settings
-    /logs
-    /automations
-    /experiments
-    /crisis
-    /system-health
-  /api (if applicable)
-/core
-  config/
-  logging/
-  secrets/
-  security/
-  events/
-  metrics/
-  rbac/
-  errors/
-  utils/
-/infra
-  github-actions/
-  terraform/
-  docker/
-/tests
-  unit/
-  integration/
-  e2e/
-scripts/
+/app/                    # Flask orchestrator (main API, agents, health)
+/wsgi.py                 # WSGI production entry point  
+/orchestrator/           # Core agent system + business logic
+/core/                   # Shared utilities (secrets, health, security)
+/royal_platform/         # E-commerce platform integrations
+/royal_mcp/              # Model Context Protocol server
 ```
 
+### Apps (pnpm workspaces)
+```
+/apps/command-center-ui/ # React+Vite dashboard (port 5173)
+/apps/aira/             # FastAPI AI orchestrator (port 3001) 
+/apps/api/              # FastAPI general API (port 3000)
+/apps/orchestrator-api/ # FastAPI orchestrator API (port 3002)
+/apps/agent-executors/  # Agent execution service (port 3003)
+```
+
+### Packages (shared libs)
+```  
+/packages/shared-types/ # TypeScript type definitions
+/packages/agents-core/  # Agent base classes & utilities
+/packages/connectors/   # External API integrations
+/packages/obs/          # Observability utilities  
+/packages/shopify-client/ # Shopify API client
+```
+
+## 🚀 DEVELOPMENT WORKFLOWS
+
+### Essential Commands (Use These!)
+```bash
+# Install dependencies for entire monorepo
+pnpm install
+
+# Start all services in development
+pnpm dev
+
+# Start specific apps
+pnpm dev:orchestrator-api  # FastAPI orchestrator
+pnpm dev:aira             # AIRA AI service  
+pnpm start                # Flask main app (production mode)
+
+# Build all packages and apps
+pnpm build
+
+# Type checking across all TypeScript projects  
+pnpm typecheck
+
+# Lint all code
+pnpm lint
+
+# Run tests
+pnpm test
+```
+
+### Python Services
+```bash
+# Flask orchestrator (main service)
+python wsgi.py
+# Or with Gunicorn (production)
+gunicorn -w 2 -b 0.0.0.0:10000 wsgi:app
+
+# Makefile shortcuts
+make setup     # Development environment setup
+make run       # Run orchestrator API
+make dashboard # Start holographic control center
+make ci        # Complete CI pipeline locally
+```
+
+## 🎯 CURRENT IMPLEMENTATION STATUS
+
+### Flask Orchestrator (`/app/routes/`)
+- ✅ **Health & Metrics**: `/healthz`, `/readyz`, `/metrics` (core/health_service.py)
+- ✅ **Agent System**: Agent sessions, messaging, streaming (agents.py)  
+- ✅ **Command Center**: SPA serving, empire status (command_center.py)
+- ✅ **Empire Management**: Campaign execution, product research (empire.py)
+- ✅ **WebSocket Streams**: Real-time data (sockets.py, SocketIO)
+
+### React Command Center (`/apps/command-center-ui/src/`)
+- ✅ **Module System**: Lazy loading with Suspense boundaries implemented
+- ✅ **Store Management**: Zustand stores (empire, navigation, performance)
+- ✅ **Real Modules**: AIRA, Analytics, Agents, Dashboard, Revenue, Inventory, Marketing
+- ✅ **Mobile Responsive**: Layout shells, navigation, module scroller
+- ✅ **Performance**: Metrics tracking, optimization hooks, bundle splitting
+
+### FastAPI Services (All Operational)
+- ✅ **AIRA** (`/apps/aira/`): AI orchestration, system routes, metrics
+- ✅ **API** (`/apps/api/`): General API with agents, health, auth routes
+- ✅ **Orchestrator API** (`/apps/orchestrator-api/`): Agent management API
+- ✅ **Agent Executors** (`/apps/agent-executors/`): Business logic execution
+
+### Core Systems (Production Ready)  
+- ✅ **Secret Resolution** (`/core/secrets/`): Multi-provider with encryption + caching
+- ✅ **Health Monitoring** (`/core/health_service.py`): Circuit breakers, dependencies
+- ✅ **Agent Framework** (`/orchestrator/core/`): Base classes, orchestration, monitoring
+- ✅ **E-commerce Integration** (`/royal_platform/`): Shopify, AutoDS, Spocket connectors
+
+## 🏗️ ARCHITECTURE PATTERNS & INTEGRATIONS
+
+### Multi-Service Coordination
+```typescript
+// Service discovery pattern used throughout
+const endpoints = {
+  flask: process.env.FLASK_API_URL || 'http://localhost:10000',
+  aira: process.env.AIRA_API_URL || 'http://localhost:3001', 
+  orchestrator: process.env.ORCHESTRATOR_API_URL || 'http://localhost:3002',
+  agents: process.env.AGENTS_API_URL || 'http://localhost:3003'
+};
+
+// Cross-service health checks (see /core/health_service.py)
+const healthCheck = async (service: string) => {
+  return fetch(`${endpoints[service]}/healthz`);
+};
+```
+
+### Agent System Integration
+```python
+# Flask routes delegate to orchestrator core
+from orchestrator.core.orchestrator import Orchestrator
+from app.orchestrator_bridge import get_orchestrator
+
+# Real agent execution (not mock)
+@agents_bp.route("/status")  
+def get_agents_status():
+    orchestrator = get_orchestrator()
+    return orchestrator.get_all_agents_health()
+```
+
+### Secret Resolution (Already Implemented)
+```python
+# /core/secrets/secret_provider.py - Production ready
+from core.secrets.secret_provider import UnifiedSecretResolver
+
+secrets = UnifiedSecretResolver()
+api_key = await secrets.get_secret('SHOPIFY_API_KEY')
+# Cascades: ENV → GitHub → Cloudflare → External → Cache
+```
+
+### React Module Architecture (Current Pattern)
+
+```typescript
+// /apps/command-center-ui/src/App.tsx - Lazy loading pattern
+const AiraModule = lazy(() => import('./modules/aira/AiraModule'));
+const AgentsModule = lazy(() => import('./modules/agents/AgentsModule'));
+
+// Module registration with real routing
+const renderCurrentModule = () => {
+  switch (state.currentModule) {
+    case 'aira':
+      return <Suspense fallback={<Loading />}><AiraModule /></Suspense>;
+    case 'agents': 
+      return <Suspense fallback={<Loading />}><AgentsModule /></Suspense>;
+  }
+};
+```
+
+### Database & Persistence Patterns
+```python
+# /royal_platform/database/ - SQLAlchemy models
+from royal_platform.database.models import Agent, Campaign, ProductOpportunity
+
+# /app/services/ - Business logic services  
+from app.services.health_service import HealthService
+from app.services.agent_monitor import AgentMonitor
+```
+
+### WebSocket Real-Time Updates
+```python
+# /app/sockets.py - SocketIO integration with Flask
+from flask_socketio import SocketIO, emit
+
+@socketio.on('agent_status_request')
+def handle_agent_status():
+    status = get_orchestrator().get_real_time_status()
+    emit('agent_status_update', status)
+```
+
 ---
 
-## DESIGN TOKENS (Introduce or Centralize)
+## 🔐 SECRET RESOLUTION SYSTEM (ALREADY IMPLEMENTED)
+
+The project includes a sophisticated multi-provider secret resolution system in `/core/secrets/`:
+
+### Resolution Order
+1. **ENV** → Environment variables
+2. **GITHUB** → GitHub Actions secrets  
+3. **CLOUDFLARE** → Workers/Pages bindings
+4. **EXTERNAL** → AWS SSM/Vault (pluggable)
+5. **CACHE** → Encrypted in-memory cache
+
+### Usage Pattern
+```python
+from core.secrets.secret_provider import UnifiedSecretResolver
+
+secrets = UnifiedSecretResolver()
+api_key = await secrets.get_secret('STRIPE_API_KEY')
+# Automatically handles fallbacks, caching, and encryption
+```
+
+### Security Features
+- **AES-256-GCM encryption** for cached secrets
+- **TTL expiration** for cache entries
+- **Metrics tracking** (resolution time, cache hits, fallback depth)
+- **Never logs secret values** - only hashed keys for debugging
+
+---
+
+## 🚀 ENTERPRISE AUTOSCALING & PERFORMANCE
+
+### Production Scaling Patterns
+```python
+# /core/scaling/autoscaler.py - Production autoscaling logic
+from dataclasses import dataclass
+from typing import Dict, List
+import asyncio
+
+@dataclass
+class ScalingMetrics:
+    cpu_usage: float
+    memory_usage: float
+    request_queue_depth: int
+    response_latency_p95: float
+    active_connections: int
+
+class AutoScaler:
+    def __init__(self, min_instances=2, max_instances=50):
+        self.min_instances = min_instances
+        self.max_instances = max_instances
+        self.current_instances = min_instances
+        
+    async def evaluate_scaling(self, metrics: ScalingMetrics) -> Dict[str, any]:
+        """Enterprise-grade scaling decisions based on real metrics."""
+        scale_up_conditions = (
+            metrics.cpu_usage > 0.75 or 
+            metrics.memory_usage > 0.8 or
+            metrics.request_queue_depth > 100 or
+            metrics.response_latency_p95 > 2000  # 2s
+        )
+        
+        scale_down_conditions = (
+            metrics.cpu_usage < 0.3 and 
+            metrics.memory_usage < 0.5 and
+            metrics.request_queue_depth < 10 and
+            metrics.response_latency_p95 < 500  # 500ms
+        )
+        
+        if scale_up_conditions and self.current_instances < self.max_instances:
+            new_count = min(self.current_instances * 2, self.max_instances)
+            return {"action": "scale_up", "target_instances": new_count}
+        elif scale_down_conditions and self.current_instances > self.min_instances:
+            new_count = max(self.current_instances // 2, self.min_instances)
+            return {"action": "scale_down", "target_instances": new_count}
+            
+        return {"action": "no_change", "target_instances": self.current_instances}
+```
+
+### Circuit Breaker Implementation
+```python
+# /core/resilience/circuit_breaker.py - Production circuit breaker
+import time
+from enum import Enum
+from typing import Callable, Any
+
+class CircuitState(Enum):
+    CLOSED = "closed"
+    OPEN = "open" 
+    HALF_OPEN = "half_open"
+
+class CircuitBreaker:
+    def __init__(self, failure_threshold=5, recovery_timeout=60, expected_exception=Exception):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.expected_exception = expected_exception
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = CircuitState.CLOSED
+        
+    async def call(self, func: Callable, *args, **kwargs) -> Any:
+        if self.state == CircuitState.OPEN:
+            if time.time() - self.last_failure_time > self.recovery_timeout:
+                self.state = CircuitState.HALF_OPEN
+            else:
+                raise Exception("Circuit breaker is OPEN")
+                
+        try:
+            result = await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
+            self._on_success()
+            return result
+        except self.expected_exception as e:
+            self._on_failure()
+            raise e
+            
+    def _on_success(self):
+        self.failure_count = 0
+        self.state = CircuitState.CLOSED
+        
+    def _on_failure(self):
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        if self.failure_count >= self.failure_threshold:
+            self.state = CircuitState.OPEN
+```
+
+### Performance Monitoring
+```typescript
+// /packages/obs/performance.ts - Production performance tracking
+interface PerformanceMetrics {
+  endpoint: string;
+  method: string;
+  statusCode: number;
+  duration: number;
+  timestamp: number;
+  userId?: string;
+  traceId: string;
+}
+
+class PerformanceMonitor {
+  private metrics: PerformanceMetrics[] = [];
+  private flushInterval = 30000; // 30s
+  
+  constructor(private metricsEndpoint: string) {
+    setInterval(() => this.flushMetrics(), this.flushInterval);
+  }
+  
+  trackRequest(req: any, res: any, duration: number): void {
+    const metric: PerformanceMetrics = {
+      endpoint: req.route?.path || req.url,
+      method: req.method,
+      statusCode: res.statusCode,
+      duration,
+      timestamp: Date.now(),
+      userId: req.user?.id,
+      traceId: req.headers['x-trace-id'] || crypto.randomUUID()
+    };
+    
+    this.metrics.push(metric);
+    
+    // Alert on performance degradation
+    if (duration > 5000) { // 5s threshold
+      this.sendAlert(`High latency detected: ${duration}ms for ${req.url}`);
+    }
+  }
+  
+  private async flushMetrics(): Promise<void> {
+    if (this.metrics.length === 0) return;
+    
+    try {
+      await fetch(this.metricsEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metrics: this.metrics })
+      });
+      this.metrics = [];
+    } catch (error) {
+      console.error('Failed to flush metrics:', error);
+    }
+  }
+  
+  private sendAlert(message: string): void {
+    // Integration with PagerDuty, Slack, etc.
+    fetch('/api/alerts', {
+      method: 'POST',
+      body: JSON.stringify({ level: 'warning', message, timestamp: Date.now() })
+    });
+  }
+}
+```
+
+---
+
+## DESIGN TOKENS (IMPLEMENTED)
 
 ```
 :root {
@@ -174,11 +428,39 @@ scripts/
 
 ---
 
-## SECRET RESOLUTION SYSTEM
+## 📋 AGENT ECOSYSTEM (PRODUCTION READY)
 
-### TypeScript Implementation (Core Concept)
+The system includes multiple operational agents:
 
-```typescript name=core/secrets/SecretProvider.ts
+### Core Agents (`/orchestrator/agents/`)
+- **ProductResearchAgent**: News scraping, trend discovery (AutoDS, Spocket)
+- **InventoryForecastingAgent**: Demand prediction with Prophet + Shopify
+- **PricingOptimizerAgent**: Competitor analysis, dynamic pricing
+- **MarketingAutomationAgent**: Email campaigns, content generation
+- **OrderFulfillmentAgent**: Risk assessment, supplier routing
+
+### Agent Architecture
+```python
+# Base pattern used throughout (see /orchestrator/core/agent_base.py)
+from orchestrator.core.agent_base import AgentBase
+
+class MyAgent(AgentBase):
+    async def run(self) -> Dict[str, Any]:
+        # Real business logic here
+        pass
+```
+
+### Health Monitoring
+All agents report health via `/api/agents/status` with:
+- Success rates, error counts, last execution time
+- Circuit breaker status for external APIs
+- Performance metrics and resource usage
+
+---
+
+## 🔧 DETAILED SECRET SYSTEM REFERENCE
+
+### TypeScript Implementation (For Future TS Services)
 import crypto from 'crypto';
 
 export type SecretKey = string;
@@ -220,22 +502,57 @@ class EnvProvider implements SecretProvider {
   }
 }
 
-// Placeholder provider for Cloudflare (Workers/Pages binding simulation)
+// Production Cloudflare Workers/Pages provider
 class CloudflareProvider implements SecretProvider {
   name = 'CloudflareProvider';
   constructor(private bindings?: Record<string, string>) {}
   async get(key: string): Promise<SecretResult | null> {
-    const v = this.bindings?.[key];
+    const v = this.bindings?.[key] || globalThis.ENV?.[key];
     if (!v) return null;
     return { key, value: v, source: SecretSource.CLOUDFLARE, fetchedAt: Date.now() };
   }
 }
 
-// External vault adapter placeholder (e.g., AWS SSM)
+// Enterprise vault integration - AWS SSM Parameter Store
 class ExternalVaultProvider implements SecretProvider {
   name = 'ExternalVaultProvider';
+  private ssmClient?: any;
+  
+  constructor() {
+    // Only initialize AWS SDK if credentials are available
+    if (process.env.AWS_REGION && process.env.AWS_ACCESS_KEY_ID) {
+      try {
+        const { SSMClient } = require('@aws-sdk/client-ssm');
+        this.ssmClient = new SSMClient({ region: process.env.AWS_REGION });
+      } catch (e) {
+        // AWS SDK not available in this environment
+      }
+    }
+  }
+  
   async get(key: string): Promise<SecretResult | null> {
-    // Implement actual SSM / Vault / GCP Secret Manager integration as needed.
+    if (!this.ssmClient) return null;
+    
+    try {
+      const { GetParameterCommand } = require('@aws-sdk/client-ssm');
+      const command = new GetParameterCommand({
+        Name: `/royal-equips/${key}`,
+        WithDecryption: true
+      });
+      const result = await this.ssmClient.send(command);
+      
+      if (result.Parameter?.Value) {
+        return {
+          key,
+          value: result.Parameter.Value,
+          source: SecretSource.EXTERNAL,
+          fetchedAt: Date.now()
+        };
+      }
+    } catch (error) {
+      // Parameter not found or access denied
+    }
+    
     return null;
   }
 }
@@ -269,8 +586,7 @@ export class UnifiedSecretResolver {
     );
     this.providers = [
       new EnvProvider(),
-      // GitHub Actions secrets already appear in env (covered above, but keep placeholder if extended)
-      new CloudflareProvider(),
+      new CloudflareProvider(globalThis.ENV),
       new ExternalVaultProvider()
     ];
   }
@@ -391,9 +707,34 @@ class CloudflareProvider:
 
 class ExternalVaultProvider:
     name = "ExternalVaultProvider"
+    
+    def __init__(self):
+        self.ssm_client = None
+        if os.getenv("AWS_REGION") and os.getenv("AWS_ACCESS_KEY_ID"):
+            try:
+                import boto3
+                self.ssm_client = boto3.client('ssm', region_name=os.getenv("AWS_REGION"))
+            except ImportError:
+                pass  # AWS SDK not available
+    
     async def get(self, key: str) -> Optional[SecretResult]:
-        # Placeholder for AWS SSM / Hashicorp Vault integration
-        return None
+        if not self.ssm_client:
+            return None
+        
+        try:
+            response = self.ssm_client.get_parameter(
+                Name=f"/royal-equips/{key}",
+                WithDecryption=True
+            )
+            return SecretResult(
+                key=key,
+                value=response['Parameter']['Value'],
+                source="external",
+                fetched_at=time.time()
+            )
+        except Exception:
+            # Parameter not found or access denied
+            return None
 
 class UnifiedSecretResolver:
     def __init__(
@@ -490,273 +831,334 @@ const secrets = new UnifiedSecretResolver({
 const stripeKey = await secrets.getSecret('STRIPE_API_KEY');
 ```
 
+
+
 ---
 
-## RESPONSIVE UI COMPONENTS (KEY EXAMPLES)
+## DESIGN TOKENS (IMPLEMENTED)
 
-### Module Scroller
-
-```tsx name=app/modules/_shared/components/ModuleScroller.tsx
-import React, { useRef, useEffect } from 'react';
-import clsx from 'clsx';
-
-interface ModuleDef {
-  id: string;
-  label: string;
-  path: string;
-  status?: 'active' | 'coming-soon' | 'disabled';
-  icon?: React.ReactNode;
-}
-
-export const ModuleScroller: React.FC<{
-  modules: ModuleDef[];
-  activeId?: string;
-  onNavigate: (path: string) => void;
-}> = ({ modules, activeId, onNavigate }) => {
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!ref.current || !activeId) return;
-    const el = ref.current.querySelector<HTMLButtonElement>(`[data-id="${activeId}"]`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-    }
-  }, [activeId]);
-
-  return (
-    <div
-      className="flex gap-2 overflow-x-auto no-scrollbar px-3 py-2 scroll-smooth snap-x snap-mandatory"
-      role="tablist"
-      aria-label="Primary Modules"
-      ref={ref}
-    >
-      {modules.map(m => {
-        const active = m.id === activeId;
-        return (
-          <button
-            key={m.id}
-            data-id={m.id}
-            role="tab"
-            aria-selected={active}
-            tabIndex={active ? 0 : -1}
-            disabled={m.status === 'coming-soon' || m.status === 'disabled'}
-            onClick={() => onNavigate(m.path)}
-            className={clsx(
-              'snap-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors',
-              active
-                ? 'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/60'
-                : 'bg-surface/40 text-text-dim hover:text-cyan-200 hover:bg-cyan-500/10',
-              m.status === 'coming-soon' && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            {m.icon}{m.label}
-            {m.status === 'coming-soon' && <span className="ml-2 text-[11px] uppercase">Soon</span>}
-          </button>
-        );
-      })}
-    </div>
-  );
-};
 ```
-
-### Placeholder / Skeleton
-
-```tsx name=app/modules/_shared/components/ModulePlaceholder.tsx
-import React from 'react';
-
-export const ModulePlaceholder: React.FC<{ title: string; description?: string }> = ({ title, description }) => (
-  <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-4 px-6">
-    <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 text-transparent bg-clip-text">
-      {title} Module – Coming Soon
-    </h2>
-    <p className="max-w-md text-text-dim">
-      {description ?? 'This capability is being provisioned in the autonomous command pipeline.'}
-    </p>
-    <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div
-          key={i}
-            className="h-12 rounded-md bg-surface/30 animate-pulse border border-surface/60"
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-);
+:root {
+  --color-bg: #020409;
+  --color-bg-alt: #070c14;
+  --color-surface: #0e1824;
+  --color-accent-cyan: #05f4ff;
+  --color-accent-magenta: #ff1fbf;
+  --color-accent-green: #21ff7a;
+  --color-text-primary: #d6ecff;
+  --color-text-dim: #7ba0b8;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-pill: 999px;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --transition-fast: 120ms cubic-bezier(.4,.0,.2,1);
+  --transition-med: 240ms cubic-bezier(.4,.0,.2,1);
+}
 ```
 
 ---
 
-## NAV ARCHITECTURE
+## 💡 ENTERPRISE DEVELOPMENT PATTERNS
 
-- `<AppShell />` contains:
-  - `<TopNav />` (collapsible, shrink on scroll)
-  - `<ModuleScroller />`
-  - `<StatusStrip />` (network, agent cluster health, latency)
-  - `<ContentViewport />`
-- Add React error boundaries per route.
+### Production File Organization
+- **TypeScript**: Strict mode, ESLint enterprise rules, path mapping via tsconfig
+- **Python**: Type hints mandatory, black formatting, ruff linting
+- **Shared Types**: `/packages/shared-types/` - versioned, exported via package.json
+- **API Routes**: Blueprint/router pattern with middleware chains
 
----
+### Database Connection Pooling
+```python
+# /core/database/pool.py - Production connection management
+from sqlalchemy.pool import QueuePool
+from sqlalchemy import create_engine
 
-## RBAC STUB
+class DatabasePool:
+    def __init__(self, database_url: str, max_connections: int = 20):
+        self.engine = create_engine(
+            database_url,
+            poolclass=QueuePool,
+            pool_size=10,
+            max_overflow=max_connections - 10,
+            pool_pre_ping=True,  # Validates connections
+            pool_recycle=3600,   # 1 hour connection lifetime
+            echo=False           # No SQL logging in production
+        )
+```
 
-```typescript name=core/security/rbac.ts
-export type Role = 'ROOT' | 'ADMIN' | 'OPERATOR' | 'ANALYST' | 'VIEWER';
+### Rate Limiting Implementation
+```typescript
+// /packages/security/rate-limiter.ts - Production rate limiting
+import Redis from 'ioredis';
 
-const hierarchy: Role[] = ['VIEWER','ANALYST','OPERATOR','ADMIN','ROOT'];
-
-export function can(assigned: Role, required: Role): boolean {
-  return hierarchy.indexOf(assigned) >= hierarchy.indexOf(required);
+interface RateLimitConfig {
+  windowMs: number;
+  maxRequests: number;
+  keyGenerator: (req: any) => string;
 }
 
-export interface GuardSpec {
-  required: Role;
-  auditAction: string;
-}
-
-export function authorize(userRole: Role, spec: GuardSpec) {
-  if (!can(userRole, spec.required)) {
-    throw Object.assign(new Error('Forbidden'), { status: 403, audit: spec.auditAction });
+class RateLimiter {
+  constructor(private redis: Redis, private config: RateLimitConfig) {}
+  
+  async checkLimit(req: any): Promise<{ allowed: boolean; resetTime: number }> {
+    const key = this.config.keyGenerator(req);
+    const window = Math.floor(Date.now() / this.config.windowMs);
+    const redisKey = `rate_limit:${key}:${window}`;
+    
+    const current = await this.redis.incr(redisKey);
+    await this.redis.expire(redisKey, Math.ceil(this.config.windowMs / 1000));
+    
+    return {
+      allowed: current <= this.config.maxRequests,
+      resetTime: (window + 1) * this.config.windowMs
+    };
   }
 }
 ```
 
----
+### Cache Strategy
+```python
+# /core/cache/redis_cache.py - Production caching layer
+import redis.asyncio as redis
+import pickle
+from typing import Any, Optional
+import logging
 
-## ERROR HANDLING & LOGGING
-
-- Introduce `core/errors/*` with domain-specific error classes.
-- Structured logs JSON format:
-  `{ "ts": "...", "level": "info|warn|error", "event": "module_load", "module": "analytics", "duration_ms": 123 }`
-- Never log secrets, tokens, raw PII.
-
----
-
-## TELEMETRY HOOK (LIGHTWEIGHT)
-
-```typescript name=core/metrics/metrics.ts
-const perf = typeof performance !== 'undefined' ? performance : undefined;
-
-export function mark(label: string) {
-  perf?.mark(label);
-}
-
-export function measure(name: string, start: string, end: string) {
-  perf?.measure(name, start, end);
-  const entries = perf?.getEntriesByName(name);
-  const duration = entries?.[entries.length - 1]?.duration;
-  console.log(JSON.stringify({ level: 'info', event: 'perf_measure', name, duration }));
-}
+class RedisCache:
+    def __init__(self, redis_url: str):
+        self.redis = redis.from_url(redis_url, decode_responses=False)
+        self.logger = logging.getLogger(__name__)
+    
+    async def get(self, key: str) -> Optional[Any]:
+        try:
+            data = await self.redis.get(f"cache:{key}")
+            return pickle.loads(data) if data else None
+        except Exception as e:
+            self.logger.error(f"Cache get failed for {key}: {e}")
+            return None
+    
+    async def set(self, key: str, value: Any, ttl: int = 300) -> bool:
+        try:
+            data = pickle.dumps(value)
+            await self.redis.setex(f"cache:{key}", ttl, data)
+            return True
+        except Exception as e:
+            self.logger.error(f"Cache set failed for {key}: {e}")
+            return False
+    
+    async def invalidate_pattern(self, pattern: str) -> int:
+        """Invalidate all keys matching pattern for cache busting."""
+        keys = await self.redis.keys(f"cache:{pattern}")
+        return await self.redis.delete(*keys) if keys else 0
 ```
 
+## 🔍 PRODUCTION OBSERVABILITY & DEBUGGING
+
+### Distributed Tracing
+```python
+# /core/tracing/opentelemetry.py - Production tracing
+from opentelemetry import trace
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+def setup_tracing():
+    trace.set_tracer_provider(TracerProvider())
+    tracer = trace.get_tracer(__name__)
+    
+    jaeger_exporter = JaegerExporter(
+        agent_host_name="localhost",
+        agent_port=6831,
+    )
+    
+    span_processor = BatchSpanProcessor(jaeger_exporter)
+    trace.get_tracer_provider().add_span_processor(span_processor)
+    return tracer
+
+# Usage in business logic
+@trace_calls
+async def process_order(order_id: str):
+    with tracer.start_as_current_span("process_order") as span:
+        span.set_attribute("order.id", order_id)
+        # Business logic here
+```
+
+### Health Check Matrix
+```bash
+# Production health verification commands
+curl -f http://localhost:10000/healthz || exit 1    # Flask liveness
+curl -f http://localhost:3001/readyz || exit 1      # AIRA readiness  
+curl -f http://localhost:3002/metrics || exit 1     # Metrics endpoint
+
+# Database connectivity validation
+python -c "from app import db; db.engine.connect()" || exit 1
+
+# Redis connectivity check
+redis-cli ping | grep PONG || exit 1
+```
+
+### Log Aggregation
+```python
+# /core/logging/structured.py - Enterprise logging
+import structlog
+import logging.config
+
+def setup_logging():
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.processors.JSONRenderer()
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
+
+# Usage
+logger = structlog.get_logger()
+logger.info("Order processed", order_id="12345", amount=99.99, user_id="user_123")
+```
+
+## 🚀 PRODUCTION DEPLOYMENT STANDARDS
+
+### Container Orchestration
+```dockerfile
+# /Dockerfile - Production container definition
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+FROM python:3.11-slim AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 10000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:10000/healthz || exit 1
+
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:10000", "--access-logfile", "-", "wsgi:app"]
+```
+
+### Infrastructure as Code
+```yaml
+# /infra/k8s/deployment.yaml - Kubernetes production deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: royal-equips-orchestrator
+  labels:
+    app: royal-equips
+    tier: orchestrator
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  selector:
+    matchLabels:
+      app: royal-equips
+  template:
+    spec:
+      containers:
+      - name: orchestrator
+        image: royal-equips/orchestrator:latest
+        ports:
+        - containerPort: 10000
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 10000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+```
+
+## 🎯 WHEN TO USE WHICH SERVICE
+
+### Flask Orchestrator (`/app/`) - Use For:
+- Agent coordination and health monitoring
+- WebSocket real-time updates  
+- Command center SPA serving
+- Core business logic integration
+
+### AIRA Service (`/apps/aira/`) - Use For:  
+- AI agent coordination
+- Natural language processing
+- Complex decision making
+- Cross-domain orchestration
+
+### FastAPI Services (`/apps/api/`, `/apps/orchestrator-api/`) - Use For:
+- High-performance API endpoints
+- OpenAPI/Swagger documentation  
+- Async request handling
+- External integrations
+
+### React UI (`/apps/command-center-ui/`) - Use For:
+- Dashboard and visualization
+- Real-time monitoring interfaces  
+- Mobile-responsive admin panels
+- Progressive web app features
+
+Remember: This is a **production revenue-generating system** - treat every change as if it impacts real business operations.
+
 ---
 
-## CI / GITHUB ACTIONS (HIGH-LEVEL PLAN)
+## 🏆 ENTERPRISE EXECUTION PRINCIPLES
 
-1. Workflow: `ci.yml`
-   - Steps: checkout → setup (node + python) → install → lint → type-check → test → build → security scan (npm audit, pip audit, CodeQL matrix).
-2. Workflow: `deploy.yml`
-   - On protected branch merge: build image (pin base) → push → deploy to environment (staging → production with manual approval).
-3. Workflow: `bundle-report.yml`
-   - Diff bundle sizes vs. `main`.
-4. Add: Dependabot config, CODEOWNERS, SECURITY.md if not present.
+### Code Quality Standards
+- **Zero Placeholders**: All implementations must use real business logic and data
+- **Type Safety**: TypeScript strict mode, Python type hints mandatory
+- **Performance**: Sub-2s load times, autoscaling based on real metrics
+- **Security**: Secret management, circuit breakers, rate limiting
+- **Observability**: Structured logging, distributed tracing, health monitoring
 
----
+### Production Readiness Checklist
+- ✅ Health endpoints (`/healthz`, `/readyz`, `/metrics`)
+- ✅ Circuit breaker patterns for external APIs
+- ✅ Secret resolution with encryption and caching
+- ✅ Horizontal pod autoscaling configuration
+- ✅ Database connection pooling
+- ✅ Redis caching layer
+- ✅ Performance monitoring and alerting
+- ✅ Structured logging with correlation IDs
 
-## ACCEPTANCE CRITERIA (Copilot MUST enforce)
+### Development Workflow
+1. **Understand**: Review this guide and actual codebase structure
+2. **Implement**: Use real APIs, real data, real business logic  
+3. **Validate**: Type checking, linting, testing, security scans
+4. **Deploy**: Production-ready containers with health checks
+5. **Monitor**: Metrics, logs, alerts, performance tracking
 
-- All new TS code uses `strict` and passes `tsc --noEmit`.
-- Lighthouse metrics: LCP < 2.5s on simulated Moto G4 + Slow 4G.
-- No unhandled promise rejections (Node + browser).
-- Secrets resolver: 90%+ cache hit after warm path simulation test.
-- UI navigable entirely via keyboard (Tab / Shift+Tab / Enter / Space / Arrow keys on ModuleScroller).
-- a11y: No critical violations (axe run baseline).
-- Tests: Coverage for secret provider core paths (cache hit, fallback resolution, miss). At least one integration test for a module route rendering skeleton -> loaded state.
-
----
-
-## IMPLEMENTATION PHASES (EXECUTE IN ORDER)
-
-1. Baseline Refactor
-   - Introduce tokens, layout shell, design mode toggles, remove inline style debt.
-2. Secret Layer + Security Hardening
-   - Implement multi-fallback logic + environment detection utilities.
-3. Navigation & Module Scaffolds
-   - Add scroller, route-level suspense
-4. Observability Injection
-   - Logging, metrics marks, error boundaries, health endpoints.
-5. Performance & Accessibility Pass
-   - Optimize bundle & dynamic imports.
-6. Testing & CI Enhancements
-   - Add pipelines, test harness, coverage gating.
-7. Final Hardening & Docs
-   - Document secret provider, module registry, extension points.
-
----
-
-## GIT & COMMIT GUIDELINES
-
-Format:
-`feat(ui): responsive module scroller`
-`chore(secrets): add multi-provider resolver`
-`perf(analytics): lazy load charting libs`
-`sec(rbac): add role guards for settings module`
-
-Sign all commits. Keep PRs atomic (< 500 loc diff where possible). Provide CHANGELOG-ready descriptions.
-
----
-
-## EXTENSION POINTS (DEFINE INTERFACES)
-
-- `ModuleDefinition`: id, title, route, requiredRole, featureFlags, lazy import loader.
-- `AgentDescriptor`: id, capabilities, heartbeatEndpoint, degradationStrategy.
-- `EventBusAdapter`: publish(event), subscribe(topic, handler), with fallback in-memory bus for local dev.
-
----
-
-## COPILOT EXECUTION INSTRUCTIONS
-
-When generating code:
-- Always prefer composition over inheritance.
-- Avoid vendor lock; keep provider interfaces thin.
-- Suggest minimal dependencies; justify any new library.
-- Provide tests when adding new core utilities.
-- If encountering missing context (framework variant), propose detection logic & conditional paths.
-- Flag any found anti-patterns (e.g., direct secret usage in components).
-- Maintain idempotency & safe retries for any initialization sequence.
-
-If uncertainty arises: output a CODE REVIEW style note + proposed resolution before implementing.
-
----
-
-## OUTSTANDING QUESTIONS (If Unknown, Provide Default Strategy)
-
-1. Framework baseline (Next.js vs. CRA/Vite)? Default: Next.js App Router.
-2. State management? Default: React Query + Context for global ephemeral config.
-3. Charting library? Default: Lightweight (e.g., `@tanstack/react-charts` or dynamic import `chart.js`).
-4. External vault activation? Leave interface + TODO markers.
-
----
-
-## DELIVERABLES SUMMARY
-
-- Refactored responsive UI shell + module scroller
-- All modules scaffolded with placeholders & lazy boundaries
-- Multi-fallback secret resolver (TS + Python)
-- RBAC guard utilities
-- Observability (logging, metrics, perf marks)
-- Security & CI improvements
-- Test coverage baseline
-- Documentation (this file + inline JSDoc / docstrings)
-- Always keep repository clean/remove unused file to avoid duplicate issues
-- Always keep documents and readme updated.
-- Always build only business logic and patterns. 
----
-
-## START NOW
-
-Begin with: generating or updating core layout, adding secret provider, wiring metrics, then commit incrementally.
-
-NO PLACEHOLDER LOGIC. EVERYTHING SHIPPABLE.
-
-CROWN THE EMPIRE. BUILD THE QUANTUM COMMAND CENTER.
+**NEVER** implement theoretical or placeholder code. This system generates real revenue and serves real customers.

@@ -19,7 +19,8 @@ const AgentsModule = lazy(() => import('./modules/agents/AgentsModule'));
 const DashboardModule = lazy(() => import('./modules/dashboard/DashboardModule'));
 const RevenueModule = lazy(() => import('./modules/revenue/RevenueModule'));
 const InventoryModule = lazy(() => import('./modules/inventory/InventoryModule'));
-const MarketingStudioModule = lazy(() => import('./modules/marketing/MarketingStudioModule'));
+const MarketingAutomationModule = lazy(() => import('./modules/marketing/MarketingModule'));
+const CustomerSupportModule = lazy(() => import('./modules/customer-support/CustomerSupportModule'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
@@ -103,8 +104,14 @@ function AppContent() {
         return <ShopifyDashboard />;
       case 'marketing':
         return (
-          <Suspense fallback={loadingFallback('Marketing Studio')}>
-            <MarketingStudioModule />
+          <Suspense fallback={loadingFallback('Marketing Automation')}>
+            <MarketingAutomationModule />
+          </Suspense>
+        );
+      case 'customer-support':
+        return (
+          <Suspense fallback={loadingFallback('Customer Support')}>
+            <CustomerSupportModule />
           </Suspense>
         );
       case 'products':

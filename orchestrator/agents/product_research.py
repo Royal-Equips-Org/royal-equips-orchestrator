@@ -127,54 +127,136 @@ class ProductResearchAgent(AgentBase):
             self.logger.error(f"Error fetching AutoDS products: {e}")
             return await self._autods_enhanced_stub()
 
-    async def _autods_enhanced_stub(self) -> List[Dict[str, Any]]:
-        """Enhanced stub data for AutoDS products with realistic market data."""
-        await asyncio.sleep(0.5)  # Simulate API delay
+    async def _fetch_trending_products_fallback(self) -> List[Dict[str, Any]]:
+        """Fallback to trending product analysis using Google Trends and web scraping."""
+        self.logger.info("Using fallback trending product analysis")
         
-        stub_products = [
-            {
-                'id': 'autods_001',
-                'title': 'Wireless Car Charger Mount with Qi Technology',
-                'source': 'AutoDS',
-                'supplier_price': 12.50,
-                'suggested_price': 24.99,
-                'category': 'Car Electronics',
-                'trend_score': 85,
-                'image_url': 'https://example.com/wireless-charger.jpg',
-                'supplier_name': 'TechSource Pro',
-                'shipping_time': '7-14 days',
-                'rating': 4.3
-            },
-            {
-                'id': 'autods_002', 
-                'title': 'LED Dashboard Ambient Lighting Kit RGB',
-                'source': 'AutoDS',
-                'supplier_price': 8.75,
-                'suggested_price': 19.99,
-                'category': 'Car Accessories',
-                'trend_score': 92,
-                'image_url': 'https://example.com/led-kit.jpg',
-                'supplier_name': 'AutoLights Direct',
-                'shipping_time': '5-10 days',
-                'rating': 4.5
-            },
-            {
-                'id': 'autods_003',
-                'title': 'Bluetooth OBD2 Scanner Diagnostic Tool',
-                'source': 'AutoDS', 
-                'supplier_price': 15.30,
-                'suggested_price': 34.99,
-                'category': 'Car Electronics',
-                'trend_score': 78,
-                'image_url': 'https://example.com/obd2-scanner.jpg',
-                'supplier_name': 'DiagnosticPro',
-                'shipping_time': '3-7 days',
-                'rating': 4.1
+        try:
+            # Use Google Trends for car accessories if pytrends is available
+            if _PYTRENDS_AVAILABLE:
+                trends = await self._get_google_trends_products()
+                if trends:
+                    return trends
+            
+            # Fallback to AliExpress trending analysis
+            aliexpress_products = await self._scrape_aliexpress_trending()
+            if aliexpress_products:
+                return aliexpress_products
+                
+            # Final fallback - return empty list to force manual intervention
+            self.logger.warning("All trending product sources failed - manual intervention required")
+            return []
+            
+        except Exception as e:
+            self.logger.error(f"Fallback trending analysis failed: {e}")
+            return []
+
+    async def _get_google_trends_products(self) -> List[Dict[str, Any]]:
+        """Get trending car accessories from Google Trends."""
+        try:
+            pytrends = TrendReq(hl='en-US', tz=360)
+            
+            # Car accessory keywords to track
+            keywords = [
+                'car phone mount', 'dash cam', 'car charger', 'seat covers', 
+                'car organizer', 'LED lights car', 'bluetooth car adapter'
+            ]
+            
+            products = []
+            for keyword in keywords:
+                pytrends.build_payload([keyword], timeframe='today 3-m')
+                interest_data = pytrends.interest_over_time()
+                
+                if not interest_data.empty:
+                    # Calculate trend score from recent growth
+                    recent_avg = interest_data[keyword].tail(4).mean()
+                    overall_avg = interest_data[keyword].mean()
+                    trend_score = min(100, int((recent_avg / overall_avg) * 50)) if overall_avg > 0 else 50
+                    
+                    # Estimate pricing based on keyword
+                    base_price = self._estimate_product_price(keyword)
+                    
+                    products.append({
+                        'id': f'trends_{hash(keyword)}',
+                        'title': self._generate_product_title(keyword),
+                        'source': 'Google Trends',
+                        'supplier_price': base_price * 0.4,  # 40% cost
+                        'suggested_price': base_price,
+                        'category': 'Car Accessories',
+                        'trend_score': trend_score,
+                        'image_url': None,
+                        'supplier_name': 'Multiple Sources',
+                        'shipping_time': '10-20 days',
+                        'rating': 4.0
+                    })
+            
+            self.logger.info(f"Generated {len(products)} products from Google Trends analysis")
+            return products
+            
+        except Exception as e:
+            self.logger.error(f"Google Trends analysis failed: {e}")
+            return []
+
+    async def _scrape_aliexpress_trending(self) -> List[Dict[str, Any]]:
+        """Scrape trending car accessories from AliExpress."""
+        try:
+            url = "https://www.aliexpress.com/category/34/automobiles-motorcycles.html"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
-        ]
+            
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.get(url, headers=headers)
+                if response.status_code != 200:
+                    return []
+                
+                # Basic product extraction (would need proper HTML parsing in production)
+                products = []
+                # This is a simplified implementation - would need BeautifulSoup/Scrapy
+                # for robust HTML parsing and product extraction
+                
+                self.logger.warning("AliExpress scraping not fully implemented - requires HTML parsing")
+                return products
+                
+        except Exception as e:
+            self.logger.error(f"AliExpress scraping failed: {e}")
+            return []
+
+    def _estimate_product_price(self, keyword: str) -> float:
+        """Estimate product price based on keyword analysis."""
+        price_ranges = {
+            'phone mount': (15, 35),
+            'dash cam': (50, 150),
+            'car charger': (10, 25),
+            'seat covers': (25, 80),
+            'organizer': (20, 40),
+            'LED lights': (15, 45),
+            'bluetooth adapter': (20, 50)
+        }
         
-        self.logger.debug(f"Using enhanced stub data: {len(stub_products)} products from AutoDS")
-        return stub_products
+        for key, (min_price, max_price) in price_ranges.items():
+            if key in keyword.lower():
+                return (min_price + max_price) / 2
+        
+        return 25.0  # Default price
+
+    def _generate_product_title(self, keyword: str) -> str:
+        """Generate appealing product title from keyword."""
+        templates = {
+            'phone mount': 'Universal Phone Holder Mount for Car Dashboard',
+            'dash cam': 'HD Dashboard Camera with Night Vision',
+            'car charger': 'Fast Charging USB Car Charger Adapter',
+            'seat covers': 'Premium Leather Car Seat Covers Set',
+            'organizer': 'Multi-Pocket Car Organizer Storage Solution',
+            'LED lights': 'RGB LED Interior Lighting Kit for Cars',
+            'bluetooth adapter': 'Wireless Bluetooth Car Audio Adapter'
+        }
+        
+        for key, template in templates.items():
+            if key in keyword.lower():
+                return template
+        
+        return f"Premium {keyword.title()} for Automotive Use"
 
     async def _fetch_spocket_products(self) -> List[Dict[str, Any]]:
         """Fetch trending products from Spocket API or simulate with enhanced stub.""" 

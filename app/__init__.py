@@ -112,12 +112,15 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.docs', 'docs_bp', None),
         ('app.routes.auto_fix', 'auto_fix_bp', None),
         ('app.routes.empire', 'empire_bp', None),  # Empire management endpoints
-        ('app.routes.empire', 'api_empire_bp', None),  # API Empire endpoints for frontend
+        ('app.routes.empire_production', 'empire_bp', None),  # Production Empire API with real business logic
         ('app.blueprints.shopify', 'shopify_bp', None),
         ('app.blueprints.github', 'github_bp', None),
         ('app.blueprints.ai_assistant', 'assistant_bp', None),
         ('app.blueprints.workspace', 'workspace_bp', None),
         ('app.routes.edge_functions', 'edge_functions_bp', None),
+        ('app.routes.marketing_automation', 'marketing_bp', None),  # Production Marketing Automation with AI
+        ('app.routes.customer_support', 'customer_support_bp', None),  # Production Customer Support with AI
+        ('app.routes.analytics', 'analytics_bp', None),  # Production Analytics with Business Intelligence
         ('app.routes.inventory', 'inventory_bp', None),
     ]
     
