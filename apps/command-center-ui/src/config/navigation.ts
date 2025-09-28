@@ -184,6 +184,26 @@ export const navigationModules: NavigationModule[] = [
     category: 'operations',
     isNew: true
   },
+  {
+    id: 'security',
+    label: 'SECURITY',
+    icon: Shield,
+    description: 'AI Security Center - Fraud Detection & Compliance Monitoring',
+    color: '#FF4500',
+    path: '/security',
+    category: 'security',
+    isNew: true
+  },
+  {
+    id: 'finance',
+    label: 'FINANCE',
+    icon: DollarSign,
+    description: 'Financial Intelligence - Payment Processing & Business Intelligence',
+    color: '#32CD32',
+    path: '/finance',
+    category: 'analytics',
+    isNew: true
+  },
   
   // System & Utilities
   {

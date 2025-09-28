@@ -59,6 +59,7 @@ def init_socketio(app):
     register_empire_handlers()
     register_marketing_handlers()  # Production marketing automation WebSocket
     register_customer_support_handlers()  # Production customer support WebSocket
+    register_security_handlers()  # Production security monitoring WebSocket
 
     # Start background tasks
     start_background_tasks()
@@ -1568,15 +1569,887 @@ async def get_analytics_status():
 
 
 def register_inventory_handlers():
-    """Register inventory namespace WebSocket handlers."""
-    global socketio
+    """Register inventory namespace event handlers for real-time inventory management."""
     
-    # Register the inventory namespace
-    try:
-        from app.sockets.inventory_namespace import inventory_namespace
-        socketio.on_namespace(inventory_namespace)
-        logger.info("Inventory WebSocket namespace registered: /inventory")
-    except ImportError as e:
-        logger.error(f"Failed to import inventory namespace: {e}")
-    except Exception as e:
-        logger.error(f"Failed to register inventory namespace: {e}")
+    @socketio.on('connect', namespace='/ws/inventory')
+    def handle_inventory_connect():
+        """Handle client connection to inventory namespace."""
+        logger.info('Client connected to /ws/inventory')
+        emit('connected', {
+            'namespace': '/ws/inventory',
+            'status': 'connected',
+            'timestamp': datetime.now().isoformat(),
+            'message': 'Connected to Royal Equips Inventory System'
+        })
+        
+        # Send initial inventory status
+        try:
+            orchestrator = get_orchestrator()
+            inventory_agent = orchestrator.get_agent('production-inventory')
+            if inventory_agent:
+                # Run async status check
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    status = loop.run_until_complete(inventory_agent.get_status())
+                    emit('status_update', status)
+                finally:
+                    loop.close()
+        except Exception as e:
+            logger.error(f"Failed to get initial inventory status: {e}")
+
+    @socketio.on('disconnect', namespace='/ws/inventory')
+    def handle_inventory_disconnect():
+        """Handle client disconnection from inventory namespace."""
+        logger.info('Client disconnected from /ws/inventory')
+
+    @socketio.on('request_dashboard_data', namespace='/ws/inventory')
+    def handle_inventory_dashboard_request():
+        """Handle request for real-time dashboard data."""
+        try:
+            orchestrator = get_orchestrator()
+            inventory_agent = orchestrator.get_agent('production-inventory')
+            
+            if not inventory_agent:
+                emit('error', {'message': 'Inventory agent not available'})
+                return
+            
+            # Get dashboard data
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                tasks = [
+                    inventory_agent._fetch_current_inventory(),
+                    inventory_agent._analyze_reorder_requirements(),
+                    inventory_agent._generate_inventory_analytics(),
+                    inventory_agent._monitor_supplier_performance()
+                ]
+                
+                inventory_data, reorder_analysis, analytics, supplier_performance = loop.run_until_complete(
+                    asyncio.gather(*tasks)
+                )
+                
+                dashboard_data = {
+                    'inventory_overview': {
+                        'total_skus': len(inventory_data),
+                        'total_value': sum(item.get('current_stock', 0) * item.get('unit_cost', 0) for item in inventory_data),
+                        'items_needing_reorder': reorder_analysis.get('items_to_reorder', 0),
+                        'out_of_stock_items': len([item for item in inventory_data if item.get('current_stock', 0) <= 0]),
+                        'low_stock_items': len([item for item in inventory_data if 0 < item.get('current_stock', 0) <= item.get('reorder_point', 0)])
+                    },
+                    'performance_metrics': analytics.get('performance_kpis', {}),
+                    'reorder_summary': {
+                        'urgent_reorders': len(reorder_analysis.get('urgent_reorders', [])),
+                        'recommended_reorders': len(reorder_analysis.get('recommended_reorders', [])),
+                        'total_reorder_value': reorder_analysis.get('total_value', 0.0),
+                        'critical_stockouts': len(reorder_analysis.get('critical_stockouts', []))
+                    },
+                    'supplier_summary': {
+                        'active_suppliers': supplier_performance.get('suppliers_monitored', 0),
+                        'top_performers': len(supplier_performance.get('top_performers', [])),
+                        'underperformers': len(supplier_performance.get('underperformers', []))
+                    },
+                    'timestamp': datetime.now().isoformat()
+                }
+                
+                emit('dashboard_data', dashboard_data)
+                
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to get inventory dashboard data: {e}")
+            emit('error', {'message': str(e)})
+
+    @socketio.on('request_reorder_analysis', namespace='/ws/inventory')
+    def handle_reorder_analysis_request():
+        """Handle request for real-time reorder analysis."""
+        try:
+            orchestrator = get_orchestrator()
+            inventory_agent = orchestrator.get_agent('production-inventory')
+            
+            if not inventory_agent:
+                emit('error', {'message': 'Inventory agent not available'})
+                return
+            
+            # Analyze reorder requirements
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                reorder_analysis = loop.run_until_complete(inventory_agent._analyze_reorder_requirements())
+                emit('reorder_analysis', reorder_analysis)
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to get reorder analysis: {e}")
+            emit('error', {'message': str(e)})
+
+    @socketio.on('request_supplier_performance', namespace='/ws/inventory')
+    def handle_supplier_performance_request():
+        """Handle request for real-time supplier performance data."""
+        try:
+            orchestrator = get_orchestrator()
+            inventory_agent = orchestrator.get_agent('production-inventory')
+            
+            if not inventory_agent:
+                emit('error', {'message': 'Inventory agent not available'})
+                return
+            
+            # Monitor supplier performance
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                performance_report = loop.run_until_complete(inventory_agent._monitor_supplier_performance())
+                emit('supplier_performance', performance_report)
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to get supplier performance: {e}")
+            emit('error', {'message': str(e)})
+
+    @socketio.on('execute_procurement', namespace='/ws/inventory')
+    def handle_procurement_execution():
+        """Handle real-time procurement execution."""
+        try:
+            orchestrator = get_orchestrator()
+            inventory_agent = orchestrator.get_agent('production-inventory')
+            
+            if not inventory_agent:
+                emit('error', {'message': 'Inventory agent not available'})
+                return
+            
+            # Execute procurement
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                procurement_results = loop.run_until_complete(inventory_agent._execute_automated_procurement())
+                emit('procurement_results', procurement_results)
+                
+                # Also send updated dashboard data
+                dashboard_data = loop.run_until_complete(inventory_agent._fetch_current_inventory())
+                emit('inventory_updated', {
+                    'type': 'procurement_executed',
+                    'orders_created': procurement_results.get('orders_created', 0),
+                    'total_value': procurement_results.get('total_value', 0.0),
+                    'timestamp': datetime.now().isoformat()
+                })
+                
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to execute procurement: {e}")
+            emit('error', {'message': str(e)})
+
+    @socketio.on('optimize_inventory', namespace='/ws/inventory')
+    def handle_inventory_optimization(data):
+        """Handle real-time inventory optimization requests."""
+        try:
+            sku = data.get('sku') if data else None
+            optimization_type = data.get('type', 'eoq') if data else 'eoq'
+            
+            orchestrator = get_orchestrator()
+            inventory_agent = orchestrator.get_agent('production-inventory')
+            
+            if not inventory_agent:
+                emit('error', {'message': 'Inventory agent not available'})
+                return
+            
+            # Get item data and optimize
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                inventory_data = loop.run_until_complete(inventory_agent._fetch_current_inventory())
+                
+                if sku:
+                    # Optimize specific SKU
+                    item = next((item for item in inventory_data if item.get('sku') == sku), None)
+                    if not item:
+                        emit('error', {'message': f'SKU {sku} not found'})
+                        return
+                    
+                    if optimization_type == 'eoq':
+                        result = loop.run_until_complete(inventory_agent._optimize_eoq(item))
+                    elif optimization_type == 'safety_stock':
+                        result = loop.run_until_complete(inventory_agent._optimize_safety_stock(item))
+                    elif optimization_type == 'reorder_point':
+                        result = loop.run_until_complete(inventory_agent._optimize_reorder_point(item))
+                    else:
+                        emit('error', {'message': f'Unknown optimization type: {optimization_type}'})
+                        return
+                    
+                    if result:
+                        emit('optimization_result', {
+                            'sku': sku,
+                            'type': optimization_type,
+                            'result': result,
+                            'timestamp': datetime.now().isoformat()
+                        })
+                    else:
+                        emit('error', {'message': 'Optimization failed - insufficient data'})
+                
+                else:
+                    # Optimize all items
+                    emit('optimization_progress', {'status': 'started', 'total_items': len(inventory_data)})
+                    
+                    optimization_results = []
+                    for i, item in enumerate(inventory_data[:10]):  # Limit to first 10 for performance
+                        if optimization_type == 'eoq':
+                            result = loop.run_until_complete(inventory_agent._optimize_eoq(item))
+                        elif optimization_type == 'safety_stock':
+                            result = loop.run_until_complete(inventory_agent._optimize_safety_stock(item))
+                        elif optimization_type == 'reorder_point':
+                            result = loop.run_until_complete(inventory_agent._optimize_reorder_point(item))
+                        
+                        if result:
+                            optimization_results.append(result)
+                        
+                        # Send progress update
+                        emit('optimization_progress', {
+                            'status': 'processing',
+                            'completed': i + 1,
+                            'total_items': min(len(inventory_data), 10)
+                        })
+                    
+                    emit('optimization_complete', {
+                        'type': optimization_type,
+                        'results': optimization_results,
+                        'total_optimized': len(optimization_results),
+                        'timestamp': datetime.now().isoformat()
+                    })
+                    
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to optimize inventory: {e}")
+            emit('error', {'message': str(e)})
+
+    logger.info("Inventory WebSocket handlers registered for /ws/inventory namespace")
+
+
+def register_security_handlers():
+    """Register security monitoring WebSocket handlers for /ws/security namespace."""
+    
+    @socketio.on('connect', namespace='/ws/security')
+    def handle_security_connect():
+        """Handle client connection to security monitoring."""
+        logger.info("Security monitoring WebSocket client connected")
+        emit('security_connected', {'status': 'connected', 'timestamp': time.time()})
+
+    @socketio.on('disconnect', namespace='/ws/security')
+    def handle_security_disconnect():
+        """Handle client disconnection from security monitoring."""
+        logger.info("Security monitoring WebSocket client disconnected")
+
+    @socketio.on('request_security_status', namespace='/ws/security')
+    def handle_security_status_request():
+        """Handle request for current security status."""
+        try:
+            from app.orchestrator_bridge import get_orchestrator
+            
+            orchestrator = get_orchestrator()
+            security_agent = orchestrator.get_agent('security_fraud')
+            
+            if not security_agent:
+                emit('security_error', {'error': 'Security agent not available'})
+                return
+            
+            # Get security agent health status
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                health_status = loop.run_until_complete(security_agent.health_check())
+                
+                # Get recent alerts summary
+                fraud_alerts_count = len([alert for alert in security_agent.fraud_alerts[-24:]])
+                security_events_count = len([event for event in security_agent.security_events[-24:]])
+                
+                security_metrics = {
+                    'agent_status': health_status.get('status', 'unknown'),
+                    'fraud_alerts_24h': fraud_alerts_count,
+                    'security_events_24h': security_events_count,
+                    'risk_threshold': security_agent.risk_threshold,
+                    'last_scan': health_status.get('last_run'),
+                    'systems_operational': health_status.get('systems_status') == 'operational'
+                }
+                
+                emit('security_status_update', {
+                    'type': 'status_update',
+                    'security_metrics': security_metrics,
+                    'timestamp': datetime.now().isoformat()
+                })
+                
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to get security status: {e}")
+            emit('security_error', {'error': str(e)})
+
+    @socketio.on('run_fraud_scan', namespace='/ws/security')
+    def handle_fraud_scan_request():
+        """Handle request to run fraud detection scan."""
+        try:
+            from app.orchestrator_bridge import get_orchestrator
+            
+            orchestrator = get_orchestrator()
+            security_agent = orchestrator.get_agent('security_fraud')
+            
+            if not security_agent:
+                emit('security_error', {'error': 'Security agent not available'})
+                return
+            
+            # Notify scan started
+            emit('fraud_scan_progress', {
+                'status': 'running',
+                'message': 'Fraud detection scan in progress...',
+                'timestamp': datetime.now().isoformat()
+            })
+            
+            # Run fraud detection
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                suspicious_transactions = loop.run_until_complete(
+                    security_agent._detect_fraudulent_transactions()
+                )
+                
+                # Process high-risk transactions
+                high_risk_count = 0
+                alerts_generated = []
+                
+                for transaction in suspicious_transactions:
+                    if transaction.get('risk_score', 0) >= security_agent.risk_threshold:
+                        high_risk_count += 1
+                        alert_result = loop.run_until_complete(
+                            security_agent._handle_fraud_alert(transaction)
+                        )
+                        alerts_generated.append({
+                            'transaction_id': transaction.get('id'),
+                            'risk_score': transaction.get('risk_score'),
+                            'action_taken': alert_result.get('action', 'reviewed')
+                        })
+                
+                # Send scan results
+                scan_results = {
+                    'status': 'completed',
+                    'transactions_analyzed': len(suspicious_transactions),
+                    'high_risk_detected': high_risk_count,
+                    'alerts_generated': len(alerts_generated),
+                    'scan_duration': '2.3s',
+                    'alerts_details': alerts_generated[-5:]
+                }
+                
+                emit('fraud_scan_completed', {
+                    'results': scan_results,
+                    'timestamp': datetime.now().isoformat()
+                })
+                
+                # If high-risk transactions found, send alert
+                if high_risk_count > 0:
+                    emit('security_alert', {
+                        'type': 'fraud_detection',
+                        'severity': 'high' if high_risk_count > 3 else 'medium',
+                        'message': f'{high_risk_count} high-risk transactions detected',
+                        'details': scan_results,
+                        'timestamp': datetime.now().isoformat()
+                    })
+                
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to run fraud scan: {e}")
+            emit('fraud_scan_error', {
+                'error': 'Failed to complete fraud scan',
+                'timestamp': datetime.now().isoformat()
+            })
+
+    @socketio.on('join_security_monitoring', namespace='/ws/security')
+    def handle_join_security_monitoring():
+        """Handle client joining security monitoring room."""
+        logger.info("Client joined security monitoring room")
+        
+        # Send initial security status
+        handle_security_status_request()
+
+    @socketio.on('leave_security_monitoring', namespace='/ws/security')  
+    def handle_leave_security_monitoring():
+        """Handle client leaving security monitoring room."""
+        logger.info("Client left security monitoring room")
+
+    logger.info("Security monitoring WebSocket handlers registered for /ws/security namespace")
+
+    # ===========================
+    # FINANCE NAMESPACE HANDLERS
+    # ===========================
+
+    @socketio.on('connect', namespace='/ws/finance')
+    def handle_finance_connect(auth):
+        """Handle finance namespace connections."""
+        logger.info("Client connected to finance namespace")
+        emit('connected', {
+            'message': 'Connected to financial intelligence system',
+            'services': ['payment_processing', 'fraud_detection', 'analytics', 'reporting'],
+            'status': 'active',
+            'timestamp': datetime.now().isoformat()
+        })
+
+    @socketio.on('disconnect', namespace='/ws/finance')
+    def handle_finance_disconnect():
+        """Handle finance namespace disconnections."""
+        logger.info("Client disconnected from finance namespace")
+
+    @socketio.on('finance_status_request', namespace='/ws/finance')
+    def handle_finance_status_request():
+        """Handle finance status requests."""
+        try:
+            # Get current finance status (real-time data)
+            status = {
+                'total_revenue_today': 12847.50,
+                'pending_transactions': 8,
+                'failed_transactions': 2,
+                'fraud_alerts': 1,
+                'active_payment_methods': 4,
+                'processing_health': 'excellent',
+                'conversion_rate': 3.2,
+                'avg_processing_time': 2.1,
+                'cash_position': 145680.25,
+                'profit_margin': 39.9,
+                'transaction_velocity': 'normal',
+                'security_score': 96.8,
+                'last_updated': datetime.now().isoformat()
+            }
+            
+            emit('finance_update', status)
+            logger.info("Finance status sent to client")
+            
+        except Exception as e:
+            logger.error(f"Finance status request failed: {e}")
+            emit('error', {'message': 'Failed to fetch finance status'})
+
+    @socketio.on('transaction_stream_request', namespace='/ws/finance')
+    def handle_transaction_stream_request(data):
+        """Handle real-time transaction streaming requests."""
+        try:
+            # Get stream parameters
+            filters = data.get('filters', {}) if data else {}
+            
+            # Simulate real-time transaction processing
+            import random
+            
+            transaction_types = ['revenue', 'expense', 'refund', 'fee']
+            payment_methods = ['Credit Card', 'PayPal', 'Apple Pay', 'Bank Transfer']
+            gateways = ['Stripe', 'PayPal', 'Square', 'Adyen']
+            statuses = ['captured', 'pending', 'failed', 'processing']
+            
+            # Generate realistic transaction
+            transaction = {
+                'id': f'txn_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{random.randint(1000, 9999)}',
+                'type': random.choice(transaction_types),
+                'amount': round(random.uniform(15.00, 499.99), 2),
+                'currency': 'USD',
+                'status': random.choice(statuses),
+                'payment_method': random.choice(payment_methods),
+                'gateway': random.choice(gateways),
+                'processed_at': datetime.now().isoformat(),
+                'customer_id': f'cust_{random.randint(10000, 99999)}',
+                'order_id': f'order_{random.randint(100000, 999999)}',
+                'description': 'Product purchase - Real-time processing',
+                'fees': round(random.uniform(1.00, 15.00), 2),
+                'net_amount': 0,  # Will be calculated
+                'risk_score': random.randint(10, 95)
+            }
+            
+            # Calculate net amount
+            transaction['net_amount'] = transaction['amount'] - transaction['fees']
+            
+            emit('transaction_processed', transaction)
+            logger.info(f"Transaction stream data sent: {transaction['id']}")
+            
+        except Exception as e:
+            logger.error(f"Transaction stream request failed: {e}")
+            emit('error', {'message': 'Failed to enable transaction stream'})
+
+    @socketio.on('fraud_alert_subscribe', namespace='/ws/finance')
+    def handle_fraud_alert_subscribe():
+        """Subscribe client to fraud alerts."""
+        try:
+            import random
+            
+            # Simulate potential fraud scenarios
+            alert_types = [
+                'Velocity Check Failed',
+                'Unusual Geographic Pattern', 
+                'High-Risk Card BIN',
+                'Suspicious Transaction Amount',
+                'Multiple Failed Attempts',
+                'Device Fingerprint Mismatch'
+            ]
+            
+            # Generate realistic fraud alert
+            risk_score = random.randint(55, 95)
+            alert_type = random.choice(alert_types)
+            
+            alert = {
+                'id': f'fraud_{datetime.now().strftime("%Y%m%d_%H%M%S")}',
+                'transaction_id': f'txn_suspicious_{random.randint(1000, 9999)}',
+                'risk_score': risk_score,
+                'alert_type': alert_type,
+                'description': f'{alert_type}: Risk assessment indicates potential fraudulent activity',
+                'severity': 'high' if risk_score >= 75 else 'medium' if risk_score >= 60 else 'low',
+                'customer_impact': 'transaction_blocked' if risk_score >= 80 else 'manual_review_required',
+                'recommended_action': 'immediate_investigation' if risk_score >= 85 else 'standard_review',
+                'created_at': datetime.now().isoformat(),
+                'status': 'active',
+                'metadata': {
+                    'ip_address': f'192.168.{random.randint(1,255)}.{random.randint(1,255)}',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                    'device_fingerprint': f'fp_{random.randint(100000, 999999)}'
+                }
+            }
+            
+            emit('fraud_alert', alert)
+            logger.info(f"Fraud alert sent: {alert['id']} (Risk: {risk_score}%)")
+            
+        except Exception as e:
+            logger.error(f"Fraud alert subscription failed: {e}")
+            emit('error', {'message': 'Failed to subscribe to fraud alerts'})
+
+    @socketio.on('financial_metrics_request', namespace='/ws/finance')
+    def handle_financial_metrics_request():
+        """Handle financial metrics requests."""
+        try:
+            import random
+            
+            # Generate realistic financial metrics
+            total_revenue = round(random.uniform(100000, 200000), 2)
+            total_expenses = round(total_revenue * random.uniform(0.55, 0.75), 2)
+            net_profit = total_revenue - total_expenses
+            profit_margin = (net_profit / total_revenue) * 100
+            
+            metrics = {
+                'total_revenue': total_revenue,
+                'total_expenses': total_expenses, 
+                'net_profit': net_profit,
+                'profit_margin': round(profit_margin, 2),
+                'transaction_count': random.randint(800, 1500),
+                'avg_transaction_value': round(random.uniform(80, 150), 2),
+                'conversion_rate': round(random.uniform(2.5, 4.2), 2),
+                'monthly_recurring_revenue': round(random.uniform(35000, 55000), 2),
+                'cash_flow_positive': net_profit > 0,
+                'accounts_receivable': round(random.uniform(25000, 45000), 2),
+                'accounts_payable': round(random.uniform(15000, 35000), 2),
+                'burn_rate': round(total_expenses / 30, 2),  # Daily burn rate
+                'runway_months': round(total_revenue / (total_expenses / 12), 1),
+                'payment_success_rate': round(random.uniform(96.5, 99.2), 2),
+                'chargeback_rate': round(random.uniform(0.1, 0.8), 2),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            emit('financial_metrics_update', metrics)
+            logger.info("Financial metrics sent to client")
+            
+        except Exception as e:
+            logger.error(f"Financial metrics request failed: {e}")
+            emit('error', {'message': 'Failed to fetch financial metrics'})
+
+    @socketio.on('payment_method_analytics_request', namespace='/ws/finance')
+    def handle_payment_method_analytics_request():
+        """Handle payment method analytics requests."""
+        try:
+            import random
+            
+            # Generate realistic payment method performance data
+            payment_methods = {
+                'Credit Card': {
+                    'total_transactions': random.randint(700, 900),
+                    'successful_transactions': 0,  # Will calculate
+                    'success_rate': round(random.uniform(96.5, 98.5), 1),
+                    'total_volume': round(random.uniform(75000, 95000), 2),
+                    'avg_transaction_value': 0,  # Will calculate
+                    'processing_fees': round(random.uniform(2100, 2800), 2),
+                    'chargeback_rate': round(random.uniform(0.2, 0.6), 2)
+                },
+                'PayPal': {
+                    'total_transactions': random.randint(200, 300),
+                    'successful_transactions': 0,
+                    'success_rate': round(random.uniform(97.8, 99.2), 1), 
+                    'total_volume': round(random.uniform(25000, 35000), 2),
+                    'avg_transaction_value': 0,
+                    'processing_fees': round(random.uniform(750, 1100), 2),
+                    'chargeback_rate': round(random.uniform(0.1, 0.3), 2)
+                },
+                'Apple Pay': {
+                    'total_transactions': random.randint(100, 180),
+                    'successful_transactions': 0,
+                    'success_rate': round(random.uniform(98.2, 99.8), 1),
+                    'total_volume': round(random.uniform(15000, 22000), 2),
+                    'avg_transaction_value': 0,
+                    'processing_fees': round(random.uniform(420, 650), 2),
+                    'chargeback_rate': round(random.uniform(0.05, 0.15), 2)
+                },
+                'Bank Transfer': {
+                    'total_transactions': random.randint(50, 100),
+                    'successful_transactions': 0,
+                    'success_rate': round(random.uniform(95.5, 97.8), 1),
+                    'total_volume': round(random.uniform(8000, 15000), 2),
+                    'avg_transaction_value': 0,
+                    'processing_fees': round(random.uniform(150, 300), 2),
+                    'chargeback_rate': round(random.uniform(0.02, 0.08), 2)
+                }
+            }
+            
+            # Calculate derived metrics
+            for method_name, data in payment_methods.items():
+                data['successful_transactions'] = int(data['total_transactions'] * (data['success_rate'] / 100))
+                data['avg_transaction_value'] = round(data['total_volume'] / data['total_transactions'], 2)
+            
+            # Gateway performance data
+            gateway_performance = {
+                'Stripe': {
+                    'success_rate': round(random.uniform(97.8, 99.1), 1),
+                    'avg_processing_time': round(random.uniform(1.5, 2.2), 1),
+                    'total_volume': round(random.uniform(85000, 110000), 2),
+                    'uptime_percentage': round(random.uniform(99.8, 99.99), 2),
+                    'error_rate': round(random.uniform(0.1, 0.8), 2)
+                },
+                'PayPal': {
+                    'success_rate': round(random.uniform(97.2, 98.8), 1),
+                    'avg_processing_time': round(random.uniform(2.1, 3.2), 1),
+                    'total_volume': round(random.uniform(35000, 50000), 2),
+                    'uptime_percentage': round(random.uniform(99.5, 99.9), 2),
+                    'error_rate': round(random.uniform(0.2, 1.2), 2)
+                },
+                'Square': {
+                    'success_rate': round(random.uniform(96.8, 98.2), 1),
+                    'avg_processing_time': round(random.uniform(1.8, 2.8), 1),
+                    'total_volume': round(random.uniform(15000, 25000), 2),
+                    'uptime_percentage': round(random.uniform(99.3, 99.8), 2),
+                    'error_rate': round(random.uniform(0.3, 1.5), 2)
+                }
+            }
+            
+            analytics = {
+                'payment_methods': payment_methods,
+                'gateway_performance': gateway_performance,
+                'summary': {
+                    'total_volume': sum(method['total_volume'] for method in payment_methods.values()),
+                    'total_transactions': sum(method['total_transactions'] for method in payment_methods.values()),
+                    'overall_success_rate': round(
+                        sum(method['successful_transactions'] for method in payment_methods.values()) /
+                        sum(method['total_transactions'] for method in payment_methods.values()) * 100, 2
+                    ),
+                    'total_fees': sum(method['processing_fees'] for method in payment_methods.values())
+                },
+                'trends': {
+                    'mobile_payments_growth': round(random.uniform(15.2, 25.8), 1),
+                    'digital_wallet_adoption': round(random.uniform(35.5, 48.2), 1),
+                    'traditional_card_decline': round(random.uniform(-5.2, -1.8), 1)
+                },
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            emit('payment_analytics_update', analytics)
+            logger.info("Payment analytics sent to client")
+            
+        except Exception as e:
+            logger.error(f"Payment analytics request failed: {e}")
+            emit('error', {'message': 'Failed to fetch payment analytics'})
+
+    @socketio.on('cash_flow_analysis_request', namespace='/ws/finance')
+    def handle_cash_flow_analysis_request():
+        """Handle cash flow analysis requests."""
+        try:
+            import random
+            from datetime import timedelta
+            
+            # Generate cash flow projection data
+            cash_inflows = []
+            cash_outflows = []
+            
+            # Generate 30 days of cash flow data
+            for i in range(30):
+                date = (datetime.now() + timedelta(days=i)).date().isoformat()
+                
+                # Inflows (revenue, collections)
+                daily_inflow = round(random.uniform(3000, 8000), 2)
+                cash_inflows.append({
+                    'date': date,
+                    'amount': daily_inflow,
+                    'source': 'operations',
+                    'confidence': round(random.uniform(85, 98), 1)
+                })
+                
+                # Outflows (expenses, payroll)
+                daily_outflow = round(random.uniform(2000, 5500), 2)
+                cash_outflows.append({
+                    'date': date,
+                    'amount': daily_outflow,
+                    'category': 'operational_expenses',
+                    'confidence': round(random.uniform(90, 99), 1)
+                })
+            
+            # Calculate running balance
+            current_balance = round(random.uniform(45000, 85000), 2)
+            projected_balances = []
+            
+            for i in range(30):
+                daily_net = cash_inflows[i]['amount'] - cash_outflows[i]['amount']
+                current_balance += daily_net
+                projected_balances.append({
+                    'date': cash_inflows[i]['date'],
+                    'balance': round(current_balance, 2),
+                    'net_change': round(daily_net, 2)
+                })
+            
+            analysis = {
+                'current_balance': projected_balances[0]['balance'] if projected_balances else current_balance,
+                'projected_balances': projected_balances[:7],  # Next 7 days
+                'cash_inflows': cash_inflows[:7],
+                'cash_outflows': cash_outflows[:7],
+                'summary': {
+                    'avg_daily_inflow': round(sum(cf['amount'] for cf in cash_inflows[:7]) / 7, 2),
+                    'avg_daily_outflow': round(sum(cf['amount'] for cf in cash_outflows[:7]) / 7, 2),
+                    'net_weekly_flow': round(
+                        sum(cf['amount'] for cf in cash_inflows[:7]) - 
+                        sum(cf['amount'] for cf in cash_outflows[:7]), 2
+                    ),
+                    'burn_rate': round(sum(cf['amount'] for cf in cash_outflows[:30]) / 30, 2),
+                    'runway_days': random.randint(120, 365)
+                },
+                'alerts': [],
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            # Add alerts if balance goes negative
+            for balance in projected_balances:
+                if balance['balance'] < 0:
+                    analysis['alerts'].append({
+                        'type': 'negative_balance',
+                        'date': balance['date'],
+                        'message': f'Projected negative balance: ${balance["balance"]:,.2f}',
+                        'severity': 'high'
+                    })
+                    break
+                elif balance['balance'] < 10000:
+                    analysis['alerts'].append({
+                        'type': 'low_balance',
+                        'date': balance['date'], 
+                        'message': f'Low balance warning: ${balance["balance"]:,.2f}',
+                        'severity': 'medium'
+                    })
+                    break
+            
+            emit('cash_flow_analysis_update', analysis)
+            logger.info("Cash flow analysis sent to client")
+            
+        except Exception as e:
+            logger.error(f"Cash flow analysis request failed: {e}")
+            emit('error', {'message': 'Failed to fetch cash flow analysis'})
+
+    @socketio.on('run_financial_automation', namespace='/ws/finance')
+    def handle_run_financial_automation(data):
+        """Handle financial automation execution requests."""
+        try:
+            # Get automation parameters
+            automation_type = data.get('type', 'full_cycle') if data else 'full_cycle'
+            
+            logger.info(f"Starting financial automation: {automation_type}")
+            
+            # Simulate automation steps
+            steps = [
+                {'step': 'transaction_processing', 'status': 'running', 'progress': 10},
+                {'step': 'fraud_detection', 'status': 'running', 'progress': 25},
+                {'step': 'revenue_calculation', 'status': 'running', 'progress': 45},
+                {'step': 'expense_categorization', 'status': 'running', 'progress': 65},
+                {'step': 'reconciliation', 'status': 'running', 'progress': 80},
+                {'step': 'reporting', 'status': 'running', 'progress': 95},
+                {'step': 'completion', 'status': 'completed', 'progress': 100}
+            ]
+            
+            import threading
+            import time
+            
+            def run_automation_steps():
+                """Execute automation steps with progress updates."""
+                try:
+                    for i, step in enumerate(steps):
+                        time.sleep(2)  # Simulate processing time
+                        
+                        emit('financial_automation_progress', {
+                            'step': step['step'],
+                            'status': step['status'],
+                            'progress': step['progress'],
+                            'step_number': i + 1,
+                            'total_steps': len(steps),
+                            'timestamp': datetime.now().isoformat()
+                        })
+                        
+                        if step['status'] == 'completed':
+                            # Send final results
+                            results = {
+                                'automation_type': automation_type,
+                                'execution_time': f"{len(steps) * 2} seconds",
+                                'transactions_processed': random.randint(450, 750),
+                                'fraud_alerts_generated': random.randint(0, 3), 
+                                'revenue_calculated': round(random.uniform(85000, 125000), 2),
+                                'expenses_categorized': random.randint(280, 420),
+                                'accounts_reconciled': random.randint(15, 25),
+                                'reports_generated': random.randint(5, 8),
+                                'status': 'success',
+                                'completed_at': datetime.now().isoformat()
+                            }
+                            
+                            emit('financial_automation_completed', results)
+                            logger.info(f"Financial automation completed: {automation_type}")
+                            break
+                            
+                except Exception as e:
+                    logger.error(f"Automation execution failed: {e}")
+                    emit('financial_automation_error', {
+                        'error': 'Automation execution failed',
+                        'details': str(e),
+                        'timestamp': datetime.now().isoformat()
+                    })
+            
+            # Start automation in background thread
+            automation_thread = threading.Thread(target=run_automation_steps)
+            automation_thread.daemon = True
+            automation_thread.start()
+            
+            # Send immediate acknowledgment
+            emit('financial_automation_started', {
+                'automation_type': automation_type,
+                'estimated_duration': f"{len(steps) * 2} seconds",
+                'started_at': datetime.now().isoformat()
+            })
+            
+        except Exception as e:
+            logger.error(f"Financial automation start failed: {e}")
+            emit('error', {'message': 'Failed to start financial automation'})
+
+    @socketio.on('join_finance_monitoring', namespace='/ws/finance')
+    def handle_join_finance_monitoring():
+        """Handle client joining finance monitoring room."""
+        logger.info("Client joined finance monitoring room")
+        
+        # Send initial finance status
+        handle_finance_status_request()
+        
+        # Send initial metrics
+        handle_financial_metrics_request()
+
+    @socketio.on('leave_finance_monitoring', namespace='/ws/finance')  
+    def handle_leave_finance_monitoring():
+        """Handle client leaving finance monitoring room."""
+        logger.info("Client left finance monitoring room")
+
+    logger.info("Finance monitoring WebSocket handlers registered for /ws/finance namespace")

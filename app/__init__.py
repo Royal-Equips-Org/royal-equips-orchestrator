@@ -122,6 +122,8 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.customer_support', 'customer_support_bp', None),  # Production Customer Support with AI
         ('app.routes.analytics', 'analytics_bp', None),  # Production Analytics with Business Intelligence
         ('app.routes.inventory', 'inventory_bp', None),
+        ('app.routes.security', 'security_bp', None),  # Production Security with AI Fraud Detection
+        ('app.routes.finance', 'finance_bp', None),  # Production Finance with Payment Intelligence
     ]
     
     registered_count = 0

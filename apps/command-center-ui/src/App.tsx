@@ -21,6 +21,8 @@ const RevenueModule = lazy(() => import('./modules/revenue/RevenueModule'));
 const InventoryModule = lazy(() => import('./modules/inventory/InventoryModule'));
 const MarketingAutomationModule = lazy(() => import('./modules/marketing/MarketingModule'));
 const CustomerSupportModule = lazy(() => import('./modules/customer-support/CustomerSupportModule'));
+const SecurityModule = lazy(() => import('./modules/security/SecurityModule'));
+const FinanceModule = lazy(() => import('./modules/finance/FinanceModule'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
@@ -112,6 +114,18 @@ function AppContent() {
         return (
           <Suspense fallback={loadingFallback('Customer Support')}>
             <CustomerSupportModule />
+          </Suspense>
+        );
+      case 'security':
+        return (
+          <Suspense fallback={loadingFallback('Security Center')}>
+            <SecurityModule />
+          </Suspense>
+        );
+      case 'finance':
+        return (
+          <Suspense fallback={loadingFallback('Financial Intelligence')}>
+            <FinanceModule />
           </Suspense>
         );
       case 'products':
