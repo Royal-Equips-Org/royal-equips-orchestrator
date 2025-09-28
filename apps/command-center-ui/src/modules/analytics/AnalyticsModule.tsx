@@ -88,6 +88,67 @@ export default function AnalyticsModule() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const { isConnected, socket } = useEmpireStore();
 
+  // Fetch analytics data from API
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch main analytics data
+      const response = await fetch('/api/analytics/dashboard');
+      if (!response.ok) {
+        throw new Error(`Analytics API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Process and format the data
+      const formattedData: AnalyticsData = {
+        kpis: data.kpis || {
+          monthly_revenue: { value: 0, change: 0, status: 'healthy', formatted: '$0' },
+          conversion_rate: { value: 0, change: 0, status: 'healthy', formatted: '0%' },
+          avg_order_value: { value: 0, change: 0, status: 'healthy', formatted: '$0' },
+          customer_acquisition_cost: { value: 0, change: 0, status: 'healthy', formatted: '$0' }
+        },
+        charts: data.charts || {
+          revenue_trend: { type: 'line', data: [], title: 'Revenue Trend' },
+          conversion_funnel: { type: 'funnel', data: [], title: 'Conversion Funnel' },
+          top_products: { type: 'bar', data: [], title: 'Top Products' },
+          customer_segments: { type: 'pie', data: [], title: 'Customer Segments' }
+        },
+        summary: data.summary || {
+          total_orders: 0,
+          total_customers: 0,
+          inventory_items: 0,
+          active_campaigns: 0
+        },
+        alerts: data.alerts || [],
+        time_range: data.time_range || '30d',
+        last_updated: data.last_updated || new Date().toISOString()
+      };
+
+      setAnalyticsData(formattedData);
+      
+      // Set up insights from the processed data
+      if (data.insights) {
+        setInsights(data.insights.map((insight: any) => ({
+          id: insight.id || Math.random().toString(),
+          title: insight.title,
+          value: insight.value,
+          change: insight.change || 0,
+          trend: insight.trend || 'neutral',
+          category: insight.category || 'general'
+        })));
+      }
+
+    } catch (err) {
+      console.error('Failed to fetch analytics:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load analytics data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Real-time data updates via WebSocket
   useEffect(() => {
     if (socket && isConnected) {
@@ -528,26 +589,6 @@ export default function AnalyticsModule() {
       </div>
     </div>
   );
-      if (empireData?.empire_health) {
-        analyticsInsights.push({
-          id: 'empire_readiness',
-          title: 'Empire Readiness Score',
-          value: `${empireData.empire_health.empire_readiness_score || 0}%`,
-          change: 5.2, // Would calculate from historical data in real implementation
-          trend: 'up',
-          category: 'business'
-        });
-      }
-
-      setMetrics(processedMetrics);
-      setInsights(analyticsInsights);
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Helper function to calculate growth rates (would use historical data in real implementation)
   const calculateGrowthRate = (currentValue: number, type: string): number => {
@@ -599,7 +640,7 @@ export default function AnalyticsModule() {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading && !metrics) {
+  if (loading && !analyticsData) {
     return (
       <div className="min-h-screen bg-black text-white p-6 flex items-center justify-center">
         <div className="text-center">
