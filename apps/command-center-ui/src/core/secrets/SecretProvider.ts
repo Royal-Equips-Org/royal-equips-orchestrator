@@ -99,7 +99,10 @@ export class UnifiedSecretResolver {
   private encKey: string;
   
   constructor(private opts: UnifiedSecretOptions = {}) {
-    this.encKey = opts.encryptionKey ?? 'royal-equips-secret-key-default-32b';
+    if (!opts.encryptionKey) {
+      throw new Error('Encryption key must be provided externally and cannot have a default value.');
+    }
+    this.encKey = opts.encryptionKey;
     this.providers = [
       new EnvProvider(),
       // GitHub Actions secrets already appear in env (covered above, but keep placeholder if extended)
