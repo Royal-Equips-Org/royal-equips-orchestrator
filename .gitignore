@@ -28,6 +28,8 @@ venv/
 .wrangler/
 *.log.env
 
+# API production build artifacts
+apps/api/dist-web/
 
 reports/junit/
 # Additional build artifacts
