@@ -62,7 +62,7 @@ export default function AnalyticsModule() {
         activeAgents: metricsData.active_sessions || 0,
         totalMessages: metricsData.total_messages || 0,
         uptime: metricsData.uptime_seconds || 0,
-        errorRate: metricsData.total_errors / Math.max(metricsData.total_requests, 1) * 100,
+        errorRate: (metricsData.total_errors || 0) / Math.max(metricsData.total_requests || 1, 1) * 100,
         systemHealth: metricsData.ok ? 'excellent' : 'degraded'
       };
 
