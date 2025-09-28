@@ -328,20 +328,25 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
             ...orders,
             success: true,
             source: 'live_shopify',
-            analytics: {
-              total_orders: orders.orders?.edges?.length || 0,
-              today_orders: orders.orders?.edges?.filter((edge: any) => {
-                const createdAt = new Date(edge.node.createdAt);
-                const today = new Date();
-                return createdAt.toDateString() === today.toDateString();
-              }).length || 0,
-              total_revenue: orders.orders?.edges?.reduce((sum: number, edge: any) => 
-                sum + parseFloat(edge.node.totalPrice || '0'), 0
-              ) || 0,
-              pending_orders: orders.orders?.edges?.filter((edge: any) => 
-                edge.node.fulfillmentStatus === 'UNFULFILLED'
-              ).length || 0
-            }
+            analytics: (() => {
+              const today = new Date();
+              const metrics = (orders.orders?.edges ?? []).reduce(
+                (acc, edge: any) => {
+                  acc.total_orders += 1;
+                  const createdAt = new Date(edge.node.createdAt);
+                  if (createdAt.toDateString() === today.toDateString()) {
+                    acc.today_orders += 1;
+                  }
+                  acc.total_revenue += parseFloat(edge.node.totalPrice || '0');
+                  if (edge.node.fulfillmentStatus === 'UNFULFILLED') {
+                    acc.pending_orders += 1;
+                  }
+                  return acc;
+                },
+                { total_orders: 0, today_orders: 0, total_revenue: 0, pending_orders: 0 }
+              );
+              return metrics;
+            })()
           };
 
           return reply.send(processedOrders);
