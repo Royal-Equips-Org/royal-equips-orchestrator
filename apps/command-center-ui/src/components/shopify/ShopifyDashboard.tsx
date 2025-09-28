@@ -219,7 +219,7 @@ export default function ShopifyDashboard() {
               ${(metrics?.averageOrderValue || 0).toFixed(2)}
             </p>
             <p className="text-sm text-yellow-400">
-              {metrics?.traffic || 0} visitors tracked
+              {metrics?.trafficEstimate || 0} visitors tracked
             </p>
           </div>
         </motion.div>
