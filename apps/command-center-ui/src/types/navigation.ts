@@ -10,6 +10,7 @@ export interface NavigationModule {
   requiresAuth?: boolean;
   isNew?: boolean;
   disabled?: boolean;
+  status?: 'active' | 'coming-soon' | 'disabled';
 }
 
 export interface NavigationState {
