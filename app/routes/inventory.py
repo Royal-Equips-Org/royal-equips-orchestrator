@@ -367,6 +367,5 @@ def get_inventory_metrics():
         logger.error(f"Inventory metrics error: {e}")
         return jsonify({
             "error": "Failed to get inventory metrics",
-            "message": str(e),
             "timestamp": datetime.now().isoformat()
         }), 500
