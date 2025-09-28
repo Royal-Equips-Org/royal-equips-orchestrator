@@ -8,33 +8,6 @@ import {
 import { useEmpireStore } from '../../store/empire-store';
 import { shopifyService, ShopifyMetrics } from '../../services/shopify-service';
 
-interface ShopifyMetrics {
-  orders: {
-    total: number;
-    today: number;
-    pending: number;
-    revenue: number;
-  };
-  products: {
-    total: number;
-    active: number;
-    lowStock: number;
-    outOfStock: number;
-  };
-  customers: {
-    total: number;
-    new: number;
-    returning: number;
-    lifetime_value: number;
-  };
-  performance: {
-    conversion_rate: number;
-    avg_order_value: number;
-    cart_abandonment: number;
-    traffic: number;
-  };
-}
-
 export default function ShopifyDashboard() {
   const [metrics, setMetrics] = useState<ShopifyMetrics | null>(null);
   const [loading, setLoading] = useState(true);
