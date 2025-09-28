@@ -32,9 +32,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install -g curl jq
-
       - name: Test 1 - Homepage loads with correct title
         run: |
           echo "🧪 Testing homepage load and title..."
