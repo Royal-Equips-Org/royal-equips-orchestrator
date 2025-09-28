@@ -116,8 +116,9 @@ jobs:
           response=$(curl -fsSL -X POST "$TARGET_URL/v1/admin/circuit/reset" -H "Accept: application/json" -H "Content-Type: application/json")
           status_code=$(curl -o /dev/null -s -w "%{http_code}" -X POST "$TARGET_URL/v1/admin/circuit/reset")
           if [[ "$status_code" == "200" ]]; then
-            echo "✅ Circuit breaker reset endpoint working"
-            if echo "$response" | jq -e '.ok' > /dev/null 2>&1; then
+          result=$(curl -s -w "\n%{http_code}" -X POST "$TARGET_URL/v1/admin/circuit/reset" -H "Accept: application/json" -H "Content-Type: application/json")
+          response=$(echo "$result" | sed '$d')
+          status_code=$(echo "$result" | tail -n1)
               echo "Reset confirmed: $(echo "$response" | jq -r '.ok')"
             fi
           else
