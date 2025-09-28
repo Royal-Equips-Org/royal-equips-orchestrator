@@ -2,137 +2,46 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { 
   ShoppingCart, Package, Users, DollarSign, 
-  TrendingUp, TrendingDown, Activity, Zap,
-  AlertCircle, CheckCircle, Clock, RefreshCw
+  TrendingUp, Activity, Zap, AlertCircle, 
+  CheckCircle, Clock, RefreshCw
 } from 'lucide-react';
 import { useEmpireStore } from '../../store/empire-store';
-
-interface ShopifyMetrics {
-  orders: {
-    total: number;
-    today: number;
-    pending: number;
-    revenue: number;
-  };
-  products: {
-    total: number;
-    active: number;
-    lowStock: number;
-    outOfStock: number;
-  };
-  customers: {
-    total: number;
-    new: number;
-    returning: number;
-    lifetime_value: number;
-  };
-  performance: {
-    conversion_rate: number;
-    avg_order_value: number;
-    cart_abandonment: number;
-    traffic: number;
-  };
-}
+import { shopifyService, ShopifyMetrics } from '../../services/shopify-service';
 
 export default function ShopifyDashboard() {
   const [metrics, setMetrics] = useState<ShopifyMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [storeHealth, setStoreHealth] = useState<{
+    status: 'connected' | 'disconnected' | 'error';
+    shopName?: string;
+    details: string;
+  } | null>(null);
+
   const { isConnected } = useEmpireStore();
 
-  // Helper to add timeout to fetch
-  const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout: number = 10000) => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    try {
-      const response = await fetch(url, { ...options, signal: controller.signal });
-      clearTimeout(id);
-      return response;
-    } catch (error: any) {
-      clearTimeout(id);
-      // If aborted, treat as service unavailable
-      if (error.name === 'AbortError') {
-        return { ok: false, status: 408, json: () => Promise.resolve({}) };
-      }
-      return { ok: false, status: 503, json: () => Promise.resolve({}) };
-    }
-  };
-
-  // Fetch real Shopify data
+  // Fetch real Shopify metrics
   const fetchShopifyMetrics = async () => {
     try {
       setLoading(true);
       
-      // Call real API endpoints with timeout
-      const [ordersRes, productsRes, customersRes] = await Promise.all([
-        fetchWithTimeout('/api/v1/shopify/orders'),
-        fetchWithTimeout('/api/v1/shopify/products'),
-        fetchWithTimeout('/api/v1/shopify/customers')
+      // Fetch live data from Shopify
+      const [metricsData, healthData] = await Promise.all([
+        shopifyService.fetchMetrics(),
+        shopifyService.getStoreHealth()
       ]);
 
-      // Check if any API calls failed
-      if (!ordersRes.ok || !productsRes.ok || !customersRes.ok) {
-        console.warn('Some Shopify API calls failed');
-        setMetrics(null);
-        return;
-      }
-
-      const [ordersData, productsData, customersData] = await Promise.all([
-        ordersRes.json(),
-        productsRes.json(), 
-        customersRes.json()
-      ]);
-
-      // Handle API errors gracefully
-      if (!ordersData.success || !productsData.success || !customersData.success) {
-        console.warn('Shopify API returned error responses');
-        setMetrics(null);
-        return;
-      }
-
-      // Process real data into metrics using the analytics data from API
-      const processedMetrics: ShopifyMetrics = {
-        orders: {
-          total: ordersData.analytics?.total_orders || 0,
-          today: ordersData.analytics?.today_orders || 0,
-          pending: ordersData.analytics?.pending_orders || 0,
-          revenue: ordersData.analytics?.total_revenue || 0
-        },
-        products: {
-          total: productsData.products?.edges?.length || 0,
-          active: productsData.products?.edges?.filter((edge: any) => 
-            edge.node.status === 'ACTIVE'
-          ).length || 0,
-          lowStock: productsData.products?.edges?.filter((edge: any) => 
-            edge.node.totalInventory < 10
-          ).length || 0,
-          outOfStock: productsData.products?.edges?.filter((edge: any) => 
-            edge.node.totalInventory === 0
-          ).length || 0
-        },
-        customers: {
-          total: customersData.analytics?.total_customers || 0,
-          new: customersData.analytics?.new_customers || 0,
-          returning: customersData.analytics?.returning_customers || 0,
-          lifetime_value: customersData.analytics?.avg_lifetime_value || 0
-        },
-        performance: {
-          conversion_rate: ordersData.analytics && customersData.analytics && customersData.analytics.total_customers > 0
-            ? (ordersData.analytics.total_orders / customersData.analytics.total_customers) * 100
-            : 0,
-          avg_order_value: ordersData.analytics && ordersData.analytics.total_orders > 0
-            ? ordersData.analytics.total_revenue / ordersData.analytics.total_orders
-            : 0,
-          cart_abandonment: 0, // This would need to come from Shopify Analytics API
-          traffic: 0 // This would need to come from Shopify Analytics API
-        }
-      };
-
-      setMetrics(processedMetrics);
+      setMetrics(metricsData);
+      setStoreHealth(healthData);
       setLastUpdated(new Date());
+      
     } catch (error) {
       console.error('Failed to fetch Shopify metrics:', error);
       setMetrics(null);
+      setStoreHealth({
+        status: 'error',
+        details: 'Failed to connect to Shopify API'
+      });
     } finally {
       setLoading(false);
     }
@@ -146,7 +55,7 @@ export default function ShopifyDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
+  if (loading && !metrics) {
     return (
       <div className="h-full flex items-center justify-center">
         <motion.div
@@ -172,7 +81,7 @@ export default function ShopifyDashboard() {
             onClick={fetchShopifyMetrics}
             className="px-4 py-2 bg-hologram/20 border border-hologram rounded-lg text-hologram hover:bg-hologram/30 transition-colors"
           >
-            <RefreshCw className="w-4 h-4 inline-block mr-2" />
+            <RefreshCw className="w-4 h-4 mr-2" />
             Retry Connection
           </motion.button>
         </div>
@@ -181,29 +90,55 @@ export default function ShopifyDashboard() {
   }
 
   return (
-    <div className="min-h-full bg-gradient-to-br from-black via-gray-900 to-black p-6">
+    <div className="h-full overflow-auto p-6 bg-gradient-to-br from-gray-900/50 to-black/50">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="p-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-2xl border border-green-400/30"
+          >
+            <ShoppingCart className="w-8 h-8 text-green-400" />
+          </motion.div>
           <div>
-            <h1 className="text-3xl font-bold text-hologram mb-2">Shopify Command Center</h1>
-            <p className="text-gray-400">Real-time store analytics and management</p>
+            <h1 className="text-3xl font-bold text-white">Shopify Command Center</h1>
+            <p className="text-green-400">
+              {storeHealth?.status === 'connected' ? `Connected to ${storeHealth.shopName}` : 'Live E-commerce Operations'}
+            </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <div className="text-sm text-gray-400">Last Updated</div>
-              <div className="text-white font-mono">{lastUpdated.toLocaleTimeString()}</div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {storeHealth && (
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+              storeHealth.status === 'connected' 
+                ? 'bg-green-500/20 text-green-300 border border-green-400/30'
+                : storeHealth.status === 'error'
+                ? 'bg-red-500/20 text-red-300 border border-red-400/30'
+                : 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30'
+            }`}>
+              {storeHealth.status === 'connected' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+              {storeHealth.status === 'connected' ? 'Connected' : 'Disconnected'}
             </div>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={fetchShopifyMetrics}
-              className="p-2 bg-hologram/20 border border-hologram rounded-lg text-hologram hover:bg-hologram/30 transition-colors"
-              title="Refresh Data"
-            >
-              <RefreshCw className="w-5 h-5" />
-            </motion.button>
-          </div>
+          )}
+          
+          {lastUpdated && (
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <Clock className="w-4 h-4" />
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </div>
+          )}
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={fetchShopifyMetrics}
+            className="p-2 bg-hologram/20 border border-hologram rounded-lg text-hologram hover:bg-hologram/30 transition-colors"
+            title="Refresh Data"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </motion.button>
         </div>
       </div>
 
@@ -218,24 +153,14 @@ export default function ShopifyDashboard() {
             <div className="p-3 bg-green-500/20 rounded-xl">
               <ShoppingCart className="w-6 h-6 text-green-400" />
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-white">{metrics?.orders.total || 0}</div>
-              <div className="text-sm text-gray-400">Total Orders</div>
-            </div>
+            <TrendingUp className="w-5 h-5 text-green-400" />
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Today:</span>
-              <span className="text-green-400 font-mono">{metrics?.orders.today || 0}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Pending:</span>
-              <span className="text-orange-400 font-mono">{metrics?.orders.pending || 0}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Revenue:</span>
-              <span className="text-green-400 font-mono">${(metrics?.orders.revenue || 0).toFixed(2)}</span>
-            </div>
+            <p className="text-sm text-gray-400">Total Orders</p>
+            <p className="text-3xl font-bold text-white">{metrics?.totalOrders || 0}</p>
+            <p className="text-sm text-green-400">
+              ${(metrics?.totalRevenue || 0).toLocaleString()} revenue
+            </p>
           </div>
         </motion.div>
 
@@ -248,24 +173,12 @@ export default function ShopifyDashboard() {
             <div className="p-3 bg-blue-500/20 rounded-xl">
               <Package className="w-6 h-6 text-blue-400" />
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-white">{metrics?.products.total || 0}</div>
-              <div className="text-sm text-gray-400">Products</div>
-            </div>
+            <Activity className="w-5 h-5 text-blue-400" />
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Active:</span>
-              <span className="text-blue-400 font-mono">{metrics?.products.active || 0}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Low Stock:</span>
-              <span className="text-orange-400 font-mono">{metrics?.products.lowStock || 0}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Out of Stock:</span>
-              <span className="text-red-400 font-mono">{metrics?.products.outOfStock || 0}</span>
-            </div>
+            <p className="text-sm text-gray-400">Total Products</p>
+            <p className="text-3xl font-bold text-white">{metrics?.totalProducts || 0}</p>
+            <p className="text-sm text-blue-400">Live catalog items</p>
           </div>
         </motion.div>
 
@@ -278,135 +191,90 @@ export default function ShopifyDashboard() {
             <div className="p-3 bg-purple-500/20 rounded-xl">
               <Users className="w-6 h-6 text-purple-400" />
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-white">{metrics?.customers.total || 0}</div>
-              <div className="text-sm text-gray-400">Customers</div>
-            </div>
+            <TrendingUp className="w-5 h-5 text-purple-400" />
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">New:</span>
-              <span className="text-purple-400 font-mono">{metrics?.customers.new || 0}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Returning:</span>
-              <span className="text-green-400 font-mono">{metrics?.customers.returning || 0}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Avg LTV:</span>
-              <span className="text-purple-400 font-mono">${(metrics?.customers.lifetime_value || 0).toFixed(0)}</span>
-            </div>
+            <p className="text-sm text-gray-400">Total Customers</p>
+            <p className="text-3xl font-bold text-white">{metrics?.totalCustomers || 0}</p>
+            <p className="text-sm text-purple-400">
+              {(metrics?.conversionRate || 0).toFixed(1)}% conversion rate
+            </p>
           </div>
         </motion.div>
 
-        {/* Performance */}
+        {/* Revenue */}
         <motion.div
           whileHover={{ scale: 1.02 }}
           className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 border border-yellow-400/30"
         >
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-yellow-500/20 rounded-xl">
-              <Activity className="w-6 h-6 text-yellow-400" />
+              <DollarSign className="w-6 h-6 text-yellow-400" />
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-white">{(metrics?.performance.conversion_rate || 0).toFixed(1)}%</div>
-              <div className="text-sm text-gray-400">Conversion</div>
-            </div>
+            <Zap className="w-5 h-5 text-yellow-400" />
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">AOV:</span>
-              <span className="text-yellow-400 font-mono">${(metrics?.performance.avg_order_value || 0).toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Abandonment:</span>
-              <span className="text-red-400 font-mono">{(metrics?.performance.cart_abandonment || 0).toFixed(1)}%</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Traffic:</span>
-              <span className="text-yellow-400 font-mono">{Math.round(metrics?.performance.traffic || 0)}</span>
-            </div>
+            <p className="text-sm text-gray-400">Average Order Value</p>
+            <p className="text-3xl font-bold text-white">
+              ${(metrics?.averageOrderValue || 0).toFixed(2)}
+            </p>
+            <p className="text-sm text-yellow-400">
+              {metrics?.traffic || 0} visitors tracked
+            </p>
           </div>
         </motion.div>
       </div>
 
-      {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 border border-cyan-400/30"
-        >
-          <h3 className="text-xl font-bold text-cyan-400 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <button className="w-full p-3 bg-cyan-500/20 border border-cyan-400/30 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-all text-left">
-              <Package className="w-4 h-4 inline-block mr-2" />
-              Manage Products
-            </button>
-            <button className="w-full p-3 bg-green-500/20 border border-green-400/30 rounded-lg text-green-400 hover:bg-green-500/30 transition-all text-left">
-              <ShoppingCart className="w-4 h-4 inline-block mr-2" />
-              Process Orders
-            </button>
-            <button className="w-full p-3 bg-purple-500/20 border border-purple-400/30 rounded-lg text-purple-400 hover:bg-purple-500/30 transition-all text-left">
-              <Users className="w-4 h-4 inline-block mr-2" />
-              Customer Support
-            </button>
+      {/* Real-time Activity Feed */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 border border-gray-600/30"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">Live Store Activity</h2>
+          <div className="flex items-center gap-2 text-green-400">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-sm">Live Data Stream</span>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 border border-orange-400/30"
-        >
-          <h3 className="text-xl font-bold text-orange-400 mb-4">Alerts</h3>
-          <div className="space-y-3">
-            {(metrics?.products.outOfStock || 0) > 0 && (
-              <div className="p-3 bg-red-500/20 border border-red-400/30 rounded-lg">
-                <div className="flex items-center">
-                  <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
-                  <span className="text-red-400 text-sm">{metrics?.products.outOfStock} products out of stock</span>
+        <div className="space-y-4">
+          {metrics && (
+            <>
+              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-500/10 to-transparent rounded-lg border-l-4 border-green-400">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <div>
+                  <p className="text-white font-medium">Store sync completed</p>
+                  <p className="text-sm text-gray-400">
+                    {metrics.totalProducts} products • {metrics.totalOrders} orders processed
+                  </p>
                 </div>
               </div>
-            )}
-            {(metrics?.orders.pending || 0) > 0 && (
-              <div className="p-3 bg-orange-500/20 border border-orange-400/30 rounded-lg">
-                <div className="flex items-center">
-                  <Clock className="w-4 h-4 text-orange-400 mr-2" />
-                  <span className="text-orange-400 text-sm">{metrics?.orders.pending} orders pending fulfillment</span>
-                </div>
-              </div>
-            )}
-            {!metrics?.products.outOfStock && !metrics?.orders.pending && (
-              <div className="p-3 bg-green-500/20 border border-green-400/30 rounded-lg">
-                <div className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                  <span className="text-green-400 text-sm">All systems operational</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
 
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 border border-hologram/30"
-        >
-          <h3 className="text-xl font-bold text-hologram mb-4">AI Insights</h3>
-          <div className="space-y-3 text-sm text-gray-300">
-            <div className="p-3 bg-hologram/10 rounded-lg">
-              <Zap className="w-4 h-4 inline-block mr-2 text-hologram" />
-              Revenue trend: {(metrics?.orders.revenue || 0) > 1000 ? 'Strong' : 'Moderate'} growth detected
-            </div>
-            <div className="p-3 bg-hologram/10 rounded-lg">
-              <TrendingUp className="w-4 h-4 inline-block mr-2 text-hologram" />
-              Conversion rate is {(metrics?.performance.conversion_rate || 0) > 3 ? 'above' : 'below'} industry average
-            </div>
-            <div className="p-3 bg-hologram/10 rounded-lg">
-              <Users className="w-4 h-4 inline-block mr-2 text-hologram" />
-              Customer retention: {((metrics?.customers.returning || 0) / (metrics?.customers.total || 1) * 100).toFixed(0)}%
-            </div>
-          </div>
-        </motion.div>
-      </div>
+              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-500/10 to-transparent rounded-lg border-l-4 border-blue-400">
+                <Activity className="w-5 h-5 text-blue-400" />
+                <div>
+                  <p className="text-white font-medium">Revenue tracking active</p>
+                  <p className="text-sm text-gray-400">
+                    ${metrics.totalRevenue.toLocaleString()} total revenue monitored
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-500/10 to-transparent rounded-lg border-l-4 border-purple-400">
+                <Users className="w-5 h-5 text-purple-400" />
+                <div>
+                  <p className="text-white font-medium">Customer analytics updated</p>
+                  <p className="text-sm text-gray-400">
+                    {metrics.totalCustomers} customers • {metrics.conversionRate.toFixed(1)}% conversion rate
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }

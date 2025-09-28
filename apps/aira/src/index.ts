@@ -11,8 +11,9 @@ import Fastify from 'fastify';
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
-import redisPlugin from './plugins/redis.js';
-import { RedisCircuitBreaker } from './lib/circuit-breaker.js';
+// Redis is optional - comment out to run without Redis
+// import redisPlugin from './plugins/redis.js';
+// import { RedisCircuitBreaker } from './lib/circuit-breaker.js';
 import { healthRoutes } from './routes/health.js';
 import { systemRoutes } from './routes/system.js';
 import { adminCircuitRoutes } from './routes/admin-circuit.js';
@@ -20,11 +21,13 @@ import { metricsRoute } from './routes/metrics.js';
 import { agentsRoute } from './routes/agents.js';
 import { opportunitiesRoute } from './routes/opportunities.js';
 import { campaignsRoute } from './routes/campaigns.js';
+import { openaiService } from './services/openai-service.js';
 import { empireRepo } from './repository/empire-repo.js';
 
+// Optional Redis circuit breaker
 declare module 'fastify' {
   interface FastifyInstance {
-    circuit: RedisCircuitBreaker;
+    circuit?: any; // Optional circuit breaker
   }
 }
 
@@ -81,25 +84,25 @@ await app.register(rateLimit, {
   }
 });
 
-// Register Redis plugin
-await app.register(redisPlugin, {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD,
-  db: parseInt(process.env.REDIS_DB || '0')
-});
+// Register Redis plugin (optional - disabled for demo)
+// await app.register(redisPlugin, {
+//   host: process.env.REDIS_HOST || 'localhost',
+//   port: parseInt(process.env.REDIS_PORT || '6379'),
+//   password: process.env.REDIS_PASSWORD,
+//   db: parseInt(process.env.REDIS_DB || '0')
+// });
 
-// Initialize circuit breaker after Redis is available
-app.addHook('onReady', async () => {
-  app.decorate('circuit', new RedisCircuitBreaker(app.redis, {
-    failureThreshold: 5,
-    recoveryTimeout: 60000, // 60 seconds
-    minimumRequests: 10,
-    halfOpenMaxCalls: 3,
-    keyPrefix: 'aira_cb'
-  }));
-  app.log.info('Circuit breaker initialized');
-});
+// Initialize circuit breaker after Redis is available (optional)
+// app.addHook('onReady', async () => {
+//   app.decorate('circuit', new RedisCircuitBreaker(app.redis, {
+//     failureThreshold: 5,
+//     recoveryTimeout: 60000, // 60 seconds
+//     minimumRequests: 10,
+//     halfOpenMaxCalls: 3,
+//     keyPrefix: 'aira_cb'
+//   }));
+//   app.log.info('Circuit breaker initialized');
+// });
 
 // Health check endpoint
 app.get('/health', async () => ({ 
@@ -133,11 +136,18 @@ app.post('/api/empire/chat', async (request, reply) => {
     });
     return;
   }
-  return {
-    content: `🤖 AIRA: Received your message "${content}". Empire systems are operational and all endpoints are available.`,
-    agent_name: 'AIRA',
-    timestamp: new Date().toISOString()
-  };
+
+  try {
+    const response = await openaiService.generateResponse(content);
+    return response;
+  } catch (error) {
+    request.log.error(`Chat error: ${error instanceof Error ? error.message : String(error)}`);
+    return {
+      content: '🚨 I encountered an issue processing your request. Let me get back online and assist you with empire operations.',
+      agent_name: 'AIRA',
+      timestamp: new Date().toISOString()
+    };
+  }
 });
 
 // Global error handler with structured logging
