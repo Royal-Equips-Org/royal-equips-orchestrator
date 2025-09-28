@@ -5,6 +5,7 @@ import NavigationBar from './components/navigation/NavigationBar'
 import { ToastContainer } from './components/ui/Toast'
 import { ToastProvider, useToastContext } from './contexts/ToastContext'
 import { NavigationProvider, useNavigation } from './contexts/NavigationContext'
+import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
@@ -12,12 +13,34 @@ function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
   const { toasts, removeToast } = useToastContext();
   const { state } = useNavigation();
+  const { optimizePerformance, metrics, recommendations } = usePerformanceOptimization();
 
   useEffect(() => {
     // Initialize empire systems and load all data
     console.log('Royal Equips Empire Command Center - Initialized');
     refreshAll();
-  }, [refreshAll]);
+    
+    // Trigger performance optimization after initial load
+    setTimeout(() => {
+      optimizePerformance();
+    }, 2000);
+  }, [refreshAll, optimizePerformance]);
+
+  // Log performance metrics for monitoring
+  useEffect(() => {
+    if (metrics) {
+      console.log('Performance Metrics:', {
+        loadTime: `${metrics.loadTime}ms`,
+        renderTime: `${metrics.renderTime}ms`,
+        memoryUsage: `${metrics.memoryUsage.toFixed(1)}MB`,
+        networkRequests: metrics.networkRequests
+      });
+      
+      if (recommendations.length > 0) {
+        console.log('Performance Recommendations:', recommendations);
+      }
+    }
+  }, [metrics, recommendations]);
 
   // Render current module content
   const renderCurrentModule = () => {

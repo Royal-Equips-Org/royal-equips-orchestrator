@@ -47,9 +47,9 @@ export default function ShopifyDashboard() {
       
       // Call real API endpoints
       const [ordersRes, productsRes, customersRes] = await Promise.all([
-        fetch('/api/v1/shopify/orders').catch(() => ({ ok: false, status: 503 })),
-        fetch('/api/v1/shopify/products').catch(() => ({ ok: false, status: 503 })),
-        fetch('/api/v1/shopify/customers').catch(() => ({ ok: false, status: 503 }))
+        fetch('/api/v1/shopify/orders').catch(() => ({ ok: false, status: 503, json: () => Promise.resolve({}) })),
+        fetch('/api/v1/shopify/products').catch(() => ({ ok: false, status: 503, json: () => Promise.resolve({}) })),
+        fetch('/api/v1/shopify/customers').catch(() => ({ ok: false, status: 503, json: () => Promise.resolve({}) }))
       ]);
 
       // Check if any API calls failed
