@@ -113,7 +113,7 @@ export default function AgentsModule() {
           errorCount: metricsData.total_errors || 0,
           performance: {
             avgResponseTime: 120,
-            successRate: ((metricsData.total_requests - metricsData.total_errors) / Math.max(metricsData.total_requests, 1)) * 100,
+            successRate: (((metricsData.total_requests || 0) - (metricsData.total_errors || 0)) / Math.max(metricsData.total_requests || 1, 1)) * 100,
             throughput: metricsData.active_sessions || 0
           },
           capabilities: ['Request Orchestration', 'Session Management', 'Error Handling']
