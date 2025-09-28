@@ -24,7 +24,7 @@ export class EmpireService {
     try {
       logger.info('Fetching empire metrics');
       return await retryMetrics(async () => {
-        const data = await apiClient.get('/v1/system/status');
+        const data = await apiClient.get('/api/empire/metrics');
         return validateAndTransform(data, isEmpireMetrics, 'EmpireMetrics');
       });
     } catch (error) {
@@ -37,7 +37,7 @@ export class EmpireService {
     try {
       logger.info('Fetching agents');
       return await retryAgents(async () => {
-        const data = await apiClient.get('/v1/agents');
+        const data = await apiClient.get('/api/empire/agents');
         return validateAndTransform(data, isAgentArray, 'Agent[]');
       });
     } catch (error) {
@@ -50,7 +50,7 @@ export class EmpireService {
     try {
       logger.info('Fetching product opportunities');
       return await retryOpportunities(async () => {
-        const data = await apiClient.get('/v1/opportunities');
+        const data = await apiClient.get('/api/empire/opportunities');
         return validateAndTransform(data, isProductOpportunityArray, 'ProductOpportunity[]');
       });
     } catch (error) {
@@ -63,7 +63,7 @@ export class EmpireService {
     try {
       logger.info('Fetching marketing campaigns');
       return await retryCampaigns(async () => {
-        const data = await apiClient.get('/v1/marketing/campaigns/all');
+        const data = await apiClient.get('/api/empire/campaigns');
         return validateAndTransform(data, isMarketingCampaignArray, 'MarketingCampaign[]');
       });
     } catch (error) {
