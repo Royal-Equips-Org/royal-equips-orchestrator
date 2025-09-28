@@ -1,18 +1,26 @@
 # Royal Equips Command Center UI
 
-A modern React application for managing the Royal Equips Empire with real-time agent monitoring, product opportunity tracking, and AI-powered chat interface.
+A comprehensive React application for managing the Royal Equips Empire with modular architecture, AI-powered interfaces, and real-time business intelligence.
 
-## Features
+## 🚀 Features
 
-- **Agent Network Grid**: Monitor and manage AI agents with real-time status updates
-- **Product Opportunity Cards**: Review and approve/reject product opportunities with toast notifications
-- **Revenue Tracker**: Track empire revenue progress and metrics
-- **AI Chat Interface**: Communicate with AIRA with enhanced error classification  
-- **Marketing Studio**: Create and manage marketing campaigns
-- **3D Empire Visualization**: Interactive 3D visualization of the agent network
-- **Network Status Bar**: Unified service status monitoring
-- **Toast Notifications**: User feedback for actions and errors
-- **Emergency Controls**: Emergency stop and autopilot controls
+### Core Command Center
+- **AIRA AI Empire Agent**: Interactive chat interface with operations dashboard
+- **Real-time Dashboard**: Live metrics with KPI tracking and performance monitoring
+- **Modular Navigation**: Enhanced module scroller with keyboard and touch support
+- **Mobile-First Design**: Responsive layouts optimized for all device sizes
+
+### Business Intelligence Modules
+- **Analytics Engine**: Advanced business intelligence with predictive insights
+- **Revenue Intelligence**: Real-time revenue tracking with forecasting models
+- **Agent Management**: AI agent deployment, monitoring, and health diagnostics
+- **Shopify Operations**: Store management with live sync and performance metrics
+
+### System & Infrastructure
+- **Observability Layer**: Comprehensive metrics collection and structured logging
+- **Error Boundaries**: Graceful error handling with recovery mechanisms  
+- **Code Splitting**: Lazy-loaded modules for optimal performance
+- **Secret Management**: Multi-fallback secret resolution system
 
 ## Environment Setup
 

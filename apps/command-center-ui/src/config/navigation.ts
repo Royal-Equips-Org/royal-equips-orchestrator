@@ -3,7 +3,7 @@ import {
   Command, Network, Database, Rocket, Eye, 
   Gauge, Target, TrendingUp, Orbit, Atom,
   ShoppingCart, Package, Users, BarChart3,
-  Home, Settings, Search, Bell
+  Home, Settings, Search, Bell, DollarSign
 } from 'lucide-react';
 import { NavigationModule } from '../types/navigation';
 
@@ -29,6 +29,16 @@ export const navigationModules: NavigationModule[] = [
   },
   
   // Intelligence & Analytics
+  {
+    id: 'aira',
+    label: 'AIRA',
+    icon: Brain,
+    description: 'AI Empire Agent',
+    color: '#00FFFF',
+    path: '/aira',
+    category: 'intelligence',
+    isNew: true
+  },
   {
     id: 'neural',
     label: 'NEURAL',
@@ -64,6 +74,15 @@ export const navigationModules: NavigationModule[] = [
     color: '#FFD700',
     path: '/analytics',
     category: 'analytics'
+  },
+  {
+    id: 'agents',
+    label: 'AGENTS',
+    icon: Users,
+    description: 'AI Agent Management',
+    color: '#FF69B4',
+    path: '/agents',
+    category: 'intelligence'
   },
   
   // Operational Modules
@@ -124,6 +143,25 @@ export const navigationModules: NavigationModule[] = [
     path: '/customers',
     category: 'operations'
   },
+  {
+    id: 'revenue',
+    label: 'REVENUE',
+    icon: DollarSign,
+    description: 'Revenue Intelligence & Forecasting',
+    color: '#00FF7F',
+    path: '/revenue',
+    category: 'analytics',
+    isNew: true
+  },
+  {
+    id: 'inventory',
+    label: 'INVENTORY',
+    icon: Package,
+    description: 'Supply Chain & Stock Management',
+    color: '#FF8C00',
+    path: '/inventory',
+    category: 'operations'
+  },
   
   // System & Utilities
   {
@@ -174,6 +212,7 @@ export const moduleCategories = {
 export const quickAccessModules = [
   'command',
   'dashboard', 
+  'aira',
   'shopify',
   'products',
   'analytics'
