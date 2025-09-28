@@ -15,68 +15,20 @@ import QuantumProductMatrix from './QuantumProductMatrix';
 import NeuralAnalytics from './NeuralAnalytics';
 import QuantumMetrics from './QuantumMetrics';
 import HolographicInterface from './HolographicInterface';
-import { useEmpireStore } from '@/store/empire-store';
-
-type QuantumView = 'command' | 'neural' | 'quantum' | 'intelligence' | 'matrix' | 'analytics' | 'holographic';
-
-const quantumModules = [
-  { 
-    id: 'command', 
-    label: 'COMMAND', 
-    icon: Command, 
-    description: 'Quantum Command Operations',
-    color: '#FF0080'
-  },
-  { 
-    id: 'neural', 
-    label: 'NEURAL', 
-    icon: Brain, 
-    description: 'AI Neural Networks',
-    color: '#00FFFF'
-  },
-  { 
-    id: 'quantum', 
-    label: 'QUANTUM', 
-    icon: Atom, 
-    description: 'Quantum Processing Core',
-    color: '#8A2BE2'
-  },
-  { 
-    id: 'intelligence', 
-    label: 'INTELLIGENCE', 
-    icon: Eye, 
-    description: 'Business Intelligence Matrix',
-    color: '#00FF00'
-  },
-  { 
-    id: 'matrix', 
-    label: 'MATRIX', 
-    icon: Network, 
-    description: 'Product Reality Matrix',
-    color: '#FF4500'
-  },
-  { 
-    id: 'analytics', 
-    label: 'ANALYTICS', 
-    icon: Activity, 
-    description: 'Quantum Analytics Engine',
-    color: '#FFD700'
-  },
-  { 
-    id: 'holographic', 
-    label: 'HOLO', 
-    icon: Layers, 
-    description: 'Holographic Interface',
-    color: '#FF1493'
-  },
-];
+import { useEmpireStore } from '../../store/empire-store';
+import { useNavigation } from '../../contexts/NavigationContext';
+import { NavigationView } from '../../types/navigation';
+import { navigationModules, getModulesByCategory } from '../../config/navigation';
 
 export default function EmpireDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [currentView, setCurrentView] = useState<QuantumView>('command');
   const [quantumEnergy, setQuantumEnergy] = useState(100);
   const [neuralActivity, setNeuralActivity] = useState(85);
   const { metrics, agents, isConnected } = useEmpireStore();
+  const { state, navigateToModule } = useNavigation();
+  
+  // Use navigation state for current view
+  const currentView = state.currentModule as NavigationView;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -210,7 +162,7 @@ export default function EmpireDashboard() {
 
                 {/* Quantum Modules Panel */}
                 <div className="space-y-4">
-                  {quantumModules.slice(0, 4).map((module, index) => (
+                  {getModulesByCategory('intelligence').slice(0, 3).map((module, index) => (
                     <motion.button
                       key={module.id}
                       initial={{ opacity: 0, x: 20 }}
@@ -218,10 +170,10 @@ export default function EmpireDashboard() {
                       transition={{ delay: index * 0.1 }}
                       whileHover={{ scale: 1.05, x: -5 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setCurrentView(module.id as QuantumView)}
+                      onClick={() => navigateToModule(module.id)}
                       className={`w-full p-4 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${
                         currentView === module.id
-                          ? `bg-gradient-to-r from-${module.color}/20 to-${module.color}/10 border-${module.color}/50`
+                          ? `bg-gradient-to-r from-cyan-500/20 to-purple-500/10 border-cyan-500/50`
                           : 'bg-gray-900/20 border-gray-700/30 hover:border-cyan-500/50'
                       }`}
                       style={{ backgroundColor: currentView === module.id ? `${module.color}20` : undefined }}
@@ -239,20 +191,20 @@ export default function EmpireDashboard() {
                   ))}
                 </div>
 
-                {/* Additional Quantum Modules */}
+                {/* Operations Modules */}
                 <div className="space-y-4">
-                  {quantumModules.slice(4).map((module, index) => (
+                  {getModulesByCategory('operations').slice(0, 4).map((module, index) => (
                     <motion.button
                       key={module.id}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: (index + 4) * 0.1 }}
+                      transition={{ delay: (index + 3) * 0.1 }}
                       whileHover={{ scale: 1.05, x: -5 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setCurrentView(module.id as QuantumView)}
-                      className={`w-full p-4 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${
+                      onClick={() => navigateToModule(module.id)}
+                      className={`w-full p-4 rounded-2xl border backdrop-blur-xl transition-all duration-300 relative ${
                         currentView === module.id
-                          ? `bg-gradient-to-r from-${module.color}/20 to-${module.color}/10 border-${module.color}/50`
+                          ? `bg-gradient-to-r from-orange-500/20 to-pink-500/10 border-orange-500/50`
                           : 'bg-gray-900/20 border-gray-700/30 hover:border-cyan-500/50'
                       }`}
                       style={{ backgroundColor: currentView === module.id ? `${module.color}20` : undefined }}
@@ -266,6 +218,9 @@ export default function EmpireDashboard() {
                           </p>
                         </div>
                       </div>
+                      {module.isNew && (
+                        <div className="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                      )}
                     </motion.button>
                   ))}
                 </div>
