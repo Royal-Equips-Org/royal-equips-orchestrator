@@ -678,7 +678,7 @@ def get_shopify_metrics():
                 "source": "error_occurred",
                 "lastUpdated": datetime.now().isoformat(),
                 "connected": False,
-                "error": str(e)
+                "error": "An internal error has occurred."
             }), 200
 
     except Exception as e:
