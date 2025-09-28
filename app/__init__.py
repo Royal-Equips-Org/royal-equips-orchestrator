@@ -118,6 +118,7 @@ def register_blueprints(app: Flask) -> None:
         ('app.blueprints.ai_assistant', 'assistant_bp', None),
         ('app.blueprints.workspace', 'workspace_bp', None),
         ('app.routes.edge_functions', 'edge_functions_bp', None),
+        ('app.routes.inventory', 'inventory_bp', None),
     ]
     
     registered_count = 0

@@ -52,22 +52,45 @@ export default function InventoryModule() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { isConnected } = useEmpireStore();
 
-  // Fetch real inventory data from Shopify
+  // Fetch real inventory data from the unified inventory endpoint
   const fetchInventoryData = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      // Try to fetch from Shopify products endpoint
-      const productsResponse = await fetch('/api/shopify/products');
-      let productsData = [];
-      
-      if (productsResponse.ok) {
-        const shopifyData = await productsResponse.json();
-        productsData = shopifyData.products || [];
+      // Use the new unified inventory endpoint
+      const inventoryResponse = await fetch('/api/inventory', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Check if we received JSON content-type
+      const contentType = inventoryResponse.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`Expected JSON response, got ${contentType || 'unknown content type'}`);
       }
 
-      // Fetch additional inventory data from empire system
+      let inventoryData = null;
+      let productsData = [];
+      
+      if (inventoryResponse.ok) {
+        inventoryData = await inventoryResponse.json();
+        productsData = inventoryData.products || [];
+      } else {
+        // Handle API errors gracefully
+        const errorData = await inventoryResponse.json().catch(() => ({}));
+        console.warn('Inventory API error:', errorData);
+        
+        // Use error data if available, otherwise create mock data
+        if (errorData.products) {
+          productsData = errorData.products;
+        }
+      }
+
+      // Fetch additional empire status for connection state
       const empireResponse = await fetch('/api/empire-status');
       let empireData = null;
       
@@ -75,18 +98,15 @@ export default function InventoryModule() {
         empireData = await empireResponse.json();
       }
 
-      // Process Shopify products into inventory format
+      // Process inventory data into UI format
       const processedInventory: InventoryItem[] = productsData.map((product: any) => {
-        // Calculate inventory metrics from variants
-        const totalQuantity = product.variants?.reduce((sum: number, variant: any) => 
-          sum + (variant.inventory_quantity || 0), 0) || 0;
-        
+        // Extract inventory from the normalized API response
+        const totalQuantity = product.totalInventory || 0;
         const price = product.variants?.[0]?.price || 0;
-        const compareAtPrice = product.variants?.[0]?.compare_at_price || price;
         
         // Determine status based on quantity
         let status: InventoryItem['status'] = 'in_stock';
-        const reorderPoint = 10; // Would be configurable in real system
+        const reorderPoint = 10;
         
         if (totalQuantity === 0) status = 'out_of_stock';
         else if (totalQuantity <= reorderPoint) status = 'low_stock';
@@ -147,7 +167,15 @@ export default function InventoryModule() {
       
     } catch (err) {
       console.error('Failed to fetch inventory data:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      
+      // Check if this is the HTML parsing error
+      if (err instanceof Error && err.message.includes('Unexpected token')) {
+        setError('API endpoint returned HTML instead of JSON. Please check server configuration.');
+      } else if (err instanceof Error && err.message.includes('content type')) {
+        setError('Invalid API response format. Expected JSON but received different content type.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load inventory data');
+      }
     } finally {
       setLoading(false);
     }

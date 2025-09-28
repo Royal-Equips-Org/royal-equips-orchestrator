@@ -170,7 +170,8 @@ def create_event():
 
     except Exception as e:
         logger.error(f"Failed to create event: {e}")
-        return jsonify({"error": "Failed to create event", "message": str(e)}), 500
+        # Optionally: logger.exception("Failed to create event") for full stack trace
+        return jsonify({"error": "Failed to create event"}), 500
 
 
 @main_bp.route("/jobs", methods=["GET"])
@@ -197,4 +198,33 @@ def get_jobs():
 
     except Exception as e:
         logger.error(f"Failed to get jobs: {e}")
-        return jsonify({"error": "Failed to get jobs", "message": str(e)}), 500
+        # Optionally: logger.exception("Failed to get jobs") for full stack trace
+        return jsonify({"error": "Failed to get jobs"}), 500
+
+
+@main_bp.route("/test-inventory")
+def test_inventory():
+    """Serve inventory API test page for development and debugging."""
+    try:
+        # Read the test HTML file
+        from pathlib import Path
+        test_file = Path(__file__).parent.parent.parent / "test_inventory_page.html"
+        
+        if test_file.exists():
+            with open(test_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            response = make_response(content)
+            response.headers['Content-Type'] = 'text/html; charset=utf-8'
+            return response
+        else:
+            return jsonify({
+                "error": "Test page not found",
+                "message": "test_inventory_page.html is missing"
+            }), 404
+            
+    except Exception as e:
+        logger.exception(f"Error serving test inventory page")
+        return jsonify({
+            "error": "Failed to serve test page"
+        }), 500
