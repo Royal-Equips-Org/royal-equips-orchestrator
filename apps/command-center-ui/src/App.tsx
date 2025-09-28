@@ -6,6 +6,9 @@ import { ToastContainer } from './components/ui/Toast'
 import { ToastProvider, useToastContext } from './contexts/ToastContext'
 import { NavigationProvider, useNavigation } from './contexts/NavigationContext'
 import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
+import MobileShell from './components/layout/MobileShell'
+import TopBar from './components/layout/TopBar'
+import ModuleScroller from './components/layout/ModuleScroller'
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
@@ -120,13 +123,37 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-black">
-      <NavigationBar />
-      <div className="pt-32"> {/* Account for navigation bar height */}
-        {renderCurrentModule()}
+    <MobileShell>
+      {/* Mobile-first responsive navigation */}
+      <TopBar className="lg:hidden" />
+      
+      {/* Desktop navigation (hidden on mobile) */}
+      <div className="hidden lg:block">
+        <NavigationBar />
       </div>
+      
+      {/* Module navigation scroller */}
+      <div className="
+        lg:hidden sticky top-16 z-30
+        bg-bg/80 backdrop-blur-md
+        border-b border-quantum-primary/20
+      ">
+        <ModuleScroller />
+      </div>
+      
+      {/* Main content area with responsive padding */}
+      <main className="
+        pt-16 lg:pt-32
+        min-h-screen
+      ">
+        <div className="px-4 sm:px-6 lg:px-8">
+          {renderCurrentModule()}
+        </div>
+      </main>
+      
+      {/* Toast notifications */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
-    </div>
+    </MobileShell>
   )
 }
 

@@ -15,6 +15,7 @@ export interface EmpireMetrics {
   system_uptime: number;
   daily_discoveries: number;
   profit_margin_avg: number;
+  powerLevel?: number; // Added for mobile UI display
 }
 
 export interface Agent {

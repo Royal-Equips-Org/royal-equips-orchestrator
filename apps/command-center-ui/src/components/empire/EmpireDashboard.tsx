@@ -61,11 +61,11 @@ export default function EmpireDashboard() {
             <div className="absolute inset-0 opacity-20">
               <Canvas>
                 <PerspectiveCamera makeDefault position={[0, 0, 10]} />
-                <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} />
+                <ambientLight intensity={0.3} />
+                <pointLight position={[10, 10, 10]} intensity={0.5} />
+                <directionalLight position={[-10, -10, -5]} intensity={0.2} />
                 <Stars radius={300} depth={60} count={20000} factor={7} saturation={0} fade />
                 <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
-                <Environment preset="night" />
               </Canvas>
             </div>
 
