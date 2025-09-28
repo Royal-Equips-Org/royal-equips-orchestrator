@@ -103,7 +103,7 @@ export const ModulePlaceholder: React.FC<ModulePlaceholderProps> = ({
           <span
             className={clsx(
               'animate-ping absolute inline-flex h-full w-full rounded-full opacity-75',
-              config.bgColor.replace('bg-', 'bg-').replace('/10', '/50')
+              config.bgColor.replace('/10', '/50')
             )}
           />
           <span
