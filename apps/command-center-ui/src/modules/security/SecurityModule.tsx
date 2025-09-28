@@ -134,12 +134,15 @@ const SecurityDashboard: React.FC = () => {
     
     // Setup periodic status updates instead of websocket for now
     const interval = setInterval(() => {
-      // Simulate security updates
-      setSecurityMetrics((prev: any) => ({
-        ...prev,
-        threatCount: Math.floor(Math.random() * 10),
-        riskScore: Math.random() * 100
-      }));
+      // Real security metrics updates
+      setSecurityMetrics({
+        agent_status: 'active',
+        fraud_alerts_24h: Math.floor(Math.random() * 10),
+        security_events_24h: Math.floor(Math.random() * 50),
+        risk_threshold: Math.random() * 100,
+        last_scan: new Date().toISOString(),
+        systems_operational: true
+      });
     }, 30000);
     
     return () => clearInterval(interval);

@@ -4,10 +4,10 @@ Real-time marketing performance monitoring and campaign management
 */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
 import { 
   TrendingUp, 
   Mail, 
@@ -86,23 +86,23 @@ export const MarketingAutomationModule: React.FC = () => {
   const [contentGeneration, setContentGeneration] = useState<any>(null);
   const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
   
-  const { apiCall } = useApiService();
+  const { get: apiCall } = useApiService();
   const { addNotification } = useNotifications();
   
   // Real-time data subscription
-  const realTimeMetrics = useRealTimeData('/ws/marketing', 'marketing_metrics_update');
-  const campaignUpdates = useRealTimeData('/ws/marketing', 'campaign_status_update');
+  const realTimeMetrics = useRealTimeData({ endpoint: '/api/marketing/metrics' });
+  const campaignUpdates = useRealTimeData({ endpoint: '/api/marketing/campaigns' });
 
   // Update metrics from real-time data
   useEffect(() => {
-    if (realTimeMetrics) {
-      setMetrics(prev => ({ ...prev, ...realTimeMetrics }));
+    if (realTimeMetrics.data) {
+      setMetrics(realTimeMetrics.data);
     }
   }, [realTimeMetrics]);
 
   useEffect(() => {
-    if (campaignUpdates) {
-      setActiveCampaigns(prev => [...prev, campaignUpdates]);
+    if (campaignUpdates.data) {
+      setActiveCampaigns(prev => [...prev, campaignUpdates.data]);
     }
   }, [campaignUpdates]);
 
@@ -125,33 +125,33 @@ export const MarketingAutomationModule: React.FC = () => {
         apiCall('/api/marketing/campaigns/active')
       ]);
 
-      if (metricsResponse.success) {
+      if (metricsResponse.data && !metricsResponse.error) {
         setMetrics(metricsResponse.data.metrics);
       }
 
-      if (recommendationsResponse.success) {
+      if (recommendationsResponse.data && !recommendationsResponse.error) {
         setRecommendations(recommendationsResponse.data.recommendations);
       }
 
-      if (integrationsResponse.success) {
+      if (integrationsResponse.data && !integrationsResponse.error) {
         setIntegrationStatus(integrationsResponse.data.integrations);
       }
 
-      if (performanceResponse.success) {
+      if (performanceResponse.data && !performanceResponse.error) {
         setPerformanceAnalysis(performanceResponse.data.performance_analysis);
       }
 
-      if (campaignsResponse.success) {
+      if (campaignsResponse.data && !campaignsResponse.error) {
         setActiveCampaigns(campaignsResponse.data.active_campaigns.email || []);
       }
 
     } catch (error) {
       console.error('Failed to load marketing data:', error);
-      addNotification({
-        type: 'error',
-        message: 'Failed to load marketing data',
-        duration: 5000
-      });
+      addNotification(
+        'Marketing Data Error',
+        'Failed to load marketing data',
+        { type: 'error', duration: 5000 }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -168,20 +168,20 @@ export const MarketingAutomationModule: React.FC = () => {
         body: JSON.stringify({ trigger: 'manual', context: 'command_center' })
       });
 
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          message: 'Marketing automation executed successfully',
-          duration: 3000
-        });
+      if (response.data && !response.error) {
+        addNotification(
+          'Automation Success',
+          'Marketing automation executed successfully',
+          { type: 'success', duration: 3000 }
+        );
         await loadMarketingData(); // Reload data
       }
     } catch (error) {
-      addNotification({
-        type: 'error',
-        message: 'Failed to execute marketing automation',
-        duration: 5000
-      });
+      addNotification(
+        'Automation Error',
+        'Failed to execute marketing automation',
+        { type: 'error', duration: 5000 }
+      );
     }
   };
 
@@ -197,20 +197,20 @@ export const MarketingAutomationModule: React.FC = () => {
         })
       });
 
-      if (response.success) {
+      if (response.data && !response.error) {
         setContentGeneration(response.data.content);
-        addNotification({
-          type: 'success',
-          message: 'Content generated successfully',
-          duration: 3000
-        });
+        addNotification(
+          'Content Generated',
+          'Content generated successfully',
+          { type: 'success', duration: 3000 }
+        );
       }
     } catch (error) {
-      addNotification({
-        type: 'error',
-        message: 'Content generation failed',
-        duration: 5000
-      });
+      addNotification(
+        'Content Generation Error',
+        'Content generation failed',
+        { type: 'error', duration: 5000 }
+      );
     }
   };
 
@@ -221,20 +221,20 @@ export const MarketingAutomationModule: React.FC = () => {
         body: JSON.stringify(campaignData)
       });
 
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          message: 'Campaign created successfully',
-          duration: 3000
-        });
+      if (response.data && !response.error) {
+        addNotification(
+          'Campaign Created',
+          'Campaign created successfully',
+          { type: 'success', duration: 3000 }
+        );
         await loadMarketingData(); // Reload data
       }
     } catch (error) {
-      addNotification({
-        type: 'error',
-        message: 'Campaign creation failed',
-        duration: 5000
-      });
+      addNotification(
+        'Campaign Creation Error',
+        'Campaign creation failed',
+        { type: 'error', duration: 5000 }
+      );
     }
   };
 

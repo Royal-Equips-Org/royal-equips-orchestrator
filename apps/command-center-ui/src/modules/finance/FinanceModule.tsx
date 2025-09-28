@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 import { useModuleSocket } from '../../stores/socket-store';
-import { usePerformance } from '../../hooks/use-performance';
+import { usePerformance } from '../../hooks/usePerformance';
 
 interface FinancialMetrics {
   total_revenue: number;
@@ -270,7 +270,7 @@ const FinanceModule: React.FC = () => {
             value={selectedPeriod}
             onChange={(e) => {
               setSelectedPeriod(e.target.value);
-              trackInteraction('finance_period_change', { period: e.target.value });
+              trackInteraction('finance_period_change');
             }}
             className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm"
           >
