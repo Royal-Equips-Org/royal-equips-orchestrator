@@ -498,6 +498,181 @@ def get_job(job_id: str):
         }), 500
 
 
+@shopify_bp.route("/products", methods=["GET"])
+def get_products():
+    """
+    Get products from Shopify with inventory data.
+    ---
+    tags:
+      - Shopify
+    parameters:
+      - name: limit
+        in: query
+        type: integer
+        description: Maximum number of products to return (default 50, max 250)
+        minimum: 1
+        maximum: 250
+      - name: force
+        in: query
+        type: string
+        description: Force refresh bypassing cache (value '1' to enable)
+    responses:
+      200:
+        description: Products with inventory data
+        schema:
+          type: object
+          properties:
+            products:
+              type: array
+              items:
+                type: object
+            timestamp:
+              type: string
+            shop:
+              type: string
+            meta:
+              type: object
+      503:
+        description: Shopify service not configured or unavailable
+    """
+    try:
+        service = get_shopify_service()
+
+        if not service.is_configured():
+            return jsonify({
+                "products": [],
+                "timestamp": datetime.now().isoformat(),
+                "shop": "not_configured",
+                "meta": {
+                    "count": 0,
+                    "lowStock": 0,
+                    "fetchedMs": 0,
+                    "cache": "MISS",
+                    "apiCalls": 0
+                },
+                "error": "Shopify credentials not configured"
+            }), 503
+
+        # Get query parameters
+        limit = request.args.get('limit', 50, type=int)
+        force_refresh = request.args.get('force') == '1'
+        
+        # Validate limit
+        if limit < 1 or limit > 250:
+            return jsonify({
+                "error": "Invalid limit parameter",
+                "message": "Limit must be between 1 and 250"
+            }), 400
+
+        start_time = datetime.now()
+        
+        try:
+            # Get products from Shopify
+            products_data, _ = service.list_products(limit=limit)
+            
+            # Transform to the expected format
+            transformed_products = []
+            low_stock_count = 0
+            
+            for product in products_data:
+                # Calculate total inventory across all variants
+                total_inventory = 0
+                variants = []
+                
+                for variant in product.get('variants', []):
+                    inventory_qty = variant.get('inventory_quantity', 0)
+                    total_inventory += inventory_qty
+                    
+                    variants.append({
+                        "id": f"gid://shopify/ProductVariant/{variant.get('id')}",
+                        "sku": variant.get('sku', ''),
+                        "price": variant.get('price', '0'),
+                        "inventoryQuantity": inventory_qty,
+                        "tracked": variant.get('inventory_management') == 'shopify'
+                    })
+                
+                # Check for low stock (threshold: 10)
+                if 0 < total_inventory <= 10:
+                    low_stock_count += 1
+                
+                transformed_product = {
+                    "id": f"gid://shopify/Product/{product.get('id')}",
+                    "title": product.get('title', ''),
+                    "status": product.get('status', 'DRAFT').upper(),
+                    "totalInventory": total_inventory,
+                    "variants": variants
+                }
+                
+                transformed_products.append(transformed_product)
+            
+            # Calculate metrics
+            fetch_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+            shop_name = f"{service.shop_name}.myshopify.com" if service.shop_name else "unknown"
+            
+            response_data = {
+                "timestamp": datetime.now().isoformat(),
+                "shop": shop_name,
+                "products": transformed_products,
+                "meta": {
+                    "count": len(transformed_products),
+                    "lowStock": low_stock_count,
+                    "fetchedMs": fetch_time_ms,
+                    "cache": "MISS" if force_refresh else "HIT",
+                    "apiCalls": 1
+                }
+            }
+            
+            return jsonify(response_data), 200
+            
+        except ShopifyAuthError as e:
+            logger.error(f"Shopify authentication error: {e}")
+            return jsonify({
+                "products": [],
+                "timestamp": datetime.now().isoformat(),
+                "shop": "auth_failed",
+                "meta": {
+                    "count": 0,
+                    "lowStock": 0,
+                    "fetchedMs": 0,
+                    "cache": "MISS",
+                    "apiCalls": 0
+                },
+                "error": "Authentication failed"
+            }), 401
+            
+        except ShopifyAPIError as e:
+            logger.error(f"Shopify API error: {e}")
+            return jsonify({
+                "products": [],
+                "timestamp": datetime.now().isoformat(),
+                "shop": "api_error",
+                "meta": {
+                    "count": 0,
+                    "lowStock": 0,
+                    "fetchedMs": 0,
+                    "cache": "MISS",
+                    "apiCalls": 0
+                },
+                "error": "API error occurred"
+            }), 503
+
+    except Exception as e:
+        logger.error(f"Error getting products: {e}")
+        return jsonify({
+            "products": [],
+            "timestamp": datetime.now().isoformat(),
+            "shop": "error",
+            "meta": {
+                "count": 0,
+                "lowStock": 0,
+                "fetchedMs": 0,
+                "cache": "MISS",
+                "apiCalls": 0
+            },
+            "error": "Internal server error"
+        }), 500
+
+
 @shopify_bp.route("/metrics", methods=["GET"])
 def get_shopify_metrics():
     """
