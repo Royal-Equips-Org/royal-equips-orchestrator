@@ -1,6 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
 import * as fs from 'fs/promises';
-import { join, resolve } from 'path';
 
 // Simple Shopify GraphQL client
 class ShopifyGraphQL {
