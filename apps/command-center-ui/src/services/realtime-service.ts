@@ -151,7 +151,7 @@ export class RealTimeService {
         dataType
       });
     } catch (err) {
-      logger.error('Failed to send unsubscribe message', err);
+      logger.error('Failed to send unsubscribe message', undefined, err instanceof Error ? err : new Error(String(err)));
     }
         }
       }
