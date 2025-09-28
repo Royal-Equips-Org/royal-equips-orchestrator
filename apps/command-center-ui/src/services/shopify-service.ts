@@ -105,7 +105,7 @@ export interface ShopifyApiResponse<T> {
 }
 
 export class ShopifyService {
-  private baseUrl = '/api/shopify';
+  private baseUrl = `${apiClient.getBaseUrl()}/shopify`;
 
   /**
    * Get Shopify store status and configuration
