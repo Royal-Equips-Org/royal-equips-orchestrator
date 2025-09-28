@@ -1,7 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { secrets } from '../../../core/secrets/SecretProvider';
-import { logger } from '../../../core/logging/logger';
-import { perf_tracker, mark, measure } from '../../../core/metrics/perf';
+import * as fs from 'fs/promises';
+import path from 'node:path';
 
 interface HealthDependency {
   name: string;
@@ -18,208 +17,284 @@ interface HealthResponse {
   version: string;
   uptime: number;
   dependencies?: HealthDependency[];
-  cache_stats?: any;
+  permissions?: {
+    contents: string;
+    issues: string;
+    pullRequests: string;
+    actions: string;
+  };
 }
 
 const healthRoutes: FastifyPluginAsync = async (app) => {
   const startTime = Date.now();
 
   // Basic health check - always returns 200
-  app.get("/health", async () => {
-    const uptime = Date.now() - startTime;
-    
-    const response: HealthResponse = {
-      status: 'ok',
-      service: 'Royal Equips API',
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-      uptime
-    };
-
-    logger.healthPing('/health', 'ok');
-    return response;
-  });
-
-  // Kubernetes health check endpoint - simple ok/not ok
-  app.get("/healthz", async (req, reply) => {
-    mark('healthz_check');
-    
+  app.get("/health", {
+    config: {
+      rateLimit: {
+        max: 30,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (req, reply) => {
     try {
       const uptime = Date.now() - startTime;
-      const response = { 
+      
+      const response: HealthResponse = {
         status: 'ok',
+        service: 'Royal Equips API',
+        version: process.env.RELEASE || '1.0.0-dev',
         timestamp: new Date().toISOString(),
-        uptime
+        uptime,
+        permissions: {
+          contents: 'read',
+          issues: 'write',
+          pullRequests: 'write',
+          actions: 'read'
+        }
       };
 
-      const duration = measure('healthz_check', 'healthz_check');
-      logger.healthPing('/healthz', 'ok', duration || undefined);
-      
       return reply.code(200).send(response);
     } catch (error) {
-      logger.healthPing('/healthz', 'error');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Health check failed: ${errorMsg}`);
+      
       return reply.code(503).send({
         status: 'error',
         timestamp: new Date().toISOString(),
-        error: 'Health check failed'
+        error: 'Health check failed',
+        message: errorMsg
       });
     }
   });
 
-  // Readiness check endpoint - comprehensive dependency checks
-  app.get("/readyz", async (req, reply) => {
-    mark('readyz_check');
+  // Kubernetes health check endpoint - simple liveness probe
+  app.get("/healthz", {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const uptime = Date.now() - startTime;
+      
+      // Basic liveness check - if we can respond, we're alive
+      const response = { 
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime,
+        service: 'Royal Equips API'
+      };
+      
+      app.log.debug('Liveness check passed');
+      return reply.code(200).send(response);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Liveness check failed: ${errorMsg}`);
+      
+      return reply.code(503).send({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: 'Health check failed',
+        message: errorMsg
+      });
+    }
+  });
+
+  // Readiness check endpoint - comprehensive dependency checks with filesystem access
+  app.get("/readyz", {
+    config: {
+      rateLimit: {
+        max: 10, // More restrictive due to filesystem access
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (req, reply) => {
+    const startCheck = Date.now();
     
     try {
       const dependencies: HealthDependency[] = [];
       let overallStatus: 'ok' | 'error' | 'degraded' = 'ok';
 
-      // Check secret resolution system
-      try {
-        mark('secret_check');
-        // Try to resolve a test secret (use fallback to avoid failing)
-        const testResult = await secrets.getSecretWithFallback('READINESS_TEST_SECRET', 'test-fallback');
-        const secretLatency = measure('secret_check', 'secret_check');
-        
+      // Check environment variables
+      const checkStart = Date.now();
+      const requiredEnvVars = ['NODE_ENV'];
+      const optionalEnvVars = ['PORT', 'HOST', 'RELEASE'];
+      const missingRequired = requiredEnvVars.filter(env => !process.env[env]);
+      const missingOptional = optionalEnvVars.filter(env => !process.env[env]);
+      
+      if (missingRequired.length > 0) {
         dependencies.push({
-          name: 'secrets',
-          status: 'ok',
-          latency: secretLatency || undefined,
+          name: 'environment',
+          status: 'error',
+          latency: Date.now() - checkStart,
+          error: `Missing required environment variables: ${missingRequired.join(', ')}`,
           details: { 
-            cache_size: secrets.getCacheStats().size,
-            test_resolved: testResult === 'test-fallback' ? 'fallback' : 'provider'
+            missing_required: missingRequired,
+            missing_optional: missingOptional,
+            node_env: process.env.NODE_ENV
           }
         });
-      } catch (error) {
-        dependencies.push({
-          name: 'secrets',
-          status: 'error',
-          error: error.message
-        });
         overallStatus = 'error';
-      }
-
-      // Check environment variables presence
-      const requiredEnvVars = ['NODE_ENV'];
-      const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
-      
-      if (missingEnvVars.length > 0) {
+      } else if (missingOptional.length > 0) {
         dependencies.push({
           name: 'environment',
           status: 'degraded',
-          details: { missing_vars: missingEnvVars }
+          latency: Date.now() - checkStart,
+          details: { 
+            missing_optional: missingOptional,
+            node_env: process.env.NODE_ENV,
+            port: process.env.PORT || 'default',
+            release: process.env.RELEASE || 'dev'
+          }
         });
         if (overallStatus === 'ok') overallStatus = 'degraded';
       } else {
         dependencies.push({
           name: 'environment',
           status: 'ok',
-          details: { node_env: process.env.NODE_ENV }
+          latency: Date.now() - checkStart,
+          details: { 
+            node_env: process.env.NODE_ENV,
+            port: process.env.PORT || 'default',
+            release: process.env.RELEASE || 'dev'
+          }
         });
       }
 
-      // Check memory usage
+      // Check memory usage and system resources
+      const memCheckStart = Date.now();
       const memUsage = process.memoryUsage();
       const memUsageMB = {
         rss: Math.round(memUsage.rss / 1024 / 1024),
         heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
         heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
-        external: Math.round(memUsage.external / 1024 / 1024)
+        external: Math.round(memUsage.external / 1024 / 1024),
+        arrayBuffers: Math.round(memUsage.arrayBuffers / 1024 / 1024)
       };
 
-      // Flag if heap usage is over 500MB
-      const memoryStatus = memUsageMB.heapUsed > 500 ? 'degraded' : 'ok';
-      if (memoryStatus === 'degraded' && overallStatus === 'ok') {
+      // Memory thresholds
+      const memoryStatus = memUsageMB.heapUsed > 1000 ? 'error' : 
+                           memUsageMB.heapUsed > 500 ? 'degraded' : 'ok';
+      
+      if (memoryStatus === 'error') {
+        overallStatus = 'error';
+      } else if (memoryStatus === 'degraded' && overallStatus === 'ok') {
         overallStatus = 'degraded';
       }
 
       dependencies.push({
         name: 'memory',
         status: memoryStatus,
-        details: memUsageMB
-      });
-
-      // Performance metrics
-      const perfSummary = perf_tracker.getSummary();
-      dependencies.push({
-        name: 'performance',
-        status: 'ok',
+        latency: Date.now() - memCheckStart,
         details: {
-          total_measures: perfSummary.total_measures,
-          avg_duration: Math.round(perfSummary.avg_duration || 0)
+          ...memUsageMB,
+          heap_used_percentage: Math.round((memUsageMB.heapUsed / memUsageMB.heapTotal) * 100)
         }
       });
 
-      const duration = measure('readyz_check', 'readyz_check');
+      // Check file system access
+      const fsCheckStart = Date.now();
+      try {
+        const webRoot = process.env.NODE_ENV === 'production' 
+          ? path.join(process.cwd(), "dist-web")
+          : path.join(process.cwd(), process.env.WEB_DIST_PATH || "../command-center-ui/dist");
+        
+        await fs.access(webRoot);
+        const stats = await fs.stat(webRoot);
+        
+        dependencies.push({
+          name: 'filesystem',
+          status: 'ok',
+          latency: Date.now() - fsCheckStart,
+          details: {
+            web_root: webRoot,
+            web_root_exists: true,
+            is_directory: stats.isDirectory()
+          }
+        });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown filesystem error';
+        dependencies.push({
+          name: 'filesystem',
+          status: 'error',
+          latency: Date.now() - fsCheckStart,
+          error: `Cannot access web root: ${errorMsg}`,
+          details: {
+            web_root: process.env.NODE_ENV === 'production' 
+              ? path.join(process.cwd(), "dist-web")
+              : path.join(process.cwd(), process.env.WEB_DIST_PATH || "../command-center-ui/dist"),
+            web_root_exists: false
+          }
+        });
+        overallStatus = 'error';
+      }
+
+      // Check Node.js version compatibility
+      const nodeCheckStart = Date.now();
+      const nodeVersion = process.version;
+      const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
+      
+      const nodeStatus = majorVersion >= 18 ? 'ok' : 'degraded';
+      if (nodeStatus === 'degraded' && overallStatus === 'ok') {
+        overallStatus = 'degraded';
+      }
+
+      dependencies.push({
+        name: 'runtime',
+        status: nodeStatus,
+        latency: Date.now() - nodeCheckStart,
+        details: {
+          node_version: nodeVersion,
+          platform: process.platform,
+          arch: process.arch,
+          uptime_seconds: Math.floor(process.uptime()),
+          pid: process.pid
+        }
+      });
+
+      const totalLatency = Date.now() - startCheck;
       const uptime = Date.now() - startTime;
 
       const response: HealthResponse = {
         status: overallStatus,
         service: 'Royal Equips API',
-        version: '1.0.0',
+        version: process.env.RELEASE || '1.0.0-dev',
         timestamp: new Date().toISOString(),
         uptime,
         dependencies,
-        cache_stats: secrets.getCacheStats()
+        permissions: {
+          contents: 'read',
+          issues: 'write', 
+          pullRequests: 'write',
+          actions: 'read'
+        }
       };
 
-      const httpStatus = overallStatus === 'ok' ? 200 : overallStatus === 'degraded' ? 200 : 503;
+      const httpStatus = overallStatus === 'ok' ? 200 : 
+                         overallStatus === 'degraded' ? 200 : 503;
       
-      logger.healthPing('/readyz', overallStatus, duration || undefined);
+      app.log.info(`Readiness check completed: ${overallStatus} (${totalLatency}ms)`);
       return reply.code(httpStatus).send(response);
 
     } catch (error) {
-      const duration = measure('readyz_check', 'readyz_check');
-      logger.error('readyz_check_failed', { 
-        error: error.message,
-        stack: error.stack,
-        duration 
-      });
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      const totalLatency = Date.now() - startCheck;
+      
+      app.log.error(`Readiness check failed after ${totalLatency}ms: ${errorMsg}`);
       
       return reply.code(503).send({
         status: 'error',
         service: 'Royal Equips API',
+        version: process.env.RELEASE || '1.0.0-dev',
         timestamp: new Date().toISOString(),
         error: 'Readiness check failed',
-        message: error.message
+        message: errorMsg,
+        uptime: Date.now() - startTime,
+        check_duration_ms: totalLatency
       });
-    }
-  });
-        return reply.code(503).send({ 
-          ok: false, 
-          dependencies: { db: 'error', redis: 'error' },
-          timestamp: new Date().toISOString() 
-        });
-      }
-    } catch (error) {
-      return reply.code(503).send({ 
-        ok: false, 
-        error: 'Health check failed',
-        timestamp: new Date().toISOString() 
-      });
-    }
-  });
-
-  // Metrics endpoint for monitoring
-  app.get("/metrics", async (req, reply) => {
-    try {
-      const perfSummary = perf_tracker.getSummary();
-      const cacheStats = secrets.getCacheStats();
-      const uptime = Date.now() - startTime;
-      
-      const metrics = {
-        uptime_seconds: Math.floor(uptime / 1000),
-        memory_usage: process.memoryUsage(),
-        performance: perfSummary,
-        cache: cacheStats,
-        timestamp: new Date().toISOString()
-      };
-
-      logger.info('metrics_request', { metrics_count: Object.keys(metrics).length });
-      return reply.code(200).send(metrics);
-    } catch (error) {
-      logger.error('metrics_error', { error: error.message });
-      return reply.code(500).send({ error: 'Failed to collect metrics' });
     }
   });
 };

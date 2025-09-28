@@ -1,28 +1,57 @@
 import Fastify from "fastify";
-import staticPlugin from "@fastify/static";
+import fastifyStatic from "@fastify/static";
+import rateLimit from "@fastify/rate-limit";
 import path from "node:path";
 import api from "./v1/index.js";
 
 const app = Fastify({ logger: true });
 
+// Global rate limiting
+await app.register(rateLimit, {
+  max: 100, // requests per window
+  timeWindow: '1 minute',
+  global: false, // Apply to all routes unless overridden
+});
+
 // API routes
 app.register(api, { prefix: "/v1" });
 
-// Serve built UI from ../web/dist (dev) or ./dist-web (production)
+// Serve built UI from ../command-center-ui/dist (dev) or ./dist-web (production)
 const webRoot = process.env.NODE_ENV === 'production' 
-  ? path.join(process.cwd(), "./dist-web")
-  : path.join(process.cwd(), process.env.WEB_DIST_PATH || "../web/dist");
-app.register(staticPlugin, { root: webRoot, prefix: "/" });
+  ? path.join(process.cwd(), "dist-web")
+  : path.join(process.cwd(), process.env.WEB_DIST_PATH || "../command-center-ui/dist");
+
+app.register(fastifyStatic, {
+  root: webRoot,
+  prefix: "/",
+  index: ["index.html"],
+  setHeaders(res, path) {
+    if (path.endsWith("index.html")) {
+      res.setHeader("Cache-Control", "no-store");
+    } else {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    }
+  }
+});
 
 // SPA fallback for HTML requests
 app.setNotFoundHandler((req, reply) => {
-  const wantsHtml = req.method === "GET" && (req.headers.accept || "").includes("text/html");
-  if (wantsHtml) return reply.sendFile("index.html");
+  const accept = req.headers.accept || "";
+  if (req.method === "GET" && accept.includes("text/html")) {
+    return reply.sendFile("index.html");
+  }
   reply.code(404).send({ error: "not_found" });
 });
 
-// Version endpoint
-app.get("/version", (_req, r) => r.send({ release: process.env.RELEASE || "dev" }));
+// Version endpoint with basic rate limiting
+app.get("/version", {
+  config: {
+    rateLimit: {
+      max: 50,
+      timeWindow: '1 minute'
+    }
+  }
+}, (_req, r) => r.send({ release: process.env.RELEASE || "dev" }));
 
 // Start server
 const start = async () => {
