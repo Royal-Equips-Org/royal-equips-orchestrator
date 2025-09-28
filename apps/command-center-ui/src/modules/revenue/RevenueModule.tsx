@@ -276,22 +276,32 @@ export default function RevenueModule() {
         <h2 className="text-xl font-bold text-green-400 mb-6">Revenue Operations</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { label: 'Generate Report', desc: 'Comprehensive revenue analysis', icon: BarChart3, color: 'green' },
-            { label: 'Forecast Model', desc: 'Update predictive models', icon: TrendingUp, color: 'blue' },
-            { label: 'Optimization', desc: 'Revenue enhancement opportunities', icon: Target, color: 'purple' }
-          ].map((action, index) => (
-            <motion.button
-              key={action.label}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-4 bg-black/40 rounded-lg border border-gray-700/50 text-left hover:border-green-400/50 transition-colors group"
-            >
-              <action.icon className={`w-6 h-6 text-${action.color}-400 mb-3 group-hover:scale-110 transition-transform`} />
-              <div className="text-sm font-medium text-white">{action.label}</div>
-              <div className="text-xs text-gray-400">{action.desc}</div>
-            </motion.button>
-          ))}
+          {/*
+            Use a mapping object to ensure Tailwind class names are statically analyzable.
+          */}
+          {(() => {
+            const colorClassMap: Record<string, string> = {
+              green: "text-green-400",
+              blue: "text-blue-400",
+              purple: "text-purple-400",
+            };
+            return [
+              { label: 'Generate Report', desc: 'Comprehensive revenue analysis', icon: BarChart3, color: 'green' },
+              { label: 'Forecast Model', desc: 'Update predictive models', icon: TrendingUp, color: 'blue' },
+              { label: 'Optimization', desc: 'Revenue enhancement opportunities', icon: Target, color: 'purple' }
+            ].map((action, index) => (
+              <motion.button
+                key={action.label}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-4 bg-black/40 rounded-lg border border-gray-700/50 text-left hover:border-green-400/50 transition-colors group"
+              >
+                <action.icon className={`w-6 h-6 ${colorClassMap[action.color]} mb-3 group-hover:scale-110 transition-transform`} />
+                <div className="text-sm font-medium text-white">{action.label}</div>
+                <div className="text-xs text-gray-400">{action.desc}</div>
+              </motion.button>
+            ));
+          })()}
         </div>
       </motion.div>
     </div>
