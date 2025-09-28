@@ -145,10 +145,14 @@ export class RealTimeService {
         listeners.delete(callback);
         if (listeners.size === 0) {
     // Send unsubscribe message to server
-    this.sendMessage({
-      type: 'unsubscribe',
-      dataType
-    });
+    try {
+      this.sendMessage({
+        type: 'unsubscribe',
+        dataType
+      });
+    } catch (err) {
+      logger.error('Failed to send unsubscribe message', err);
+    }
         }
       }
     };
