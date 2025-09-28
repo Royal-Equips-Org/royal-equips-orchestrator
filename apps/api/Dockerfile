@@ -27,7 +27,7 @@ ENV NODE_ENV=production \
 
 # Health check for container orchestration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:${PORT}/v1/healthz || exit 1
+  CMD sh -c 'curl -f http://localhost:${PORT}/v1/healthz || exit 1'
 
 WORKDIR /app/apps/api
 EXPOSE ${PORT}
