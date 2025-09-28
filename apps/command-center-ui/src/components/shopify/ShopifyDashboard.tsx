@@ -81,6 +81,7 @@ export default function ShopifyDashboard() {
             onClick={fetchShopifyMetrics}
             className="px-4 py-2 bg-hologram/20 border border-hologram rounded-lg text-hologram hover:bg-hologram/30 transition-colors"
           >
+            <RefreshCw className="w-4 h-4 mr-2 inline" />
             Retry Connection
           </motion.button>
         </div>
