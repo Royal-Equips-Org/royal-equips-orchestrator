@@ -1,4 +1,6 @@
 name: Unified Origin Smoke Tests
+permissions:
+  contents: read
 
 on:
   push:
