@@ -32,6 +32,9 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
       
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
       - name: Enable Corepack
         run: corepack enable
       
@@ -45,13 +48,13 @@ jobs:
       
       - name: Build Web UI
         run: |
-          cd apps/web
+          cd apps/command-center-ui
           pnpm build
       
       - name: Start unified server in background
         run: |
           cd apps/api
-          NODE_ENV=development WEB_DIST_PATH="../web/dist" PORT=10000 node dist/server.js &
+          NODE_ENV=development WEB_DIST_PATH="../command-center-ui/dist" PORT=10000 node dist/server.js &
           echo $! > server.pid
           sleep 5
       

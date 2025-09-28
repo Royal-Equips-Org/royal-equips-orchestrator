@@ -1,4 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
+import * as fs from 'fs/promises';
+import path from 'node:path';
 
 interface HealthDependency {
   name: string;
@@ -15,116 +17,262 @@ interface HealthResponse {
   version: string;
   uptime: number;
   dependencies?: HealthDependency[];
+  permissions?: {
+    contents: string;
+    issues: string;
+    pullRequests: string;
+    actions: string;
+  };
 }
 
 const healthRoutes: FastifyPluginAsync = async (app) => {
   const startTime = Date.now();
 
   // Basic health check - always returns 200
-  app.get("/health", async () => {
-    const uptime = Date.now() - startTime;
-    
-    const response: HealthResponse = {
-      status: 'ok',
-      service: 'Royal Equips API',
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-      uptime
-    };
-
-    return response;
-  });
-
-  // Kubernetes health check endpoint - simple ok/not ok
-  app.get("/healthz", async (req, reply) => {
+  app.get("/health", async (req, reply) => {
     try {
       const uptime = Date.now() - startTime;
-      const response = { 
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime
-      };
       
+      const response: HealthResponse = {
+        status: 'ok',
+        service: 'Royal Equips API',
+        version: process.env.RELEASE || '1.0.0-dev',
+        timestamp: new Date().toISOString(),
+        uptime,
+        permissions: {
+          contents: 'read',
+          issues: 'write',
+          pullRequests: 'write',
+          actions: 'read'
+        }
+      };
+
       return reply.code(200).send(response);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Health check failed: ${errorMsg}`);
+      
       return reply.code(503).send({
         status: 'error',
         timestamp: new Date().toISOString(),
-        error: 'Health check failed'
+        error: 'Health check failed',
+        message: errorMsg
+      });
+    }
+  });
+
+  // Kubernetes health check endpoint - simple liveness probe
+  app.get("/healthz", async (req, reply) => {
+    try {
+      const uptime = Date.now() - startTime;
+      
+      // Basic liveness check - if we can respond, we're alive
+      const response = { 
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime,
+        service: 'Royal Equips API'
+      };
+      
+      app.log.debug('Liveness check passed');
+      return reply.code(200).send(response);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Liveness check failed: ${errorMsg}`);
+      
+      return reply.code(503).send({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: 'Health check failed',
+        message: errorMsg
       });
     }
   });
 
   // Readiness check endpoint - comprehensive dependency checks
   app.get("/readyz", async (req, reply) => {
+    const startCheck = Date.now();
+    
     try {
       const dependencies: HealthDependency[] = [];
       let overallStatus: 'ok' | 'error' | 'degraded' = 'ok';
 
-      // Check environment variables presence
+      // Check environment variables
+      const checkStart = Date.now();
       const requiredEnvVars = ['NODE_ENV'];
-      const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
+      const optionalEnvVars = ['PORT', 'HOST', 'RELEASE'];
+      const missingRequired = requiredEnvVars.filter(env => !process.env[env]);
+      const missingOptional = optionalEnvVars.filter(env => !process.env[env]);
       
-      if (missingEnvVars.length > 0) {
+      if (missingRequired.length > 0) {
+        dependencies.push({
+          name: 'environment',
+          status: 'error',
+          latency: Date.now() - checkStart,
+          error: `Missing required environment variables: ${missingRequired.join(', ')}`,
+          details: { 
+            missing_required: missingRequired,
+            missing_optional: missingOptional,
+            node_env: process.env.NODE_ENV
+          }
+        });
+        overallStatus = 'error';
+      } else if (missingOptional.length > 0) {
         dependencies.push({
           name: 'environment',
           status: 'degraded',
-          details: { missing_vars: missingEnvVars }
+          latency: Date.now() - checkStart,
+          details: { 
+            missing_optional: missingOptional,
+            node_env: process.env.NODE_ENV,
+            port: process.env.PORT || 'default',
+            release: process.env.RELEASE || 'dev'
+          }
         });
         if (overallStatus === 'ok') overallStatus = 'degraded';
       } else {
         dependencies.push({
           name: 'environment',
           status: 'ok',
-          details: { node_env: process.env.NODE_ENV }
+          latency: Date.now() - checkStart,
+          details: { 
+            node_env: process.env.NODE_ENV,
+            port: process.env.PORT || 'default',
+            release: process.env.RELEASE || 'dev'
+          }
         });
       }
 
-      // Check memory usage
+      // Check memory usage and system resources
+      const memCheckStart = Date.now();
       const memUsage = process.memoryUsage();
       const memUsageMB = {
         rss: Math.round(memUsage.rss / 1024 / 1024),
         heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
         heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
-        external: Math.round(memUsage.external / 1024 / 1024)
+        external: Math.round(memUsage.external / 1024 / 1024),
+        arrayBuffers: Math.round(memUsage.arrayBuffers / 1024 / 1024)
       };
 
-      // Flag if heap usage is over 500MB
-      const memoryStatus = memUsageMB.heapUsed > 500 ? 'degraded' : 'ok';
-      if (memoryStatus === 'degraded' && overallStatus === 'ok') {
+      // Memory thresholds
+      const memoryStatus = memUsageMB.heapUsed > 1000 ? 'error' : 
+                           memUsageMB.heapUsed > 500 ? 'degraded' : 'ok';
+      
+      if (memoryStatus === 'error') {
+        overallStatus = 'error';
+      } else if (memoryStatus === 'degraded' && overallStatus === 'ok') {
         overallStatus = 'degraded';
       }
 
       dependencies.push({
         name: 'memory',
         status: memoryStatus,
-        details: memUsageMB
+        latency: Date.now() - memCheckStart,
+        details: {
+          ...memUsageMB,
+          heap_used_percentage: Math.round((memUsageMB.heapUsed / memUsageMB.heapTotal) * 100)
+        }
       });
 
+      // Check file system access
+      const fsCheckStart = Date.now();
+      try {
+        const webRoot = process.env.NODE_ENV === 'production' 
+          ? path.join(process.cwd(), "dist-web")
+          : path.join(process.cwd(), process.env.WEB_DIST_PATH || "../command-center-ui/dist");
+        
+        await fs.access(webRoot);
+        const stats = await fs.stat(webRoot);
+        
+        dependencies.push({
+          name: 'filesystem',
+          status: 'ok',
+          latency: Date.now() - fsCheckStart,
+          details: {
+            web_root: webRoot,
+            web_root_exists: true,
+            is_directory: stats.isDirectory()
+          }
+        });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown filesystem error';
+        dependencies.push({
+          name: 'filesystem',
+          status: 'error',
+          latency: Date.now() - fsCheckStart,
+          error: `Cannot access web root: ${errorMsg}`,
+          details: {
+            web_root: process.env.NODE_ENV === 'production' 
+              ? path.join(process.cwd(), "dist-web")
+              : path.join(process.cwd(), process.env.WEB_DIST_PATH || "../command-center-ui/dist"),
+            web_root_exists: false
+          }
+        });
+        overallStatus = 'error';
+      }
+
+      // Check Node.js version compatibility
+      const nodeCheckStart = Date.now();
+      const nodeVersion = process.version;
+      const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
+      
+      const nodeStatus = majorVersion >= 18 ? 'ok' : 'degraded';
+      if (nodeStatus === 'degraded' && overallStatus === 'ok') {
+        overallStatus = 'degraded';
+      }
+
+      dependencies.push({
+        name: 'runtime',
+        status: nodeStatus,
+        latency: Date.now() - nodeCheckStart,
+        details: {
+          node_version: nodeVersion,
+          platform: process.platform,
+          arch: process.arch,
+          uptime_seconds: Math.floor(process.uptime()),
+          pid: process.pid
+        }
+      });
+
+      const totalLatency = Date.now() - startCheck;
       const uptime = Date.now() - startTime;
 
       const response: HealthResponse = {
         status: overallStatus,
         service: 'Royal Equips API',
-        version: '1.0.0',
+        version: process.env.RELEASE || '1.0.0-dev',
         timestamp: new Date().toISOString(),
         uptime,
-        dependencies
+        dependencies,
+        permissions: {
+          contents: 'read',
+          issues: 'write', 
+          pullRequests: 'write',
+          actions: 'read'
+        }
       };
 
-      const httpStatus = overallStatus === 'ok' ? 200 : overallStatus === 'degraded' ? 200 : 503;
+      const httpStatus = overallStatus === 'ok' ? 200 : 
+                         overallStatus === 'degraded' ? 200 : 503;
       
+      app.log.info(`Readiness check completed: ${overallStatus} (${totalLatency}ms)`);
       return reply.code(httpStatus).send(response);
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      const totalLatency = Date.now() - startCheck;
+      
+      app.log.error(`Readiness check failed after ${totalLatency}ms: ${errorMsg}`);
       
       return reply.code(503).send({
         status: 'error',
         service: 'Royal Equips API',
+        version: process.env.RELEASE || '1.0.0-dev',
         timestamp: new Date().toISOString(),
         error: 'Readiness check failed',
-        message: errorMsg
+        message: errorMsg,
+        uptime: Date.now() - startTime,
+        check_duration_ms: totalLatency
       });
     }
   });
