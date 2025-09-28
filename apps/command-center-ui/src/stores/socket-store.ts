@@ -139,5 +139,15 @@ export const useSocketStore = create<SocketStore>()(
   }))
 );
 
-// Additional export for module compatibility
-export const useModuleSocket = useSocketStore;
+// Additional export for module compatibility - returns the socket instance
+export const useModuleSocket = (module?: string) => {
+  const { socket, isConnected } = useSocketStore();
+  
+  // Return a socket-like interface for module-specific usage
+  return socket && isConnected ? socket : {
+    on: () => {},
+    off: () => {},
+    emit: () => {},
+    connected: false
+  };
+};
