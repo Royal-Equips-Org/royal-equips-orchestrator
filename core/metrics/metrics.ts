@@ -209,8 +209,17 @@ export function trackApiCall<T>(
 if (typeof window !== 'undefined') {
   // Track initial page load
   window.addEventListener('load', () => {
-    const loadTime = performance.timing?.loadEventEnd - performance.timing?.navigationStart;
-    if (loadTime) {
+    let loadTime: number | undefined;
+    // Use Navigation Timing Level 2 API if available
+    const navEntries = performance.getEntriesByType?.('navigation');
+    if (navEntries && navEntries.length > 0) {
+      const navEntry = navEntries[0] as PerformanceNavigationTiming;
+      loadTime = navEntry.loadEventEnd - navEntry.startTime;
+    } else if (performance.timing) {
+      // Fallback to deprecated API
+      loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+    }
+    if (loadTime && loadTime > 0) {
       metrics.recordPageLoad(window.location.pathname, loadTime);
     }
   });
