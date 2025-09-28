@@ -167,16 +167,10 @@ export default {
     },
   },
   plugins: [
+    require('@tailwindcss/scrollbar-hide'),
     // Custom utilities for scroll-snap and touch optimization
     function({ addUtilities }) {
       addUtilities({
-        '.scrollbar-none': {
-          '-ms-overflow-style': 'none',
-          'scrollbar-width': 'none',
-          '&::-webkit-scrollbar': {
-            display: 'none',
-          },
-        },
         '.scroll-snap-x': {
           'scroll-snap-type': 'x mandatory',
         },
