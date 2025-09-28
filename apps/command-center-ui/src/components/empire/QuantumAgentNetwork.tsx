@@ -5,8 +5,15 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text3D, Sphere } from '@react-three/drei';
 import { Brain, Cpu, Network, Zap, Activity, Target } from 'lucide-react';
 import { useEmpireStore } from '@/store/empire-store';
+import { Agent } from '@/types/empire';
 
-function QuantumAgentNode({ position, agent, onClick }: any) {
+interface QuantumAgentNodeProps {
+  position: [number, number, number];
+  agent: Agent;
+  onClick: () => void;
+}
+
+function QuantumAgentNode({ position, agent, onClick }: QuantumAgentNodeProps) {
   return (
     <group position={position} onClick={onClick}>
       <Sphere args={[0.5]} position={[0, 0, 0]}>
@@ -31,7 +38,7 @@ function QuantumAgentNode({ position, agent, onClick }: any) {
 
 export default function QuantumAgentNetwork() {
   const { agents } = useEmpireStore();
-  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [neuralActivity, setNeuralActivity] = useState(92);
 
   useEffect(() => {
@@ -135,7 +142,7 @@ export default function QuantumAgentNetwork() {
                   <span className="font-bold text-white text-sm">{agent.name}</span>
                   <div className={`w-3 h-3 rounded-full ${
                     agent.status === 'active' ? 'bg-green-400 animate-pulse' : 
-                    agent.status === 'idle' ? 'bg-yellow-400' : 'bg-red-400'
+                    agent.status === 'inactive' ? 'bg-yellow-400' : 'bg-red-400'
                   }`} />
                 </div>
                 <div className="flex items-center justify-between text-xs">
