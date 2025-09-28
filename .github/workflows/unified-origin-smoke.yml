@@ -65,9 +65,10 @@ jobs:
           echo "✅ UI served with no-store cache header"
           
           # Check that index.html contains the expected title
-          curl -fsS http://localhost:10000/ | grep -q "<title>ROYAL EQUIPS EMPIRE COMMAND CENTER</title>" || \
-            curl -fsS http://localhost:10000/ | grep -q "Royal Equips" || \
-            curl -fsS http://localhost:10000/ | grep -q "Command Center"
+          HTML_CONTENT=$(curl -fsS http://localhost:10000/)
+          echo "$HTML_CONTENT" | grep -q "<title>ROYAL EQUIPS EMPIRE COMMAND CENTER</title>" || \
+            echo "$HTML_CONTENT" | grep -q "Royal Equips" || \
+            echo "$HTML_CONTENT" | grep -q "Command Center"
           echo "✅ UI HTML content served correctly"
           
           echo "Testing API endpoints..."
