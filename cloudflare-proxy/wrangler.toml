@@ -1,18 +1,24 @@
 name = "royal-equips-proxy"
 main = "worker.js"
+compatibility_date = "2024-08-17"
 
-# Update these with your actual domain and backend URL
+# Production Cloudflare deployment configuration for Royal Equips
 routes = [
-  { pattern = "your-domain.com/*", zone_name = "your-domain.com" }
+  { pattern = "royalequips.com/*", zone_name = "royalequips.com" },
+  { pattern = "*.royalequips.com/*", zone_name = "royalequips.com" }
 ]
 
 [vars]
-UPSTREAM = "https://api.your-backend.example"
+UPSTREAM = "https://royal-equips-orchestrator.onrender.com"
 
 # For development
 [env.dev]
 vars = { UPSTREAM = "http://localhost:10000" }
 
+# For staging
+[env.staging]
+vars = { UPSTREAM = "https://royal-equips-orchestrator-staging.onrender.com" }
+
 # For production  
 [env.production]
-vars = { UPSTREAM = "https://your-production-backend.render.com" }
+vars = { UPSTREAM = "https://royal-equips-orchestrator.onrender.com" }
