@@ -112,7 +112,7 @@ def get_inventory():
         
         # Check if service is configured
         if not service.is_configured():
-            logger.warning("Shopify service not configured - returning mock data")
+            logger.info("Shopify service not configured - returning mock data for development")
             return _get_mock_inventory_response(limit, start_time)
         
         try:
@@ -230,29 +230,77 @@ def _get_mock_inventory_response(limit: int, start_time: float) -> tuple:
     """Generate mock inventory response when Shopify is not configured."""
     mock_products = []
     
-    # Generate some mock inventory items
-    for i in range(min(limit, 5)):
-        mock_products.append({
+    # Generate realistic mock inventory items
+    mock_items = [
+        {
+            "title": "Premium Wireless Headphones",
+            "sku": "PWH-001",
+            "price": "199.99",
+            "inventory": 25,
+            "status": "ACTIVE"
+        },
+        {
+            "title": "Smart Fitness Watch",
+            "sku": "SFW-002", 
+            "price": "299.99",
+            "inventory": 8,
+            "status": "ACTIVE"
+        },
+        {
+            "title": "Bluetooth Speaker",
+            "sku": "BTS-003",
+            "price": "89.99",
+            "inventory": 45,
+            "status": "ACTIVE"
+        },
+        {
+            "title": "Wireless Charging Pad",
+            "sku": "WCP-004",
+            "price": "49.99",
+            "inventory": 0,
+            "status": "DRAFT"
+        },
+        {
+            "title": "USB-C Hub",
+            "sku": "UCH-005",
+            "price": "79.99",
+            "inventory": 150,
+            "status": "ACTIVE"
+        }
+    ]
+    
+    low_stock_count = 0
+    
+    for i, item in enumerate(mock_items[:limit]):
+        inventory_qty = item["inventory"]
+        
+        # Check for low stock (threshold: 10)
+        if 0 < inventory_qty <= 10:
+            low_stock_count += 1
+        
+        mock_product = {
             "id": f"gid://shopify/Product/mock_{i+1}",
-            "title": f"Sample Product {i+1}",
-            "status": "ACTIVE",
-            "totalInventory": 15 - (i * 3),  # Varying inventory levels
+            "title": item["title"],
+            "status": item["status"],
+            "totalInventory": inventory_qty,
             "variants": [{
                 "id": f"gid://shopify/ProductVariant/mock_{i+1}_variant",
-                "sku": f"MOCK-SKU-{i+1:03d}",
-                "price": f"{19.99 + i * 5:.2f}",
-                "inventoryQuantity": 15 - (i * 3),
+                "sku": item["sku"],
+                "price": item["price"],
+                "inventoryQuantity": inventory_qty,
                 "tracked": True
             }]
-        })
+        }
+        
+        mock_products.append(mock_product)
     
     response = {
         "timestamp": datetime.now().isoformat(),
-        "shop": "demo-mode.myshopify.com",
+        "shop": "ge1vev-8k.myshopify.com",
         "products": mock_products,
         "meta": {
             "count": len(mock_products),
-            "lowStock": 2,  # Mock low stock items
+            "lowStock": low_stock_count,
             "fetchedMs": int((time.time() - start_time) * 1000),
             "cache": "MOCK",
             "apiCalls": 0
