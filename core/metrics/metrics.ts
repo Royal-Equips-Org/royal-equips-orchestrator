@@ -199,7 +199,14 @@ export function trackApiCall<T>(
     .catch(error => {
       const duration = Date.now() - startTime;
       mark(`api_error_${endpoint}`);
-      const status = error.status || error.code || 500;
+      let status = 500;
+      if (error && typeof error === 'object') {
+        if ('status' in error && typeof (error as any).status === 'number') {
+          status = (error as any).status;
+        } else if ('code' in error && typeof (error as any).code === 'number') {
+          status = (error as any).code;
+        }
+      }
       metrics.recordApiCall(endpoint, duration, status);
       throw error;
     });
