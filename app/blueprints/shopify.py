@@ -685,7 +685,7 @@ def get_shopify_metrics():
         logger.error(f"Shopify metrics endpoint failed: {e}")
         return jsonify({
             "error": "Failed to get metrics",
-            "message": str(e),
+            "message": "An internal error has occurred.",
             "timestamp": datetime.now().isoformat()
         }), 500
 
