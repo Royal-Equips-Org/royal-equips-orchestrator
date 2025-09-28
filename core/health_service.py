@@ -15,6 +15,8 @@ import psutil
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict
 from datetime import datetime
+import logging
+import traceback
 
 try:
     from fastapi import FastAPI, Response, status
@@ -242,9 +244,11 @@ class HealthService:
                 "timestamp": datetime.now().isoformat()
             }
         except Exception as e:
+            # Log full stack trace for internal diagnosis
+            logging.error("Exception in HealthService.get_metrics:\n%s", traceback.format_exc())
             return {
                 "error": "Failed to collect metrics",
-                "message": str(e),
+                "message": "An internal error occurred.",
                 "timestamp": datetime.now().isoformat()
             }
 
