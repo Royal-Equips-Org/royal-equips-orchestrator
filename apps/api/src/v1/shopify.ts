@@ -318,67 +318,63 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     try {
       const { cursor } = request.query as { cursor?: string };
       
-      // Try real Shopify API first
+      // Enhanced Shopify API with proper error handling
       if (process.env.SHOPIFY_ACCESS_TOKEN && process.env.SHOPIFY_ACCESS_TOKEN !== 'demo_token') {
         try {
           const orders = await shopifyClient.query(GQL_ORDERS, { cursor });
-          return reply.send({ orders, success: true, source: 'live_shopify' });
+          
+          // Process and enhance the real data
+          const processedOrders = {
+            ...orders,
+            success: true,
+            source: 'live_shopify',
+            analytics: (() => {
+              const today = new Date();
+              const metrics = (orders.orders?.edges ?? []).reduce(
+                (acc, edge: any) => {
+                  acc.total_orders += 1;
+                  const createdAt = new Date(edge.node.createdAt);
+                  if (createdAt.toDateString() === today.toDateString()) {
+                    acc.today_orders += 1;
+                  }
+                  acc.total_revenue += parseFloat(edge.node.totalPrice || '0');
+                  if (edge.node.fulfillmentStatus === 'UNFULFILLED') {
+                    acc.pending_orders += 1;
+                  }
+                  return acc;
+                },
+                { total_orders: 0, today_orders: 0, total_revenue: 0, pending_orders: 0 }
+              );
+              return metrics;
+            })()
+          };
+
+          return reply.send(processedOrders);
         } catch (error) {
-          app.log.warn('Live Shopify orders API failed');
+          app.log.warn('Live Shopify orders API failed:', error);
+          // Return structured error instead of mock data
+          return reply.code(503).send({
+            error: 'Shopify API connection failed',
+            message: 'Unable to connect to Shopify. Please check your API credentials.',
+            success: false,
+            source: 'api_error',
+            retry_available: true
+          });
         }
       }
 
-      // Mock orders data
-      const mockOrders = {
-        orders: {
-          edges: [
-            {
-              cursor: "order_1",
-              node: {
-                id: "gid://shopify/Order/mock_order_1",
-                name: "#1001",
-                email: "customer@example.com",
-                totalPrice: "89.97",
-                financialStatus: "PAID",
-                fulfillmentStatus: "FULFILLED",
-                createdAt: new Date(Date.now() - 86400000).toISOString(),
-                updatedAt: new Date(Date.now() - 43200000).toISOString(),
-                customer: {
-                  id: "gid://shopify/Customer/mock_1",
-                  email: "customer@example.com",
-                  firstName: "John",
-                  lastName: "Doe"
-                },
-                lineItems: {
-                  edges: [{
-                    node: {
-                      id: "gid://shopify/LineItem/mock_1",
-                      title: "Four-port Car Charger",
-                      quantity: 3,
-                      price: "29.99",
-                      product: {
-                        id: "gid://shopify/Product/mock_1",
-                        title: "Four-port Car Charger"
-                      },
-                      variant: {
-                        id: "gid://shopify/ProductVariant/mock_1",
-                        title: "Default Title"
-                      }
-                    }
-                  }]
-                }
-              }
-            }
-          ],
-          pageInfo: { hasNextPage: false }
-        }
-      };
-
-      return reply.send({ ...mockOrders, success: true, source: 'mock_data' });
+      // No valid credentials - return connection error
+      return reply.code(401).send({
+        error: 'Shopify credentials not configured',
+        message: 'Please configure SHOPIFY_ACCESS_TOKEN and SHOPIFY_GRAPHQL_ENDPOINT environment variables.',
+        success: false,
+        source: 'config_error',
+        setup_required: true
+      });
     } catch (error) {
-      app.log.error('Shopify orders fetch failed');
+      app.log.error('Shopify orders fetch failed:', error);
       return reply.code(500).send({ 
-        error: 'Failed to fetch orders', 
+        error: 'Internal server error', 
         success: false 
       });
     }
@@ -388,53 +384,63 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     try {
       const { cursor } = request.query as { cursor?: string };
       
-      // Try real Shopify API first
+      // Enhanced Shopify API with proper error handling
       if (process.env.SHOPIFY_ACCESS_TOKEN && process.env.SHOPIFY_ACCESS_TOKEN !== 'demo_token') {
         try {
           const customers = await shopifyClient.query(GQL_CUSTOMERS, { cursor });
-          return reply.send({ customers, success: true, source: 'live_shopify' });
+          
+          // Process and enhance the real customer data
+          const processedCustomers = {
+            ...customers,
+            success: true,
+            source: 'live_shopify',
+            analytics: {
+              total_customers: customers.customers?.edges?.length || 0,
+              new_customers: customers.customers?.edges?.filter((edge: any) => {
+                const createdAt = new Date(edge.node.createdAt);
+                const monthAgo = new Date();
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                return createdAt > monthAgo;
+              }).length || 0,
+              returning_customers: customers.customers?.edges?.filter((edge: any) => 
+                edge.node.ordersCount > 1
+              ).length || 0,
+              total_spent: customers.customers?.edges?.reduce((sum: number, edge: any) => 
+                sum + parseFloat(edge.node.totalSpent || '0'), 0
+              ) || 0,
+              avg_lifetime_value: customers.customers?.edges?.length > 0 
+                ? (customers.customers.edges.reduce((sum: number, edge: any) => 
+                    sum + parseFloat(edge.node.totalSpent || '0'), 0
+                  ) / customers.customers.edges.length) 
+                : 0
+            }
+          };
+
+          return reply.send(processedCustomers);
         } catch (error) {
-          app.log.warn('Live Shopify customers API failed');
+          app.log.warn('Live Shopify customers API failed:', error);
+          return reply.code(503).send({
+            error: 'Shopify API connection failed',
+            message: 'Unable to connect to Shopify customers endpoint. Please check your API credentials.',
+            success: false,
+            source: 'api_error',
+            retry_available: true
+          });
         }
       }
 
-      // Mock customers data
-      const mockCustomers = {
-        customers: {
-          edges: [
-            {
-              cursor: "customer_1",
-              node: {
-                id: "gid://shopify/Customer/mock_1",
-                email: "john.doe@example.com",
-                firstName: "John",
-                lastName: "Doe",
-                phone: "+1234567890",
-                createdAt: new Date(Date.now() - 2592000000).toISOString(),
-                updatedAt: new Date(Date.now() - 86400000).toISOString(),
-                ordersCount: 3,
-                totalSpent: "269.97",
-                addresses: [{
-                  id: "gid://shopify/MailingAddress/mock_1",
-                  address1: "123 Main St",
-                  address2: "Apt 4B",
-                  city: "New York",
-                  province: "NY",
-                  country: "United States",
-                  zip: "10001"
-                }]
-              }
-            }
-          ],
-          pageInfo: { hasNextPage: false }
-        }
-      };
-
-      return reply.send({ ...mockCustomers, success: true, source: 'mock_data' });
+      // No valid credentials
+      return reply.code(401).send({
+        error: 'Shopify credentials not configured',
+        message: 'Please configure SHOPIFY_ACCESS_TOKEN and SHOPIFY_GRAPHQL_ENDPOINT environment variables.',
+        success: false,
+        source: 'config_error',
+        setup_required: true
+      });
     } catch (error) {
-      app.log.error('Shopify customers fetch failed');
+      app.log.error('Shopify customers fetch failed:', error);
       return reply.code(500).send({ 
-        error: 'Failed to fetch customers', 
+        error: 'Internal server error', 
         success: false 
       });
     }

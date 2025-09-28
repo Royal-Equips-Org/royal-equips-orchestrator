@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request, current_app, g
 from typing import Dict, Any, Optional, List
 
+from app.services.product_research_service import get_product_research_service
 from app.services.health_service import get_health_service
 from app.services.empire_scanner import get_empire_scanner
 from app.services.empire_auto_healer import get_empire_auto_healer
@@ -316,54 +317,146 @@ def get_marketing_campaigns():
 
 
 def generate_marketing_campaigns() -> List[Dict[str, Any]]:
-    """Generate realistic marketing campaign data."""
-    return [
-        {
-            "id": "camp_001",
-            "name": "Smart Home Electronics - Q4",
-            "product_category": "Electronics",
-            "status": "active",
-            "daily_spend": 245.50,
-            "impressions": 15420,
-            "clicks": 892,
-            "conversions": 47,
-            "ctr": 5.78,
-            "conversion_rate": 5.27,
-            "roas": 3.4,
-            "start_date": (datetime.now() - timedelta(days=12)).isoformat(),
-            "end_date": (datetime.now() + timedelta(days=18)).isoformat()
-        },
-        {
-            "id": "camp_002",
-            "name": "Home Office Solutions",
-            "product_category": "Home & Office",
-            "status": "active",
-            "daily_spend": 180.25,
-            "impressions": 9870,
-            "clicks": 543,
-            "conversions": 32,
-            "ctr": 5.50,
-            "conversion_rate": 5.89,
-            "roas": 4.1,
-            "start_date": (datetime.now() - timedelta(days=8)).isoformat(),
-            "end_date": (datetime.now() + timedelta(days=22)).isoformat()
-        },
-        {
-            "id": "camp_003",
-            "name": "Sustainable Living Products",
-            "product_category": "Home & Garden",
-            "status": "paused",
-            "daily_spend": 95.75,
-            "impressions": 4230,
-            "clicks": 189,
-            "conversions": 12,
-            "ctr": 4.47,
-            "conversion_rate": 6.35,
-            "roas": 2.8,
-            "start_date": (datetime.now() - timedelta(days=15)).isoformat(),
-            "end_date": (datetime.now() + timedelta(days=15)).isoformat()
+    """Generate realistic marketing campaign data based on current product opportunities."""
+    try:
+        # Get current opportunities to base campaigns on
+        research_service = get_product_research_service()
+        opportunities = research_service.discover_opportunities(limit=5)
+        
+        campaigns = []
+        
+        # Platform performance data (realistic industry averages)
+        platform_data = {
+            'facebook': {'avg_ctr': 1.2, 'avg_cpc': 0.97, 'avg_roas': 4.2},
+            'google': {'avg_ctr': 2.4, 'avg_cpc': 1.35, 'avg_roas': 4.8},
+            'instagram': {'avg_ctr': 1.8, 'avg_cpc': 0.89, 'avg_roas': 3.9},
+            'tiktok': {'avg_ctr': 2.1, 'avg_cpc': 0.75, 'avg_roas': 3.2},
+            'pinterest': {'avg_ctr': 1.5, 'avg_cpc': 0.82, 'avg_roas': 3.6}
         }
-    ]
+        
+        for i, opp in enumerate(opportunities[:3]):  # Create campaigns for top 3 opportunities
+            # Select platform based on category and opportunity characteristics
+            if 'Gaming' in opp.category:
+                platform = 'tiktok'
+            elif 'Fashion' in opp.category or 'Lifestyle' in opp.category:
+                platform = 'instagram'
+            elif opp.search_volume > 30000:
+                platform = 'google'
+            else:
+                platform = 'facebook'
+                
+            platform_stats = platform_data[platform]
+            
+            # Calculate realistic campaign metrics based on opportunity data
+            base_budget = 1000 + (opp.confidence_score - 70) * 100  # $1000-4000 budget
+            daily_spend = base_budget / 30  # 30-day campaign
+            
+            # Calculate metrics based on confidence score and market factors
+            confidence_multiplier = opp.confidence_score / 100
+            impressions = int(base_budget * 15 * confidence_multiplier)  # 15 impressions per dollar
+            clicks = int(impressions * (platform_stats['avg_ctr'] / 100))
+            conversions = int(clicks * (confidence_multiplier * 0.05))  # 2-5% conversion rate
+            
+            current_spend = daily_spend * (7 + i * 3)  # Simulate different campaign ages
+            roas = platform_stats['avg_roas'] * confidence_multiplier
+            
+            # Determine status based on performance
+            status = 'active' if roas > 3.0 else 'paused' if roas > 2.0 else 'under_review'
+            
+            campaign = {
+                "id": f"camp_{str(i+1).zfill(3)}",
+                "name": f"{opp.title} - {platform.capitalize()} Campaign",
+                "product_category": opp.category,
+                "status": status,
+                "daily_spend": round(daily_spend, 2),
+                "spent": round(current_spend, 2),
+                "budget": round(base_budget, 2),
+                "impressions": impressions,
+                "clicks": clicks,
+                "conversions": conversions,
+                "ctr": round(platform_stats['avg_ctr'] * confidence_multiplier, 2),
+                "conversion_rate": round((conversions / clicks * 100) if clicks > 0 else 0, 2),
+                "roas": round(roas, 1),
+                "platform": platform,
+                "start_date": (datetime.now() - timedelta(days=7 + i * 3)).isoformat(),
+                "end_date": (datetime.now() + timedelta(days=23 - i * 3)).isoformat(),
+                "opportunity_id": opp.id,
+                "profit_margin": opp.profit_margin,
+                "target_audience": generate_target_audience(opp.category),
+                "creative_insights": generate_creative_insights(opp, platform)
+            }
+            campaigns.append(campaign)
+            
+        return campaigns
+        
+    except Exception as e:
+        logger.error(f"Failed to generate marketing campaigns: {e}")
+        # Return empty list if service fails
+        return []
+
+def generate_target_audience(category: str) -> Dict[str, Any]:
+    """Generate target audience data based on product category."""
+    audiences = {
+        'Electronics': {
+            'age_range': '25-45',
+            'interests': ['Technology', 'Gadgets', 'Smart Home'],
+            'demographics': 'Tech-savvy professionals',
+            'size_estimate': '2.1M'
+        },
+        'Gaming': {
+            'age_range': '18-35',
+            'interests': ['Gaming', 'Esports', 'Technology'],
+            'demographics': 'Gaming enthusiasts',
+            'size_estimate': '1.8M'
+        },
+        'Health & Fitness': {
+            'age_range': '25-50',
+            'interests': ['Fitness', 'Health', 'Wellness'],
+            'demographics': 'Health-conscious individuals',
+            'size_estimate': '3.2M'
+        },
+        'Fashion': {
+            'age_range': '18-40',
+            'interests': ['Fashion', 'Style', 'Shopping'],
+            'demographics': 'Fashion-forward consumers',
+            'size_estimate': '2.8M'
+        }
+    }
+    
+    return audiences.get(category, audiences['Electronics'])
+
+def generate_creative_insights(opportunity, platform: str) -> List[str]:
+    """Generate creative insights for campaign optimization."""
+    insights = []
+    
+    # Platform-specific insights
+    platform_insights = {
+        'facebook': ['Use carousel ads for product features', 'Focus on social proof'],
+        'google': ['Highlight unique selling points', 'Use strong call-to-action'],
+        'instagram': ['Visual storytelling works best', 'Use user-generated content'],
+        'tiktok': ['Short, engaging videos perform well', 'Trending audio increases reach'],
+        'pinterest': ['High-quality lifestyle images', 'Include DIY or tutorial content']
+    }
+    
+    insights.extend(platform_insights.get(platform, []))
+    
+    # Confidence-based insights
+    if opportunity.confidence_score > 85:
+        insights.append('High-performing product - increase budget')
+    elif opportunity.confidence_score > 70:
+        insights.append('Test different ad formats')
+    else:
+        insights.append('Focus on specific audience segments')
+        
+    # Category-specific insights
+    if 'Electronics' in opportunity.category:
+        insights.append('Emphasize technical specifications')
+    elif 'Gaming' in opportunity.category:
+        insights.append('Show product in gaming context')
+    elif 'Health' in opportunity.category:
+        insights.append('Focus on benefits and results')
+        
+    return insights
 
 
 @empire_bp.route('/health', methods=['GET'])
@@ -1134,86 +1227,60 @@ def api_get_empire_agents():
 
 @api_empire_bp.route('/opportunities', methods=['GET'])
 def api_get_product_opportunities():
-    """Get product opportunities for the command center UI."""
+    """Get product opportunities for the command center UI using advanced market intelligence."""
     try:
-        # In a real implementation, this would query from a product research service
-        # For now, create structured opportunities that match the frontend interface
-        health_service = get_health_service()
-        empire_health = health_service.check_empire_health()
+        # Get query parameters
+        limit = int(request.args.get('limit', 10))
+        force_refresh = request.args.get('refresh', 'false').lower() == 'true'
         
-        # Generate opportunities based on real business logic
-        opportunities = []
+        # Use the advanced product research service
+        research_service = get_product_research_service()
+        opportunities = research_service.discover_opportunities(limit=limit, force_refresh=force_refresh)
         
-        # Base opportunity templates with real market data patterns
-        opportunity_templates = [
-            {
-                'title': 'Smart Home Security Kit',
-                'category': 'Electronics',
-                'description': 'AI-powered home security with mobile alerts',
-                'price_range': '$89-$149',
-                'trend_score': 87,
-                'profit_potential': 'High',
-                'platform': 'Shopify + Amazon',
-                'supplier_leads': ['AutoDS Verified', 'AliExpress Pro'],
-                'market_insights': 'High demand in urban areas, growing 15% monthly',
-                'search_volume': 45000,
-                'competition_level': 'Medium',
-                'seasonal_factor': 'Year-round stable',
-                'confidence_score': 92,
-                'profit_margin': 45.2,
-                'monthly_searches': 45000
-            },
-            {
-                'title': 'Wireless Gaming Headset Pro',
-                'category': 'Gaming',
-                'description': 'Low-latency wireless gaming headset with RGB lighting',
-                'price_range': '$59-$89',
-                'trend_score': 92,
-                'profit_potential': 'High',
-                'platform': 'Shopify + TikTok Shop',
-                'supplier_leads': ['Spocket Premium', 'Direct Manufacturer'],
-                'market_insights': 'Gaming market expansion, high conversion rate',
-                'search_volume': 38500,
-                'competition_level': 'High',
-                'seasonal_factor': 'Holiday peaks',
-                'confidence_score': 88,
-                'profit_margin': 38.7,
-                'monthly_searches': 38500
-            },
-            {
-                'title': 'Eco-Friendly Water Bottle',
-                'category': 'Lifestyle',
-                'description': 'Sustainable bamboo fiber water bottle with temperature control',
-                'price_range': '$25-$45',
-                'trend_score': 78,
-                'profit_potential': 'Medium',
-                'platform': 'Shopify + Instagram',
-                'supplier_leads': ['Eco Suppliers Network', 'Green Trade Co'],
-                'market_insights': 'Sustainability trend growing, loyal customer base',
-                'search_volume': 28200,
-                'competition_level': 'Low',
-                'seasonal_factor': 'Summer peaks',
-                'confidence_score': 85,
-                'profit_margin': 52.1,
-                'monthly_searches': 28200
+        # Convert opportunities to API format compatible with existing frontend
+        api_opportunities = []
+        for opp in opportunities:
+            api_opp = {
+                'id': opp.id,
+                'title': opp.title,
+                'category': opp.category,
+                'description': opp.description,
+                'price_range': opp.price_range,
+                'trend_score': opp.trend_score,
+                'profit_potential': opp.profit_potential,
+                'platform': opp.platform,
+                'supplier_leads': opp.supplier_leads,
+                'market_insights': opp.market_insights,
+                'search_volume': opp.search_volume,
+                'competition_level': opp.competition_level,
+                'seasonal_factor': opp.seasonal_factor,
+                'confidence_score': opp.confidence_score,
+                'profit_margin': opp.profit_margin,
+                'monthly_searches': opp.monthly_searches,
+                'discovered_at': opp.discovered_at.isoformat(),
+                'status': 'pending',
+                'data_sources': opp.data_sources,
+                'risk_factors': opp.risk_factors,
+                'growth_indicators': opp.growth_indicators
             }
-        ]
-        
-        # Generate opportunities with unique IDs and current timestamps
-        for i, template in enumerate(opportunity_templates):
-            opportunity = template.copy()
-            opportunity['id'] = f'opp-{i+1:03d}'
-            opportunity['status'] = 'pending'  # or 'approved', 'rejected'
-            opportunity['discovered_at'] = datetime.now().isoformat()
-            opportunities.append(opportunity)
-        
-        # Limit based on empire health or configuration
-        max_opportunities = empire_health.get('total_opportunities', len(opportunities))
-        opportunities = opportunities[:max_opportunities]
+            api_opportunities.append(api_opp)
         
         return jsonify({
             'success': True,
-            'data': opportunities,
+            'data': api_opportunities,
+            'summary': {
+                'total_opportunities': len(api_opportunities),
+                'avg_confidence_score': sum(opp['confidence_score'] for opp in api_opportunities) / len(api_opportunities) if api_opportunities else 0,
+                'high_confidence': len([opp for opp in api_opportunities if opp['confidence_score'] >= 85]),
+                'medium_confidence': len([opp for opp in api_opportunities if 70 <= opp['confidence_score'] < 85]),
+                'low_confidence': len([opp for opp in api_opportunities if opp['confidence_score'] < 70])
+            },
+            'meta': {
+                'generated_at': datetime.now().isoformat(),
+                'cache_used': not force_refresh,
+                'data_sources': ['advanced_market_intelligence', 'real_business_logic'],
+                'next_refresh_recommended': (datetime.now() + timedelta(hours=6)).isoformat()
+            },
             'timestamp': datetime.now().isoformat()
         })
         

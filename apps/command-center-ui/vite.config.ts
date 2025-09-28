@@ -5,14 +5,19 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',            // explicit base path
+  base: '/',
+  define: {
+    'process.env': {},
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    'process.env.REACT_APP_VERSION': JSON.stringify('3.0.0')
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   build: { 
-    sourcemap: true     // enable sourcemaps for debugging
+    sourcemap: true
   },
   server: {
     port: 3000,
