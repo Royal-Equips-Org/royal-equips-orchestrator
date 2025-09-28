@@ -55,7 +55,7 @@ class InventoryWebSocketClient {
           resolve();
         });
 
-        this.socket.on('disconnect', (reason) => {
+        this.socket.on('disconnect', (reason: any) => {
           console.log('❌ Disconnected from inventory WebSocket:', reason);
           this.stopHeartbeat();
           
@@ -66,13 +66,13 @@ class InventoryWebSocketClient {
           });
         });
 
-        this.socket.on('connect_error', (error) => {
+        this.socket.on('connect_error', (error: any) => {
           console.error('❌ Inventory WebSocket connection error:', error);
           this.config.onError?.(error);
           reject(error);
         });
 
-        this.socket.on('reconnect', (attempt) => {
+        this.socket.on('reconnect', (attempt: any) => {
           console.log(`🔄 Inventory WebSocket reconnected after ${attempt} attempts`);
           this.config.onConnectionStatus?.({
             status: 'reconnected',
@@ -81,7 +81,7 @@ class InventoryWebSocketClient {
           });
         });
 
-        this.socket.on('reconnect_error', (error) => {
+        this.socket.on('reconnect_error', (error: any) => {
           console.error('❌ Inventory WebSocket reconnection failed:', error);
         });
 
@@ -99,96 +99,96 @@ class InventoryWebSocketClient {
     if (!this.socket) return;
 
     // Connection confirmation
-    this.socket.on('connection_status', (data) => {
+    this.socket.on('connection_status', (data: any) => {
       console.log('📡 Inventory WebSocket connection status:', data);
       this.config.onConnectionStatus?.(data);
     });
 
     // Dashboard updates
-    this.socket.on('dashboard_update', (data) => {
+    this.socket.on('dashboard_update', (data: any) => {
       console.log('📊 Inventory dashboard update received:', data);
       this.config.onDashboardUpdate?.(data);
     });
 
     // Agent status updates
-    this.socket.on('agent_status', (status) => {
+    this.socket.on('agent_status', (status: any) => {
       console.log('🤖 Inventory agent status update:', status);
       this.config.onAgentStatus?.(status);
     });
 
     // Forecasting updates
-    this.socket.on('forecast_update', (data) => {
+    this.socket.on('forecast_update', (data: any) => {
       console.log('🔮 Inventory forecast update:', data);
       this.config.onForecastUpdate?.(data);
     });
 
-    this.socket.on('forecast_completed', (data) => {
+    this.socket.on('forecast_completed', (data: any) => {
       console.log('✅ Inventory forecast completed:', data);
       this.config.onForecastUpdate?.(data);
     });
 
-    this.socket.on('forecast_error', (error) => {
+    this.socket.on('forecast_error', (error: any) => {
       console.error('❌ Inventory forecast error:', error);
       this.config.onError?.(error);
     });
 
     // Optimization updates
-    this.socket.on('optimization_update', (data) => {
+    this.socket.on('optimization_update', (data: any) => {
       console.log('⚙️ Inventory optimization update:', data);
       this.config.onOptimizationUpdate?.(data);
     });
 
-    this.socket.on('optimization_completed', (data) => {
+    this.socket.on('optimization_completed', (data: any) => {
       console.log('✅ Inventory optimization completed:', data);
       this.config.onOptimizationUpdate?.(data);
     });
 
-    this.socket.on('optimization_error', (error) => {
+    this.socket.on('optimization_error', (error: any) => {
       console.error('❌ Inventory optimization error:', error);
       this.config.onError?.(error);
     });
 
     // Supplier performance updates
-    this.socket.on('supplier_performance_update', (data) => {
+    this.socket.on('supplier_performance_update', (data: any) => {
       console.log('🚛 Supplier performance update:', data);
       this.config.onSupplierUpdate?.(data);
     });
 
     // Inventory alerts
-    this.socket.on('inventory_alert', (alert) => {
+    this.socket.on('inventory_alert', (alert: any) => {
       console.log('🚨 Inventory alert:', alert);
       this.config.onInventoryAlert?.(alert);
     });
 
     // Reorder recommendations
-    this.socket.on('reorder_recommendation', (recommendation) => {
+    this.socket.on('reorder_recommendation', (recommendation: any) => {
       console.log('💡 Reorder recommendation:', recommendation);
       this.config.onReorderRecommendation?.(recommendation);
     });
 
     // Cycle execution events
-    this.socket.on('cycle_started', (data) => {
+    this.socket.on('cycle_started', (data: any) => {
       console.log('🔄 Inventory cycle started:', data);
     });
 
-    this.socket.on('cycle_completed', (data) => {
+    this.socket.on('cycle_completed', (data: any) => {
       console.log('✅ Inventory cycle completed:', data);
       // Trigger dashboard refresh
       this.config.onDashboardUpdate?.(data);
     });
 
-    this.socket.on('cycle_error', (error) => {
+    this.socket.on('cycle_error', (error: any) => {
       console.error('❌ Inventory cycle error:', error);
       this.config.onError?.(error);
     });
 
     // Heartbeat
-    this.socket.on('heartbeat_ack', (data) => {
+    this.socket.on('heartbeat_ack', (data: any) => {
       // Silent acknowledgment
     });
 
     // Generic error handler
-    this.socket.on('error', (error) => {
+    this.socket.on('error', (error: any) => {
       console.error('❌ Inventory WebSocket error:', error);
       this.config.onError?.(error);
     });

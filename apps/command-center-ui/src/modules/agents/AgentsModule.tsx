@@ -110,7 +110,7 @@ export default function AgentsModule() {
             successRate: Math.floor(successRate * 10) / 10, // Round to 1 decimal
             throughput: agent.throughput_per_hour || 0
           },
-          capabilities: agent.capabilities || this.getAgentCapabilities(agent.type || agent.agent_type)
+          capabilities: agent.capabilities || getAgentCapabilities(agent.type || agent.agent_type)
         };
       });
 

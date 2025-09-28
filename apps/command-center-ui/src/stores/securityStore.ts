@@ -151,7 +151,7 @@ export const useSecurityStore = create<SecurityState>()(
     }),
     {
       name: 'security-store',
-      partialize: (state) => ({
+      partialize: (state: any) => ({
         selectedTimeRange: state.selectedTimeRange,
         filterSeverity: state.filterSeverity,
         filterType: state.filterType

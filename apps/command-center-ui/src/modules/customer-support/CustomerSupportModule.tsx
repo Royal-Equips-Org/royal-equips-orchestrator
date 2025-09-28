@@ -99,12 +99,12 @@ const CustomerSupportModule: React.FC = () => {
   // Real-time updates
   useEffect(() => {
     if (socket) {
-      socket.on('ticket_created', (data) => {
+      socket.on('ticket_created', (data: any) => {
         setTickets(prev => [data.ticket, ...prev]);
         trackEvent('ticket_created_realtime');
       });
 
-      socket.on('ticket_updated', (data) => {
+      socket.on('ticket_updated', (data: any) => {
         setTickets(prev => prev.map(ticket => 
           ticket.id === data.ticket_id 
             ? { ...ticket, ...data.updates }
@@ -113,7 +113,7 @@ const CustomerSupportModule: React.FC = () => {
         trackEvent('ticket_updated_realtime');
       });
 
-      socket.on('ticket_escalated', (data) => {
+      socket.on('ticket_escalated', (data: any) => {
         setTickets(prev => prev.map(ticket => 
           ticket.id === data.ticket_id 
             ? { ...ticket, status: 'escalated', priority: data.new_priority }
@@ -122,7 +122,7 @@ const CustomerSupportModule: React.FC = () => {
         trackEvent('ticket_escalated_realtime');
       });
 
-      socket.on('support_metrics_update', (data) => {
+      socket.on('support_metrics_update', (data: any) => {
         setMetrics(data.metrics);
       });
 

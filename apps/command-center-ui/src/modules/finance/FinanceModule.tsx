@@ -142,17 +142,17 @@ const FinanceModule: React.FC = () => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('finance_update', (data) => {
+    socket.on('finance_update', (data: any) => {
       setDashboardData(prev => prev ? { ...prev, ...data } : data);
       trackInteraction('finance_realtime_update');
     });
 
-    socket.on('transaction_processed', (transaction) => {
+    socket.on('transaction_processed', (transaction: any) => {
       setTransactions(prev => [transaction, ...prev.slice(0, 49)]);
       trackInteraction('finance_transaction_update');
     });
 
-    socket.on('fraud_alert', (alert) => {
+    socket.on('fraud_alert', (alert: any) => {
       if (dashboardData) {
         setDashboardData(prev => prev ? {
           ...prev,

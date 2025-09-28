@@ -191,7 +191,7 @@ export const navigationModules: NavigationModule[] = [
     description: 'AI Security Center - Fraud Detection & Compliance Monitoring',
     color: '#FF4500',
     path: '/security',
-    category: 'security',
+    category: 'operations',
     isNew: true
   },
   {
