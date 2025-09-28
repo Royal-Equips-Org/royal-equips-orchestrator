@@ -95,7 +95,8 @@ export class EmpireService {
   async sendChatMessage(content: string): Promise<AIRAResponse> {
     try {
       logger.info('Sending chat message', { messageLength: content.length });
-      const data = await apiClient.post('/v1/chat', { content });
+      // Use the correct AIRA endpoint
+      const data = await apiClient.post('/api/empire/chat', { content });
       return validateAndTransform(data, isAIRAResponse, 'AIRAResponse');
     } catch (error) {
       logger.error('Failed to send chat message', { error: String(error) });

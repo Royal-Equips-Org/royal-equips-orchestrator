@@ -20,6 +20,7 @@ import { metricsRoute } from './routes/metrics.js';
 import { agentsRoute } from './routes/agents.js';
 import { opportunitiesRoute } from './routes/opportunities.js';
 import { campaignsRoute } from './routes/campaigns.js';
+import { openaiService } from './services/openai-service.js';
 import { empireRepo } from './repository/empire-repo.js';
 
 declare module 'fastify' {
@@ -133,11 +134,18 @@ app.post('/api/empire/chat', async (request, reply) => {
     });
     return;
   }
-  return {
-    content: `🤖 AIRA: Received your message "${content}". Empire systems are operational and all endpoints are available.`,
-    agent_name: 'AIRA',
-    timestamp: new Date().toISOString()
-  };
+
+  try {
+    const response = await openaiService.generateResponse(content);
+    return response;
+  } catch (error) {
+    request.log.error(`Chat error: ${error instanceof Error ? error.message : String(error)}`);
+    return {
+      content: '🚨 I encountered an issue processing your request. Let me get back online and assist you with empire operations.',
+      agent_name: 'AIRA',
+      timestamp: new Date().toISOString()
+    };
+  }
 });
 
 // Global error handler with structured logging

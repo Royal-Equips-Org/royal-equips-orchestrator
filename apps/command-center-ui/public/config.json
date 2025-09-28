@@ -1,6 +1,6 @@
 {
   "$schema": "./config.schema.json",
-  "apiRelativeBase": "/v1",
+  "apiRelativeBase": "http://localhost:10000",
   "featureFlags": {
     "enable3D": true,
     "enableMetricsPolling": true,
