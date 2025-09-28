@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import time
 import base64
-import secrets
+import secrets as crypto_secrets
 import hashlib
 import asyncio
 from typing import Optional, Dict, List, Protocol, Any, Callable
@@ -190,7 +190,7 @@ class UnifiedSecretResolver:
             }
         
         aes = AESGCM(self.key)
-        nonce = secrets.token_bytes(12)
+        nonce = crypto_secrets.token_bytes(12)
         ct = aes.encrypt(nonce, plaintext.encode(), None)
         
         return {
@@ -270,24 +270,35 @@ class UnifiedSecretResolver:
         
         # Try each provider in order
         for depth, provider in enumerate(self.providers, start=1):
-            res = await provider.get(key)
-            if res:
-                effective_ttl = ttl or self.cache_ttl
-                enc = self._encrypt(res.value)
-                
-                # Cache encrypted result
-                self.cache[key] = {
-                    "data": enc,
-                    "ttl": effective_ttl,
-                    "source": res.source.value,
-                    "ts": time.time()
-                }
-                
-                latency_ms = (time.time() - start) * 1000
-                if self.metrics and self.metrics.on_resolve:
-                    self.metrics.on_resolve(key_hash, res.source.value, depth, latency_ms)
-                
-                return res
+            try:
+                res = await provider.get(key)
+                if res:
+                    effective_ttl = ttl or self.cache_ttl
+                    enc = self._encrypt(res.value)
+                    
+                    # Cache encrypted result
+                    self.cache[key] = {
+                        "data": enc,
+                        "ttl": effective_ttl,
+                        "source": res.source.value,
+                        "ts": time.time()
+                    }
+                    
+                    latency_ms = (time.time() - start) * 1000
+                    if self.metrics and self.metrics.on_resolve:
+                        self.metrics.on_resolve(key_hash, res.source.value, depth, latency_ms)
+                    
+                    return res
+            except Exception as e:
+                # Log error but continue to next provider
+                print(json.dumps({
+                    "level": "warn",
+                    "event": "secret_provider_error",
+                    "provider": provider.name,
+                    "key_hash": key_hash,
+                    "error": str(e)
+                }))
+                continue
 
         # Not found in any provider
         if self.metrics and self.metrics.on_miss:

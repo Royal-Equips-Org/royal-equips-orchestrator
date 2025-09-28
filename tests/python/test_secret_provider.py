@@ -76,13 +76,16 @@ def mock_metrics():
 @pytest.fixture
 def resolver(mock_metrics):
     """Create resolver with mock providers and metrics."""
+    # Create a proper 32-byte key
+    test_key = b"test-key-32-chars-for-testing!!!"  # Exactly 32 bytes
+    
     return UnifiedSecretResolver(
         providers=[
             MockEnvProvider({"TEST_SECRET": "env-value"}),
             MockCloudflareProvider({"CF_SECRET": "cloudflare-value"})
         ],
         cache_ttl=1,  # 1 second for testing
-        encryption_key=b"test-key-32-chars-for-testing!",
+        encryption_key=test_key,
         metrics=mock_metrics
     )
 
@@ -197,6 +200,9 @@ class TestUnifiedSecretResolver:
     @pytest.mark.asyncio
     async def test_key_hashing(self, resolver, mock_metrics):
         """Test that actual keys are never logged."""
+        # Add secret to provider for this test
+        resolver.providers[0].secrets["SENSITIVE_KEY_NAME"] = "sensitive-value"
+        
         await resolver.get_secret("SENSITIVE_KEY_NAME")
         
         # Check metrics call
@@ -228,7 +234,8 @@ class TestUnifiedSecretResolver:
         backup_provider = MockEnvProvider({"TEST_SECRET": "backup-value"})
         
         resolver = UnifiedSecretResolver(
-            providers=[failing_provider, backup_provider]
+            providers=[failing_provider, backup_provider],
+            encryption_key=b"test-key-32-chars-for-testing!!!"  # Proper 32-byte key
         )
         
         # Should still resolve from backup provider

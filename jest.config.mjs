@@ -1,5 +1,6 @@
 // jest.config.mjs
 export default {
+  preset: 'ts-jest',
   testEnvironment: "node",
   reporters: [
     "default",
@@ -22,6 +23,28 @@ export default {
     ".next/",
     "reports/",
     "apps/command-center-ui/" // Exclude vitest tests - they use their own test runner
+  ],
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: {
+        moduleResolution: 'node',
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true,
+        target: 'es2020',
+        module: 'commonjs'
+      }
+    }]
+  },
+  moduleNameMapping: {
+    '^../../../core/(.*)$': '<rootDir>/core/$1'
+  },
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  collectCoverageFrom: [
+    'core/**/*.ts',
+    'apps/api/src/**/*.ts',
+    '!**/*.d.ts',
+    '!**/*.config.*',
+    '!**/node_modules/**'
   ],
   passWithNoTests: true
 };
