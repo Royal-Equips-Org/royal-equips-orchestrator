@@ -170,7 +170,8 @@ def create_event():
 
     except Exception as e:
         logger.error(f"Failed to create event: {e}")
-        return jsonify({"error": "Failed to create event", "message": str(e)}), 500
+        # Optionally: logger.exception("Failed to create event") for full stack trace
+        return jsonify({"error": "Failed to create event"}), 500
 
 
 @main_bp.route("/jobs", methods=["GET"])
@@ -197,7 +198,8 @@ def get_jobs():
 
     except Exception as e:
         logger.error(f"Failed to get jobs: {e}")
-        return jsonify({"error": "Failed to get jobs", "message": str(e)}), 500
+        # Optionally: logger.exception("Failed to get jobs") for full stack trace
+        return jsonify({"error": "Failed to get jobs"}), 500
 
 
 @main_bp.route("/test-inventory")
@@ -222,8 +224,7 @@ def test_inventory():
             }), 404
             
     except Exception as e:
-        logger.error(f"Error serving test inventory page: {e}")
+        logger.exception(f"Error serving test inventory page")
         return jsonify({
-            "error": "Failed to serve test page",
-            "message": str(e)
+            "error": "Failed to serve test page"
         }), 500
