@@ -14,6 +14,8 @@ const AiraModule = lazy(() => import('./modules/aira/AiraModule'));
 const AnalyticsModule = lazy(() => import('./modules/analytics/AnalyticsModule'));
 const AgentsModule = lazy(() => import('./modules/agents/AgentsModule'));
 const DashboardModule = lazy(() => import('./modules/dashboard/DashboardModule'));
+const RevenueModule = lazy(() => import('./modules/revenue/RevenueModule'));
+const InventoryModule = lazy(() => import('./modules/inventory/InventoryModule'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
@@ -79,6 +81,18 @@ function AppContent() {
         return (
           <Suspense fallback={loadingFallback('Dashboard')}>
             <DashboardModule />
+          </Suspense>
+        );
+      case 'revenue':
+        return (
+          <Suspense fallback={loadingFallback('Revenue')}>
+            <RevenueModule />
+          </Suspense>
+        );
+      case 'inventory':
+        return (
+          <Suspense fallback={loadingFallback('Inventory')}>
+            <InventoryModule />
           </Suspense>
         );
       case 'shopify':

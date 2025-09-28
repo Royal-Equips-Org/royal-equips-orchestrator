@@ -3,7 +3,7 @@ import {
   Command, Network, Database, Rocket, Eye, 
   Gauge, Target, TrendingUp, Orbit, Atom,
   ShoppingCart, Package, Users, BarChart3,
-  Home, Settings, Search, Bell
+  Home, Settings, Search, Bell, DollarSign
 } from 'lucide-react';
 import { NavigationModule } from '../types/navigation';
 
@@ -141,6 +141,25 @@ export const navigationModules: NavigationModule[] = [
     description: 'Customer Relationship Management',
     color: '#FF69B4',
     path: '/customers',
+    category: 'operations'
+  },
+  {
+    id: 'revenue',
+    label: 'REVENUE',
+    icon: DollarSign,
+    description: 'Revenue Intelligence & Forecasting',
+    color: '#00FF7F',
+    path: '/revenue',
+    category: 'analytics',
+    isNew: true
+  },
+  {
+    id: 'inventory',
+    label: 'INVENTORY',
+    icon: Package,
+    description: 'Supply Chain & Stock Management',
+    color: '#FF8C00',
+    path: '/inventory',
     category: 'operations'
   },
   
