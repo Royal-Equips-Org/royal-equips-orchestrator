@@ -36,18 +36,18 @@ export function useWebSocket(url: string = 'http://localhost:10000'): UseWebSock
         console.log('WebSocket connected to:', url);
       });
 
-      newSocket.on('disconnect', (reason) => {
+      newSocket.on('disconnect', (reason: any) => {
         setIsConnected(false);
         console.log('WebSocket disconnected:', reason);
       });
 
-      newSocket.on('connect_error', (error) => {
+      newSocket.on('connect_error', (error: any) => {
         console.error('WebSocket connection error:', error);
         setIsConnected(false);
       });
 
       // Generic message handler
-      newSocket.onAny((eventName, data) => {
+      newSocket.onAny((eventName: any, data: any) => {
         setLastMessage({
           type: eventName,
           data,

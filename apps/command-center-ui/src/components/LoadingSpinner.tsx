@@ -42,3 +42,6 @@ export default function LoadingSpinner({
     </div>
   );
 }
+
+// Named export for compatibility
+export { LoadingSpinner };

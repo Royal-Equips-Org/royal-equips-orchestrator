@@ -15,6 +15,9 @@ interface UsePerformanceReturn {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  trackEvent: (event: string) => void;
+  trackMetric: (metric: string, value: number) => void;
+  trackInteraction: (interaction: string) => void;
 }
 
 export function usePerformance(): UsePerformanceReturn {
@@ -71,10 +74,29 @@ export function usePerformance(): UsePerformanceReturn {
     return () => clearInterval(interval);
   }, [fetchPerformanceMetrics]);
 
+  // Add tracking functions
+  const trackEvent = useCallback((event: string) => {
+    console.log(`Event tracked: ${event}`);
+    // In production, send to analytics service
+  }, []);
+
+  const trackMetric = useCallback((metric: string, value: number) => {
+    console.log(`Metric tracked: ${metric} = ${value}`);
+    // In production, send to metrics service
+  }, []);
+
+  const trackInteraction = useCallback((interaction: string) => {
+    console.log(`Interaction tracked: ${interaction}`);
+    // In production, send to analytics service
+  }, []);
+
   return {
     metrics,
     loading,
     error,
-    refresh
+    refresh,
+    trackEvent,
+    trackMetric,
+    trackInteraction
   };
 }

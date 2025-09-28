@@ -135,7 +135,7 @@ const SecurityDashboard: React.FC = () => {
     // Setup periodic status updates instead of websocket for now
     const interval = setInterval(() => {
       // Simulate security updates
-      setSecurityMetrics(prev => ({
+      setSecurityMetrics((prev: any) => ({
         ...prev,
         threatCount: Math.floor(Math.random() * 10),
         riskScore: Math.random() * 100
@@ -204,8 +204,7 @@ const SecurityDashboard: React.FC = () => {
   // Trigger fraud detection scan
   const runFraudScan = useCallback(() => {
     setScanProgress('Initiating fraud detection scan...');
-    sendMessage({
-      type: 'request_fraud_scan',
+    sendMessage('request_fraud_scan', {
       user_id: 'admin'
     });
   }, [sendMessage]);

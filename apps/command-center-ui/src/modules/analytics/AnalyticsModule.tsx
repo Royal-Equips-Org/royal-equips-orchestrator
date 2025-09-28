@@ -149,6 +149,9 @@ export default function AnalyticsModule() {
     }
   };
 
+  // Create an alias for the main fetch function
+  const fetchAnalyticsData = fetchData;
+
   // Real-time data updates via polling (removed socket dependency)
   useEffect(() => {
     // Periodic data refresh instead of WebSocket

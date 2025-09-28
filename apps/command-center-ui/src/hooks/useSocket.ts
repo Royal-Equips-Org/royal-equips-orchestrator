@@ -6,6 +6,8 @@ interface UseSocketReturn {
   isConnected: boolean;
   connect: () => void;
   disconnect: () => void;
+  on: (event: string, callback: (data: any) => void) => void;
+  off: (event: string, callback?: (data: any) => void) => void;
 }
 
 export function useSocket(url: string = 'http://localhost:10000'): UseSocketReturn {
@@ -32,7 +34,7 @@ export function useSocket(url: string = 'http://localhost:10000'): UseSocketRetu
         console.log('Socket disconnected');
       });
 
-      newSocket.on('connect_error', (error) => {
+      newSocket.on('connect_error', (error: any) => {
         console.error('Socket connection error:', error);
         setIsConnected(false);
       });
@@ -49,6 +51,22 @@ export function useSocket(url: string = 'http://localhost:10000'): UseSocketRetu
     }
   };
 
+  const on = (event: string, callback: (data: any) => void) => {
+    if (socket) {
+      socket.on(event, callback);
+    }
+  };
+
+  const off = (event: string, callback?: (data: any) => void) => {
+    if (socket) {
+      if (callback) {
+        socket.off(event, callback);
+      } else {
+        socket.off(event);
+      }
+    }
+  };
+
   useEffect(() => {
     return () => {
       disconnect();
@@ -59,6 +77,8 @@ export function useSocket(url: string = 'http://localhost:10000'): UseSocketRetu
     socket,
     isConnected,
     connect,
-    disconnect
+    disconnect,
+    on,
+    off
   };
 }

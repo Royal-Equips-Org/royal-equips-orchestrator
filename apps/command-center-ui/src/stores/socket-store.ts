@@ -62,12 +62,12 @@ export const useSocketStore = create<SocketStore>()(
           console.log('Socket connected successfully');
         });
 
-        newSocket.on('disconnect', (reason) => {
+        newSocket.on('disconnect', (reason: any) => {
           set({ isConnected: false });
           console.log('Socket disconnected:', reason);
         });
 
-        newSocket.on('connect_error', (error) => {
+        newSocket.on('connect_error', (error: any) => {
           set(state => ({ 
             error: error.message,
             reconnectAttempts: state.reconnectAttempts + 1
@@ -76,7 +76,7 @@ export const useSocketStore = create<SocketStore>()(
         });
 
         // Generic message handler
-        newSocket.onAny((eventName, data) => {
+        newSocket.onAny((eventName: any, data: any) => {
           set(state => ({
             messages: [
               ...state.messages.slice(-99), // Keep last 100 messages
@@ -138,3 +138,6 @@ export const useSocketStore = create<SocketStore>()(
     }
   }))
 );
+
+// Additional export for module compatibility
+export const useModuleSocket = useSocketStore;
