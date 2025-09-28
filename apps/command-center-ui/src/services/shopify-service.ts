@@ -85,7 +85,7 @@ export interface ShopifyApiResponse<T> {
 }
 
 export class ShopifyService {
-  private baseUrl = '/api/v1/shopify';
+  private baseUrl = (apiClient.defaults?.baseURL ?? 'http://localhost:10000') + '/api/v1/shopify';
 
   /**
    * Fetch live Shopify products with pagination
