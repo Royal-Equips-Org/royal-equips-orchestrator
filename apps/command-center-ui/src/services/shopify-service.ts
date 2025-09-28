@@ -65,7 +65,7 @@ export interface ShopifyCustomer {
   createdAt: string;
 }
 
-export type ShopifyDataSource = 'live_shopify' | 'enhanced_cached_data' | 'no_data_available';
+export type ShopifyDataSource = 'live_shopify' | 'no_data_available' | 'fetch_failed' | 'error_occurred';
 
 export interface ShopifyMetrics {
   totalOrders: number;
@@ -209,82 +209,38 @@ export class ShopifyService {
    */
   async fetchMetrics(): Promise<ShopifyMetrics> {
     try {
-      logger.info('Fetching Shopify metrics from backend');
+      logger.info('Fetching real Shopify metrics from backend');
 
-      // Get store status first
-      const storeHealth = await this.getStoreHealth();
+      // Call the new real metrics endpoint
+      const response = await apiClient.get(`${this.baseUrl}/metrics`) as ShopifyMetrics;
       
-      if (storeHealth.status !== 'connected') {
-        // Return default metrics when not connected
-        return {
-          totalRevenue: 0,
-          totalOrders: 0,
-          totalProducts: 0,
-          totalCustomers: 0,
-          averageOrderValue: 0,
-          conversionRate: 0,
-          trafficEstimate: 0,
-          topProducts: [],
-          recentOrders: [],
-          source: 'no_data_available' as ShopifyDataSource,
-          lastUpdated: new Date().toISOString(),
-          connected: false
-        };
-      }
-
-      // For now, return sample metrics that would come from a real implementation
-      // In a real implementation, these would come from actual Shopify data analysis endpoints
-      return {
-        totalRevenue: 125000.50,
-        totalOrders: 342,
-        totalProducts: 156,
-        totalCustomers: 891,
-        averageOrderValue: 365.79,
-        conversionRate: 3.2,
-        trafficEstimate: 10500,
-        topProducts: [
-          {
-            id: 'prod_001',
-            title: 'Smart Home Security Kit',
-            handle: 'smart-home-security-kit',
-            totalSales: 45200.00,
-            ordersCount: 123,
-            inventoryLevel: 45
-          },
-          {
-            id: 'prod_002', 
-            title: 'Wireless Gaming Headset Pro',
-            handle: 'wireless-gaming-headset-pro',
-            totalSales: 32800.00,
-            ordersCount: 89,
-            inventoryLevel: 23
-          }
-        ],
-        recentOrders: [
-          {
-            id: 'order_001',
-            orderNumber: '#1001',
-            customerName: 'John Doe',
-            totalPrice: '299.99',
-            createdAt: new Date(Date.now() - 3600000).toISOString(),
-            fulfillmentStatus: 'fulfilled'
-          },
-          {
-            id: 'order_002',
-            orderNumber: '#1002', 
-            customerName: 'Jane Smith',
-            totalPrice: '149.50',
-            createdAt: new Date(Date.now() - 7200000).toISOString(),
-            fulfillmentStatus: 'pending'
-          }
-        ],
-        source: 'live_shopify' as ShopifyDataSource,
-        lastUpdated: new Date().toISOString(),
-        connected: true
-      };
+      logger.info('Successfully fetched real Shopify metrics', {
+        totalRevenue: response.totalRevenue,
+        totalOrders: response.totalOrders,
+        totalProducts: response.totalProducts,
+        source: response.source
+      });
+      
+      return response;
+      
     } catch (error) {
-      logger.error('Failed to calculate Shopify metrics', { error: String(error) });
-      throw error;
+      logger.error('Failed to fetch real Shopify metrics', { error: String(error) });
+      
+      // Return minimal error state (no mock data)
+      return {
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalProducts: 0,
+        totalCustomers: 0,
+        averageOrderValue: 0,
+        conversionRate: 0,
+        trafficEstimate: 0,
+        topProducts: [],
+        recentOrders: [],
+        source: 'fetch_failed' as ShopifyDataSource,
+        lastUpdated: new Date().toISOString(),
+        connected: false
+      };
     }
   }
 }
