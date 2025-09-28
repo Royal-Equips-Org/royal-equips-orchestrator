@@ -7,7 +7,7 @@ import { OrbitControls, Environment, PerspectiveCamera, Text3D, Stars } from '@r
 import { 
   Zap, Brain, Cpu, Activity, Shield, Layers, 
   Command, Network, Database, Rocket, Eye, 
-  Gauge, Target, Lightning, Orbit, Atom
+  Gauge, Target, TrendingUp, Orbit, Atom
 } from 'lucide-react';
 import QuantumAgentNetwork from './QuantumAgentNetwork';
 import IntelligenceCenter from './IntelligenceCenter';
@@ -154,7 +154,7 @@ export default function EmpireDashboard() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-green-400 text-sm font-mono">REVENUE</p>
-                              <p className="text-2xl font-bold text-white">${metrics?.revenue || '1.2M'}</p>
+                              <p className="text-2xl font-bold text-white">${metrics?.revenue_progress || '1.2M'}</p>
                             </div>
                             <TrendingUp className="w-8 h-8 text-green-400" />
                           </div>
@@ -271,8 +271,8 @@ export default function EmpireDashboard() {
                 </div>
               </div>
             </div>
-          </div>
-    }
+      </div>
+  }
   };
 
   return (
@@ -312,7 +312,7 @@ export default function EmpireDashboard() {
               <span className="text-green-400 font-mono text-sm">SECURE</span>
             </div>
             <div className="flex items-center space-x-2">
-              <Lightning className="w-5 h-5 text-yellow-400" />
+              <Zap className="w-5 h-5 text-yellow-400" />
               <span className="text-yellow-400 font-mono text-sm">{quantumEnergy.toFixed(1)}% POWER</span>
             </div>
             <div className="px-4 py-2 bg-gradient-to-r from-purple-600/20 to-cyan-600/20 rounded-full border border-purple-400/30">
