@@ -1,11 +1,15 @@
 # Multi-stage build: Web assets + API
 FROM node:20-alpine AS web
 WORKDIR /repo
+# Copy workspace files first
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/command-center-ui ./apps/command-center-ui
 RUN corepack enable && cd apps/command-center-ui && pnpm i --frozen-lockfile && pnpm build
 
 FROM node:20-alpine AS api
 WORKDIR /app
+# Copy workspace files first
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/api ./apps/api
 RUN corepack enable && cd apps/api && pnpm i --frozen-lockfile && pnpm build
 
