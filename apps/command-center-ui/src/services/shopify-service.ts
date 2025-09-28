@@ -65,6 +65,8 @@ export interface ShopifyCustomer {
   createdAt: string;
 }
 
+export type ShopifyDataSource = 'live_shopify' | 'no_data_available' | 'fetch_failed' | 'error_occurred';
+
 export interface ShopifyMetrics {
   totalOrders: number;
   totalRevenue: number;
@@ -72,289 +74,172 @@ export interface ShopifyMetrics {
   totalCustomers: number;
   averageOrderValue: number;
   conversionRate: number;
-  traffic: number;
+  trafficEstimate: number;
+  topProducts: Array<{
+    id: string;
+    title: string;
+    handle: string;
+    totalSales: number;
+    ordersCount: number;
+    inventoryLevel: number;
+  }>;
+  recentOrders: Array<{
+    id: string;
+    orderNumber: string;
+    customerName: string;
+    totalPrice: string;
+    createdAt: string;
+    fulfillmentStatus: string;
+  }>;
+  source: ShopifyDataSource;
   lastUpdated: string;
+  connected: boolean;
 }
 
 export interface ShopifyApiResponse<T> {
   success: boolean;
   data?: T;
-  source: 'live_shopify' | 'enhanced_cached_data' | 'no_data_available';
+  source: ShopifyDataSource;
   total?: number;
   message?: string;
 }
 
 export class ShopifyService {
-  private baseUrl = (apiClient.defaults?.baseURL ?? 'http://localhost:10000') + '/api/v1/shopify';
+  private baseUrl = `${apiClient.getBaseUrl()}/shopify`;
 
   /**
-   * Fetch live Shopify products with pagination
-   */
-  async fetchProducts(limit = 50, cursor?: string): Promise<ShopifyApiResponse<ShopifyProduct[]>> {
-    try {
-      logger.info('Fetching Shopify products', { limit, cursor });
-      
-      const params = new URLSearchParams();
-      params.append('limit', limit.toString());
-      if (cursor) {
-        params.append('cursor', cursor);
-      }
-
-      const response = await apiClient.get<{
-        products: {
-          edges: Array<{
-            cursor: string;
-            node: ShopifyProduct;
-          }>;
-          pageInfo: {
-            hasNextPage: boolean;
-          };
-        };
-        success: boolean;
-        source: string;
-        total?: number;
-      }>(`${this.baseUrl}/products?${params}`);
-
-      if (!response.success) {
-        throw new Error('Shopify products API returned unsuccessful response');
-      }
-
-      const products = response.products.edges.map(edge => edge.node);
-
-      return {
-        success: true,
-        data: products,
-        source: response.source as any,
-        total: response.total
-      };
-
-    } catch (error) {
-      logger.error('Failed to fetch Shopify products', { error: String(error) });
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch live Shopify orders
-   */
-  async fetchOrders(limit = 50, cursor?: string): Promise<ShopifyApiResponse<ShopifyOrder[]>> {
-    try {
-      logger.info('Fetching Shopify orders', { limit, cursor });
-      
-      const params = new URLSearchParams();
-      params.append('limit', limit.toString());
-      if (cursor) {
-        params.append('cursor', cursor);
-      }
-
-      const response = await apiClient.get<{
-        orders: {
-          edges: Array<{
-            cursor: string;
-            node: ShopifyOrder;
-          }>;
-        };
-        success: boolean;
-        source: string;
-      }>(`${this.baseUrl}/orders?${params}`);
-
-      if (!response.success) {
-        throw new Error('Shopify orders API returned unsuccessful response');
-      }
-
-      const orders = response.orders.edges.map(edge => edge.node);
-
-      return {
-        success: true,
-        data: orders,
-        source: response.source as any
-      };
-
-    } catch (error) {
-      logger.error('Failed to fetch Shopify orders', { error: String(error) });
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch live Shopify customers
-   */
-  async fetchCustomers(limit = 50, cursor?: string): Promise<ShopifyApiResponse<ShopifyCustomer[]>> {
-    try {
-      logger.info('Fetching Shopify customers', { limit, cursor });
-      
-      const params = new URLSearchParams();
-      params.append('limit', limit.toString());
-      if (cursor) {
-        params.append('cursor', cursor);
-      }
-
-      const response = await apiClient.get<{
-        customers: {
-          edges: Array<{
-            cursor: string;
-            node: ShopifyCustomer;
-          }>;
-        };
-        success: boolean;
-        source: string;
-      }>(`${this.baseUrl}/customers?${params}`);
-
-      if (!response.success) {
-        throw new Error('Shopify customers API returned unsuccessful response');
-      }
-
-      const customers = response.customers.edges.map(edge => edge.node);
-
-      return {
-        success: true,
-        data: customers,
-        source: response.source as any
-      };
-
-    } catch (error) {
-      logger.error('Failed to fetch Shopify customers', { error: String(error) });
-      throw error;
-    }
-  }
-
-  /**
-   * Calculate comprehensive Shopify metrics from live data
-   */
-  async fetchMetrics(): Promise<ShopifyMetrics> {
-    try {
-      logger.info('Calculating Shopify metrics from live data');
-
-      // Fetch all data in parallel
-      const [productsResponse, ordersResponse, customersResponse] = await Promise.all([
-        this.fetchProducts(100),
-        this.fetchOrders(100), 
-        this.fetchCustomers(100)
-      ]);
-
-      const products = productsResponse.data || [];
-      const orders = ordersResponse.data || [];
-      const customers = customersResponse.data || [];
-
-      // Calculate metrics
-      const totalRevenue = orders.reduce((sum, order) => {
-        return sum + parseFloat(order.totalPrice || '0');
-      }, 0);
-
-      const totalOrders = orders.length;
-      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-      // Estimate conversion rate based on customers vs orders (simplified)
-      const conversionRate = customers.length > 0 ? (totalOrders / customers.length) * 100 : 0;
-
-      // Estimate traffic (orders * conversion rate assumption)
-      const traffic = Math.round(totalOrders * (100 / Math.max(conversionRate, 1)) * 1.5);
-
-      const metrics: ShopifyMetrics = {
-        totalOrders,
-        totalRevenue,
-        totalProducts: products.length,
-        totalCustomers: customers.length,
-        averageOrderValue,
-        conversionRate: Math.min(conversionRate, 100), // Cap at 100%
-        traffic,
-        lastUpdated: new Date().toISOString()
-      };
-
-      logger.info('Shopify metrics calculated successfully', {
-        totalProducts: metrics.totalProducts,
-        totalOrders: metrics.totalOrders,
-        revenue: metrics.totalRevenue
-      });
-
-      return metrics;
-
-    } catch (error) {
-      logger.error('Failed to calculate Shopify metrics', { error: String(error) });
-      
-      // Return fallback metrics
-      return {
-        totalOrders: 0,
-        totalRevenue: 0,
-        totalProducts: 0,
-        totalCustomers: 0,
-        averageOrderValue: 0,
-        conversionRate: 0,
-        traffic: 0,
-        lastUpdated: new Date().toISOString()
-      };
-    }
-  }
-
-  /**
-   * Sync products from Shopify (for agent operations)
-   */
-  async syncProducts(): Promise<{ success: boolean; count: number; message: string }> {
-    try {
-      logger.info('Starting Shopify product sync');
-
-      const response = await apiClient.post<{
-        success: boolean;
-        count: number;
-        message: string;
-      }>(`${this.baseUrl}/sync/products`);
-
-      logger.info('Product sync completed', { 
-        success: response.success, 
-        count: response.count 
-      });
-
-      return response;
-
-    } catch (error) {
-      logger.error('Failed to sync Shopify products', { error: String(error) });
-      return {
-        success: false,
-        count: 0,
-        message: `Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      };
-    }
-  }
-
-  /**
-   * Get Shopify store information and health status
+   * Get Shopify store status and configuration
    */
   async getStoreHealth(): Promise<{
     status: 'connected' | 'disconnected' | 'error';
     shopName?: string;
-    plan?: string;
     details: string;
   }> {
     try {
-      const response = await apiClient.get<{
-        success: boolean;
-        shop?: {
-          name: string;
-          plan: string;
-          domain: string;
+      logger.info('Fetching Shopify store health');
+      
+      const response = await apiClient.get(`${this.baseUrl}/status`) as {
+        configured: boolean;
+        shop_info?: {
+          name?: string;
         };
-        message?: string;
-      }>(`${this.baseUrl}/health`);
-
-      if (response.success && response.shop) {
+        error?: string;
+      };
+      
+      if (response.configured) {
         return {
           status: 'connected',
-          shopName: response.shop.name,
-          plan: response.shop.plan,
-          details: `Connected to ${response.shop.domain}`
+          shopName: response.shop_info?.name || 'Unknown Shop',
+          details: `Connected to ${response.shop_info?.name || 'Shopify store'}`
         };
       } else {
         return {
           status: 'disconnected',
-          details: response.message || 'Unable to connect to Shopify store'
+          details: response.error || 'Shopify not configured'
         };
       }
-
     } catch (error) {
-      logger.error('Failed to check Shopify store health', { error: String(error) });
+      logger.error('Failed to fetch Shopify status', { error: String(error) });
       return {
         status: 'error',
-        details: `Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        details: 'Failed to connect to Shopify API'
+      };
+    }
+  }
+
+  /**
+   * Trigger product synchronization
+   */
+  async syncProducts(): Promise<{ jobId: string; message: string }> {
+    try {
+      logger.info('Triggering Shopify product sync');
+      
+      const response = await apiClient.post(`${this.baseUrl}/sync-products`, {
+        limit: 100,
+        force: false
+      }) as {
+        job_id: string;
+        message?: string;
+      };
+      
+      return {
+        jobId: response.job_id,
+        message: response.message || 'Product sync initiated'
+      };
+    } catch (error) {
+      logger.error('Failed to sync products', { error: String(error) });
+      throw error;
+    }
+  }
+
+  /**
+   * Get active Shopify sync jobs
+   */
+  async getActiveJobs(): Promise<any[]> {
+    try {
+      logger.info('Fetching Shopify sync jobs');
+      
+      const response = await apiClient.get(`${this.baseUrl}/jobs`) as {
+        jobs?: any[];
+      };
+      return response.jobs || [];
+    } catch (error) {
+      logger.error('Failed to fetch jobs', { error: String(error) });
+      return [];
+    }
+  }
+
+  /**
+   * Get job status by ID  
+   */
+  async getJobStatus(jobId: string): Promise<any> {
+    try {
+      logger.info('Fetching job status', { jobId });
+      
+      const response = await apiClient.get(`${this.baseUrl}/jobs/${jobId}`) as any;
+      return response;
+    } catch (error) {
+      logger.error('Failed to fetch job status', { error: String(error) });
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate comprehensive Shopify metrics from backend service
+   */
+  async fetchMetrics(): Promise<ShopifyMetrics> {
+    try {
+      logger.info('Fetching real Shopify metrics from backend');
+
+      // Call the new real metrics endpoint
+      const response = await apiClient.get(`${this.baseUrl}/metrics`) as ShopifyMetrics;
+      
+      logger.info('Successfully fetched real Shopify metrics', {
+        totalRevenue: response.totalRevenue,
+        totalOrders: response.totalOrders,
+        totalProducts: response.totalProducts,
+        source: response.source
+      });
+      
+      return response;
+      
+    } catch (error) {
+      logger.error('Failed to fetch real Shopify metrics', { error: String(error) });
+      
+      // Return minimal error state (no mock data)
+      return {
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalProducts: 0,
+        totalCustomers: 0,
+        averageOrderValue: 0,
+        conversionRate: 0,
+        trafficEstimate: 0,
+        topProducts: [],
+        recentOrders: [],
+        source: 'fetch_failed' as ShopifyDataSource,
+        lastUpdated: new Date().toISOString(),
+        connected: false
       };
     }
   }

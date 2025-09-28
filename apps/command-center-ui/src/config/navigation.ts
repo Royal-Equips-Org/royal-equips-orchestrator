@@ -3,7 +3,8 @@ import {
   Command, Network, Database, Rocket, Eye, 
   Gauge, Target, TrendingUp, Orbit, Atom,
   ShoppingCart, Package, Users, BarChart3,
-  Home, Settings, Search, Bell, DollarSign
+  Home, Settings, Search, Bell, DollarSign,
+  PenTool
 } from 'lucide-react';
 import { NavigationModule } from '../types/navigation';
 
@@ -113,6 +114,16 @@ export const navigationModules: NavigationModule[] = [
     description: 'Shopify Store Management',
     color: '#96BF00',
     path: '/shopify',
+    category: 'operations',
+    isNew: true
+  },
+  {
+    id: 'marketing',
+    label: 'MARKETING',
+    icon: PenTool,
+    description: 'AI Marketing Studio & Campaign Management',
+    color: '#FF6B9D',
+    path: '/marketing',
     category: 'operations',
     isNew: true
   },

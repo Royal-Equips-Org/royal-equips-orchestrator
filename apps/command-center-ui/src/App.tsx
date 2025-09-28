@@ -16,6 +16,7 @@ const AgentsModule = lazy(() => import('./modules/agents/AgentsModule'));
 const DashboardModule = lazy(() => import('./modules/dashboard/DashboardModule'));
 const RevenueModule = lazy(() => import('./modules/revenue/RevenueModule'));
 const InventoryModule = lazy(() => import('./modules/inventory/InventoryModule'));
+const MarketingStudioModule = lazy(() => import('./modules/marketing/MarketingStudioModule'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
@@ -97,6 +98,12 @@ function AppContent() {
         );
       case 'shopify':
         return <ShopifyDashboard />;
+      case 'marketing':
+        return (
+          <Suspense fallback={loadingFallback('Marketing Studio')}>
+            <MarketingStudioModule />
+          </Suspense>
+        );
       case 'products':
         return <div className="h-full flex items-center justify-center text-hologram">Products Module - Coming Soon</div>;
       case 'orders':

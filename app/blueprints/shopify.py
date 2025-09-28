@@ -498,6 +498,198 @@ def get_job(job_id: str):
         }), 500
 
 
+@shopify_bp.route("/metrics", methods=["GET"])
+def get_shopify_metrics():
+    """
+    Get comprehensive Shopify store metrics from live data.
+    ---
+    tags:
+      - Shopify
+    responses:
+      200:
+        description: Live Shopify metrics
+        schema:
+          type: object
+          properties:
+            totalRevenue:
+              type: number
+            totalOrders:
+              type: number
+            totalProducts:
+              type: number
+            totalCustomers:
+              type: number
+            averageOrderValue:
+              type: number
+            conversionRate:
+              type: number
+            trafficEstimate:
+              type: number
+            topProducts:
+              type: array
+            recentOrders:
+              type: array
+            source:
+              type: string
+            lastUpdated:
+              type: string
+            connected:
+              type: boolean
+      503:
+        description: Shopify service not configured or unavailable
+    """
+    try:
+        service = get_shopify_service()
+
+        if not service.is_configured():
+            return jsonify({
+                "totalRevenue": 0,
+                "totalOrders": 0,
+                "totalProducts": 0,
+                "totalCustomers": 0,
+                "averageOrderValue": 0,
+                "conversionRate": 0,
+                "trafficEstimate": 0,
+                "topProducts": [],
+                "recentOrders": [],
+                "source": "no_data_available",
+                "lastUpdated": datetime.now().isoformat(),
+                "connected": False
+            }), 200
+
+        # Get real data from Shopify
+        try:
+            # Fetch live data
+            products, _ = service.list_products(limit=250)
+            orders, _ = service.list_orders(limit=250, status='any')
+            
+            # Calculate real metrics
+            total_revenue = 0
+            total_orders = len(orders)
+            total_products = len(products)
+            
+            # Calculate revenue from orders
+            for order in orders:
+                try:
+                    total_revenue += float(order.get('total_price', '0'))
+                except (ValueError, TypeError):
+                    continue
+            
+            # Calculate average order value
+            average_order_value = total_revenue / total_orders if total_orders > 0 else 0
+            
+            # Get top products by analyzing orders
+            product_sales = {}
+            for order in orders:
+                line_items = order.get('line_items', [])
+                for item in line_items:
+                    product_id = item.get('product_id')
+                    if product_id:
+                        if product_id not in product_sales:
+                            product_sales[product_id] = {
+                                'id': str(product_id),
+                                'title': item.get('title', 'Unknown Product'),
+                                'handle': item.get('variant_title', '').lower().replace(' ', '-'),
+                                'totalSales': 0,
+                                'ordersCount': 0,
+                                'inventoryLevel': 0
+                            }
+                        try:
+                            item_total = float(item.get('price', '0')) * int(item.get('quantity', 1))
+                            product_sales[product_id]['totalSales'] += item_total
+                            product_sales[product_id]['ordersCount'] += 1
+                        except (ValueError, TypeError):
+                            continue
+            
+            # Get inventory levels from products
+            for product in products:
+                product_id = str(product.get('id'))
+                if product_id in product_sales:
+                    variants = product.get('variants', [])
+                    total_inventory = sum(int(v.get('inventory_quantity', 0)) for v in variants)
+                    product_sales[product_id]['inventoryLevel'] = total_inventory
+                    if not product_sales[product_id]['handle']:
+                        product_sales[product_id]['handle'] = product.get('handle', '')
+            
+            # Sort and get top 5 products
+            top_products = sorted(
+                list(product_sales.values()), 
+                key=lambda x: x['totalSales'], 
+                reverse=True
+            )[:5]
+            
+            # Get recent orders (last 10)
+            recent_orders = []
+            for order in sorted(orders, key=lambda x: x.get('created_at', ''), reverse=True)[:10]:
+                customer = order.get('customer', {})
+                recent_orders.append({
+                    'id': str(order.get('id', '')),
+                    'orderNumber': order.get('order_number', order.get('name', '')),
+                    'customerName': f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip() or 'Guest',
+                    'totalPrice': order.get('total_price', '0'),
+                    'createdAt': order.get('created_at', datetime.now().isoformat()),
+                    'fulfillmentStatus': order.get('fulfillment_status', 'unfulfilled')
+                })
+            
+            # Estimate metrics (simplified calculations)
+            # Get unique customers from orders
+            unique_customers = len(set(
+                order.get('customer', {}).get('id') 
+                for order in orders 
+                if order.get('customer', {}).get('id')
+            ))
+            
+            # Simple conversion rate estimation (orders per unique customer)
+            conversion_rate = (total_orders / max(unique_customers, 1)) * 100 if unique_customers > 0 else 0
+            conversion_rate = min(conversion_rate, 100)  # Cap at 100%
+            
+            # Traffic estimate (very simplified)
+            traffic_estimate = int(unique_customers * 10)  # Rough estimate
+            
+            metrics = {
+                "totalRevenue": round(total_revenue, 2),
+                "totalOrders": total_orders,
+                "totalProducts": total_products,
+                "totalCustomers": unique_customers,
+                "averageOrderValue": round(average_order_value, 2),
+                "conversionRate": round(conversion_rate, 2),
+                "trafficEstimate": traffic_estimate,
+                "topProducts": top_products,
+                "recentOrders": recent_orders,
+                "source": "live_shopify",
+                "lastUpdated": datetime.now().isoformat(),
+                "connected": True
+            }
+            
+            return jsonify(metrics), 200
+
+        except Exception as e:
+            logger.error(f"Failed to fetch Shopify metrics: {e}")
+            return jsonify({
+                "totalRevenue": 0,
+                "totalOrders": 0,
+                "totalProducts": 0,
+                "totalCustomers": 0,
+                "averageOrderValue": 0,
+                "conversionRate": 0,
+                "trafficEstimate": 0,
+                "topProducts": [],
+                "recentOrders": [],
+                "source": "error_occurred",
+                "lastUpdated": datetime.now().isoformat(),
+                "connected": False,
+                "error": "An internal error has occurred."
+            }), 200
+
+    except Exception as e:
+        logger.error(f"Shopify metrics endpoint failed: {e}")
+        return jsonify({
+            "error": "Failed to get metrics",
+            "message": "An internal error has occurred.",
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+
 @shopify_bp.route("/webhooks/<topic>", methods=["POST"])
 def handle_webhook(topic: str):
     """

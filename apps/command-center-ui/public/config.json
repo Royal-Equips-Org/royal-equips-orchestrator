@@ -1,6 +1,6 @@
 {
   "$schema": "./config.schema.json",
-  "apiRelativeBase": "http://localhost:10000",
+  "apiRelativeBase": "http://localhost:10000/api",
   "featureFlags": {
     "enable3D": false,
     "enableMetricsPolling": true,
@@ -8,11 +8,15 @@
     "enableHealthMonitoring": true
   },
   "polling": {
-    "metricsInterval": 30000,
-    "healthCheckInterval": 10000
+    "metricsInterval": 15000,
+    "healthCheckInterval": 5000
   },
   "circuitBreaker": {
     "enabled": true,
     "resetEndpoint": "http://localhost:10000/api/admin/circuit/reset"
+  },
+  "secrets": {
+    "cacheTTLms": 300000,
+    "enableMetrics": true
   }
 }
