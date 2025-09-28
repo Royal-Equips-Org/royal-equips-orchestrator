@@ -70,7 +70,7 @@ export async function loadRuntimeConfig(): Promise<RuntimeConfig> {
     
     // Fallback configuration
     globalConfig = {
-      apiRelativeBase: '/api',
+      apiRelativeBase: '/v1',
       featureFlags: {
         enable3D: true,
         enableMetricsPolling: true,
@@ -83,7 +83,7 @@ export async function loadRuntimeConfig(): Promise<RuntimeConfig> {
       },
       circuitBreaker: {
         enabled: true,
-        resetEndpoint: '/api/admin/circuit/reset',
+        resetEndpoint: '/v1/admin/circuit/reset',
       },
     };
     

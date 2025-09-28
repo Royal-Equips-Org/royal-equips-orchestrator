@@ -9,9 +9,22 @@ WORKDIR /app
 COPY apps/api ./apps/api
 RUN corepack enable && cd apps/api && pnpm i --frozen-lockfile && pnpm build
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Bundle UI in the API image
 COPY --from=web /repo/apps/command-center-ui/dist /app/apps/api/dist-web
 
-ENV PORT=10000 RELEASE=${GIT_COMMIT:-local}
+# Set production environment variables
+ENV NODE_ENV=production \
+    PORT=10000 \
+    HOST=0.0.0.0 \
+    RELEASE=${GIT_COMMIT:-local}
+
+# Health check for container orchestration
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT}/v1/healthz || exit 1
+
 WORKDIR /app/apps/api
+EXPOSE ${PORT}
 CMD ["node","dist/server.js"]
