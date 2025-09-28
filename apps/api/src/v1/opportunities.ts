@@ -31,7 +31,14 @@ const opportunitiesRoutes: FastifyPluginAsync = async (app) => {
     }
   }
 
-  app.get("/opportunities", async () => {
+  app.get("/opportunities", {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async () => {
     try {
       const analysisData = await getLatestAnalysisData();
       
@@ -220,7 +227,14 @@ const opportunitiesRoutes: FastifyPluginAsync = async (app) => {
     }
   });
   
-  app.get("/opportunities/:id", async (request, reply) => {
+  app.get("/opportunities/:id", {
+    config: {
+      rateLimit: {
+        max: 30,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
     
     return reply.send({

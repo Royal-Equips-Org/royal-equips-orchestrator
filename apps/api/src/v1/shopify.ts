@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import * as fs from 'fs/promises';
-// Simple Shopify GraphQL client
+import path from 'node:path';
+
 // Simple Shopify GraphQL client
 class ShopifyGraphQL {
   constructor(private endpoint: string, private token: string) {}
@@ -155,7 +156,14 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     }
   }
 
-  app.get("/shopify/products", async (request, reply) => {
+  app.get("/shopify/products", {
+    config: {
+      rateLimit: {
+        max: 15, // Restricted due to filesystem access
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (request, reply) => {
     try {
       const { cursor, limit = '50' } = request.query as { cursor?: string; limit?: string };
       
@@ -314,7 +322,14 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     return [category, ...allTags.slice(0, Math.floor(Math.random() * 3) + 2)];
   }
 
-  app.get("/shopify/orders", async (request, reply) => {
+  app.get("/shopify/orders", {
+    config: {
+      rateLimit: {
+        max: 15,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (request, reply) => {
     try {
       const { cursor } = request.query as { cursor?: string };
       
@@ -382,7 +397,14 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     }
   });
 
-  app.get("/shopify/customers", async (request, reply) => {
+  app.get("/shopify/customers", {
+    config: {
+      rateLimit: {
+        max: 15,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (request, reply) => {
     try {
       const { cursor } = request.query as { cursor?: string };
       
@@ -451,7 +473,14 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // Product analytics endpoint using cached analysis data
-  app.get("/shopify/analytics", async (request, reply) => {
+  app.get("/shopify/analytics", {
+    config: {
+      rateLimit: {
+        max: 10, // More restrictive for analytics
+        timeWindow: '1 minute'
+      }  
+    }
+  }, async (request, reply) => {
     try {
       const analysisData = await getLatestShopifyData('analysis');
       

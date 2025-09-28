@@ -1,9 +1,17 @@
 import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
+import rateLimit from "@fastify/rate-limit";
 import path from "node:path";
 import api from "./v1/index.js";
 
 const app = Fastify({ logger: true });
+
+// Global rate limiting
+await app.register(rateLimit, {
+  max: 100, // requests per window
+  timeWindow: '1 minute',
+  global: false, // Apply to all routes unless overridden
+});
 
 // API routes
 app.register(api, { prefix: "/v1" });
@@ -35,8 +43,15 @@ app.setNotFoundHandler((req, reply) => {
   reply.code(404).send({ error: "not_found" });
 });
 
-// Version endpoint
-app.get("/version", (_req, r) => r.send({ release: process.env.RELEASE || "dev" }));
+// Version endpoint with basic rate limiting
+app.get("/version", {
+  config: {
+    rateLimit: {
+      max: 50,
+      timeWindow: '1 minute'
+    }
+  }
+}, (_req, r) => r.send({ release: process.env.RELEASE || "dev" }));
 
 // Start server
 const start = async () => {

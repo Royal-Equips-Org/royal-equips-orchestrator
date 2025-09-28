@@ -29,7 +29,14 @@ const healthRoutes: FastifyPluginAsync = async (app) => {
   const startTime = Date.now();
 
   // Basic health check - always returns 200
-  app.get("/health", async (req, reply) => {
+  app.get("/health", {
+    config: {
+      rateLimit: {
+        max: 30,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (req, reply) => {
     try {
       const uptime = Date.now() - startTime;
       
@@ -62,7 +69,14 @@ const healthRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // Kubernetes health check endpoint - simple liveness probe
-  app.get("/healthz", async (req, reply) => {
+  app.get("/healthz", {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (req, reply) => {
     try {
       const uptime = Date.now() - startTime;
       
@@ -89,8 +103,15 @@ const healthRoutes: FastifyPluginAsync = async (app) => {
     }
   });
 
-  // Readiness check endpoint - comprehensive dependency checks
-  app.get("/readyz", async (req, reply) => {
+  // Readiness check endpoint - comprehensive dependency checks with filesystem access
+  app.get("/readyz", {
+    config: {
+      rateLimit: {
+        max: 10, // More restrictive due to filesystem access
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (req, reply) => {
     const startCheck = Date.now();
     
     try {
