@@ -272,7 +272,7 @@ export default function EmpireDashboard() {
               </div>
             </div>
       </div>
-    );
+  }
   };
 
   return (
