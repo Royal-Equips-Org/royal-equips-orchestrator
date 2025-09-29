@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Brain, 
@@ -12,11 +12,15 @@ import {
   AlertTriangle,
   CheckCircle,
   Eye,
-  Target
+  Target,
+  Sparkles
 } from 'lucide-react';
 import { useEmpireStore } from '../../store/empire-store';
 import { empireService } from '../../services/empire-service';
 import { Agent } from '../../types/empire';
+
+// Lazy load Enhanced AIRA Module for performance
+const EnhancedAIRAModule = lazy(() => import('./EnhancedAIRAModule'));
 
 interface AIRAStatus {
   online: boolean;
@@ -135,6 +139,7 @@ export default function AiraModule() {
 
   const [chatMode, setChatMode] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  const [enhancedMode, setEnhancedMode] = useState(false);
   const [chatHistory, setChatHistory] = useState<Array<{
     type: 'user' | 'aira';
     message: string;
@@ -292,11 +297,32 @@ export default function AiraModule() {
               <MessageSquare className="w-4 h-4 inline-block mr-2" />
               {chatMode ? 'Exit Chat' : 'Chat Mode'}
             </button>
+            
+            <button
+              onClick={() => setEnhancedMode(!enhancedMode)}
+              className={`px-4 py-2 rounded-lg border transition-colors ${
+                enhancedMode 
+                  ? 'bg-gradient-to-r from-cyan-500/20 to-fuchsia-500/20 border-fuchsia-400 text-fuchsia-300'
+                  : 'border-gray-600 text-gray-300 hover:border-fuchsia-400'
+              }`}
+            >
+              <Brain className="w-4 h-4 inline-block mr-2" />
+              {enhancedMode ? 'Classic Mode' : 'Enhanced Intelligence'}
+            </button>
           </div>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {enhancedMode ? (
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
+          </div>
+        }>
+          <EnhancedAIRAModule />
+        </Suspense>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Status Overview */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -513,7 +539,8 @@ export default function AiraModule() {
             )}
           </AnimatePresence>
         </motion.div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

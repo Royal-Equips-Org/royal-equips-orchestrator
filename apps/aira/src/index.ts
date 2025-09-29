@@ -23,6 +23,7 @@ import { opportunitiesRoute } from './routes/opportunities.js';
 import { campaignsRoute } from './routes/campaigns.js';
 import { openaiService } from './services/openai-service.js';
 import { empireRepo } from './repository/empire-repo.js';
+import { enhancedAIRARoutes } from './routes/enhanced-aira-routes.js';
 
 // Optional Redis circuit breaker
 declare module 'fastify' {
@@ -120,6 +121,9 @@ await app.register(metricsRoute);
 await app.register(agentsRoute);
 await app.register(opportunitiesRoute);
 await app.register(campaignsRoute);
+
+// Register Enhanced AIRA Intelligence routes
+await app.register(enhancedAIRARoutes);
 
 // Simple chat endpoint for basic functionality
 interface EmpireChatRequestBody {

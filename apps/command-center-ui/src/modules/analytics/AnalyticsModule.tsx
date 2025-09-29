@@ -150,7 +150,16 @@ export default function AnalyticsModule() {
   };
 
   // Create an alias for the main fetch function
-  const fetchAnalyticsData = fetchAnalytics;
+    const fetchAnalyticsData = async () => {
+    // Fetch real analytics data from empire service
+    try {
+      const response = await empireService.fetchAnalytics();
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error);
+      return null;
+    }
+  };
 
   // Real-time data updates via polling (removed socket dependency)
   useEffect(() => {

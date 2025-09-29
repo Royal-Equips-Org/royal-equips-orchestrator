@@ -86,8 +86,8 @@ const FinanceModule: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('daily');
   const [selectedView, setSelectedView] = useState('dashboard');
 
-  const socket = useModuleSocket('finance');
-  const { trackInteraction } = usePerformance();
+  const socketStore = useSocketStore();
+  const { trackPerformance } = usePerformance();
 
   // Fetch dashboard data
   const fetchDashboardData = async () => {
@@ -140,16 +140,17 @@ const FinanceModule: React.FC = () => {
 
   // Socket event handlers
   useEffect(() => {
+    const socket = socketStore.socket;
     if (!socket) return;
 
     socket.on('finance_update', (data: any) => {
       setDashboardData(prev => prev ? { ...prev, ...data } : data);
-      trackInteraction('finance_realtime_update');
+      trackPerformance('finance_realtime_update');
     });
 
     socket.on('transaction_processed', (transaction: any) => {
       setTransactions(prev => [transaction, ...prev.slice(0, 49)]);
-      trackInteraction('finance_transaction_update');
+      trackPerformance('finance_transaction_update');
     });
 
     socket.on('fraud_alert', (alert: any) => {
@@ -159,7 +160,7 @@ const FinanceModule: React.FC = () => {
           fraud_alerts: [alert, ...prev.fraud_alerts]
         } : prev);
       }
-      trackInteraction('finance_fraud_alert');
+      trackPerformance('finance_fraud_alert');
     });
 
     return () => {
@@ -167,7 +168,7 @@ const FinanceModule: React.FC = () => {
       socket.off('transaction_processed');
       socket.off('fraud_alert');
     };
-  }, [socket, dashboardData, trackInteraction]);
+  }, [socketStore.socket, dashboardData, trackPerformance]);
 
   // Calculated metrics
   const calculatedMetrics = useMemo(() => {
