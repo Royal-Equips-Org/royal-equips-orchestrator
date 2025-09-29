@@ -42,7 +42,7 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
         max: 20, // Max 20 requests per window
         timeWindow: '1 minute', // Per minute for health checks
         skipOnError: true,
-        keyGenerator: (request) => {
+        keyGenerator: (request: any) => {
           // Use IP for health endpoint rate limiting
           return `health:${request.ip}`;
         }
