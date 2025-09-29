@@ -1,4 +1,4 @@
-import { useEffect, Suspense, lazy } from 'react'
+import React, { useEffect, Suspense, lazy, useState } from 'react'
 import EmpireDashboard from './components/empire/EmpireDashboard'
 import ShopifyDashboard from './components/shopify/ShopifyDashboard'  
 import NavigationBar from './components/navigation/NavigationBar'
@@ -10,6 +10,7 @@ import MobileShell from './components/layout/MobileShell'
 import TopBar from './components/layout/TopBar'
 import ModuleScroller from './components/layout/ModuleScroller'
 import ExactCommandCenter from './components/holographic/ExactCommandCenter'
+import AICore from './components/ai-core/AICore'
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
@@ -29,12 +30,16 @@ const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AI
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
   const { toasts, removeToast } = useToastContext();
-  const { state } = useNavigation();
+  const { state, navigateToModule } = useNavigation();
   const { optimizePerformance, metrics, recommendations } = usePerformanceOptimization();
+  
+  // AI Core state - make it the main interface
+  const [showAICore, setShowAICore] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     // Initialize empire systems and load all data
-    console.log('Royal Equips Empire Command Center - Initialized');
+    console.log('Royal Equips Empire Command Center - AI Core Initialized');
     refreshAll();
     
     // Trigger performance optimization after initial load
@@ -58,6 +63,46 @@ function AppContent() {
       }
     }
   }, [metrics, recommendations]);
+
+  // Handle module access from AI Core
+  const handleModuleAccess = (moduleId: string) => {
+    navigateToModule(moduleId);
+    setShowAICore(false); // Show traditional interface for specific modules
+  };
+
+  // Handle return to AI Core
+  const handleReturnToAICore = () => {
+    setShowAICore(true);
+    navigateToModule('command'); // Set to command module
+  };
+
+  // Keyboard shortcuts for AI Core
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'F11':
+          e.preventDefault();
+          setIsFullscreen(!isFullscreen);
+          break;
+        case 'Escape':
+          if (isFullscreen) {
+            setIsFullscreen(false);
+          } else if (!showAICore) {
+            handleReturnToAICore();
+          }
+          break;
+        case 'h':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            setShowAICore(!showAICore);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isFullscreen, showAICore]);
 
   // Render current module content
   const renderCurrentModule = () => {
@@ -130,6 +175,21 @@ function AppContent() {
             <FinanceModule />
           </Suspense>
         );
+      case 'holographic':
+      case 'holo':
+        // Holographic view as an optional module instead of default
+        return (
+          <div className="w-full h-full">
+            <ExactCommandCenter />
+          </div>
+        );
+      case 'ai-core':
+        // AI Core integrated view
+        return (
+          <div className="w-full h-full">
+            <AICore onExit={() => handleReturnToAICore()} isFullscreen={false} />
+          </div>
+        );
       case 'products':
         return <div className="h-full flex items-center justify-center text-hologram">Products Module - Coming Soon</div>;
       case 'orders':
@@ -145,15 +205,133 @@ function AppContent() {
     }
   };
 
-  return (
-    <div className="w-full h-screen bg-black overflow-hidden">
-      {/* Exact Reference Image Command Center */}
-      <ExactCommandCenter />
-      
-      {/* Toast notifications positioned absolutely */}
-      <div className="absolute top-20 right-4 z-50">
-        <ToastContainer toasts={toasts} onClose={removeToast} />
+  // Main render - AI Core as primary interface
+  if (showAICore) {
+    return (
+      <div className="w-full h-screen bg-black overflow-hidden">
+        {/* AI Core as main interface exactly like the reference image */}
+        <AICore 
+          onExit={() => setShowAICore(false)} 
+          isFullscreen={isFullscreen}
+        />
+        
+        {/* Floating access to traditional modules when needed */}
+        {!isFullscreen && (
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '20px',
+            background: 'rgba(0, 30, 60, 0.3)',
+            border: '1px solid rgba(0, 170, 255, 0.5)',
+            borderRadius: '8px',
+            padding: '10px',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            gap: '10px',
+            zIndex: 100
+          }}>
+            <button 
+              onClick={() => handleModuleAccess('dashboard')}
+              style={{
+                background: 'rgba(0, 170, 255, 0.2)',
+                border: '1px solid #00aaff',
+                borderRadius: '4px',
+                color: '#00ddff',
+                padding: '5px 10px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Dashboard
+            </button>
+            <button 
+              onClick={() => handleModuleAccess('aira')}
+              style={{
+                background: 'rgba(0, 170, 255, 0.2)',
+                border: '1px solid #00aaff',
+                borderRadius: '4px',
+                color: '#00ddff',
+                padding: '5px 10px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              AIRA
+            </button>
+            <button 
+              onClick={() => handleModuleAccess('shopify')}
+              style={{
+                background: 'rgba(0, 170, 255, 0.2)',
+                border: '1px solid #00aaff',
+                borderRadius: '4px',
+                color: '#00ddff',
+                padding: '5px 10px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Shopify
+            </button>
+          </div>
+        )}
+        
+        {/* Toast notifications positioned absolutely */}
+        <div className="absolute top-20 right-4 z-50">
+          <ToastContainer toasts={toasts} onClose={removeToast} />
+        </div>
       </div>
+    );
+  }
+
+  // Traditional interface when accessing specific modules
+  return (
+    <div className="flex h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden">
+      {/* Mobile responsive shell */}
+      <MobileShell>
+        {/* Top navigation bar */}
+        <TopBar />
+        
+        {/* Main navigation */}
+        <NavigationBar />
+        
+        {/* Module scroller for mobile */}
+        <ModuleScroller />
+        
+        {/* Return to AI Core button */}
+        <button
+          onClick={handleReturnToAICore}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            background: 'rgba(0, 170, 255, 0.3)',
+            border: '2px solid #00aaff',
+            borderRadius: '50%',
+            width: '60px',
+            height: '60px',
+            color: '#00ffff',
+            fontSize: '24px',
+            cursor: 'pointer',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Return to AI Core (Ctrl+H)"
+        >
+          🤖
+        </button>
+        
+        {/* Main content area */}
+        <main className="flex-1 overflow-hidden">
+          {renderCurrentModule()}
+        </main>
+        
+        {/* Toast notifications positioned absolutely */}
+        <div className="absolute top-20 right-4 z-50">
+          <ToastContainer toasts={toasts} onClose={removeToast} />
+        </div>
+      </MobileShell>
     </div>
   )
 }
