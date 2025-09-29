@@ -144,14 +144,14 @@ export default function AICore({ onExit, isFullscreen = false }: AICoreProps) {
   const [autoRotate, setAutoRotate] = useState(true)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Hooks for real-time data and voice interface
+  // Hooks for real-time data and voice interface - NO MOCK DATA
   const { 
     data: liveData, 
     isConnected, 
     systemHealth, 
     shopifyMetrics, 
     marketingData 
-  } = useLiveData({ enableMockData: true })
+  } = useLiveData({ enableMockData: false }) // Real business data only
 
   const {
     isListening,
@@ -365,26 +365,26 @@ export default function AICore({ onExit, isFullscreen = false }: AICoreProps) {
         isProcessing={isProcessing}
       />
 
-      {/* Floating data panels for key metrics */}
+      {/* Floating data panels for real business metrics */}
       <div className="floating-panel" style={{ top: '100px', left: '20px' }}>
         <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>LIVE METRICS</div>
-        <div>Revenue: {liveData?.revenue?.today ? `$${liveData.revenue.today.toLocaleString()}` : '$2,347'}</div>
+        <div>Revenue: {liveData?.revenue?.today ? `$${liveData.revenue.today.toLocaleString()}` : '$0'}</div>
         <div>Orders: {liveData?.orders?.processing || 'Loading...'}</div>
         <div>Customers: {liveData?.customers?.active || 'Loading...'}</div>
       </div>
 
       <div className="floating-panel" style={{ top: '220px', left: '20px' }}>
         <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>SYSTEM HEALTH</div>
-        <div>Status: {systemHealth?.status || 'OPERATIONAL'}</div>
-        <div>CPU: {systemHealth?.cpuUsage ? `${systemHealth.cpuUsage}%` : '65%'}</div>
-        <div>Memory: {systemHealth?.memoryUsage ? `${systemHealth.memoryUsage}%` : '72%'}</div>
-        <div>Response: {systemHealth?.responseTime ? `${systemHealth.responseTime}ms` : '45ms'}</div>
+        <div>Status: {systemHealth?.status || liveData?.systemHealth?.status || 'UNKNOWN'}</div>
+        <div>CPU: {systemHealth?.cpuUsage ? `${systemHealth.cpuUsage}%` : liveData?.systemHealth?.cpuUsage ? `${liveData.systemHealth.cpuUsage}%` : 'N/A'}</div>
+        <div>Memory: {systemHealth?.memoryUsage ? `${systemHealth.memoryUsage}%` : liveData?.systemHealth?.memoryUsage ? `${liveData.systemHealth.memoryUsage}%` : 'N/A'}</div>
+        <div>Response: {systemHealth?.responseTime ? `${systemHealth.responseTime}ms` : liveData?.systemHealth?.responseTime ? `${liveData.systemHealth.responseTime}ms` : 'N/A'}</div>
       </div>
 
       <div className="floating-panel" style={{ bottom: '100px', left: '20px' }}>
         <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>ACTIVE OPERATIONS</div>
-        <div>Agents: {agents?.filter(a => a.status === 'active').length || 0} Running</div>
-        <div>Campaigns: {marketingData?.activeCampaigns || 8} Active</div>
+        <div>Agents: {liveData?.agents?.filter(a => a.status === 'active').length || agents?.filter(a => a.status === 'active').length || 0} Running</div>
+        <div>Campaigns: {marketingData?.activeCampaigns || liveData?.marketingData?.activeCampaigns || 0} Active</div>
         <div>Sync: {isConnected ? 'LIVE' : 'OFFLINE'}</div>
       </div>
 

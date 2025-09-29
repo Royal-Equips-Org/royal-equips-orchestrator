@@ -100,86 +100,86 @@ export default function DataPanels({
     return { points: new Float32Array(points), colors: new Float32Array(colors) }
   }
 
-  // Get panel content based on type and live data
+  // Get panel content based on type and real live data
   const getPanelContent = (type: string) => {
     switch (type) {
       case 'world-map':
         return {
           title: 'GLOBAL SALES',
-          data: shopifyMetrics?.globalSales || '$45,230',
+          data: shopifyMetrics?.globalSales || liveData?.revenue?.total ? `$${Math.floor(liveData.revenue.total).toLocaleString()}` : '$0',
           subtitle: 'Real-time Revenue'
         }
       case 'system-status':
         return {
           title: 'SYSTEM STATUS',
-          data: systemHealth?.status || 'OPERATIONAL',
-          subtitle: 'All Systems Online'
+          data: systemHealth?.status || liveData?.systemHealth?.status || 'OFFLINE',
+          subtitle: systemHealth?.uptime || liveData?.systemHealth?.uptime || 'Unknown'
         }
       case 'analytics':
         return {
           title: 'ANALYTICS',
-          data: liveData?.conversionRate || '3.2%',
+          data: shopifyMetrics?.conversionRate || liveData?.shopifyMetrics?.conversionRate || '0%',
           subtitle: 'Conversion Rate'
         }
       case 'revenue':
         return {
           title: 'REVENUE',
-          data: liveData?.revenue || '$127,543',
-          subtitle: 'Today +12.5%'
+          data: liveData?.revenue?.total ? `$${Math.floor(liveData.revenue.total).toLocaleString()}` : '$0',
+          subtitle: liveData?.revenue?.growth ? `${liveData.revenue.growth} growth` : 'No data'
         }
       case 'orders':
         return {
           title: 'ORDERS',
-          data: liveData?.orders || '342',
-          subtitle: 'Active Orders'
+          data: liveData?.orders?.total?.toString() || '0',
+          subtitle: liveData?.orders?.processing ? `${liveData.orders.processing} processing` : 'No data'
         }
       case 'inventory':
         return {
           title: 'INVENTORY',
-          data: liveData?.products || '1,847',
-          subtitle: 'Products'
+          data: liveData?.products?.total?.toString() || '0',
+          subtitle: liveData?.products?.lowStock ? `${liveData.products.lowStock} low stock` : 'No data'
         }
       case 'customers':
         return {
           title: 'CUSTOMERS',
-          data: liveData?.customers || '5,239',
-          subtitle: 'Active Users'
+          data: liveData?.customers?.total?.toString() || '0',
+          subtitle: liveData?.customers?.active ? `${liveData.customers.active} active` : 'No data'
         }
       case 'marketing':
         return {
           title: 'CAMPAIGNS',
-          data: marketingData?.active || '8',
-          subtitle: 'Running'
+          data: marketingData?.activeCampaigns?.toString() || liveData?.marketingData?.activeCampaigns?.toString() || '0',
+          subtitle: 'Active campaigns'
         }
       case 'performance':
         return {
           title: 'PERFORMANCE',
-          data: systemHealth?.uptime || '99.7%',
-          subtitle: 'Uptime'
+          data: systemHealth?.uptime || liveData?.systemHealth?.uptime || '0%',
+          subtitle: 'System uptime'
         }
       case 'logs':
         return {
           title: 'LOGS',
           data: 'LIVE',
-          subtitle: 'System Events'
+          subtitle: `${liveData?.agents?.length || 0} events`
         }
       case 'network':
         return {
           title: 'NETWORK',
-          data: '2.4 GB/s',
-          subtitle: 'Bandwidth'
+          data: systemHealth?.responseTime ? `${systemHealth.responseTime}ms` : liveData?.systemHealth?.responseTime ? `${liveData.systemHealth.responseTime}ms` : '0ms',
+          subtitle: 'Response time'
         }
       case 'security':
         return {
           title: 'SECURITY',
-          data: 'SECURE',
-          subtitle: 'No Threats'
+          data: systemHealth?.status === 'OPERATIONAL' || liveData?.systemHealth?.status === 'OPERATIONAL' ? 'SECURE' : 'ALERT',
+          subtitle: 'Threat status'
         }
       default:
         return {
           title: 'DATA',
           data: 'LIVE',
-          subtitle: 'Monitoring'
+          subtitle: 'Real-time monitoring'
         }
     }
   }
