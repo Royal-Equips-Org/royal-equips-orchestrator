@@ -76,55 +76,100 @@ export function EnhancedAIDashboard() {
   const voiceRef = useRef<any>(null);
   const eyeTrackingRef = useRef<any>(null);
 
-  // AI Context Engine - Dynamic interface learning
+  // AI Context Engine - Dynamic interface learning with real data
   const initializeAIContext = useCallback(async () => {
     try {
-      // Simulate AI context initialization
+      // Fetch real business metrics from APIs
+      const [empireMetrics, shopifyMetrics] = await Promise.all([
+        fetch('/api/v1/empire/metrics').then(r => r.json()).catch(() => null),
+        fetch('/api/v1/shopify/metrics').then(r => r.json()).catch(() => null)
+      ]);
+      
+      // Calculate real predictive alerts based on actual data
+      const realAlerts: PredictiveAlert[] = [];
+      
+      if (shopifyMetrics) {
+        // Generate real inventory alerts
+        if (shopifyMetrics.topProducts) {
+          shopifyMetrics.topProducts.forEach((product: any) => {
+            if (product.inventoryLevel < 50) {
+              realAlerts.push({
+                id: `inventory_${product.id}`,
+                type: 'risk',
+                severity: product.inventoryLevel < 10 ? 'critical' : 'medium',
+                message: `Low inventory for ${product.title}: ${product.inventoryLevel} units remaining`,
+                probability: 0.9,
+                timeToImpact: Math.max(1, Math.floor(product.inventoryLevel / 2)), // Rough velocity calculation
+                suggestedActions: ['Reorder inventory', 'Contact supplier', 'Enable backorders'],
+                autoResolvable: true
+              });
+            }
+          });
+        }
+        
+        // Generate conversion opportunity alerts
+        if (shopifyMetrics.conversionRate < 2.0) {
+          realAlerts.push({
+            id: 'conversion_opportunity',
+            type: 'opportunity',
+            severity: 'medium',
+            message: `Conversion rate below benchmark (${shopifyMetrics.conversionRate?.toFixed(1)}% vs 2.5% target)`,
+            probability: 0.75,
+            timeToImpact: 15,
+            suggestedActions: ['Optimize product pages', 'A/B test checkout flow', 'Review cart abandonment'],
+            autoResolvable: false
+          });
+        }
+      }
+      
       const context: AIContext = {
         userBehavior: {
           sessionDuration: Date.now() - performance.timing.navigationStart,
           clickPatterns: [],
-          preferredModules: ['revenue', 'inventory', 'analytics'],
-          stressLevel: 'low',
+          preferredModules: ['revenue', 'inventory', 'analytics'], // Could be determined from user analytics
+          stressLevel: 'low', // Could be determined from interaction patterns
           currentFocus: 'dashboard',
-          predictedNextAction: 'check_revenue_metrics'
+          predictedNextAction: realAlerts.length > 0 ? 'check_alerts' : 'check_revenue_metrics'
         },
         businessMetrics: {
-          revenueVelocity: 127.5,
-          conversionTrend: 15.2,
-          inventoryHealth: 94.3,
-          customerSatisfaction: 88.7,
-          marketPosition: 76.4,
-          operationalEfficiency: 91.2
+          revenueVelocity: shopifyMetrics?.totalRevenue ? 
+            (shopifyMetrics.totalRevenue / 30) * 100 : 0, // Daily revenue as velocity %
+          conversionTrend: shopifyMetrics?.conversionRate || 0,
+          inventoryHealth: shopifyMetrics?.topProducts ? 
+            (shopifyMetrics.topProducts.filter((p: any) => p.inventoryLevel > 50).length / 
+             shopifyMetrics.topProducts.length) * 100 : 0,
+          customerSatisfaction: 88.7, // Would need customer feedback API
+          marketPosition: 76.4, // Would need competitive analysis API
+          operationalEfficiency: shopifyMetrics?.connected ? 95.0 : 50.0
         },
-        predictiveAlerts: [
-          {
-            id: 'alert_001',
-            type: 'opportunity',
-            severity: 'high',
-            message: 'EU market conversion spike detected - 23% increase predicted in next 18 minutes',
-            probability: 0.87,
-            timeToImpact: 18,
-            suggestedActions: ['Increase EU inventory allocation', 'Launch targeted campaign'],
-            autoResolvable: true
-          },
-          {
-            id: 'alert_002', 
-            type: 'risk',
-            severity: 'medium',
-            message: 'Inventory shortage risk for SKU-12345 in 25 minutes based on current velocity',
-            probability: 0.73,
-            timeToImpact: 25,
-            suggestedActions: ['Trigger supplier reorder', 'Enable backorder system'],
-            autoResolvable: true
-          }
-        ],
+        predictiveAlerts: realAlerts,
         semanticQueries: []
       };
       
       setAIContext(context);
     } catch (error) {
       console.error('AI Context initialization failed:', error);
+      // Fallback to minimal context without fake data
+      setAIContext({
+        userBehavior: {
+          sessionDuration: Date.now() - performance.timing.navigationStart,
+          clickPatterns: [],
+          preferredModules: [],
+          stressLevel: 'low',
+          currentFocus: 'dashboard',
+          predictedNextAction: 'loading'
+        },
+        businessMetrics: {
+          revenueVelocity: 0,
+          conversionTrend: 0,
+          inventoryHealth: 0,
+          customerSatisfaction: 0,
+          marketPosition: 0,
+          operationalEfficiency: 0
+        },
+        predictiveAlerts: [],
+        semanticQueries: []
+      });
     }
   }, []);
 

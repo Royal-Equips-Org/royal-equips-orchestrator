@@ -24,6 +24,7 @@ import {
   Upload,
   Zap
 } from 'lucide-react';
+import { shopifyService, type ShopifyProduct as ApiShopifyProduct, type ShopifyCustomer as ApiShopifyCustomer, type ShopifyOrder as ApiShopifyOrder } from '../../services/shopify-service';
 
 // Shopify Integration Types
 interface ShopifyStore {
@@ -150,29 +151,51 @@ export function ComprehensiveShopifyIntegration() {
   const [realTimeUpdates, setRealTimeUpdates] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
 
-  // Initialize Shopify data
+  // Initialize Shopify data with real API calls
   const initializeShopifyData = useCallback(async () => {
     try {
       setSyncStatus('syncing');
       
-      // Simulate fetching store data
-      const storeData: ShopifyStore = {
-        id: 'store_001',
-        name: 'Royal Equips Store',
-        domain: 'royal-equips.myshopify.com',
-        status: 'active',
-        lastSync: new Date(),
-        totalProducts: 1247,
-        totalCustomers: 8934,
-        totalOrders: 15623,
-        monthlyRevenue: 284750.50
-      };
+      // Fetch real store health data
+      const storeHealth = await shopifyService.getStoreHealth();
       
-      setStores([storeData]);
-      setSelectedStore(storeData);
-      
-      // Initialize sample data for demonstration
-      initializeSampleData();
+      if (storeHealth.status === 'connected') {
+        // Fetch real metrics from Shopify API
+        const metrics = await shopifyService.fetchMetrics();
+        
+        const storeData: ShopifyStore = {
+          id: 'live_store',
+          name: storeHealth.shopName || 'Royal Equips Store',
+          domain: `${storeHealth.shopName?.toLowerCase().replace(/\s+/g, '-') || 'royal-equips'}.myshopify.com`,
+          status: 'active',
+          lastSync: new Date(),
+          totalProducts: metrics.totalProducts,
+          totalCustomers: metrics.totalCustomers,
+          totalOrders: metrics.totalOrders,
+          monthlyRevenue: metrics.totalRevenue
+        };
+        
+        setStores([storeData]);
+        setSelectedStore(storeData);
+        
+        // Fetch real product data
+        await fetchRealProducts();
+        
+        // Fetch real customer data
+        await fetchRealCustomers();
+        
+        // Fetch real orders data
+        await fetchRealOrders();
+        
+        // Generate real inventory alerts based on actual data
+        await generateRealInventoryAlerts();
+        
+      } else {
+        // Store not connected - show error state
+        console.error('Shopify store not connected:', storeHealth.details);
+        setSyncStatus('error');
+        return;
+      }
       
       setSyncStatus('idle');
     } catch (error) {
@@ -181,106 +204,171 @@ export function ComprehensiveShopifyIntegration() {
     }
   }, []);
 
-  const initializeSampleData = () => {
-    // Sample products
-    const sampleProducts: ShopifyProduct[] = [
-      {
-        id: 'prod_001',
-        title: 'Premium Office Chair',
-        handle: 'premium-office-chair',
-        status: 'active',
-        inventory: 45,
-        price: 299.99,
-        comparePrice: 399.99,
-        vendor: 'ErgoTech',
-        productType: 'Furniture',
-        tags: ['office', 'ergonomic', 'bestseller'],
-        images: ['/images/chair1.jpg'],
-        variants: [
-          {
-            id: 'var_001',
-            title: 'Black',
-            price: 299.99,
-            inventory: 25,
-            sku: 'CHAIR-001-BLK',
-            weight: 15.5,
+  // Fetch real products from Shopify API
+  const fetchRealProducts = async () => {
+    try {
+      // Call the real Shopify API to fetch products
+      const response = await fetch('/api/v1/shopify/products');
+      const data = await response.json();
+      
+      if (data.success && data.products) {
+        // Transform API response to our interface
+        const realProducts: ShopifyProduct[] = data.products.map((product: any) => ({
+          id: product.id,
+          title: product.title,
+          handle: product.handle,
+          status: product.status,
+          inventory: product.totalInventory || 0,
+          price: parseFloat(product.variants?.edges?.[0]?.node?.price || '0'),
+          comparePrice: product.variants?.edges?.[0]?.node?.compareAtPrice ? 
+            parseFloat(product.variants.edges[0].node.compareAtPrice) : undefined,
+          vendor: product.vendor,
+          productType: product.productType,
+          tags: product.tags,
+          images: product.images?.edges?.map((edge: any) => edge.node.url) || [],
+          variants: product.variants?.edges?.map((edge: any) => ({
+            id: edge.node.id,
+            title: edge.node.title || 'Default',
+            price: parseFloat(edge.node.price),
+            inventory: edge.node.inventoryQuantity || 0,
+            sku: edge.node.sku || '',
+            weight: 0, // Not available in basic response
             requiresShipping: true
-          },
-          {
-            id: 'var_002', 
-            title: 'White',
-            price: 299.99,
-            inventory: 20,
-            sku: 'CHAIR-001-WHT',
-            weight: 15.5,
-            requiresShipping: true
-          }
-        ],
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date()
+          })) || [],
+          createdAt: new Date(product.createdAt),
+          updatedAt: new Date(product.updatedAt)
+        }));
+        
+        setProducts(realProducts);
+        console.log(`Fetched ${realProducts.length} real products from Shopify`);
+      } else {
+        console.warn('No products returned from Shopify API');
+        setProducts([]);
       }
-      // Add more sample products...
-    ];
-
-    // Sample customers
-    const sampleCustomers: ShopifyCustomer[] = [
-      {
-        id: 'cust_001',
-        email: 'john.doe@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+1-555-0123',
-        totalSpent: 1245.99,
-        ordersCount: 8,
-        lastOrderDate: new Date('2024-09-20'),
-        acceptsMarketing: true,
-        tags: ['vip', 'repeat-customer'],
-        addresses: [],
-        createdAt: new Date('2023-05-10'),
-        lifetimeValue: 2890.50,
-        segment: 'vip'
-      }
-      // Add more sample customers...
-    ];
-
-    // Sample inventory alerts
-    const sampleAlerts: InventoryAlert[] = [
-      {
-        id: 'alert_001',
-        productId: 'prod_001',
-        variantId: 'var_001',
-        productTitle: 'Premium Office Chair - Black',
-        currentStock: 25,
-        reorderPoint: 50,
-        severity: 'medium',
-        predictedStockout: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-        suggestedReorderQuantity: 100
-      }
-    ];
-
-    setProducts(sampleProducts);
-    setCustomers(sampleCustomers);
-    setInventoryAlerts(sampleAlerts);
+    } catch (error) {
+      console.error('Failed to fetch real products:', error);
+      setProducts([]);
+    }
   };
 
-  // Real-time sync function
+  // Fetch real customers from Shopify API
+  const fetchRealCustomers = async () => {
+    try {
+      // Call the real Shopify API to fetch customers
+      const response = await fetch('/api/v1/shopify/customers');
+      const data = await response.json();
+      
+      if (data.success && data.customers) {
+        // Transform API response to our interface
+        const realCustomers: ShopifyCustomer[] = data.customers.map((customer: any) => ({
+          id: customer.id,
+          email: customer.email || '',
+          firstName: customer.firstName || '',
+          lastName: customer.lastName || '',
+          phone: customer.phone,
+          totalSpent: parseFloat(customer.totalSpent || '0'),
+          ordersCount: customer.ordersCount || 0,
+          lastOrderDate: customer.lastOrderAt ? new Date(customer.lastOrderAt) : undefined,
+          acceptsMarketing: customer.acceptsMarketing || false,
+          tags: customer.tags || [],
+          addresses: [], // Would need separate API call for addresses
+          createdAt: new Date(customer.createdAt),
+          lifetimeValue: parseFloat(customer.totalSpent || '0'), // Basic LTV calculation
+          segment: determineCustomerSegment(parseFloat(customer.totalSpent || '0'), customer.ordersCount || 0)
+        }));
+        
+        setCustomers(realCustomers);
+        console.log(`Fetched ${realCustomers.length} real customers from Shopify`);
+      } else {
+        console.warn('No customers returned from Shopify API');
+        setCustomers([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch real customers:', error);
+      setCustomers([]);
+    }
+  };
+
+  // Fetch real orders from Shopify API
+  const fetchRealOrders = async () => {
+    try {
+      // Call the real Shopify API to fetch orders
+      const response = await fetch('/api/v1/shopify/orders');
+      const data = await response.json();
+      
+      if (data.success && data.orders) {
+        // Transform API response to our interface - would need more detailed API response
+        setOrders(data.orders.map((order: any) => ({
+          ...order,
+          createdAt: new Date(order.createdAt),
+          updatedAt: new Date(order.updatedAt)
+        })));
+        
+        console.log(`Fetched ${data.orders.length} real orders from Shopify`);
+      } else {
+        console.warn('No orders returned from Shopify API');
+        setOrders([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch real orders:', error);
+      setOrders([]);
+    }
+  };
+
+  // Generate real inventory alerts based on actual product data
+  const generateRealInventoryAlerts = async () => {
+    try {
+      // Use actual product inventory levels to generate alerts
+      const alerts: InventoryAlert[] = products
+        .filter(product => product.inventory < 50) // Low stock threshold
+        .map(product => ({
+          id: `alert_${product.id}`,
+          productId: product.id,
+          variantId: product.variants[0]?.id || product.id,
+          productTitle: product.title,
+          currentStock: product.inventory,
+          reorderPoint: 50,
+          severity: product.inventory < 10 ? 'critical' : 
+                   product.inventory < 25 ? 'high' : 'medium',
+          predictedStockout: new Date(Date.now() + (product.inventory * 24 * 60 * 60 * 1000)), // Rough estimate
+          suggestedReorderQuantity: Math.max(100, product.inventory * 2)
+        }));
+      
+      setInventoryAlerts(alerts);
+      console.log(`Generated ${alerts.length} real inventory alerts`);
+    } catch (error) {
+      console.error('Failed to generate inventory alerts:', error);
+      setInventoryAlerts([]);
+    }
+  };
+
+  // Helper function to determine customer segment based on real data
+  const determineCustomerSegment = (totalSpent: number, ordersCount: number): ShopifyCustomer['segment'] => {
+    if (totalSpent > 1000 || ordersCount > 10) return 'vip';
+    if (totalSpent > 500 || ordersCount > 5) return 'regular';
+    if (ordersCount === 0 && totalSpent === 0) return 'at_risk';
+    return 'new';
+  };
+
+  // Real-time sync function using actual Shopify APIs
   const performSync = useCallback(async () => {
     if (!selectedStore) return;
     
     setSyncStatus('syncing');
     
     try {
-      // Simulate API calls to Shopify
+      // Trigger real Shopify sync via API
+      await shopifyService.syncProducts();
+      
+      // Fetch updated data from APIs
       await Promise.all([
-        // Fetch products
-        new Promise(resolve => setTimeout(resolve, 1000)),
-        // Fetch customers  
-        new Promise(resolve => setTimeout(resolve, 800)),
-        // Fetch orders
-        new Promise(resolve => setTimeout(resolve, 1200)),
-        // Check inventory levels
-        new Promise(resolve => setTimeout(resolve, 600))
+        fetchRealProducts(),
+        fetchRealCustomers(),
+        fetchRealOrders(),
       ]);
+      
+      // Update inventory alerts based on new data
+      await generateRealInventoryAlerts();
       
       // Update last sync time
       setStores(prev => prev.map(store => 
@@ -290,11 +378,12 @@ export function ComprehensiveShopifyIntegration() {
       ));
       
       setSyncStatus('idle');
+      console.log('Real Shopify sync completed successfully');
     } catch (error) {
-      console.error('Sync failed:', error);
+      console.error('Real Shopify sync failed:', error);
       setSyncStatus('error');
     }
-  }, [selectedStore]);
+  }, [selectedStore, products]);
 
   // Auto-sync setup
   useEffect(() => {
