@@ -14,9 +14,21 @@ export default function HolographicFemaleAI({ systemStatus = 'active', scale = 1
   const ringsRef = useRef<THREE.Group>(null)
   const particlesRef = useRef<THREE.Points>(null)
   
+  // Helper to determine optimal particle count based on device capabilities
+  function getOptimalParticleCount() {
+    // Use deviceMemory (GB) and hardwareConcurrency (CPU cores) if available
+    const memory = (navigator as any).deviceMemory || 4; // default to 4GB if unavailable
+    const cores = navigator.hardwareConcurrency || 4; // default to 4 cores if unavailable
+    // Heuristic: scale particle count between 1000 and 5000
+    if (memory < 2 || cores < 4) return 1000;
+    if (memory < 4 || cores < 6) return 2500;
+    if (memory < 8 || cores < 8) return 4000;
+    return 5000;
+  }
+
   // Enhanced particle system for full holographic effect
   const particles = useMemo(() => {
-    const count = 5000
+    const count = getOptimalParticleCount();
     const positions = new Float32Array(count * 3)
     const colors = new Float32Array(count * 3)
     
