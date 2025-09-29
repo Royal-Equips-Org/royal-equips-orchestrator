@@ -399,7 +399,6 @@ export default function WorkstationArray() {
   }, []);
 
   const handleExpand = (id: string) => {
-    console.log(`Expanding workstation: ${id}`);
     // Could implement modal expansion here
   };
 
