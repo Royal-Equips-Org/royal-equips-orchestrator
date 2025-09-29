@@ -124,6 +124,7 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.inventory', 'inventory_bp', None),
         ('app.routes.security', 'security_bp', None),  # Production Security with AI Fraud Detection
         ('app.routes.finance', 'finance_bp', None),  # Production Finance with Payment Intelligence
+        ('app.routes.aira_intelligence', 'aira_intelligence_bp', None),  # Enhanced AIRA Intelligence System
     ]
     
     registered_count = 0

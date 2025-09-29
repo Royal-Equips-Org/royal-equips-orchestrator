@@ -23,6 +23,7 @@ const MarketingAutomationModule = lazy(() => import('./modules/marketing/Marketi
 const CustomerSupportModule = lazy(() => import('./modules/customer-support/CustomerSupportModule'));
 const SecurityModule = lazy(() => import('./modules/security/SecurityModule'));
 const FinanceModule = lazy(() => import('./modules/finance/FinanceModule'));
+const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AIRAIntelligenceModule'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
