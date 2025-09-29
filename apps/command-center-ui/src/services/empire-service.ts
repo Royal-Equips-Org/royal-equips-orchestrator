@@ -85,7 +85,7 @@ export class EmpireService {
   async rejectProduct(productId: string, reason?: string): Promise<void> {
     try {
       logger.info('Rejecting product', { productId, reason });
-      await apiClient.post(`/empire/opportunities/reject/${productId}`, { reason });
+      await apiClient.post(`/empire/opportunities/${productId}/reject`, { reason });
     } catch (error) {
       logger.error('Failed to reject product', { productId, reason, error: String(error) });
       throw error;
