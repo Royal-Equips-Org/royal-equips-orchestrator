@@ -1,0 +1,79 @@
+name: ☁️ Cloudflare Deploy
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'workers/**'
+      - 'edge-functions/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "10.17.0"
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to Cloudflare
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🏗️ Install & Build
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm --filter "@royal-equips/*" build
+        env:
+          HUSKY: 0
+
+      - name: 🌐 Deploy Command Center (Pages)
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: royal-equips-command-center
+          directory: apps/command-center-ui/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⚡ Deploy Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers
+          environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+
+      - name: 🔗 Deploy Edge Functions
+        run: |
+          cd edge-functions/auth-hook-react-email-resend
+          npx wrangler deploy --env ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

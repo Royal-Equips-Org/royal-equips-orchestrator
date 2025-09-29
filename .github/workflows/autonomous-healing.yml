@@ -1,0 +1,96 @@
+name: 🤖 Autonomous Healing
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Every 30 minutes
+  workflow_dispatch:
+    inputs:
+      healing_type:
+        description: 'Type of healing'
+        required: true
+        default: 'standard'
+        type: choice
+        options:
+          - standard
+          - deep
+          - emergency
+  repository_dispatch:
+    types: [system-failure, service-down]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+env:
+  HEALING_TIMEOUT: 300
+
+jobs:
+  health-check:
+    name: 🩺 System Health Check
+    runs-on: ubuntu-latest
+    outputs:
+      needs_healing: ${{ steps.check.outputs.needs_healing }}
+      failed_services: ${{ steps.check.outputs.failed_services }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔍 Health Diagnostics
+        id: check
+        run: |
+          # Check deployment status
+          failed_services=""
+          
+          # Check Cloudflare deployment health
+          if ! curl -sf https://royal-equips-command-center.pages.dev/health 2>/dev/null; then
+            failed_services="$failed_services command-center"
+          fi
+          
+          # Check Workers health
+          if ! curl -sf https://royal-equips-orchestrator.workers.dev/health 2>/dev/null; then
+            failed_services="$failed_services workers"
+          fi
+          
+          if [ -n "$failed_services" ]; then
+            echo "needs_healing=true" >> $GITHUB_OUTPUT
+            echo "failed_services=$failed_services" >> $GITHUB_OUTPUT
+          else
+            echo "needs_healing=false" >> $GITHUB_OUTPUT
+          fi
+
+  auto-heal:
+    name: 🔧 Auto Healing
+    runs-on: ubuntu-latest
+    needs: health-check
+    if: needs.health-check.outputs.needs_healing == 'true'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Environment
+        run: |
+          npm install -g pnpm@10.17.0
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: 🚀 Trigger Redeployment
+        if: contains(needs.health-check.outputs.failed_services, 'command-center') || contains(needs.health-check.outputs.failed_services, 'workers')
+        run: |
+          gh workflow run cloudflare-deploy.yml --ref main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📢 Create Issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Autonomous Healing Failed - ${new Date().toISOString()}`,
+              body: `## System Status\n\n**Failed Services:** ${{ needs.health-check.outputs.failed_services }}\n\n**Healing Type:** ${{ github.event.inputs.healing_type || 'automatic' }}\n\n**Timestamp:** ${new Date().toISOString()}\n\n**Action Required:** Manual intervention needed for critical system recovery.`,
+              labels: ['bug', 'critical', 'autonomous-system']
+            })
