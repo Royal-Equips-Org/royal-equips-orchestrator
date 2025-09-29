@@ -73,7 +73,7 @@ export function EnhancedAIDashboard() {
   const [contextualAssistant, setContextualAssistant] = useState(false);
   const [predictiveUI, setPredictiveUI] = useState(true);
   
-  const voiceRef = useRef<SpeechRecognition | null>(null);
+  const voiceRef = useRef<any>(null);
   const eyeTrackingRef = useRef<any>(null);
 
   // AI Context Engine - Dynamic interface learning
@@ -148,14 +148,14 @@ export function EnhancedAIDashboard() {
   const initializeMultimodalInput = useCallback(() => {
     // Voice Commands
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       voiceRef.current = new SpeechRecognition();
       voiceRef.current.continuous = true;
       voiceRef.current.interimResults = true;
       
-      voiceRef.current.onresult = (event) => {
+      voiceRef.current.onresult = (event: any) => {
         const transcript = Array.from(event.results)
-          .map(result => result[0].transcript)
+          .map((result: any) => result[0].transcript)
           .join('');
           
         handleSemanticQuery(transcript);
@@ -181,7 +181,7 @@ export function EnhancedAIDashboard() {
         await generateVisualization(intent.parameters);
       } else if (intent.type === 'command') {
         // "Enable autonomous mode for inventory management"
-        await executeCommand(intent.action, intent.parameters);
+        await executeCommand('enable_autonomous', intent.parameters);
       }
     } catch (error) {
       console.error('Semantic query processing failed:', error);
