@@ -90,7 +90,7 @@ pnpm --filter @royal-equips/command-center-ui run build
    - Inspect circuit breaker status via `apiClient.getCircuitBreakerStatus()` (dev tools console).
    - Consider enabling `isEmergencyMode` in store to freeze automation features.
 4. Communicate status in engineering channel; include expected resolution time.
-5. After fix, document in `CHANGELOG.md` and attach post-mortem to `docs/runbooks/` if needed.
+5. After fix, document in `CHANGELOG.md` and attach post-mortem to `docs/post-mortems/` if needed.
 
 ---
 ## 8. Contact & Ownership
