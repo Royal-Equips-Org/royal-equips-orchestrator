@@ -21,7 +21,7 @@ const fastify = Fastify({
 const start = async () => {
   try {
     // Register plugins - casting to any to resolve TypeScript compatibility issues
-    await fastify.register(cors as any, {
+    await fastify.register(cors, {
       origin: true
     });
 
