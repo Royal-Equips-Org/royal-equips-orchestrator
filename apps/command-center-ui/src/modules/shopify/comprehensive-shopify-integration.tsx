@@ -221,7 +221,7 @@ export function ComprehensiveShopifyIntegration() {
           inventory: product.totalInventory || 0,
           price: parseFloat(product.variants?.edges?.[0]?.node?.price || '0'),
           comparePrice: product.variants?.edges?.[0]?.node?.compareAtPrice ? 
-            parseFloat(product.variants.edges[0].node.compareAtPrice) : undefined,
+            parseFloat(product.variants?.edges?.[0]?.node?.compareAtPrice) : undefined,
           vendor: product.vendor,
           productType: product.productType,
           tags: product.tags,
