@@ -9,6 +9,7 @@ import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import MobileShell from './components/layout/MobileShell'
 import TopBar from './components/layout/TopBar'
 import ModuleScroller from './components/layout/ModuleScroller'
+import FuturisticCommandCenter from './components/holographic/FuturisticCommandCenter'
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
@@ -145,37 +146,15 @@ function AppContent() {
   };
 
   return (
-    <MobileShell>
-      {/* Mobile-first responsive navigation */}
-      <TopBar className="lg:hidden" />
+    <div className="w-full h-screen bg-black overflow-hidden">
+      {/* Futuristic Holographic Command Center */}
+      <FuturisticCommandCenter />
       
-      {/* Desktop navigation (hidden on mobile) */}
-      <div className="hidden lg:block">
-        <NavigationBar />
+      {/* Toast notifications positioned absolutely */}
+      <div className="absolute top-20 right-4 z-50">
+        <ToastContainer toasts={toasts} onClose={removeToast} />
       </div>
-      
-      {/* Module navigation scroller */}
-      <div className="
-        lg:hidden sticky top-16 z-30
-        bg-bg/80 backdrop-blur-md
-        border-b border-quantum-primary/20
-      ">
-        <ModuleScroller />
-      </div>
-      
-      {/* Main content area with responsive padding */}
-      <main className="
-        pt-16 lg:pt-32
-        min-h-screen
-      ">
-        <div className="px-4 sm:px-6 lg:px-8">
-          {renderCurrentModule()}
-        </div>
-      </main>
-      
-      {/* Toast notifications */}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
-    </MobileShell>
+    </div>
   )
 }
 

@@ -38,8 +38,12 @@ html {
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background: linear-gradient(135deg, #020409 0%, #070c14 25%, #0e1824 50%, #020409 75%, #070c14 100%);
-  background-size: 400% 400%;
+  background: #0a0a0a;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(5, 244, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 31, 191, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #020409 0%, #070c14 25%, #0e1824 50%, #020409 75%, #070c14 100%);
+  background-size: 400% 400%, 400% 400%, 100% 100%;
   animation: quantum-gradient-shift 20s ease infinite;
   color: #d6ecff;
   overflow-x: hidden;
@@ -394,4 +398,144 @@ body::before {
 @keyframes neural-pulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 1; }
+}
+
+/* FUTURISTIC HOLOGRAPHIC COMMAND CENTER STYLES */
+
+/* Holographic glow effects */
+.holographic-glow {
+  filter: drop-shadow(0 0 10px rgba(5, 244, 255, 0.5))
+          drop-shadow(0 0 20px rgba(5, 244, 255, 0.3))
+          drop-shadow(0 0 30px rgba(5, 244, 255, 0.1));
+}
+
+/* Pulsing hologram effect */
+.hologram-pulse {
+  animation: hologram-pulse 2s ease-in-out infinite;
+}
+
+@keyframes hologram-pulse {
+  0%, 100% { 
+    opacity: 0.8; 
+    box-shadow: 0 0 20px rgba(5, 244, 255, 0.3);
+  }
+  50% { 
+    opacity: 1; 
+    box-shadow: 0 0 40px rgba(5, 244, 255, 0.6);
+  }
+}
+
+/* Scanning line effect */
+.hologram-scan {
+  position: relative;
+  overflow: hidden;
+}
+
+.hologram-scan::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(5, 244, 255, 0.2),
+    transparent
+  );
+  animation: hologram-scan 3s linear infinite;
+}
+
+@keyframes hologram-scan {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Matrix-style background grid */
+.matrix-grid {
+  background-image: 
+    linear-gradient(rgba(5, 244, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(5, 244, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: matrix-scroll 20s linear infinite;
+}
+
+@keyframes matrix-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 20px; }
+}
+
+/* Holographic text effect */
+.holographic-text {
+  background: linear-gradient(45deg, #05f4ff, #ff1fbf, #21ff7a, #05f4ff);
+  background-size: 400% 400%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: holographic-shift 3s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(5, 244, 255, 0.3);
+}
+
+@keyframes holographic-shift {
+  0%, 100% { background-position: 0% 50%; }
+  25% { background-position: 100% 0%; }
+  50% { background-position: 100% 100%; }
+  75% { background-position: 0% 100%; }
+}
+
+/* Data stream visualization */
+.data-stream {
+  position: relative;
+  overflow: hidden;
+}
+
+.data-stream::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(5, 244, 255, 0.1) 2px,
+    rgba(5, 244, 255, 0.1) 4px
+  );
+  animation: data-flow 1s linear infinite;
+}
+
+@keyframes data-flow {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+/* Enhanced mobile responsiveness for futuristic UI */
+@media (max-width: 768px) {
+  .holographic-glow {
+    filter: drop-shadow(0 0 5px rgba(5, 244, 255, 0.4))
+            drop-shadow(0 0 10px rgba(5, 244, 255, 0.2));
+  }
+  
+  .matrix-grid {
+    background-size: 15px 15px;
+  }
+  
+  @keyframes matrix-scroll {
+    0% { background-position: 0 0; }
+    100% { background-position: 15px 15px; }
+  }
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .hologram-pulse,
+  .hologram-scan::after,
+  .matrix-grid,
+  .holographic-text,
+  .data-stream::before {
+    animation: none;
+  }
 }
