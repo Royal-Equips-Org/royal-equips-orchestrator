@@ -9,7 +9,7 @@ import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import MobileShell from './components/layout/MobileShell'
 import TopBar from './components/layout/TopBar'
 import ModuleScroller from './components/layout/ModuleScroller'
-import FuturisticCommandCenter from './components/holographic/FuturisticCommandCenter'
+import ExactCommandCenter from './components/holographic/ExactCommandCenter'
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
@@ -147,8 +147,8 @@ function AppContent() {
 
   return (
     <div className="w-full h-screen bg-black overflow-hidden">
-      {/* Futuristic Holographic Command Center */}
-      <FuturisticCommandCenter />
+      {/* Exact Reference Image Command Center */}
+      <ExactCommandCenter />
       
       {/* Toast notifications positioned absolutely */}
       <div className="absolute top-20 right-4 z-50">
