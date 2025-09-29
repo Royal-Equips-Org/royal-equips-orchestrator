@@ -19,28 +19,44 @@ export interface AIRAResponse {
  * Unified OpenAI Secret Resolution
  * This pattern should be used by all agents for consistent API key management
  */
+// Helper: Validate OpenAI API key format (starts with "sk-" and is 51 chars, alphanumeric)
+function isValidOpenAIKey(key: string): boolean {
+  // OpenAI keys typically start with "sk-" and are 51 characters long
+  return /^sk-[A-Za-z0-9]{48}$/.test(key);
+}
+
+// Helper: Redact OpenAI key for logging (show prefix and last 4 chars)
+function redactOpenAIKey(key: string): string {
+  if (!key || key.length < 8) return '[redacted]';
+  return key.slice(0, 7) + '...' + key.slice(-4);
+}
+
 async function getUnifiedOpenAIKey(): Promise<{ value: string; source: string } | null> {
   // Priority order: ENV → GitHub Secrets → Cloudflare → External
   
   // 1. Environment variable (primary)
-  if (process.env.OPENAI_API_KEY) {
+  if (process.env.OPENAI_API_KEY && isValidOpenAIKey(process.env.OPENAI_API_KEY)) {
+    // Optionally log: console.info(`OpenAI key resolved from env: ${redactOpenAIKey(process.env.OPENAI_API_KEY)}`);
     return { value: process.env.OPENAI_API_KEY, source: 'env' };
   }
   
   // 2. GitHub Actions environment (for CI/CD)
-  if (process.env.GITHUB_ACTIONS && process.env.GITHUB_OPENAI_KEY) {
+  if (process.env.GITHUB_ACTIONS && process.env.GITHUB_OPENAI_KEY && isValidOpenAIKey(process.env.GITHUB_OPENAI_KEY)) {
+    // Optionally log: console.info(`OpenAI key resolved from github: ${redactOpenAIKey(process.env.GITHUB_OPENAI_KEY)}`);
     return { value: process.env.GITHUB_OPENAI_KEY, source: 'github' };
   }
   
   // 3. Cloudflare Workers environment
-  if (process.env.CF_OPENAI_API_KEY) {
+  if (process.env.CF_OPENAI_API_KEY && isValidOpenAIKey(process.env.CF_OPENAI_API_KEY)) {
+    // Optionally log: console.info(`OpenAI key resolved from cloudflare: ${redactOpenAIKey(process.env.CF_OPENAI_API_KEY)}`);
     return { value: process.env.CF_OPENAI_API_KEY, source: 'cloudflare' };
   }
   
   // 4. Other environment patterns
   const alternativeKeys = ['OPENAI_TOKEN', 'AIRA_OPENAI_KEY', 'AI_API_KEY'];
   for (const key of alternativeKeys) {
-    if (process.env[key]) {
+    if (process.env[key] && isValidOpenAIKey(process.env[key]!)) {
+      // Optionally log: console.info(`OpenAI key resolved from ${key}: ${redactOpenAIKey(process.env[key]!)}.`);
       return { value: process.env[key]!, source: `env-${key.toLowerCase()}` };
     }
   }
