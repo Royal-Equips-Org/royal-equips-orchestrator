@@ -30,7 +30,7 @@ const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AI
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
   const { toasts, removeToast } = useToastContext();
-  const { state, navigate } = useNavigation();
+  const { state, navigateToModule } = useNavigation();
   const { optimizePerformance, metrics, recommendations } = usePerformanceOptimization();
   
   // AI Core state - make it the main interface
@@ -66,14 +66,14 @@ function AppContent() {
 
   // Handle module access from AI Core
   const handleModuleAccess = (moduleId: string) => {
-    navigate(moduleId);
+    navigateToModule(moduleId);
     setShowAICore(false); // Show traditional interface for specific modules
   };
 
   // Handle return to AI Core
   const handleReturnToAICore = () => {
     setShowAICore(true);
-    navigate('command'); // Set to command module
+    navigateToModule('command'); // Set to command module
   };
 
   // Keyboard shortcuts for AI Core

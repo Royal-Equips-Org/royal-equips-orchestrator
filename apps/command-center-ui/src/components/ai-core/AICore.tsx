@@ -142,7 +142,7 @@ export default function AICore({ onExit, isFullscreen = false }: AICoreProps) {
   const [cameraControlsEnabled, setCameraControlsEnabled] = useState(true)
   const [ambientMode, setAmbientMode] = useState(false)
   const [autoRotate, setAutoRotate] = useState(true)
-  const canvasRef = useRef()
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Hooks for real-time data and voice interface
   const { 
@@ -183,7 +183,7 @@ export default function AICore({ onExit, isFullscreen = false }: AICoreProps) {
 
   // Keyboard shortcuts
   useEffect(() => {
-    const handleKeyPress = (e) => {
+    const handleKeyPress = (e: KeyboardEvent) => {
       switch (e.key.toLowerCase()) {
         case 'f11':
           e.preventDefault()
