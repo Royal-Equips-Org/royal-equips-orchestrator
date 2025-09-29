@@ -46,7 +46,7 @@ const start = async () => {
       }
     });
 
-    await fastify.register(swaggerUi as any, {
+    await fastify.register(swaggerUi, {
       routePrefix: '/docs',
       uiConfig: {
         docExpansion: 'full',
