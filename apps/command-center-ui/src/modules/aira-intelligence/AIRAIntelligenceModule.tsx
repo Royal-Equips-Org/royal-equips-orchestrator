@@ -7,11 +7,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { airaIntelligence, type ConsciousnessState, type IntelligenceMetrics, type BusinessDecision, type MarketIntelligence, type BusinessOptimization } from '../services/airaIntelligenceService';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { airaIntelligence, type ConsciousnessState, type IntelligenceMetrics, type BusinessDecision, type MarketIntelligence, type BusinessOptimization } from '../../services/airaIntelligenceService';
 
 interface AIRAIntelligenceModuleProps {
   isActive: boolean;
@@ -156,7 +156,7 @@ export function AIRAIntelligenceModule({ isActive }: AIRAIntelligenceModuleProps
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={toggleAutonomousMode} variant={autonomousMode ? "destructive" : "success"}>
+          <Button onClick={toggleAutonomousMode} variant={autonomousMode ? "destructive" : "default"}>
             {autonomousMode ? "Disable Autonomous Mode" : "Enable Autonomous Mode"}
           </Button>
           <Button onClick={fetchIntelligenceData} variant="outline">
@@ -485,3 +485,5 @@ export function AIRAIntelligenceModule({ isActive }: AIRAIntelligenceModuleProps
     </div>
   );
 }
+
+export default AIRAIntelligenceModule;

@@ -103,6 +103,17 @@ export class EmpireService {
       throw error;
     }
   }
+
+  async fetchAnalytics(): Promise<any> {
+    try {
+      logger.info('Fetching analytics data');
+      const data = await apiClient.get('/api/empire/analytics');
+      return data;
+    } catch (error) {
+      logger.error('Failed to fetch analytics', { error: String(error) });
+      throw error;
+    }
+  }
 }
 
 // Singleton instance
