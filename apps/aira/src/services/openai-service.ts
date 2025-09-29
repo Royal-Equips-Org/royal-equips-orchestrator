@@ -38,19 +38,16 @@ async function getUnifiedOpenAIKey(): Promise<{ value: string; source: string } 
   // 1. Environment variable (primary)
   if (process.env.OPENAI_API_KEY && isValidOpenAIKey(process.env.OPENAI_API_KEY)) {
     return { value: process.env.OPENAI_API_KEY, source: 'env' };
-
   }
   
   // 2. GitHub Actions environment (for CI/CD)
   if (process.env.GITHUB_ACTIONS && process.env.GITHUB_OPENAI_KEY && isValidOpenAIKey(process.env.GITHUB_OPENAI_KEY)) {
     return { value: process.env.GITHUB_OPENAI_KEY, source: 'github' };
-
   }
   
   // 3. Cloudflare Workers environment
   if (process.env.CF_OPENAI_API_KEY && isValidOpenAIKey(process.env.CF_OPENAI_API_KEY)) {
     return { value: process.env.CF_OPENAI_API_KEY, source: 'cloudflare' };
-
   }
   
   // 4. Other environment patterns
