@@ -15,6 +15,7 @@ import QuantumProductMatrix from './QuantumProductMatrix';
 import NeuralAnalytics from './NeuralAnalytics';
 import QuantumMetrics from './QuantumMetrics';
 import HolographicInterface from './HolographicInterface';
+import FuturisticCommandCenter from './FuturisticCommandCenter';
 import { useEmpireStore } from '../../store/empire-store';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { NavigationView } from '../../types/navigation';
@@ -24,6 +25,7 @@ export default function EmpireDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [quantumEnergy, setQuantumEnergy] = useState(100);
   const [neuralActivity, setNeuralActivity] = useState(85);
+  const [viewMode, setViewMode] = useState<'futuristic' | 'quantum'>('futuristic');
   const { metrics, agents, isConnected } = useEmpireStore();
   const { state, navigateToModule } = useNavigation();
   
@@ -38,6 +40,11 @@ export default function EmpireDashboard() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Check if we should show the futuristic view by default
+  if (viewMode === 'futuristic' || currentView === 'dashboard' || !currentView) {
+    return <FuturisticCommandCenter />;
+  }
 
   const renderQuantumView = () => {
     switch (currentView) {

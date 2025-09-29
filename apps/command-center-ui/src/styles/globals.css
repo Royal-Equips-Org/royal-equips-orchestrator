@@ -342,3 +342,56 @@ body::before {
     border: 1px solid #000 !important;
   }
 }
+
+/* Futuristic Command Center Utilities */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+.bg-gradient-conic {
+  background: conic-gradient(var(--tw-gradient-stops));
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Holographic glow effects */
+.holographic-glow {
+  box-shadow: 
+    0 0 20px rgba(5, 244, 255, 0.3),
+    inset 0 0 20px rgba(5, 244, 255, 0.1);
+}
+
+.holographic-glow:hover {
+  box-shadow: 
+    0 0 30px rgba(5, 244, 255, 0.5),
+    inset 0 0 30px rgba(5, 244, 255, 0.2);
+}
+
+/* Neural network connection lines */
+.neural-connection {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(5, 244, 255, 0.5) 50%, 
+    transparent 100%);
+  animation: neural-pulse 2s ease-in-out infinite;
+}
+
+@keyframes neural-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
