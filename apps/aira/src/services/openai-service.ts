@@ -1,5 +1,8 @@
 /**
- * AIRA OpenAI Service - Real AI Integration
+ * AIRA OpenAI Service - Real AI Integration with Unified Secret Management
+ * 
+ * This service demonstrates the unified OpenAI API pattern that should be used
+ * across all agents and services in the Royal Equips ecosystem.
  */
 
 import OpenAI from 'openai';
@@ -12,36 +15,84 @@ export interface AIRAResponse {
   model?: string;
 }
 
+/**
+ * Unified OpenAI Secret Resolution
+ * This pattern should be used by all agents for consistent API key management
+ */
+async function getUnifiedOpenAIKey(): Promise<{ value: string; source: string } | null> {
+  // Priority order: ENV → GitHub Secrets → Cloudflare → External
+  
+  // 1. Environment variable (primary)
+  if (process.env.OPENAI_API_KEY) {
+    return { value: process.env.OPENAI_API_KEY, source: 'env' };
+  }
+  
+  // 2. GitHub Actions environment (for CI/CD)
+  if (process.env.GITHUB_ACTIONS && process.env.GITHUB_OPENAI_KEY) {
+    return { value: process.env.GITHUB_OPENAI_KEY, source: 'github' };
+  }
+  
+  // 3. Cloudflare Workers environment
+  if (process.env.CF_OPENAI_API_KEY) {
+    return { value: process.env.CF_OPENAI_API_KEY, source: 'cloudflare' };
+  }
+  
+  // 4. Other environment patterns
+  const alternativeKeys = ['OPENAI_TOKEN', 'AIRA_OPENAI_KEY', 'AI_API_KEY'];
+  for (const key of alternativeKeys) {
+    if (process.env[key]) {
+      return { value: process.env[key]!, source: `env-${key.toLowerCase()}` };
+    }
+  }
+  
+  return null;
+}
+
 export class OpenAIService {
   private openai: OpenAI | null = null;
   private isConfigured = false;
+  private secretSource = 'none';
+  private initializationPromise: Promise<void> | null = null;
 
   constructor() {
-    this.initialize();
+    // Lazy initialization to handle async secret resolution
   }
 
-  private initialize() {
-    const apiKey = process.env.OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      console.warn('OpenAI API key not found - AIRA will operate in fallback mode');
-      return;
+  private async ensureInitialized(): Promise<void> {
+    if (this.initializationPromise) {
+      return this.initializationPromise;
     }
 
+    this.initializationPromise = this.initialize();
+    return this.initializationPromise;
+  }
+
+  private async initialize(): Promise<void> {
     try {
+      // Use unified secret resolution pattern
+      const keyResult = await getUnifiedOpenAIKey();
+      
+      if (!keyResult) {
+        console.warn('OpenAI API key not found in any source - AIRA will operate in fallback mode');
+        return;
+      }
+
       this.openai = new OpenAI({
-        apiKey: apiKey,
+        apiKey: keyResult.value,
         timeout: 30000,
         maxRetries: 2
       });
       this.isConfigured = true;
-      console.info('OpenAI service initialized successfully');
+      this.secretSource = keyResult.source;
+      console.info(`OpenAI service initialized successfully using source: ${keyResult.source}`);
     } catch (error) {
       console.error('Failed to initialize OpenAI service', error);
     }
   }
 
   async generateResponse(userMessage: string): Promise<AIRAResponse> {
+    await this.ensureInitialized();
+    
     if (!this.isConfigured || !this.openai) {
       return this.getFallbackResponse(userMessage);
     }
@@ -129,10 +180,13 @@ RESPONSE GUIDELINES:
 Always respond as if you have real access to these systems and can take immediate action to help the user achieve their business objectives.`;
   }
 
-  getStatus() {
+  async getStatus() {
+    await this.ensureInitialized();
+    
     return {
       configured: this.isConfigured,
-      hasApiKey: !!process.env.OPENAI_API_KEY,
+      hasApiKey: this.isConfigured,
+      secretSource: this.secretSource,
       timestamp: new Date().toISOString()
     };
   }
