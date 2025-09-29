@@ -21,9 +21,9 @@ export interface AIRAResponse {
  */
 // Helper: Validate OpenAI API key format (starts with "sk-" and is 51 chars, alphanumeric)
 function isValidOpenAIKey(key: string): boolean {
-  // OpenAI keys start with "sk-" and can have different formats and lengths.
-  // Accept any key that starts with "sk-" and is at least 20 characters long.
-  return typeof key === 'string' && key.startsWith('sk-') && key.length >= 20;
+  // OpenAI keys start with "sk-" and are typically 51 characters long: "sk-" + 48 alphanumeric chars.
+  // Enforce strict format: starts with "sk-" and is exactly 51 characters, with only alphanumeric chars after "sk-".
+  return typeof key === 'string' && /^sk-[A-Za-z0-9]{48}$/.test(key);
 }
 
 // Helper: Redact OpenAI key for logging (show prefix and last 4 chars)
