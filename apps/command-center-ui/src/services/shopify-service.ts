@@ -17,6 +17,7 @@ export interface ShopifyProduct {
   productType: string;
   vendor: string;
   tags: string[];
+  totalInventory?: number;
   images: {
     edges: Array<{
       node: {
