@@ -41,7 +41,7 @@ describe('EmpireService', () => {
       const result = await empireService.fetchMetrics();
 
       expect(result).toEqual(mockMetrics);
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/empire/metrics');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/empire/metrics');
     });
 
     it('should throw error for invalid metrics data', async () => {
@@ -75,7 +75,7 @@ describe('EmpireService', () => {
       const result = await empireService.fetchAgents();
 
       expect(result).toEqual(mockAgents);
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/empire/agents');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/empire/agents');
     });
   });
 
@@ -86,7 +86,7 @@ describe('EmpireService', () => {
       await empireService.approveProduct('test-id');
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        '/api/empire/opportunities/test-id/approve'
+        '/empire/opportunities/test-id/approve'
       );
     });
   });
@@ -98,7 +98,7 @@ describe('EmpireService', () => {
       await empireService.rejectProduct('test-id', 'Not suitable');
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        '/api/empire/opportunities/test-id/reject',
+        '/empire/opportunities/test-id/reject',
         { reason: 'Not suitable' }
       );
     });
@@ -117,7 +117,7 @@ describe('EmpireService', () => {
 
       expect(result).toEqual(mockResponse);
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        '/api/empire/chat',
+        '/empire/chat',
         { content: 'Hello' }
       );
     });

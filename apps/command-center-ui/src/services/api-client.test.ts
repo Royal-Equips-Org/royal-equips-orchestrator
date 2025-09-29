@@ -135,8 +135,8 @@ describe('ApiClient', () => {
       // Reset circuit breaker state by creating a new instance
       const testApiClient = new ApiClient();
       
-      // Mock 5 consecutive failures
-      for (let i = 0; i < 5; i++) {
+      // Trigger enough failures to exceed both the failure threshold and minimum request window
+      for (let i = 0; i < 10; i++) {
         mockFetch.mockRejectedValueOnce(new Error('Network error'));
         try {
           await testApiClient.get('/test', { retries: 0 });
