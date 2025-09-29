@@ -1,0 +1,31 @@
+name: Repo CI
+
+permissions:
+  contents: read
+
+on: [push, pull_request]
+jobs:
+  sweep-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install sweep deps
+        run: |
+          npm install -g knip@5.27.0 depcheck@1.4.7 ts-prune@0.10.3 globby@14.0.2
+      - name: Run knip
+        run: |
+          npx knip --strict || true
+      - name: Run depcheck
+        run: |
+          npx depcheck || true
+      - name: Run ts-prune
+        run: |
+          if [ -f tsconfig.json ]; then npx ts-prune -p tsconfig.json || true; fi
+      - name: Asset scan
+        run: |
+          node -e "const fs=require('fs'),globby=require('globby');(async()=>{const code=(await globby(['**/*.{ts,tsx,js,jsx,html,md}','!node_modules/**'])).map(f=>fs.readFileSync(f,'utf8')).join('\n');const assets=await globby(['**/*.{png,jpg,jpeg,svg,webp,css,scss}','!node_modules/**']);const unused=assets.filter(a=>!code.includes(require('path').basename(a)));console.log(JSON.stringify({unused},null,2));})();" || true
+      - name: Complete
+        run: echo "Sweep complete"

@@ -23,6 +23,7 @@ const mockEmpireService = empireService.empireService as {
   approveProduct: ReturnType<typeof vi.fn>;
   rejectProduct: ReturnType<typeof vi.fn>;
   sendChatMessage: ReturnType<typeof vi.fn>;
+  fetchAnalytics: ReturnType<typeof vi.fn>;
 };
 
 describe('EmpireStore', () => {

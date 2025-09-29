@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Brain, 
@@ -19,8 +19,7 @@ import { useEmpireStore } from '../../store/empire-store';
 import { empireService } from '../../services/empire-service';
 import { Agent } from '../../types/empire';
 
-// Lazy load Enhanced AIRA Module for performance
-const EnhancedAIRAModule = lazy(() => import('./EnhancedAIRAModule'));
+import { AIRAIntelligenceModule } from '../aira-intelligence/AIRAIntelligenceModule';
 
 interface AIRAStatus {
   online: boolean;
@@ -314,13 +313,9 @@ export default function AiraModule() {
       </motion.div>
 
       {enhancedMode ? (
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
-          </div>
-        }>
-          <EnhancedAIRAModule />
-        </Suspense>
+        <div className="flex items-center justify-center h-64">
+          <AIRAIntelligenceModule isActive={true} />
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Status Overview */}

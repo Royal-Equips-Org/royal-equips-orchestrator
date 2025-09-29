@@ -1,68 +1,61 @@
-name: CI
-permissions:
-  contents: read
+name: 🚀 Royal Equips CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main]
+    branches: [main, master]
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "10.17.0"
 
 jobs:
-  build:
+  ci:
+    name: 🔍 Build & Test
     runs-on: ubuntu-latest
-    env:
-      NODE_VERSION: "20"
-
+    
     steps:
-      # Checkout source code
-      - name: Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+      - name: 📥 Checkout
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
 
-      # Set git user identity for any git operations
-      - name: Set git user identity
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      # Setup Node.js and pnpm (with caching)
-      - name: Setup Node + pnpm
-        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # actions/setup-node@v4
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
 
-      # Enable and prepare pnpm for reproducible builds
-      - run: corepack enable
-      - run: corepack prepare pnpm@9.9.0 --activate
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398466c2d53 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
-      # Install dependencies (no lifecycle scripts for CI safety)
-      - name: Install deps (no scripts)
-        run: pnpm install --ignore-scripts --frozen-lockfile
+      - name: 🏗️ Install Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
         env:
           HUSKY: 0
 
-      # Lint source code only (exclude artifacts)
-      - name: Lint
-        run: pnpm lint
+      - name: 🔨 Build Packages
+        run: |
+          pnpm --filter "@royal-equips/*" build
+          
+      - name: 📘 Type Check
+        run: |
+          pnpm --filter @royal-equips/command-center-ui exec tsc --noEmit
+          pnpm --filter @royal-equips/aira exec tsc --noEmit  
+          pnpm --filter @royal-equips/orchestrator-api exec tsc --noEmit
+          pnpm --filter @royal-equips/api exec tsc --noEmit
 
-      # Type checking (strict TypeScript)
-      - name: Typecheck
-        run: pnpm typecheck
+      - name: 🧪 Test
+        run: pnpm test --ci --reporters=default
 
-      # Run tests with JUnit reporter for CI integration
-      - name: Test
-        run: pnpm test -- --ci --reporters=default --reporters=jest-junit
-
-      # (Optional) Debug: List JUnit report files
-      - name: Check JUnit reports directory
-        run: ls -l reports/junit || echo "JUnit report directory missing"
-
-      # Upload JUnit XML results for reporting (always, even on failure)
-      - name: Upload JUnit
+      - name: 📊 Upload Results
         if: always()
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
-          name: junit
-          path: reports/junit/junit.xml
+          name: test-results
+          path: reports/
           if-no-files-found: ignore

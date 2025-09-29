@@ -1,0 +1,79 @@
+name: ☁️ Cloudflare Deploy
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'workers/**'
+      - 'edge-functions/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "10.17.0"
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to Cloudflare
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398466c2d53 # v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🏗️ Install & Build
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm --filter "@royal-equips/*" build
+        env:
+          HUSKY: 0
+
+      - name: 🌐 Deploy Command Center (Pages)
+        uses: cloudflare/pages-action@f0a1cd58cd66095dee69bfa18fa5efd1dde93bca # v1.5.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: royal-equips-command-center
+          directory: apps/command-center-ui/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⚡ Deploy Workers
+        uses: cloudflare/wrangler-action@9681c2997648301493e78cacbfb790a9f19c833f # v3.9.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers
+          environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+
+      - name: 🔗 Deploy Edge Functions
+        run: |
+          cd edge-functions/auth-hook-react-email-resend
+          npx wrangler deploy --env ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
