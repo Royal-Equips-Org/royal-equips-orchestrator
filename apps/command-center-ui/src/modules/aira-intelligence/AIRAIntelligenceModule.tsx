@@ -156,7 +156,7 @@ export function AIRAIntelligenceModule({ isActive }: AIRAIntelligenceModuleProps
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={toggleAutonomousMode} variant={autonomousMode ? "destructive" : "default"}>
+          <Button onClick={toggleAutonomousMode} variant={autonomousMode ? "destructive" : "success"}>
             {autonomousMode ? "Disable Autonomous Mode" : "Enable Autonomous Mode"}
           </Button>
           <Button onClick={fetchIntelligenceData} variant="outline">
