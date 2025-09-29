@@ -213,7 +213,7 @@ export function ComprehensiveShopifyIntegration() {
       
       if (data.success && data.products) {
         // Transform API response to our interface
-        const realProducts: ShopifyProduct[] = data.products.map((product: any) => ({
+        const realProducts: ShopifyProduct[] = data.products.map((product: ApiShopifyProduct) => ({
           id: product.id,
           title: product.title,
           handle: product.handle,
