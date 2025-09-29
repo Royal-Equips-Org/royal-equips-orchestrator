@@ -288,11 +288,29 @@ export default function FuturisticCommandCenter() {
 
   const handleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
+      if (document.documentElement.requestFullscreen) {
+        try {
+          document.documentElement.requestFullscreen();
+          setIsFullscreen(true);
+        } catch (err) {
+          // Optionally log the error or show a message to the user
+          console.error('Failed to enter fullscreen mode:', err);
+        }
+      } else {
+        console.warn('Fullscreen API is not available in this browser.');
+      }
     } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
+      if (document.exitFullscreen) {
+        try {
+          document.exitFullscreen();
+          setIsFullscreen(false);
+        } catch (err) {
+          // Optionally log the error or show a message to the user
+          console.error('Failed to exit fullscreen mode:', err);
+        }
+      } else {
+        console.warn('Fullscreen API is not available in this browser.');
+      }
     }
   }, []);
 
