@@ -130,6 +130,14 @@ function AppContent() {
             <FinanceModule />
           </Suspense>
         );
+      case 'holographic':
+      case 'holo':
+        // Holographic view as an optional module instead of default
+        return (
+          <div className="w-full h-full">
+            <ExactCommandCenter />
+          </div>
+        );
       case 'products':
         return <div className="h-full flex items-center justify-center text-hologram">Products Module - Coming Soon</div>;
       case 'orders':
@@ -146,14 +154,28 @@ function AppContent() {
   };
 
   return (
-    <div className="w-full h-screen bg-black overflow-hidden">
-      {/* Exact Reference Image Command Center */}
-      <ExactCommandCenter />
-      
-      {/* Toast notifications positioned absolutely */}
-      <div className="absolute top-20 right-4 z-50">
-        <ToastContainer toasts={toasts} onClose={removeToast} />
-      </div>
+    <div className="flex h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden">
+      {/* Mobile responsive shell */}
+      <MobileShell>
+        {/* Top navigation bar */}
+        <TopBar />
+        
+        {/* Main navigation */}
+        <NavigationBar />
+        
+        {/* Module scroller for mobile */}
+        <ModuleScroller />
+        
+        {/* Main content area */}
+        <main className="flex-1 overflow-hidden">
+          {renderCurrentModule()}
+        </main>
+        
+        {/* Toast notifications positioned absolutely */}
+        <div className="absolute top-20 right-4 z-50">
+          <ToastContainer toasts={toasts} onClose={removeToast} />
+        </div>
+      </MobileShell>
     </div>
   )
 }
