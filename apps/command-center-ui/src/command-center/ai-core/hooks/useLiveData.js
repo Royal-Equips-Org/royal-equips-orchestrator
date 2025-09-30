@@ -127,7 +127,7 @@ export function useLiveData() {
     const metricsUnsubscribe = service.subscribe('empire-metrics', payload => {
       if (!payload) return
       try {
-        useEmpireStore.setState({ metrics: payload, lastUpdate: new Date() })
+        useEmpireStore.getState().updateMetrics(payload)
       } catch (error) {
         logger.error('Failed to push real-time metrics into store', { error })
       }
