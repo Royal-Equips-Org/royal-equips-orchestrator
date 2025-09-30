@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   NavigationState, 
   NavigationContextType, 
   BreadcrumbItem 
 } from '../types/navigation';
+import { getModuleById } from '../config/navigation';
 
 interface NavigationAction {
   type: 'NAVIGATE' | 'ADD_FAVORITE' | 'REMOVE_FAVORITE' | 'CLEAR_HISTORY' | 'GO_BACK' | 'GO_FORWARD' | 'SET_BREADCRUMBS';
@@ -116,6 +118,8 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(navigationReducer, initialState);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Load state from localStorage on mount
   useEffect(() => {
@@ -149,8 +153,16 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   }, [state.favorites, state.recentlyUsed]);
 
   const navigateToModule = useCallback((moduleId: string) => {
+    // Get module config to get the path
+    const module = getModuleById(moduleId);
+    const path = module?.path || `/${moduleId}`;
+    
+    // Navigate using React Router
+    navigate(path);
+    
+    // Update internal state for tracking
     dispatch({ type: 'NAVIGATE', payload: { moduleId } });
-  }, []);
+  }, [navigate]);
 
   const addToFavorites = useCallback((moduleId: string) => {
     dispatch({ type: 'ADD_FAVORITE', payload: { moduleId } });
@@ -165,16 +177,16 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const goBack = useCallback(() => {
-    dispatch({ type: 'GO_BACK' });
+    window.history.back();
   }, []);
 
   const goForward = useCallback(() => {
-    dispatch({ type: 'GO_FORWARD' });
+    window.history.forward();
   }, []);
 
   const currentIndex = state.history.indexOf(state.currentModule);
-  const canGoBack = currentIndex > 0;
-  const canGoForward = currentIndex < state.history.length - 1;
+  const canGoBack = window.history.length > 1;
+  const canGoForward = false; // Browser forward is not predictable
 
   const contextValue: NavigationContextType = {
     state,
