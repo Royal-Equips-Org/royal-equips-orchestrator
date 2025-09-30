@@ -1,7 +1,7 @@
 import React from 'react'
-import Hologram3D from '../../command-center/ai-core/Hologram3D'
-import DataPanels from '../../command-center/ai-core/DataPanels'
-import { useLiveData } from '../../command-center/ai-core/hooks/useLiveData'
+import Hologram3D from './Hologram3D'
+import DataPanels from './DataPanels'
+import { useLiveData } from './hooks/useLiveData'
 
 interface AICoreProps {
   onExit: () => void
