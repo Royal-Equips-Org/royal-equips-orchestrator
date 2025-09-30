@@ -9,6 +9,7 @@ import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import MobileShell from './components/layout/MobileShell'
 import TopBar from './components/layout/TopBar'
 import ModuleScroller from './modules/_shared/components/ModuleScroller'
+import ErrorBoundary from './components/error/ErrorBoundary'
 
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
@@ -185,11 +186,13 @@ function AppContent() {
 
 function App() {
   return (
-    <NavigationProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </NavigationProvider>
+    <ErrorBoundary>
+      <NavigationProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </NavigationProvider>
+    </ErrorBoundary>
   )
 }
 

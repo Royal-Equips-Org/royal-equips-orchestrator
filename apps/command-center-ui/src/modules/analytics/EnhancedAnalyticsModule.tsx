@@ -31,6 +31,8 @@ import {
   TrendingDown
 } from 'lucide-react';
 import { apiClient } from '../../services/api-client';
+import { ArrayUtils } from '../../utils/array-utils';
+import ErrorBoundary from '../../components/error/ErrorBoundary';
 
 interface EnterpriseAnalytics {
   revenue: RevenueAnalytics;
@@ -137,9 +139,113 @@ export default function EnhancedAnalyticsModule() {
           realTime: realTimeEnabled
         }
       });
-      setAnalytics(response.data);
+      
+      // Ensure analytics data has proper structure with safe defaults
+      const safeAnalytics: EnterpriseAnalytics = {
+        ...response.data,
+        kpis: ArrayUtils.ensure(response.data?.kpis),
+        revenue: {
+          ...response.data?.revenue,
+          revenueByChannel: ArrayUtils.ensure(response.data?.revenue?.revenueByChannel),
+          revenueByRegion: ArrayUtils.ensure(response.data?.revenue?.revenueByRegion),
+          monthlyTrend: ArrayUtils.ensure(response.data?.revenue?.monthlyTrend)
+        },
+        customers: {
+          ...response.data?.customers,
+          segmentDistribution: ArrayUtils.ensure(response.data?.customers?.segmentDistribution),
+          acquisitionChannels: ArrayUtils.ensure(response.data?.customers?.acquisitionChannels)
+        },
+        products: {
+          ...response.data?.products,
+          bestSellers: ArrayUtils.ensure(response.data?.products?.bestSellers),
+          categoryPerformance: ArrayUtils.ensure(response.data?.products?.categoryPerformance),
+          profitMargins: ArrayUtils.ensure(response.data?.products?.profitMargins),
+          seasonalTrends: ArrayUtils.ensure(response.data?.products?.seasonalTrends),
+          priceOptimization: ArrayUtils.ensure(response.data?.products?.priceOptimization)
+        },
+        operations: {
+          ...response.data?.operations,
+          processMetrics: ArrayUtils.ensure(response.data?.operations?.processMetrics)
+        },
+        forecasts: {
+          ...response.data?.forecasts,
+          revenueForecast: ArrayUtils.ensure(response.data?.forecasts?.revenueForecast),
+          demandForecast: ArrayUtils.ensure(response.data?.forecasts?.demandForecast),
+          seasonalPredictions: ArrayUtils.ensure(response.data?.forecasts?.seasonalPredictions),
+          marketTrends: ArrayUtils.ensure(response.data?.forecasts?.marketTrends),
+          riskAssessments: ArrayUtils.ensure(response.data?.forecasts?.riskAssessments),
+          aiInsights: ArrayUtils.ensure(response.data?.forecasts?.aiInsights)
+        }
+      };
+      
+      setAnalytics(safeAnalytics);
     } catch (error) {
       console.error('Failed to fetch enterprise analytics:', error);
+      // Set a safe empty analytics structure on error
+      setAnalytics({
+        revenue: {
+          totalRevenue: 0,
+          revenueGrowth: 0,
+          recurringRevenue: 0,
+          averageOrderValue: 0,
+          conversionRate: 0,
+          revenueByChannel: [],
+          revenueByRegion: [],
+          monthlyTrend: [],
+          profitability: {
+            grossMargin: 0,
+            netMargin: 0,
+            operatingMargin: 0
+          }
+        },
+        customers: {
+          totalCustomers: 0,
+          newCustomers: 0,
+          customerGrowth: 0,
+          lifetimeValue: 0,
+          churnRate: 0,
+          satisfactionScore: 0,
+          segmentDistribution: [],
+          acquisitionChannels: [],
+          retentionMetrics: {
+            day30: 0,
+            day90: 0,
+            day365: 0
+          }
+        },
+        products: {
+          totalProducts: 0,
+          bestSellers: [],
+          categoryPerformance: [],
+          inventoryTurnover: 0,
+          profitMargins: [],
+          seasonalTrends: [],
+          priceOptimization: []
+        },
+        operations: {
+          orderFulfillmentTime: 0,
+          inventoryAccuracy: 0,
+          supplierPerformance: 0,
+          returnRate: 0,
+          operationalEfficiency: 0,
+          automationLevel: 0,
+          processMetrics: [],
+          resourceUtilization: {
+            warehouse: 0,
+            workforce: 0,
+            technology: 0
+          }
+        },
+        forecasts: {
+          revenueForecast: [],
+          demandForecast: [],
+          seasonalPredictions: [],
+          marketTrends: [],
+          riskAssessments: [],
+          aiInsights: []
+        },
+        kpis: []
+      });
     } finally {
       setLoading(false);
     }
@@ -217,7 +323,21 @@ export default function EnhancedAnalyticsModule() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
+    <ErrorBoundary
+      fallback={(error, retry) => (
+        <div className="min-h-screen bg-black text-white p-6 flex items-center justify-center">
+          <div className="text-center">
+            <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-400 mb-2">Analytics Module Error</h2>
+            <p className="text-gray-300 mb-4">Failed to load analytics data</p>
+            <Button onClick={retry} className="bg-cyan-600 hover:bg-cyan-700">
+              Retry
+            </Button>
+          </div>
+        </div>
+      )}
+    >
+      <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -282,7 +402,7 @@ export default function EnhancedAnalyticsModule() {
 
         {/* Executive KPI Dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {analytics.kpis.slice(0, 8).map((kpi) => (
+          {ArrayUtils.slice(analytics?.kpis, 0, 8).map((kpi) => (
             <Card key={kpi.id} className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
@@ -548,7 +668,7 @@ export default function EnhancedAnalyticsModule() {
                   <div>
                     <div className="text-sm font-semibold mb-2">Top Performers</div>
                     <div className="space-y-2">
-                      {analytics.products.bestSellers.slice(0, 3).map((product, index) => (
+                      {ArrayUtils.slice(analytics?.products?.bestSellers, 0, 3).map((product, index) => (
                         <div key={product.id} className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <Badge variant="outline">#{index + 1}</Badge>
@@ -585,7 +705,7 @@ export default function EnhancedAnalyticsModule() {
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {analytics.forecasts.aiInsights?.slice(0, 6).map((insight, index) => (
+                    {ArrayUtils.slice(analytics?.forecasts?.aiInsights, 0, 6).map((insight, index) => (
                       <Card key={index} className="p-4 bg-gray-800/50 border-purple-400/20">
                         <div className="flex items-start space-x-3">
                           <div className={`w-2 h-2 rounded-full mt-2 ${
@@ -643,7 +763,7 @@ export default function EnhancedAnalyticsModule() {
           {/* Other tabs would continue with similar patterns... */}
         </Tabs>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
 

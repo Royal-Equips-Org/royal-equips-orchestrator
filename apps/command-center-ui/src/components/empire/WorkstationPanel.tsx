@@ -16,6 +16,7 @@ import {
   Package,
   AlertTriangle
 } from 'lucide-react';
+import { ArrayUtils } from '../../utils/array-utils';
 
 interface WorkstationData {
   id: string;
@@ -82,23 +83,23 @@ const MapScreen = ({ data }: { data: any }) => (
     <div className="relative h-24 bg-black/40 rounded border border-cyan-500/20 mb-2">
       {/* Simplified world map visualization */}
       <svg className="w-full h-full" viewBox="0 0 200 100">
-        {data.regions.map((region: any, index: number) => (
-          <g key={region.name}>
+        {ArrayUtils.map(data?.regions, (region: any, index: number) => (
+          <g key={region?.name || index}>
             <circle
-              cx={region.lng + 100}
-              cy={region.lat + 50}
+              cx={(region?.lng || 0) + 100}
+              cy={(region?.lat || 0) + 50}
               r="3"
-              fill={region.status === 'warning' ? '#f59e0b' : '#06d6a0'}
+              fill={region?.status === 'warning' ? '#f59e0b' : '#06d6a0'}
               className="animate-pulse"
             />
             <text
-              x={region.lng + 100}
-              y={region.lat + 45}
+              x={(region?.lng || 0) + 100}
+              y={(region?.lat || 0) + 45}
               className="text-xs fill-white"
               textAnchor="middle"
               fontSize="6"
             >
-              ${(region.sales / 1000).toFixed(0)}k
+              ${((region?.sales || 0) / 1000).toFixed(0)}k
             </text>
           </g>
         ))}
@@ -106,10 +107,10 @@ const MapScreen = ({ data }: { data: any }) => (
     </div>
     
     <div className="space-y-1">
-      {data.regions.map((region: any) => (
-        <div key={region.name} className="flex justify-between text-xs">
-          <span className="text-gray-300">{region.name}</span>
-          <span className="text-cyan-400">${(region.sales / 1000).toFixed(0)}k</span>
+      {ArrayUtils.map(data?.regions, (region: any) => (
+        <div key={region?.name || 'unknown'} className="flex justify-between text-xs">
+          <span className="text-gray-300">{region?.name || 'Unknown Region'}</span>
+          <span className="text-cyan-400">${((region?.sales || 0) / 1000).toFixed(0)}k</span>
         </div>
       ))}
     </div>
@@ -127,19 +128,19 @@ const ChartScreen = ({ data }: { data: any }) => (
     </div>
     
     <div className="h-20 flex items-end justify-between space-x-1 mb-2">
-      {data.revenue.map((item: any, index: number) => (
+      {ArrayUtils.map(data?.revenue, (item: any, index: number) => (
         <div key={index} className="flex flex-col items-center">
           <div 
             className="w-4 bg-gradient-to-t from-green-600 to-green-400 rounded-t"
-            style={{ height: `${(item.value / 15000) * 60}px` }}
+            style={{ height: `${((item?.value || 0) / 15000) * 60}px` }}
           />
-          <span className="text-xs text-gray-400 mt-1">{item.day[0]}</span>
+          <span className="text-xs text-gray-400 mt-1">{item?.day?.[0] || ''}</span>
         </div>
       ))}
     </div>
     
     <div className="text-center">
-      <div className="text-lg font-bold text-white">${data.total.toLocaleString()}</div>
+      <div className="text-lg font-bold text-white">${(data?.total || 0).toLocaleString()}</div>
       <div className="text-xs text-gray-400">Total Revenue</div>
     </div>
   </div>
