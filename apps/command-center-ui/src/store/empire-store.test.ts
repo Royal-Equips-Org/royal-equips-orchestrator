@@ -15,16 +15,7 @@ vi.mock('../services/empire-service', () => ({
   }
 }));
 
-const mockEmpireService = empireService.empireService as {
-  fetchMetrics: ReturnType<typeof vi.fn>;
-  fetchAgents: ReturnType<typeof vi.fn>;
-  fetchProductOpportunities: ReturnType<typeof vi.fn>;
-  fetchMarketingCampaigns: ReturnType<typeof vi.fn>;
-  approveProduct: ReturnType<typeof vi.fn>;
-  rejectProduct: ReturnType<typeof vi.fn>;
-  sendChatMessage: ReturnType<typeof vi.fn>;
-  fetchAnalytics: ReturnType<typeof vi.fn>;
-};
+const mockEmpireService = empireService.empireService as any;
 
 describe('EmpireStore', () => {
   beforeEach(() => {

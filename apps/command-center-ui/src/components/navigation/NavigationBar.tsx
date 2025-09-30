@@ -1,18 +1,37 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  ChevronLeft, ChevronRight, Search, Star, Clock, 
-  Menu, X, Zap, Wifi, WifiOff, Grid3X3 
+  ChevronLeft, Search, Star, 
+  Menu, Zap, Wifi, WifiOff, Grid3X3,
+  LayoutDashboard, Brain, BarChart3, Bot, DollarSign,
+  Package, Megaphone, HeadphonesIcon, Shield, CreditCard,
+  ShoppingBag
 } from 'lucide-react';
-import { useNavigation } from '../../contexts/NavigationContext';
-import { 
-  navigationModules, 
-  moduleCategories, 
-  quickAccessModules,
-  getModuleById,
-  getModulesByCategory 
-} from '../../config/navigation';
 import { useEmpireStore } from '../../store/empire-store';
+
+interface NavigationModule {
+  id: string;
+  label: string;
+  path: string;
+  icon: React.ElementType;
+  category: string;
+  description: string;
+}
+
+const navigationModules: NavigationModule[] = [
+  { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, category: 'core', description: 'Main dashboard overview' },
+  { id: 'aira', label: 'AIRA', path: '/aira', icon: Brain, category: 'ai', description: 'AI assistant and automation' },
+  { id: 'analytics', label: 'Analytics', path: '/analytics', icon: BarChart3, category: 'insights', description: 'Data analytics and reports' },
+  { id: 'agents', label: 'Agents', path: '/agents', icon: Bot, category: 'automation', description: 'Agent management' },
+  { id: 'revenue', label: 'Revenue', path: '/revenue', icon: DollarSign, category: 'finance', description: 'Revenue tracking' },
+  { id: 'inventory', label: 'Inventory', path: '/inventory', icon: Package, category: 'operations', description: 'Inventory management' },
+  { id: 'marketing', label: 'Marketing', path: '/marketing', icon: Megaphone, category: 'growth', description: 'Marketing automation' },
+  { id: 'customer-support', label: 'Support', path: '/customer-support', icon: HeadphonesIcon, category: 'service', description: 'Customer support' },
+  { id: 'security', label: 'Security', path: '/security', icon: Shield, category: 'security', description: 'Security monitoring' },
+  { id: 'finance', label: 'Finance', path: '/finance', icon: CreditCard, category: 'finance', description: 'Financial management' },
+  { id: 'shopify', label: 'Shopify', path: '/shopify', icon: ShoppingBag, category: 'ecommerce', description: 'Shopify integration' },
+];
 
 interface NavigationBarProps {
   className?: string;
@@ -21,363 +40,245 @@ interface NavigationBarProps {
 export default function NavigationBar({ className = '' }: NavigationBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showCategories, setShowCategories] = useState(false);
-  const { 
-    state, 
-    navigateToModule, 
-    addToFavorites, 
-    removeFromFavorites, 
-    goBack, 
-    goForward, 
-    canGoBack, 
-    canGoForward 
-  } = useNavigation();
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const navigate = useNavigate();
+  const location = useLocation();
   const { isConnected } = useEmpireStore();
 
-  // Handle keyboard shortcuts
+  const currentPath = location.pathname;
+  const currentModule = navigationModules.find(m => m.path === currentPath);
+
+  // Load favorites from localStorage
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey) {
-        switch (event.key) {
-          case '1':
-            event.preventDefault();
-            navigateToModule('command');
-            break;
-          case '2':
-            event.preventDefault();
-            navigateToModule('dashboard');
-            break;
-          case '3':
-            event.preventDefault();
-            navigateToModule('shopify');
-            break;
-          case '4':
-            event.preventDefault();
-            navigateToModule('products');
-            break;
-          case '5':
-            event.preventDefault();
-            navigateToModule('analytics');
-            break;
-          case 'b':
-            event.preventDefault();
-            if (canGoBack) goBack();
-            break;
-          case 'f':
-            event.preventDefault();
-            if (canGoForward) goForward();
-            break;
-        }
-      }
-      
-      // Toggle navigation with Escape
-      if (event.key === 'Escape') {
-        setIsExpanded(false);
-        setSearchQuery('');
-      }
-    };
+    try {
+      const saved = localStorage.getItem('royal-equips-favorites') || '[]';
+      setFavorites(JSON.parse(saved));
+    } catch (error) {
+      console.warn('Failed to load favorites:', error);
+    }
+  }, []);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigateToModule, goBack, goForward, canGoBack, canGoForward]);
+  // Save favorites to localStorage
+  const saveFavorites = (newFavorites: string[]) => {
+    setFavorites(newFavorites);
+    try {
+      localStorage.setItem('royal-equips-favorites', JSON.stringify(newFavorites));
+    } catch (error) {
+      console.warn('Failed to save favorites:', error);
+    }
+  };
 
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
+
+  const toggleFavorite = (moduleId: string) => {
+    const newFavorites = favorites.includes(moduleId)
+      ? favorites.filter(id => id !== moduleId)
+      : [...favorites, moduleId];
+    saveFavorites(newFavorites);
+  };
+
+  // Filter modules based on search
   const filteredModules = navigationModules.filter(module =>
     module.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
     module.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const currentModule = getModuleById(state.currentModule);
+  const favoriteModules = navigationModules.filter(m => favorites.includes(m.id));
 
   return (
-    <>
-      {/* Main Navigation Bar */}
-      <motion.div
-        className={`fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-cyan-500/30 ${className}`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      >
-        <div className="flex items-center justify-between px-4 py-2 h-12">
-          {/* Left Section - Logo & Navigation Controls */}
-          <div className="flex items-center space-x-4">
-            <motion.div 
-              className="flex items-center space-x-2"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Zap className="w-6 h-6 text-hologram" />
-              <span className="text-hologram font-bold text-lg">ROYAL EQUIPS</span>
-            </motion.div>
-            
-            {/* Navigation Controls */}
-            <div className="flex items-center space-x-2">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={goBack}
-                disabled={!canGoBack}
-                className={`p-1 rounded ${canGoBack 
-                  ? 'text-white hover:text-hologram hover:bg-white/10' 
-                  : 'text-gray-600 cursor-not-allowed'}`}
+    <motion.nav
+      className={`h-full bg-black/20 backdrop-blur-sm border-r border-cyan-400/20 ${className}`}
+      initial={{ width: 64 }}
+      animate={{ width: isExpanded ? 280 : 64 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+    >
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-cyan-400/20">
+          <div className="flex items-center justify-between">
+            {isExpanded && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-2"
               >
-                <ChevronLeft className="w-4 h-4" />
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={goForward}
-                disabled={!canGoForward}
-                className={`p-1 rounded ${canGoForward 
-                  ? 'text-white hover:text-hologram hover:bg-white/10' 
-                  : 'text-gray-600 cursor-not-allowed'}`}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </motion.button>
-            </div>
-          </div>
-
-          {/* Center Section - Current Module & Breadcrumb */}
-          <div className="flex-1 flex items-center justify-center">
-            <motion.div 
-              className="bg-black/40 px-4 py-1 rounded-full border border-cyan-500/30 flex items-center space-x-2"
-              layoutId="current-module"
-            >
-              {currentModule && (
-                <>
-                  <currentModule.icon className="w-4 h-4" style={{ color: currentModule.color }} />
-                  <span className="text-white font-mono text-sm">{currentModule.label}</span>
-                </>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Right Section - Actions & Status */}
-          <div className="flex items-center space-x-4">
-            {/* Connection Status */}
-            <div className="flex items-center space-x-2">
-              {isConnected ? (
-                <Wifi className="w-4 h-4 text-green-400" />
-              ) : (
-                <WifiOff className="w-4 h-4 text-red-400" />
-              )}
-              <span className="text-xs text-gray-400 font-mono">
-                {isConnected ? 'ONLINE' : 'OFFLINE'}
-              </span>
-            </div>
-
-            {/* Navigation Menu Toggle */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+                <Zap className="w-6 h-6 text-cyan-400" />
+                <span className="text-cyan-300 font-semibold">Royal Equips</span>
+              </motion.div>
+            )}
+            <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 text-white hover:text-hologram hover:bg-white/10 rounded-lg"
+              className="p-2 rounded-lg hover:bg-cyan-400/20 transition-colors"
             >
-              {isExpanded ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </motion.button>
+              {isExpanded ? <ChevronLeft className="w-5 h-5 text-cyan-400" /> : <Menu className="w-5 h-5 text-cyan-400" />}
+            </button>
+          </div>
+          
+          {/* Connection Status */}
+          <div className="flex items-center gap-2 mt-3">
+            {isConnected ? (
+              <Wifi className="w-4 h-4 text-green-400" />
+            ) : (
+              <WifiOff className="w-4 h-4 text-red-400" />
+            )}
+            {isExpanded && (
+              <span className={`text-xs ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                {isConnected ? 'Connected' : 'Offline'}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Quick Access Bar */}
-        <div className="px-4 py-2 border-t border-gray-800">
-          <div className="flex items-center justify-center space-x-2">
-            {quickAccessModules.map((moduleId) => {
-              const module = getModuleById(moduleId);
-              if (!module) return null;
-              
-              const isActive = state.currentModule === moduleId;
-              const isFavorite = state.favorites.includes(moduleId);
-              
-              return (
-                <motion.button
-                  key={moduleId}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigateToModule(moduleId)}
-                  className={`relative px-3 py-1 rounded-lg text-xs font-mono transition-all ${
-                    isActive 
-                      ? 'bg-white/20 text-hologram border border-hologram/50' 
-                      : 'text-gray-300 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <module.icon className="w-3 h-3 inline-block mr-1" />
-                  {module.label}
-                  {isFavorite && (
-                    <Star className="w-2 h-2 absolute -top-1 -right-1 text-yellow-400 fill-current" />
-                  )}
-                  {module.isNew && (
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full" />
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Extended Navigation Panel */}
-      <AnimatePresence>
+        {/* Search */}
         {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 left-0 right-0 z-40 bg-black/95 backdrop-blur-xl border-b border-cyan-500/30"
-          >
-            <div className="max-w-7xl mx-auto p-6">
-              {/* Search Bar */}
-              <div className="mb-6">
-                <div className="relative max-w-md mx-auto">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search modules... (type to filter)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-black/40 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-hologram"
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              {/* Module Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                {filteredModules.map((module) => {
-                  const isActive = state.currentModule === module.id;
-                  const isFavorite = state.favorites.includes(module.id);
-                  const isRecent = state.recentlyUsed.includes(module.id);
-                  
-                  return (
-                    <motion.div
-                      key={module.id}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        navigateToModule(module.id);
-                        setIsExpanded(false);
-                      }}
-                      className={`relative p-4 rounded-xl cursor-pointer transition-all ${
-                        isActive 
-                          ? 'bg-gradient-to-br from-hologram/20 to-purple-500/20 border border-hologram/50' 
-                          : 'bg-black/40 border border-gray-700 hover:border-gray-500 hover:bg-white/5'
-                      }`}
-                    >
-                      <div className="flex flex-col items-center text-center space-y-2">
-                        <div className="relative">
-                          <module.icon 
-                            className="w-8 h-8" 
-                            style={{ color: module.color }} 
-                          />
-                          {module.isNew && (
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="text-sm font-mono text-white">{module.label}</div>
-                          <div className="text-xs text-gray-400">{module.description}</div>
-                        </div>
-                      </div>
-                      
-                      {/* Indicators */}
-                      <div className="absolute top-2 right-2 flex space-x-1">
-                        {isFavorite && (
-                          <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        )}
-                        {isRecent && (
-                          <Clock className="w-3 h-3 text-blue-400" />
-                        )}
-                      </div>
-                      
-                      {/* Favorite Toggle */}
-                      <motion.button
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.8 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isFavorite) {
-                            removeFromFavorites(module.id);
-                          } else {
-                            addToFavorites(module.id);
-                          }
-                        }}
-                        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Star className={`w-3 h-3 ${isFavorite ? 'text-yellow-400 fill-current' : 'text-gray-400'}`} />
-                      </motion.button>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              {/* Recent & Favorites */}
-              {(state.recentlyUsed.length > 0 || state.favorites.length > 0) && (
-                <div className="mt-6 pt-6 border-t border-gray-800">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Recently Used */}
-                    {state.recentlyUsed.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-mono text-gray-400 mb-3 flex items-center">
-                          <Clock className="w-4 h-4 mr-2" />
-                          RECENTLY USED
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {state.recentlyUsed.slice(0, 6).map((moduleId) => {
-                            const module = getModuleById(moduleId);
-                            if (!module) return null;
-                            return (
-                              <motion.button
-                                key={moduleId}
-                                whileHover={{ scale: 1.05 }}
-                                onClick={() => {
-                                  navigateToModule(moduleId);
-                                  setIsExpanded(false);
-                                }}
-                                className="px-3 py-1 bg-black/40 rounded-full text-xs font-mono text-gray-300 hover:text-white hover:bg-white/10 border border-gray-700"
-                              >
-                                <module.icon className="w-3 h-3 inline-block mr-1" />
-                                {module.label}
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Favorites */}
-                    {state.favorites.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-mono text-gray-400 mb-3 flex items-center">
-                          <Star className="w-4 h-4 mr-2" />
-                          FAVORITES
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {state.favorites.map((moduleId) => {
-                            const module = getModuleById(moduleId);
-                            if (!module) return null;
-                            return (
-                              <motion.button
-                                key={moduleId}
-                                whileHover={{ scale: 1.05 }}
-                                onClick={() => {
-                                  navigateToModule(moduleId);
-                                  setIsExpanded(false);
-                                }}
-                                className="px-3 py-1 bg-black/40 rounded-full text-xs font-mono text-yellow-300 hover:text-yellow-200 hover:bg-yellow-500/10 border border-yellow-500/30"
-                              >
-                                <module.icon className="w-3 h-3 inline-block mr-1" />
-                                {module.label}
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+          <div className="p-4 border-b border-cyan-400/20">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-cyan-400/60" />
+              <input
+                type="text"
+                placeholder="Search modules..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-black/40 border border-cyan-400/30 rounded-lg text-cyan-300 placeholder-cyan-400/60 focus:outline-none focus:border-cyan-400/60"
+              />
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-    </>
+
+        {/* Navigation Content */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Favorites */}
+          {isExpanded && favoriteModules.length > 0 && (
+            <div className="p-4 border-b border-cyan-400/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="w-4 h-4 text-yellow-400" />
+                <span className="text-sm text-cyan-400 font-medium">Favorites</span>
+              </div>
+              <div className="space-y-1">
+                {favoriteModules.map((module) => (
+                  <NavigationItem
+                    key={module.id}
+                    module={module}
+                    isActive={currentPath === module.path}
+                    isFavorite={true}
+                    onNavigate={handleNavigate}
+                    onToggleFavorite={toggleFavorite}
+                    isExpanded={isExpanded}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Main Navigation */}
+          <div className="p-4">
+            {isExpanded && (
+              <div className="flex items-center gap-2 mb-3">
+                <Grid3X3 className="w-4 h-4 text-cyan-400" />
+                <span className="text-sm text-cyan-400 font-medium">Modules</span>
+              </div>
+            )}
+            <div className="space-y-1">
+              {filteredModules.map((module) => (
+                <NavigationItem
+                  key={module.id}
+                  module={module}
+                  isActive={currentPath === module.path}
+                  isFavorite={favorites.includes(module.id)}
+                  onNavigate={handleNavigate}
+                  onToggleFavorite={toggleFavorite}
+                  isExpanded={isExpanded}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-cyan-400/20">
+          {currentModule && isExpanded && (
+            <div className="text-xs text-cyan-400/60 mb-2">
+              Current: {currentModule.label}
+            </div>
+          )}
+          <div className="flex justify-center">
+            <div className="w-8 h-1 bg-cyan-400/20 rounded-full">
+              <div 
+                className="h-full bg-cyan-400 rounded-full transition-all duration-300"
+                style={{ width: `${(navigationModules.findIndex(m => m.path === currentPath) + 1) / navigationModules.length * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.nav>
+  );
+}
+
+interface NavigationItemProps {
+  module: NavigationModule;
+  isActive: boolean;
+  isFavorite: boolean;
+  onNavigate: (path: string) => void;
+  onToggleFavorite: (moduleId: string) => void;
+  isExpanded: boolean;
+}
+
+function NavigationItem({ 
+  module, 
+  isActive, 
+  isFavorite, 
+  onNavigate, 
+  onToggleFavorite, 
+  isExpanded 
+}: NavigationItemProps) {
+  const Icon = module.icon;
+
+  return (
+    <motion.div
+      className={`relative flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+        isActive 
+          ? 'bg-cyan-400/20 border border-cyan-400/30 text-cyan-300' 
+          : 'text-cyan-400/80 hover:bg-cyan-400/10 hover:text-cyan-300'
+      }`}
+      onClick={() => onNavigate(module.path)}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <Icon className="w-5 h-5 flex-shrink-0" />
+      
+      {isExpanded && (
+        <>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium truncate">{module.label}</div>
+            <div className="text-xs text-cyan-400/60 truncate">{module.description}</div>
+          </div>
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(module.id);
+            }}
+            className="p-1 rounded hover:bg-cyan-400/20 transition-colors"
+          >
+            <Star 
+              className={`w-4 h-4 ${
+                isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-cyan-400/40'
+              }`} 
+            />
+          </button>
+        </>
+      )}
+      
+      {isActive && (
+        <motion.div
+          className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400 rounded-r"
+          layoutId="activeIndicator"
+        />
+      )}
+    </motion.div>
   );
 }
