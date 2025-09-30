@@ -204,7 +204,7 @@ export function useVoiceInterface({
       }
     }
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       setError(event.error)
       logger.error('Speech recognition error', { error: event.error })
     }
