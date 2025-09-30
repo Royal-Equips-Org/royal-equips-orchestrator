@@ -41,7 +41,7 @@ describe('EmpireService', () => {
       const result = await empireService.fetchMetrics();
 
       expect(result).toEqual(mockMetrics);
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/empire/metrics');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/empire/metrics');
     });
 
     it('should throw error for invalid metrics data', async () => {
@@ -75,7 +75,7 @@ describe('EmpireService', () => {
       const result = await empireService.fetchAgents();
 
       expect(result).toEqual(mockAgents);
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/empire/agents');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/empire/agents');
     });
   });
 
@@ -86,7 +86,7 @@ describe('EmpireService', () => {
       await empireService.approveProduct('test-id');
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        '/api/empire/opportunities/test-id/approve'
+        '/empire/opportunities/test-id/approve'
       );
     });
   });
@@ -98,7 +98,7 @@ describe('EmpireService', () => {
       await empireService.rejectProduct('test-id', 'Not suitable');
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        '/api/empire/opportunities/test-id/reject',
+        '/empire/opportunities/test-id/reject',
         { reason: 'Not suitable' }
       );
     });
@@ -117,9 +117,48 @@ describe('EmpireService', () => {
 
       expect(result).toEqual(mockResponse);
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        '/api/empire/chat',
+        '/empire/chat',
         { content: 'Hello' }
       );
+    });
+  });
+
+  describe('controls', () => {
+    it('should trigger engine boost', async () => {
+      mockApiClient.post.mockResolvedValueOnce({});
+      await empireService.triggerEngineBoost();
+      expect(mockApiClient.post).toHaveBeenCalledWith('/empire/controls/engine-boost');
+    });
+
+    it('should trigger auto sync', async () => {
+      mockApiClient.post.mockResolvedValueOnce({});
+      await empireService.triggerAutoSync();
+      expect(mockApiClient.post).toHaveBeenCalledWith('/empire/controls/auto-sync');
+    });
+  });
+
+  describe('logInteraction', () => {
+    it('should post interaction payload', async () => {
+      mockApiClient.post.mockResolvedValueOnce({});
+      await empireService.logInteraction({
+        source: 'voice',
+        command: 'run engine boost',
+        handled: true,
+        timestamp: new Date().toISOString(),
+      });
+      expect(mockApiClient.post).toHaveBeenCalledWith('/empire/interactions', expect.objectContaining({
+        source: 'voice',
+        command: 'run engine boost'
+      }));
+    });
+
+    it('should swallow logging errors', async () => {
+      mockApiClient.post.mockRejectedValueOnce(new Error('fail'));
+      await expect(empireService.logInteraction({
+        source: 'ui',
+        message: 'noop',
+        timestamp: new Date().toISOString(),
+      })).resolves.toBeUndefined();
     });
   });
 });
