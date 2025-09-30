@@ -107,3 +107,12 @@ export interface ServiceError {
   status?: number;
   message: string;
 }
+
+export interface InteractionLogPayload {
+  source: 'voice' | 'tts' | 'ui';
+  command?: string;
+  message?: string;
+  handled?: boolean;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}

@@ -1,11 +1,12 @@
 // Empire service layer for API interactions
-import { 
-  Agent, 
-  EmpireMetrics, 
-  ProductOpportunity, 
+import {
+  Agent,
+  EmpireMetrics,
+  ProductOpportunity,
   MarketingCampaign,
   AIRAResponse,
-  ServiceError 
+  ServiceError,
+  InteractionLogPayload
 } from '../types/empire';
 import { apiClient } from './api-client';
 import { 
@@ -112,6 +113,35 @@ export class EmpireService {
     } catch (error) {
       logger.error('Failed to fetch analytics', { error: String(error) });
       throw error;
+    }
+  }
+
+  async triggerEngineBoost(): Promise<void> {
+    try {
+      logger.info('Triggering engine boost sequence');
+      await apiClient.post('/empire/controls/engine-boost');
+    } catch (error) {
+      logger.error('Engine boost trigger failed', { error: String(error) });
+      throw error;
+    }
+  }
+
+  async triggerAutoSync(): Promise<void> {
+    try {
+      logger.info('Triggering auto sync across data sources');
+      await apiClient.post('/empire/controls/auto-sync');
+    } catch (error) {
+      logger.error('Auto sync trigger failed', { error: String(error) });
+      throw error;
+    }
+  }
+
+  async logInteraction(payload: InteractionLogPayload): Promise<void> {
+    try {
+      logger.info('Logging interaction event', { source: payload.source, handled: payload.handled });
+      await apiClient.post('/empire/interactions', payload);
+    } catch (error) {
+      logger.warn('Failed to log interaction', { error: String(error) });
     }
   }
 }
