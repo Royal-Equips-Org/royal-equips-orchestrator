@@ -1111,4 +1111,4 @@ def sync_all_data():
         
     except Exception as e:
         logger.error(f"Failed to start comprehensive sync: {e}")
-        return jsonify({"error": "Failed to start sync", "message": str(e)}), 500
+        return jsonify({"error": "Failed to start sync", "message": "An internal error has occurred."}), 500
