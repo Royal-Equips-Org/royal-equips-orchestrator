@@ -1,5 +1,4 @@
 // DELETED - Consolidated into main App.tsx
- */
 
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { EnterpriseNavigation } from '../components/navigation/EnterpriseNavigation';
