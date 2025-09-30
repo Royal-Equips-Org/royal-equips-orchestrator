@@ -155,6 +155,20 @@ python3 wsgi.py
 cd apps/command-center-ui && pnpm run dev
 ```
 
+#### Mock API Server (Development)
+For development when the Flask orchestrator is not available:
+```bash
+# Terminal 1: Mock API Server
+cd dev-tools/mock-server
+npm install
+npm start
+
+# Terminal 2: Frontend
+cd apps/command-center-ui && pnpm run dev
+```
+
+The mock server provides realistic API endpoints on http://localhost:10000 for testing the Command Center UI.
+
 ## 📊 Performance Metrics
 
 The system tracks comprehensive performance metrics for each agent:
