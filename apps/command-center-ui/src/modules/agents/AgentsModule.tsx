@@ -65,11 +65,15 @@ export default function AgentsModule() {
       }
 
       // Fetch recent logs as sessions preview from backend
-      const sessionsResponse = await fetch(`/v1/agents/${(agentsData as any)?.agents?.[0]?.id || 'quantum-001'}/logs`);
       let sessionsData = [];
-      
-      if (sessionsResponse.ok) {
-        sessionsData = await sessionsResponse.json();
+      const agentId = (agentsData as any)?.agents?.[0]?.id;
+      if (agentId) {
+        const sessionsResponse = await fetch(`/v1/agents/${agentId}/logs`);
+        if (sessionsResponse.ok) {
+          sessionsData = await sessionsResponse.json();
+        }
+      } else {
+        setError('No agents available to fetch sessions.');
       }
 
       // Fetch metrics to get agent performance data
