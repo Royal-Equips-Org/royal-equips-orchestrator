@@ -15,7 +15,7 @@ import QuantumProductMatrix from './QuantumProductMatrix';
 import NeuralAnalytics from './NeuralAnalytics';
 import QuantumMetrics from './QuantumMetrics';
 import HolographicInterface from './HolographicInterface';
-import FuturisticCommandCenter from './FuturisticCommandCenter';
+import ExactCommandCenter from '../holographic/ExactCommandCenter';
 import { useEmpireStore } from '../../store/empire-store';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { NavigationView } from '../../types/navigation';
@@ -41,9 +41,9 @@ export default function EmpireDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Check if we should show the futuristic view by default
+  // Check if we should show the holographic view by default
   if (viewMode === 'futuristic' || currentView === 'dashboard' || !currentView) {
-    return <FuturisticCommandCenter />;
+    return <ExactCommandCenter />;
   }
 
   const renderQuantumView = () => {
