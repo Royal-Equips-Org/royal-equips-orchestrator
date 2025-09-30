@@ -53,6 +53,16 @@
   }
 }
 
+/* Module container for individual pages */
+.ai-core-module-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(16px, 4vw, 32px);
+}
+
 .ai-core-shell {
   position: relative;
   z-index: 2;

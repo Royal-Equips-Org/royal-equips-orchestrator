@@ -13,7 +13,6 @@ import Hologram3D from './command-center/ai-core/Hologram3D'
 import DataPanels from './command-center/ai-core/DataPanels'
 import useVoiceInterface from './command-center/ai-core/VoiceInterface'
 import { useLiveData } from './command-center/ai-core/hooks/useLiveData'
-import AICore from './components/ai-core/AICore'
 import { useEmpireStore } from './store/empire-store'
 import { empireService } from './services/empire-service'
 import ShopifyDashboard from './components/shopify/ShopifyDashboard'
@@ -35,20 +34,17 @@ const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AI
 
 function AppContent() {
   const { toasts, removeToast, success, error, info } = useToastContext()
-  const { state } = useNavigation()
+  const { state, navigateToModule } = useNavigation()
   const { optimizePerformance, metrics: perfMetrics, recommendations } = usePerformanceOptimization()
   const { metrics, agents, opportunities, campaigns, dataStreams, liveIntensity, refreshLiveData, registerCommandEvent } = useLiveData()
   const [voiceTranscript, setVoiceTranscript] = useState('')
-  const [showAICore, setShowAICore] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const consoleRef = useRef<HTMLDivElement>(null)
   const isConnected = useEmpireStore(store => store.isConnected)
 
-  // Handle module access
-  const handleModuleAccess = useCallback((module: string) => {
-    // Implementation for module switching
-    console.log('Module access:', module)
-  }, [])
+  // Handle module navigation
+  const handleModuleAccess = useCallback((moduleId: string) => {
+    navigateToModule(moduleId)
+  }, [navigateToModule])
 
   const voice = useVoiceInterface({
     onTranscript: setVoiceTranscript,
@@ -94,6 +90,16 @@ function AppContent() {
     return 'low'
   }, [liveIntensity])
 
+  const voiceWaveHeights = useMemo(() => {
+    const amplitude = liveIntensity?.voiceActivity?.volume ?? 0
+    return Array.from({ length: 8 }).map((_, idx) => {
+      const base = Math.sin((idx / 8) * Math.PI)
+      return `${Math.max(12, (base + amplitude * 1.8) * 24)}px`
+    })
+  }, [liveIntensity])
+
+  const isListening = voice.listening
+
   const handleEngineBoost = useCallback(async () => {
     try {
       await empireService.triggerEngineBoost()
@@ -127,6 +133,140 @@ function AppContent() {
       </div>
     )
 
+    // Main command center interface - always show this for 'command' module
+    if (state.currentModule === 'command') {
+      return (
+        <div className="ai-core-shell">
+          <section className="ai-core-panels-primary">
+            <DataPanels
+              dataStreams={dataStreams}
+              metrics={metrics || undefined}
+              agents={agents || undefined}
+              campaigns={campaigns || undefined}
+              liveIntensity={liveIntensity}
+            />
+            <div className="ai-core-panel">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-mono text-cyan-200/70 uppercase tracking-[0.4em]">Empire status</p>
+                  <p className="text-2xl font-semibold text-white mt-1">
+                    {metrics?.revenue_progress ? `€${metrics.revenue_progress.toLocaleString()}` : 'Synchronising'}
+                  </p>
+                </div>
+                <button className="ai-core-control-button" onClick={refreshLiveData} type="button">
+                  <RefreshCcw className="w-4 h-4" /> Refresh Data
+                </button>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 text-xs font-mono text-cyan-200/80">
+                <div>
+                  Active Agents
+                  <div className="text-lg text-white">
+                    {agents?.length ?? 0} / {metrics?.total_agents ?? 0}
+                  </div>
+                </div>
+                <div>
+                  Opportunities
+                  <div className="text-lg text-white">
+                    {opportunities?.length ?? 0}
+                  </div>
+                </div>
+                <div>
+                  Automation Level
+                  <div className="text-lg text-white">{metrics?.automation_level?.toFixed?.(1) ?? '—'}%</div>
+                </div>
+                <div>
+                  Voice Transcript
+                  <div className="text-xs text-cyan-300/80 truncate max-w-[220px]">{voiceTranscript || 'Awaiting command'}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="ai-core-hologram">
+            <div className="ai-core-hologram-header">
+              <h1>Royal Equips AI Core</h1>
+              <div className="flex items-center gap-4">
+                <div className="ai-core-voice-control">
+                  <div className={`ai-core-voice-indicator ${isListening ? 'active' : ''}`} />
+                  <div className="ai-core-voice-waveform">
+                    {voiceWaveHeights.map((height, index) => (
+                      <span key={index} className="ai-core-voice-bar" style={{ height }} />
+                    ))}
+                  </div>
+                </div>
+                <button
+                  className="ai-core-control-button"
+                  type="button"
+                  onClick={isListening ? voice.stopListening : voice.startListening}
+                >
+                  <Mic className="w-4 h-4" /> {isListening ? 'Listening…' : 'Voice Control'}
+                </button>
+              </div>
+            </div>
+
+            <div className="ai-core-canvas-container">
+              <Hologram3D
+                metrics={metrics || undefined}  
+                agents={agents || undefined}
+                opportunities={opportunities || undefined}
+                liveIntensity={liveIntensity}
+                dataStreams={dataStreams}
+              />
+              <div className="ai-core-module-dock">
+                <ModuleScroller />
+                <div className="flex flex-wrap gap-3">
+                  <button className="ai-core-control-button" type="button" onClick={handleEngineBoost}>
+                    <Rocket className="w-4 h-4" /> Engine Boost
+                  </button>
+                  <button className="ai-core-control-button" type="button" onClick={handleAutoSync}>
+                    <RefreshCcw className="w-4 h-4" /> Auto Sync
+                  </button>
+                  <button className="ai-core-control-button" type="button" onClick={handleOpenLogs}>
+                    <ScrollText className="w-4 h-4" /> Command Logs
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="ai-core-hologram-footer">
+              <div className="ai-core-status">
+                <span className="ai-core-status-dot" />
+                <span>{isConnected ? 'All systems synchronised' : 'Reconnecting to core services'}</span>
+              </div>
+              <div className="ai-core-activity">
+                <div>
+                  <div className="label">Command Rate</div>
+                  <div className={`value ${commandRateLabel}`}>{liveIntensity?.commandRate ?? 0}/min</div>
+                </div>
+                <div>
+                  <div className="label">Energy</div>
+                  <div className="value">{Math.round((liveIntensity?.energyLevel ?? 0.5) * 100)}%</div>
+                </div>
+                <div>
+                  <div className="label">Voice</div>
+                  <div className="value">{((liveIntensity?.voiceActivity?.volume ?? 0) * 100).toFixed(0)}%</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="ai-core-panels-secondary">
+            <div className="ai-core-panel" ref={consoleRef}>
+              <div className="ai-core-panel-title">
+                <Waves className="w-4 h-4" />
+                <span>Command Console</span>
+              </div>
+              <CommandConsole />
+            </div>
+            <div className="ai-core-panel hidden xl:block">
+              <NavigationBar />
+            </div>
+          </section>
+        </div>
+      )
+    }
+
+    // Individual module pages
     switch (state.currentModule) {
       case 'aira':
         return (
@@ -209,236 +349,32 @@ function AppContent() {
       default:
         return <EmpireDashboard />
     }
-  }, [state.currentModule])
+  }, [state.currentModule, dataStreams, metrics, agents, campaigns, liveIntensity, refreshLiveData, opportunities, voiceTranscript, isListening, voiceWaveHeights, voice, handleEngineBoost, handleAutoSync, handleOpenLogs, isConnected, commandRateLabel])
 
-  const voiceWaveHeights = useMemo(() => {
-    const amplitude = liveIntensity?.voiceActivity?.volume ?? 0
-    return Array.from({ length: 8 }).map((_, idx) => {
-      const base = Math.sin((idx / 8) * Math.PI)
-      return `${Math.max(12, (base + amplitude * 1.8) * 24)}px`
-    })
-  }, [liveIntensity])
-
-  const isListening = voice.listening
-
-  // Main render - AI Core as primary interface
-  if (showAICore) {
-    return (
-      <div className="w-full h-screen bg-black overflow-hidden">
-        {/* AI Core as main interface exactly like the reference image */}
-        <AICore 
-          onExit={() => setShowAICore(false)} 
-          isFullscreen={isFullscreen}
-        />
-        
-        {/* Floating access to traditional modules when needed */}
-        {!isFullscreen && (
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            background: 'rgba(0, 30, 60, 0.3)',
-            border: '1px solid rgba(0, 170, 255, 0.5)',
-            borderRadius: '8px',
-            padding: '10px',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            gap: '10px',
-            zIndex: 100
-          }}>
-            <button 
-              onClick={() => handleModuleAccess('dashboard')}
-              style={{
-                background: 'rgba(0, 170, 255, 0.2)',
-                border: '1px solid #00aaff',
-                borderRadius: '4px',
-                color: '#00ddff',
-                padding: '5px 10px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              Dashboard
-            </button>
-            <button 
-              onClick={() => handleModuleAccess('aira')}
-              style={{
-                background: 'rgba(0, 170, 255, 0.2)',
-                border: '1px solid #00aaff',
-                borderRadius: '4px',
-                color: '#00ddff',
-                padding: '5px 10px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              AIRA
-            </button>
-            <button 
-              onClick={() => handleModuleAccess('shopify')}
-              style={{
-                background: 'rgba(0, 170, 255, 0.2)',
-                border: '1px solid #00aaff',
-                borderRadius: '4px',
-                color: '#00ddff',
-                padding: '5px 10px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              Shopify
-            </button>
-          </div>
-        )}
-        
-        {/* Toast notifications positioned absolutely */}
-        <div className="absolute top-20 right-4 z-50">
-          <ToastContainer toasts={toasts} onClose={removeToast} />
-        </div>
-      </div>
-    );
-  }
-
-  // Traditional interface when accessing specific modules
+  // Single consistent UI - no more dual interfaces
   return (
     <MobileShell className="ai-core-root">
       <div className="ai-core-grid-overlay" />
-      <div className="ai-core-shell">
-        <section className="ai-core-panels-primary">
-          <DataPanels
-            dataStreams={dataStreams}
-            metrics={metrics || undefined}
-            agents={agents || undefined}
-            campaigns={campaigns || undefined}
-            liveIntensity={liveIntensity}
-          />
-          <div className="ai-core-panel">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-mono text-cyan-200/70 uppercase tracking-[0.4em]">Empire status</p>
-                <p className="text-2xl font-semibold text-white mt-1">
-                  {metrics?.revenue_progress ? `€${metrics.revenue_progress.toLocaleString()}` : 'Synchronising'}
-                </p>
-              </div>
-              <button className="ai-core-control-button" onClick={refreshLiveData} type="button">
-                <RefreshCcw className="w-4 h-4" /> Refresh Data
-              </button>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 text-xs font-mono text-cyan-200/80">
-              <div>
-                Active Agents
-                <div className="text-lg text-white">
-                  {agents?.length ?? 0} / {metrics?.total_agents ?? 0}
-                </div>
-              </div>
-              <div>
-                Opportunities
-                <div className="text-lg text-white">
-                  {opportunities?.length ?? 0}
-                </div>
-              </div>
-              <div>
-                Automation Level
-                <div className="text-lg text-white">{metrics?.automation_level?.toFixed?.(1) ?? '—'}%</div>
-              </div>
-              <div>
-                Voice Transcript
-                <div className="text-xs text-cyan-300/80 truncate max-w-[220px]">{voiceTranscript || 'Awaiting command'}</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="ai-core-hologram">
-          <div className="ai-core-hologram-header">
-            <h1>Royal Equips AI Core</h1>
-            <div className="flex items-center gap-4">
-              <div className="ai-core-voice-control">
-                <div className={`ai-core-voice-indicator ${isListening ? 'active' : ''}`} />
-                <div className="ai-core-voice-waveform">
-                  {voiceWaveHeights.map((height, index) => (
-                    <span key={index} className="ai-core-voice-bar" style={{ height }} />
-                  ))}
-                </div>
-              </div>
-              <button
-                className="ai-core-control-button"
-                type="button"
-                onClick={isListening ? voice.stopListening : voice.startListening}
-              >
-                <Mic className="w-4 h-4" /> {isListening ? 'Listening…' : 'Voice Control'}
-              </button>
-            </div>
-          </div>
-
-          <div className="ai-core-canvas-container">
-            <Hologram3D
-              metrics={metrics || undefined}  
-              agents={agents || undefined}
-              opportunities={opportunities || undefined}
-              liveIntensity={liveIntensity}
-              dataStreams={dataStreams}
-            />
-            <div className="ai-core-module-dock">
-              <ModuleScroller />
-              <div className="flex flex-wrap gap-3">
-                <button className="ai-core-control-button" type="button" onClick={handleEngineBoost}>
-                  <Rocket className="w-4 h-4" /> Engine Boost
-                </button>
-                <button className="ai-core-control-button" type="button" onClick={handleAutoSync}>
-                  <RefreshCcw className="w-4 h-4" /> Auto Sync
-                </button>
-                <button className="ai-core-control-button" type="button" onClick={handleOpenLogs}>
-                  <ScrollText className="w-4 h-4" /> Command Logs
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="ai-core-hologram-footer">
-            <div className="ai-core-status">
-              <span className="ai-core-status-dot" />
-              <span>{isConnected ? 'All systems synchronised' : 'Reconnecting to core services'}</span>
-            </div>
-            <div className="ai-core-activity">
-              <div>
-                <div className="label">Command Rate</div>
-                <div className={`value ${commandRateLabel}`}>{liveIntensity?.commandRate ?? 0}/min</div>
-              </div>
-              <div>
-                <div className="label">Energy</div>
-                <div className="value">{Math.round((liveIntensity?.energyLevel ?? 0.5) * 100)}%</div>
-              </div>
-              <div>
-                <div className="label">Voice</div>
-                <div className="value">{((liveIntensity?.voiceActivity?.volume ?? 0) * 100).toFixed(0)}%</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="ai-core-panels-secondary">
-          <div className="ai-core-panel" ref={consoleRef}>
-            <div className="ai-core-panel-title">
-              <Waves className="w-4 h-4" />
-              <span>Command Console</span>
-            </div>
-            <CommandConsole />
-          </div>
-          <div className="ai-core-panel hidden xl:block">
-            <NavigationBar />
-          </div>
-        </section>
-      </div>
-
-      <div className="ai-core-module-content px-4 sm:px-6 lg:px-16">
-        <div className="lg:hidden mb-6">
-          <TopBar />
-        </div>
-        <div className="rounded-3xl border border-cyan-500/20 bg-black/20 backdrop-blur-2xl p-6">
+      
+      {state.currentModule === 'command' ? (
+        // Full AI Core interface for command center
+        <div className="ai-core-shell">
           {renderModule()}
         </div>
-      </div>
+      ) : (
+        // Module-specific pages with navigation
+        <div className="ai-core-module-container">
+          <div className="lg:hidden mb-6">
+            <TopBar />
+          </div>
+          <div className="rounded-3xl border border-cyan-500/20 bg-black/20 backdrop-blur-2xl p-6 min-h-screen">
+            {renderModule()}
+          </div>
+          <div className="fixed bottom-4 right-4 z-40">
+            <NavigationBar />
+          </div>
+        </div>
+      )}
 
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </MobileShell>
