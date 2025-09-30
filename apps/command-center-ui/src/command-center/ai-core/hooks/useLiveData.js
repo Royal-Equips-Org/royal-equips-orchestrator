@@ -159,7 +159,7 @@ export function useLiveData() {
     const agentUnsubscribe = service.subscribe('agent-status', payload => {
       if (!payload) return
       try {
-        useEmpireStore.setState(prev => ({ ...prev, agents: payload.agents ?? payload }))
+        useEmpireStore.setState({ agents: payload.agents ?? payload })
       } catch (error) {
         logger.error('Failed to push agent status update', { error })
       }
