@@ -131,121 +131,19 @@ export default function EnhancedAnalyticsModule() {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/analytics/enterprise', {
+      const response = await apiClient.get('/api/analytics/dashboard', {
         params: {
-          startDate: dateRange.start,
-          endDate: dateRange.end,
-          includeAI: aiMode,
-          realTime: realTimeEnabled
+          time_range: dateRange.start ? `${dateRange.start}_to_${dateRange.end}` : '30d',
+          refresh: true
         }
       });
       
-      // Ensure analytics data has proper structure with safe defaults
-      const safeAnalytics: EnterpriseAnalytics = {
-        ...response.data,
-        kpis: ArrayUtils.ensure(response.data?.kpis),
-        revenue: {
-          ...response.data?.revenue,
-          revenueByChannel: ArrayUtils.ensure(response.data?.revenue?.revenueByChannel),
-          revenueByRegion: ArrayUtils.ensure(response.data?.revenue?.revenueByRegion),
-          monthlyTrend: ArrayUtils.ensure(response.data?.revenue?.monthlyTrend)
-        },
-        customers: {
-          ...response.data?.customers,
-          segmentDistribution: ArrayUtils.ensure(response.data?.customers?.segmentDistribution),
-          acquisitionChannels: ArrayUtils.ensure(response.data?.customers?.acquisitionChannels)
-        },
-        products: {
-          ...response.data?.products,
-          bestSellers: ArrayUtils.ensure(response.data?.products?.bestSellers),
-          categoryPerformance: ArrayUtils.ensure(response.data?.products?.categoryPerformance),
-          profitMargins: ArrayUtils.ensure(response.data?.products?.profitMargins),
-          seasonalTrends: ArrayUtils.ensure(response.data?.products?.seasonalTrends),
-          priceOptimization: ArrayUtils.ensure(response.data?.products?.priceOptimization)
-        },
-        operations: {
-          ...response.data?.operations,
-          processMetrics: ArrayUtils.ensure(response.data?.operations?.processMetrics)
-        },
-        forecasts: {
-          ...response.data?.forecasts,
-          revenueForecast: ArrayUtils.ensure(response.data?.forecasts?.revenueForecast),
-          demandForecast: ArrayUtils.ensure(response.data?.forecasts?.demandForecast),
-          seasonalPredictions: ArrayUtils.ensure(response.data?.forecasts?.seasonalPredictions),
-          marketTrends: ArrayUtils.ensure(response.data?.forecasts?.marketTrends),
-          riskAssessments: ArrayUtils.ensure(response.data?.forecasts?.riskAssessments),
-          aiInsights: ArrayUtils.ensure(response.data?.forecasts?.aiInsights)
-        }
-      };
-      
-      setAnalytics(safeAnalytics);
+      // Use real backend data structure from analytics.py
+      setAnalytics(response.data);
     } catch (error) {
       console.error('Failed to fetch enterprise analytics:', error);
-      // Set a safe empty analytics structure on error
-      setAnalytics({
-        revenue: {
-          totalRevenue: 0,
-          revenueGrowth: 0,
-          recurringRevenue: 0,
-          averageOrderValue: 0,
-          conversionRate: 0,
-          revenueByChannel: [],
-          revenueByRegion: [],
-          monthlyTrend: [],
-          profitability: {
-            grossMargin: 0,
-            netMargin: 0,
-            operatingMargin: 0
-          }
-        },
-        customers: {
-          totalCustomers: 0,
-          newCustomers: 0,
-          customerGrowth: 0,
-          lifetimeValue: 0,
-          churnRate: 0,
-          satisfactionScore: 0,
-          segmentDistribution: [],
-          acquisitionChannels: [],
-          retentionMetrics: {
-            day30: 0,
-            day90: 0,
-            day365: 0
-          }
-        },
-        products: {
-          totalProducts: 0,
-          bestSellers: [],
-          categoryPerformance: [],
-          inventoryTurnover: 0,
-          profitMargins: [],
-          seasonalTrends: [],
-          priceOptimization: []
-        },
-        operations: {
-          orderFulfillmentTime: 0,
-          inventoryAccuracy: 0,
-          supplierPerformance: 0,
-          returnRate: 0,
-          operationalEfficiency: 0,
-          automationLevel: 0,
-          processMetrics: [],
-          resourceUtilization: {
-            warehouse: 0,
-            workforce: 0,
-            technology: 0
-          }
-        },
-        forecasts: {
-          revenueForecast: [],
-          demandForecast: [],
-          seasonalPredictions: [],
-          marketTrends: [],
-          riskAssessments: [],
-          aiInsights: []
-        },
-        kpis: []
-      });
+      // Keep analytics null so the existing fallback UI is shown
+      setAnalytics(null);
     } finally {
       setLoading(false);
     }
