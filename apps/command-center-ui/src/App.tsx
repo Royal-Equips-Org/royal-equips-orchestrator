@@ -17,7 +17,6 @@ import { useEmpireStore } from './store/empire-store'
 import { empireService } from './services/empire-service'
 import ShopifyDashboard from './components/shopify/ShopifyDashboard'
 import EmpireDashboard from './components/empire/EmpireDashboard'
-import { useToastContext } from './contexts/ToastContext'
 import './styles/globals.css'
 import './command-center/ai-core/AiCore.css'
 
