@@ -13,6 +13,7 @@ import ErrorBoundary from './components/error/ErrorBoundary'
 
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
+import { navigationModules } from './config/navigation'
 
 // Lazy load modules for better performance
 const AiraModule = lazy(() => import('./modules/aira/AiraModule'));
@@ -27,11 +28,12 @@ const SecurityModule = lazy(() => import('./modules/security/SecurityModule'));
 const FinanceModule = lazy(() => import('./modules/finance/FinanceModule'));
 const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AIRAIntelligenceModule'));
 const ShopifyModule = lazy(() => import('./modules/shopify/ShopifyModule'));
+const ErrorTest = lazy(() => import('./test/ErrorTest'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
   const { toasts, removeToast } = useToastContext();
-  const { state } = useNavigation();
+  const { state, navigateToModule } = useNavigation();
   const { optimizePerformance, metrics, recommendations } = usePerformanceOptimization();
 
 
@@ -175,7 +177,16 @@ function AppContent() {
           bg-bg/80 backdrop-blur-md
           border-b border-quantum-primary/20
         `}>
-          <ModuleScroller />
+          <ModuleScroller 
+            modules={navigationModules.map(module => ({
+              id: module.id,
+              label: module.label,
+              path: module.path,
+              status: 'active' as const
+            }))}
+            activeId={state.currentModule}
+            onNavigate={(path: string, moduleId: string) => navigateToModule(moduleId)}
+          />
         </div>
         
         {/* Main content area with responsive padding */}
