@@ -33,6 +33,21 @@ const defaultStreams = {
  */
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
 
+/**
+ * Computes the energy level for the dashboard based on several metrics.
+ * The energy level is calculated as the average of normalized agent activity, revenue progress,
+ * automation level, and daily discoveries, with each metric clamped to reasonable defaults if missing.
+ * The final value is clamped between 0.25 and 0.95.
+ *
+ * @param {Object} metrics - The metrics object containing the following properties:
+ *   @property {number} [active_agents] - Number of currently active agents.
+ *   @property {number} [total_agents] - Total number of agents.
+ *   @property {number} [revenue_progress] - Current revenue progress.
+ *   @property {number} [target_revenue] - Target revenue value.
+ *   @property {number} [automation_level] - Automation level as a percentage (0-100).
+ *   @property {number} [daily_discoveries] - Number of daily discoveries.
+ * @returns {number} The computed energy level, a normalized value between 0.25 and 0.95.
+ */
 const computeEnergyLevel = (metrics) => {
   if (!metrics) {
     return 0.45
