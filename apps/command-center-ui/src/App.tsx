@@ -63,7 +63,6 @@ function AppContent() {
     }, 2000)
     return () => clearTimeout(timer)
   }, [optimizePerformance])
-
   useEffect(() => {
     if (perfMetrics) {
       console.log('Performance Metrics:', {
@@ -213,6 +212,85 @@ function AppContent() {
 
   const isListening = voice.listening
 
+  // Main render - AI Core as primary interface
+  if (showAICore) {
+    return (
+      <div className="w-full h-screen bg-black overflow-hidden">
+        {/* AI Core as main interface exactly like the reference image */}
+        <AICore 
+          onExit={() => setShowAICore(false)} 
+          isFullscreen={isFullscreen}
+        />
+        
+        {/* Floating access to traditional modules when needed */}
+        {!isFullscreen && (
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '20px',
+            background: 'rgba(0, 30, 60, 0.3)',
+            border: '1px solid rgba(0, 170, 255, 0.5)',
+            borderRadius: '8px',
+            padding: '10px',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            gap: '10px',
+            zIndex: 100
+          }}>
+            <button 
+              onClick={() => handleModuleAccess('dashboard')}
+              style={{
+                background: 'rgba(0, 170, 255, 0.2)',
+                border: '1px solid #00aaff',
+                borderRadius: '4px',
+                color: '#00ddff',
+                padding: '5px 10px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Dashboard
+            </button>
+            <button 
+              onClick={() => handleModuleAccess('aira')}
+              style={{
+                background: 'rgba(0, 170, 255, 0.2)',
+                border: '1px solid #00aaff',
+                borderRadius: '4px',
+                color: '#00ddff',
+                padding: '5px 10px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              AIRA
+            </button>
+            <button 
+              onClick={() => handleModuleAccess('shopify')}
+              style={{
+                background: 'rgba(0, 170, 255, 0.2)',
+                border: '1px solid #00aaff',
+                borderRadius: '4px',
+                color: '#00ddff',
+                padding: '5px 10px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Shopify
+            </button>
+          </div>
+        )}
+        
+        {/* Toast notifications positioned absolutely */}
+        <div className="absolute top-20 right-4 z-50">
+          <ToastContainer toasts={toasts} onClose={removeToast} />
+        </div>
+      </div>
+    );
+  }
+
+  // Traditional interface when accessing specific modules
   return (
     <MobileShell className="ai-core-root">
       <div className="ai-core-grid-overlay" />
