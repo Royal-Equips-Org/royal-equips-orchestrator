@@ -1,11 +1,18 @@
 name: 🧠 AI Command Center
 
 on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'apps/command-center-ui/**'
+      - 'apps/aira/**'
   push:
     branches: [main, master]
     paths:
       - 'apps/command-center-ui/**'
       - 'apps/aira/**'
+    # Only run on merge commits to reduce noise
+    types: [push]
   schedule:
     - cron: '0 */4 * * *' # Every 4 hours for AI model updates
   workflow_dispatch:
