@@ -35,10 +35,15 @@ function isDevelopment(): boolean {
   // 2. Running on development ports (3000, 5173, etc.)
   // 3. Vite dev server detected
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-  const isDevPort = ['3000', '5173', '8080', '4000'].includes(port);
+  // Make dev ports configurable via environment variable, fallback to defaults
+  const devPortsEnv = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_DEV_PORTS) ? process.env.REACT_APP_DEV_PORTS : '';
+  const devPorts = devPortsEnv
+    ? devPortsEnv.split(',').map(p => p.trim())
+    : ['3000', '5173', '8080', '4000'];
+  const isDevPort = devPorts.includes(port);
   const isViteDev = typeof window !== 'undefined' && window.location.search.includes('vite');
   
-  return isLocalhost || isDevPort || isViteDev || process.env.NODE_ENV === 'development';
+  return isLocalhost || isDevPort || isViteDev || (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development');
 }
 
 /**
