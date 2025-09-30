@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, Suspense, lazy } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react'
+import { BrowserRouter } from 'react-router-dom'
 import { Rocket, RefreshCcw, ScrollText, Mic, Waves } from 'lucide-react'
 import MobileShell from './components/layout/MobileShell'
 import NavigationBar from './components/navigation/NavigationBar'
@@ -7,7 +8,7 @@ import TopBar from './components/layout/TopBar'
 import CommandConsole from './components/CommandConsole'
 import { ToastContainer } from './components/ui/Toast'
 import { ToastProvider, useToastContext } from './contexts/ToastContext'
-import { NavigationProvider, useNavigation } from './contexts/NavigationContext'
+import { NavigationProvider } from './contexts/NavigationContext'
 import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import Hologram3D from './command-center/ai-core/Hologram3D'
 import DataPanels from './command-center/ai-core/DataPanels'
@@ -16,39 +17,18 @@ import { useLiveData } from './command-center/ai-core/hooks/useLiveData'
 import AICore from './components/ai-core/AICore'
 import { useEmpireStore } from './store/empire-store'
 import { empireService } from './services/empire-service'
-import ShopifyDashboard from './components/shopify/ShopifyDashboard'
-import EmpireDashboard from './components/empire/EmpireDashboard'
+import { AppRoutes } from './config/routes'
 import './styles/globals.css'
 import './command-center/ai-core/AiCore.css'
 
-const AiraModule = lazy(() => import('./modules/aira/AiraModule'))
-const AnalyticsModule = lazy(() => import('./modules/analytics/AnalyticsModule'))
-const AgentsModule = lazy(() => import('./modules/agents/AgentsModule'))
-const DashboardModule = lazy(() => import('./modules/dashboard/DashboardModule'))
-const RevenueModule = lazy(() => import('./modules/revenue/RevenueModule'))
-const InventoryModule = lazy(() => import('./modules/inventory/InventoryModule'))
-const MarketingAutomationModule = lazy(() => import('./modules/marketing/MarketingModule'))
-const CustomerSupportModule = lazy(() => import('./modules/customer-support/CustomerSupportModule'))
-const SecurityModule = lazy(() => import('./modules/security/SecurityModule'))
-const FinanceModule = lazy(() => import('./modules/finance/FinanceModule'))
-const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AIRAIntelligenceModule'))
-
 function AppContent() {
   const { toasts, removeToast, success, error, info } = useToastContext()
-  const { state } = useNavigation()
   const { optimizePerformance, metrics: perfMetrics, recommendations } = usePerformanceOptimization()
   const { metrics, agents, opportunities, campaigns, dataStreams, liveIntensity, refreshLiveData, registerCommandEvent } = useLiveData()
   const [voiceTranscript, setVoiceTranscript] = useState('')
   const [showAICore, setShowAICore] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const consoleRef = useRef<HTMLDivElement>(null)
   const isConnected = useEmpireStore(store => store.isConnected)
-
-  // Handle module access
-  const handleModuleAccess = useCallback((module: string) => {
-    // Implementation for module switching
-    console.log('Module access:', module)
-  }, [])
 
   const voice = useVoiceInterface({
     onTranscript: setVoiceTranscript,
@@ -120,97 +100,6 @@ function AppContent() {
     consoleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [info, registerCommandEvent])
 
-  const renderModule = useCallback(() => {
-    const loadingFallback = (moduleName: string) => (
-      <div className="h-full flex items-center justify-center text-cyan-300 font-mono text-sm">
-        Loading {moduleName}…
-      </div>
-    )
-
-    switch (state.currentModule) {
-      case 'aira':
-        return (
-          <Suspense fallback={loadingFallback('AIRA')}>
-            <AiraModule />
-          </Suspense>
-        )
-      case 'analytics':
-        return (
-          <Suspense fallback={loadingFallback('Analytics')}>
-            <AnalyticsModule />
-          </Suspense>
-        )
-      case 'agents':
-        return (
-          <Suspense fallback={loadingFallback('Agents')}>
-            <AgentsModule />
-          </Suspense>
-        )
-      case 'dashboard':
-        return (
-          <Suspense fallback={loadingFallback('Dashboard')}>
-            <DashboardModule />
-          </Suspense>
-        )
-      case 'revenue':
-        return (
-          <Suspense fallback={loadingFallback('Revenue')}>
-            <RevenueModule />
-          </Suspense>
-        )
-      case 'inventory':
-        return (
-          <Suspense fallback={loadingFallback('Inventory')}>
-            <InventoryModule />
-          </Suspense>
-        )
-      case 'shopify':
-        return <ShopifyDashboard />
-      case 'marketing':
-        return (
-          <Suspense fallback={loadingFallback('Marketing Automation')}>
-            <MarketingAutomationModule />
-          </Suspense>
-        )
-      case 'customer-support':
-        return (
-          <Suspense fallback={loadingFallback('Customer Support')}>
-            <CustomerSupportModule />
-          </Suspense>
-        )
-      case 'security':
-        return (
-          <Suspense fallback={loadingFallback('Security Center')}>
-            <SecurityModule />
-          </Suspense>
-        )
-      case 'finance':
-        return (
-          <Suspense fallback={loadingFallback('Financial Intelligence')}>
-            <FinanceModule />
-          </Suspense>
-        )
-      case 'products':
-        return <div className="h-full flex items-center justify-center text-cyan-300">Products Module arriving shortly</div>
-      case 'orders':
-        return <div className="h-full flex items-center justify-center text-cyan-300">Orders Module under orchestration</div>
-      case 'customers':
-        return <div className="h-full flex items-center justify-center text-cyan-300">Customers Module sequencing data</div>
-      case 'monitoring':
-        return <div className="h-full flex items-center justify-center text-cyan-300">System Monitoring calibrating</div>
-      case 'settings':
-        return <div className="h-full flex items-center justify-center text-cyan-300">Settings hub in preparation</div>
-      case 'aira-intelligence':
-        return (
-          <Suspense fallback={loadingFallback('AIRA Intelligence')}>
-            <AIRAIntelligenceModule isActive={true} />
-          </Suspense>
-        )
-      default:
-        return <EmpireDashboard />
-    }
-  }, [state.currentModule])
-
   const voiceWaveHeights = useMemo(() => {
     const amplitude = liveIntensity?.voiceActivity?.volume ?? 0
     return Array.from({ length: 8 }).map((_, idx) => {
@@ -228,68 +117,8 @@ function AppContent() {
         {/* AI Core as main interface exactly like the reference image */}
         <AICore 
           onExit={() => setShowAICore(false)} 
-          isFullscreen={isFullscreen}
+          isFullscreen={false}
         />
-        
-        {/* Floating access to traditional modules when needed */}
-        {!isFullscreen && (
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            background: 'rgba(0, 30, 60, 0.3)',
-            border: '1px solid rgba(0, 170, 255, 0.5)',
-            borderRadius: '8px',
-            padding: '10px',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            gap: '10px',
-            zIndex: 100
-          }}>
-            <button 
-              onClick={() => handleModuleAccess('dashboard')}
-              style={{
-                background: 'rgba(0, 170, 255, 0.2)',
-                border: '1px solid #00aaff',
-                borderRadius: '4px',
-                color: '#00ddff',
-                padding: '5px 10px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              Dashboard
-            </button>
-            <button 
-              onClick={() => handleModuleAccess('aira')}
-              style={{
-                background: 'rgba(0, 170, 255, 0.2)',
-                border: '1px solid #00aaff',
-                borderRadius: '4px',
-                color: '#00ddff',
-                padding: '5px 10px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              AIRA
-            </button>
-            <button 
-              onClick={() => handleModuleAccess('shopify')}
-              style={{
-                background: 'rgba(0, 170, 255, 0.2)',
-                border: '1px solid #00aaff',
-                borderRadius: '4px',
-                color: '#00ddff',
-                padding: '5px 10px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              Shopify
-            </button>
-          </div>
-        )}
         
         {/* Toast notifications positioned absolutely */}
         <div className="absolute top-20 right-4 z-50">
@@ -299,7 +128,7 @@ function AppContent() {
     );
   }
 
-  // Traditional interface when accessing specific modules
+  // Traditional interface with proper routing
   return (
     <MobileShell className="ai-core-root">
       <div className="ai-core-grid-overlay" />
@@ -436,7 +265,14 @@ function AppContent() {
           <TopBar />
         </div>
         <div className="rounded-3xl border border-cyan-500/20 bg-black/20 backdrop-blur-2xl p-6">
-          {renderModule()}
+          {/* Use React Router for module rendering instead of switch */}
+          <Suspense fallback={
+            <div className="h-full flex items-center justify-center text-cyan-300 font-mono text-sm">
+              Loading module...
+            </div>
+          }>
+            <AppRoutes />
+          </Suspense>
         </div>
       </div>
 
@@ -447,11 +283,13 @@ function AppContent() {
 
 function App() {
   return (
-    <NavigationProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </NavigationProvider>
+    <BrowserRouter>
+      <NavigationProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </NavigationProvider>
+    </BrowserRouter>
   )
 }
 

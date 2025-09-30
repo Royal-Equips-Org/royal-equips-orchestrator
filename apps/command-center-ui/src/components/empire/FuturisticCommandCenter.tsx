@@ -15,7 +15,6 @@ import {
   Zap
 } from 'lucide-react';
 import HolographicAIAvatar from './HolographicAIAvatar';
-import WorkstationArray from './WorkstationPanel';
 import { useEmpireStore } from '../../store/empire-store';
 
 // Ambient sound control

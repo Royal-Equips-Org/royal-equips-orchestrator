@@ -1,10 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, Search, Star, Clock, 
   Menu, X, Zap, Wifi, WifiOff, Grid3X3 
 } from 'lucide-react';
-import { useNavigation } from '../../contexts/NavigationContext';
 import { 
   navigationModules, 
   moduleCategories, 
@@ -19,20 +19,36 @@ interface NavigationBarProps {
 }
 
 export default function NavigationBar({ className = '' }: NavigationBarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCategories, setShowCategories] = useState(false);
-  const { 
-    state, 
-    navigateToModule, 
-    addToFavorites, 
-    removeFromFavorites, 
-    goBack, 
-    goForward, 
-    canGoBack, 
-    canGoForward 
-  } = useNavigation();
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [recentlyUsed, setRecentlyUsed] = useState<string[]>([]);
   const { isConnected } = useEmpireStore();
+
+  // Navigate to module using React Router
+  const navigateToModule = (moduleId: string) => {
+    const module = getModuleById(moduleId);
+    if (module) {
+      navigate(module.path);
+      // Update recently used
+      setRecentlyUsed(prev => [moduleId, ...prev.filter(id => id !== moduleId)].slice(0, 10));
+    }
+  };
+
+  // Add/remove favorites
+  const addToFavorites = (moduleId: string) => {
+    setFavorites(prev => prev.includes(moduleId) ? prev : [...prev, moduleId]);
+  };
+
+  const removeFromFavorites = (moduleId: string) => {
+    setFavorites(prev => prev.filter(id => id !== moduleId));
+  };
+
+  // Get current module from location
+  const currentModule = navigationModules.find(module => module.path === location.pathname)?.id || 'command';
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -61,11 +77,11 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
             break;
           case 'b':
             event.preventDefault();
-            if (canGoBack) goBack();
+            navigate(-1); // Go back
             break;
           case 'f':
             event.preventDefault();
-            if (canGoForward) goForward();
+            navigate(1); // Go forward
             break;
         }
       }
@@ -79,14 +95,14 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigateToModule, goBack, goForward, canGoBack, canGoForward]);
+  }, [navigateToModule, navigate]);
 
   const filteredModules = navigationModules.filter(module =>
     module.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
     module.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const currentModule = getModuleById(state.currentModule);
+  const currentModuleInfo = getModuleById(currentModule);
 
   return (
     <>
@@ -144,8 +160,8 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
             >
               {currentModule && (
                 <>
-                  <currentModule.icon className="w-4 h-4" style={{ color: currentModule.color }} />
-                  <span className="text-white font-mono text-sm">{currentModule.label}</span>
+                  <currentModuleInfo?.icon className="w-4 h-4" style={{ color: currentModule.color }} />
+                  <span className="text-white font-mono text-sm">{currentModuleInfo?.label}</span>
                 </>
               )}
             </motion.div>
@@ -185,7 +201,7 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
               if (!module) return null;
               
               const isActive = state.currentModule === moduleId;
-              const isFavorite = state.favorites.includes(moduleId);
+              const isFavorite = favorites.includes(moduleId);
               
               return (
                 <motion.button
@@ -242,9 +258,9 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
               {/* Module Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 {filteredModules.map((module) => {
-                  const isActive = state.currentModule === module.id;
-                  const isFavorite = state.favorites.includes(module.id);
-                  const isRecent = state.recentlyUsed.includes(module.id);
+                  const isActive = currentModule === module.id;
+                  const isFavorite = favorites.includes(module.id);
+                  const isRecent = recentlyUsed.includes(module.id);
                   
                   return (
                     <motion.div
@@ -309,18 +325,18 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
               </div>
 
               {/* Recent & Favorites */}
-              {(state.recentlyUsed.length > 0 || state.favorites.length > 0) && (
+              {(recentlyUsed.length > 0 || favorites.length > 0) && (
                 <div className="mt-6 pt-6 border-t border-gray-800">
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Recently Used */}
-                    {state.recentlyUsed.length > 0 && (
+                    {recentlyUsed.length > 0 && (
                       <div>
                         <h3 className="text-sm font-mono text-gray-400 mb-3 flex items-center">
                           <Clock className="w-4 h-4 mr-2" />
                           RECENTLY USED
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                          {state.recentlyUsed.slice(0, 6).map((moduleId) => {
+                          {recentlyUsed.slice(0, 6).map((moduleId) => {
                             const module = getModuleById(moduleId);
                             if (!module) return null;
                             return (
@@ -343,14 +359,14 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
                     )}
 
                     {/* Favorites */}
-                    {state.favorites.length > 0 && (
+                    {favorites.length > 0 && (
                       <div>
                         <h3 className="text-sm font-mono text-gray-400 mb-3 flex items-center">
                           <Star className="w-4 h-4 mr-2" />
                           FAVORITES
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                          {state.favorites.map((moduleId) => {
+                          {favorites.map((moduleId) => {
                             const module = getModuleById(moduleId);
                             if (!module) return null;
                             return (
