@@ -8,8 +8,8 @@
     "enableHealthMonitoring": true
   },
   "polling": {
-    "metricsInterval": 10000,
-    "healthCheckInterval": 5000
+    "metricsInterval": 5000,
+    "healthCheckInterval": 3000
   },
   "circuitBreaker": {
     "enabled": true,

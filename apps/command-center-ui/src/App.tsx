@@ -41,8 +41,10 @@ function AppContent() {
 
   const renderModule = useCallback(() => {
     const loadingFallback = (moduleName: string) => (
-      <div className="h-full flex items-center justify-center text-cyan-300 font-mono text-sm">
-        Loading {moduleName}…
+      <div className="h-full flex flex-col items-center justify-center text-cyan-300 font-mono text-sm space-y-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+        <div>Loading {moduleName}…</div>
+        <div className="text-xs text-gray-400">Initializing module systems</div>
       </div>
     )
 
