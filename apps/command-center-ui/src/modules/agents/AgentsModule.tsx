@@ -192,7 +192,7 @@ export default function AgentsModule() {
         id: agent.id || `agent_${index}`,
         name: agent.name || `Agent ${index + 1}`,
         type: agent.type || agent.agent_type || 'Unknown',
-        status: agent.status as 'active' | 'idle' | 'error' | 'stopped' || 'idle',
+        status: (agent.status as 'active' | 'idle' | 'error' | 'stopped') || 'idle',
         health: Math.floor(health),
         lastActivity: agent.last_execution || agent.updated_at || new Date().toISOString(),
         totalTasks: totalExecutions,
