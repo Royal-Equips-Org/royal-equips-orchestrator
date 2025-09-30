@@ -8,7 +8,7 @@ data for the control center dashboard.
 
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 import json
 import threading
 from typing import Dict, List, Any, Optional
@@ -495,7 +495,7 @@ class CommandCenterController:
         """Update real-time metrics cache"""
         try:
             self.metrics_cache.update({
-                "last_updated": datetime.utcnow().isoformat(),
+                "last_updated": datetime.now(timezone.utc).isoformat(),
                 "empire_status": self._get_empire_status(),
                 "business_metrics": self._get_business_metrics(),
                 "market_intelligence": self._get_market_intelligence(),
@@ -656,7 +656,7 @@ def trigger_agent(agent_name):
             "success": True,
             "message": f"{agent_name} agent triggered successfully",
             "agent": agent_name,
-            "trigger_time": datetime.utcnow().isoformat()
+            "trigger_time": datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:

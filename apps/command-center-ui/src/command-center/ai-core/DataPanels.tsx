@@ -11,9 +11,50 @@ import {
   Title,
   Tooltip,
   Filler,
-  Legend
+  Legend,
+  ChartArea
 } from 'chart.js'
 import * as d3 from 'd3'
+
+// Types for component props
+interface DataStream {
+  label: string
+  value: number
+}
+
+interface Agent {
+  health: 'good' | 'warning' | 'critical'
+}
+
+interface Campaign {
+  id: string
+  [key: string]: any
+}
+
+interface Metrics {
+  system_uptime?: number
+  automation_level?: number
+  daily_discoveries?: number
+}
+
+interface LiveIntensity {
+  commandRate?: number
+  energyLevel?: number
+}
+
+interface DataStreams {
+  revenueStream?: DataStream[]
+  logisticsStream?: DataStream[]
+  marketingMix?: DataStream[]
+}
+
+interface DataPanelsProps {
+  dataStreams?: DataStreams
+  metrics?: Metrics
+  agents?: Agent[]
+  campaigns?: Campaign[]
+  liveIntensity?: LiveIntensity
+}
 
 ChartJS.register(
   CategoryScale,
@@ -73,13 +114,13 @@ const baseOptions = {
   },
 }
 
-const createGradient = (ctx, area, colors) => {
+const createGradient = (ctx: CanvasRenderingContext2D, area: ChartArea, colors: Array<[number, string]>) => {
   const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top)
   colors.forEach(([offset, color]) => gradient.addColorStop(offset, color))
   return gradient
 }
 
-const DataPanels = memo(function DataPanels({ dataStreams, metrics, agents, campaigns, liveIntensity }) {
+const DataPanels = memo(function DataPanels({ dataStreams, metrics, agents, campaigns, liveIntensity }: DataPanelsProps) {
   const commandRate = liveIntensity?.commandRate ?? 0
   const energy = liveIntensity?.energyLevel ?? 0.5
 
@@ -98,11 +139,11 @@ const DataPanels = memo(function DataPanels({ dataStreams, metrics, agents, camp
           pointRadius: 0,
           borderWidth: 2,
           borderColor: '#0ff1ff',
-          backgroundColor: (ctx) => {
+          backgroundColor: (ctx: any) => {
             const { chart } = ctx
             const { ctx: canvasCtx, chartArea } = chart
             if (!chartArea) {
-              return null
+              return 'rgba(15, 241, 255, 0.1)'
             }
             return createGradient(canvasCtx, chartArea, [
               [0, 'rgba(15, 241, 255, 0.35)'],
@@ -146,7 +187,7 @@ const DataPanels = memo(function DataPanels({ dataStreams, metrics, agents, camp
   }, [dataStreams])
 
   const agentHealth = useMemo(() => {
-    const groups = d3.rollup(agents ?? [], (rows) => rows.length, row => row.health)
+    const groups = d3.rollup(agents ?? [], (rows: Agent[]) => rows.length, (row: Agent) => row.health)
     return [
       { label: 'Healthy', value: groups.get('good') ?? 0 },
       { label: 'Warning', value: groups.get('warning') ?? 0 },
@@ -190,7 +231,7 @@ const DataPanels = memo(function DataPanels({ dataStreams, metrics, agents, camp
               plugins: {
                 legend: {
                   display: true,
-                  position: 'right',
+                  position: 'right' as const,
                   labels: {
                     color: 'rgba(192, 236, 255, 0.85)',
                     boxWidth: 12,

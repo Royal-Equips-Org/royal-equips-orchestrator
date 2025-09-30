@@ -3,6 +3,40 @@ import { useEmpireStore } from '../../store/empire-store'
 import { empireService } from '../../services/empire-service'
 import { logger } from '../../services/log'
 
+// Extend window interface for speech recognition
+declare global {
+  interface Window {
+    SpeechRecognition: any
+    webkitSpeechRecognition: any
+    SpeechGrammarList: any
+    webkitSpeechGrammarList: any
+  }
+}
+
+// Types for voice interface
+interface VoiceCommand {
+  type: 'engine-boost' | 'auto-sync' | 'open-logs' | 'toggle-autopilot' | 'emergency-stop'
+}
+
+interface VoiceInterfaceProps {
+  onTranscript?: (transcript: string) => void
+  onCommand?: (command: VoiceCommand) => void
+  enabled?: boolean
+  registerCommandEvent?: () => void
+}
+
+interface VoiceInterfaceReturn {
+  supported: boolean
+  listening: boolean
+  speaking: boolean
+  transcript: string
+  error: string | null
+  lastCommand: string | null
+  startListening: () => void
+  stopListening: () => void
+  speak: (text: string) => Promise<void>
+}
+
 const SpeechRecognition = typeof window !== 'undefined'
   ? (window.SpeechRecognition || window.webkitSpeechRecognition)
   : undefined
@@ -23,7 +57,12 @@ const SUPPORTED_COMMANDS = [
   'toggle emergency stop',
 ]
 
-export function useVoiceInterface({ onTranscript, onCommand, enabled = true, registerCommandEvent }) {
+export function useVoiceInterface({ 
+  onTranscript, 
+  onCommand, 
+  enabled = true, 
+  registerCommandEvent 
+}: VoiceInterfaceProps): VoiceInterfaceReturn {
   const sendUserChat = useEmpireStore(state => state.sendUserChat)
   const addChatMessage = useEmpireStore(state => state.addChatMessage)
   const toggleAutopilot = useEmpireStore(state => state.toggleAutopilot)
@@ -33,9 +72,9 @@ export function useVoiceInterface({ onTranscript, onCommand, enabled = true, reg
   const [listening, setListening] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [transcript, setTranscript] = useState('')
-  const [error, setError] = useState(null)
-  const [lastCommand, setLastCommand] = useState(null)
-  const recognitionRef = useRef(null)
+  const [error, setError] = useState<string | null>(null)
+  const [lastCommand, setLastCommand] = useState<string | null>(null)
+  const recognitionRef = useRef<any>(null)
   const synthesisRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null)
 
   const grammar = useMemo(() => {
@@ -46,8 +85,9 @@ export function useVoiceInterface({ onTranscript, onCommand, enabled = true, reg
     return list
   }, [])
 
-  const speak = useCallback(async (text) => {
+  const speak = useCallback(async (text: string) => {
     if (!synthesisRef.current || !text) return
+
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 1.08
     utterance.pitch = 1.12
@@ -57,6 +97,7 @@ export function useVoiceInterface({ onTranscript, onCommand, enabled = true, reg
       source: 'tts',
       message: text,
       timestamp: new Date().toISOString(),
+      handled: true
     })
     utterance.onend = () => {
       setSpeaking(false)
@@ -64,7 +105,7 @@ export function useVoiceInterface({ onTranscript, onCommand, enabled = true, reg
     synthesisRef.current.speak(utterance)
   }, [])
 
-  const handleCommand = useCallback(async (text) => {
+  const handleCommand = useCallback(async (text: string) => {
     const normalized = text.toLowerCase()
     setLastCommand(normalized)
 
@@ -133,7 +174,7 @@ export function useVoiceInterface({ onTranscript, onCommand, enabled = true, reg
       recognition.grammars = grammar
     }
 
-    recognition.onresult = async (event) => {
+    recognition.onresult = async (event: any) => {
       let interimTranscript = ''
       let finalTranscript = ''
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -157,13 +198,13 @@ export function useVoiceInterface({ onTranscript, onCommand, enabled = true, reg
           }
           await handleCommand(finalTranscript.trim())
         } catch (commandError) {
-          setError(commandError)
-          logger.error('Voice command handling failed', { error: commandError })
+          setError(String(commandError))
+          logger.error('Voice command handling failed', { error: String(commandError) })
         }
       }
     }
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       setError(event.error)
       logger.error('Speech recognition error', { error: event.error })
     }

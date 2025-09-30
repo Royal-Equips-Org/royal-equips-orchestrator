@@ -27,10 +27,13 @@ def liveness():
       200:
         description: Service is alive
         schema:
-          type: string
-          example: "ok"
+          type: object
+          properties:
+            status:
+              type: string
+              example: "healthy"
     """
-    return "ok", 200, {"Content-Type": "text/plain"}
+    return jsonify({"status": "healthy"}), 200
 
 
 @health_bp.route("/readyz")

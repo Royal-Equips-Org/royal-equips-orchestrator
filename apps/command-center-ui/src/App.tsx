@@ -13,6 +13,7 @@ import Hologram3D from './command-center/ai-core/Hologram3D'
 import DataPanels from './command-center/ai-core/DataPanels'
 import useVoiceInterface from './command-center/ai-core/VoiceInterface'
 import { useLiveData } from './command-center/ai-core/hooks/useLiveData'
+import AICore from './components/ai-core/AICore'
 import { useEmpireStore } from './store/empire-store'
 import { empireService } from './services/empire-service'
 import ShopifyDashboard from './components/shopify/ShopifyDashboard'
@@ -38,8 +39,16 @@ function AppContent() {
   const { optimizePerformance, metrics: perfMetrics, recommendations } = usePerformanceOptimization()
   const { metrics, agents, opportunities, campaigns, dataStreams, liveIntensity, refreshLiveData, registerCommandEvent } = useLiveData()
   const [voiceTranscript, setVoiceTranscript] = useState('')
-  const consoleRef = useRef(null)
+  const [showAICore, setShowAICore] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const consoleRef = useRef<HTMLDivElement>(null)
   const isConnected = useEmpireStore(store => store.isConnected)
+
+  // Handle module access
+  const handleModuleAccess = useCallback((module: string) => {
+    // Implementation for module switching
+    console.log('Module access:', module)
+  }, [])
 
   const voice = useVoiceInterface({
     onTranscript: setVoiceTranscript,
@@ -194,7 +203,7 @@ function AppContent() {
       case 'aira-intelligence':
         return (
           <Suspense fallback={loadingFallback('AIRA Intelligence')}>
-            <AIRAIntelligenceModule />
+            <AIRAIntelligenceModule isActive={true} />
           </Suspense>
         )
       default:
@@ -298,9 +307,9 @@ function AppContent() {
         <section className="ai-core-panels-primary">
           <DataPanels
             dataStreams={dataStreams}
-            metrics={metrics}
-            agents={agents}
-            campaigns={campaigns}
+            metrics={metrics || undefined}
+            agents={agents || undefined}
+            campaigns={campaigns || undefined}
             liveIntensity={liveIntensity}
           />
           <div className="ai-core-panel">
@@ -364,9 +373,9 @@ function AppContent() {
 
           <div className="ai-core-canvas-container">
             <Hologram3D
-              metrics={metrics}
-              agents={agents}
-              opportunities={opportunities}
+              metrics={metrics || undefined}  
+              agents={agents || undefined}
+              opportunities={opportunities || undefined}
               liveIntensity={liveIntensity}
               dataStreams={dataStreams}
             />
