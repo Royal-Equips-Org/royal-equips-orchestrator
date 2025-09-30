@@ -12,7 +12,7 @@ alias gc-fast="SKIP_LINT=1 git commit"
 alias gc-quick="SKIP_LINT=1 git commit"
 
 # Combined quick commit and push
-alias gcp-fast="SKIP_LINT=1 git commit -am 'quick fix' && SKIP_CHECKS=1 git push"
+alias gcp-fast="SKIP_LINT=1 git commit -a && SKIP_CHECKS=1 git push"
 
 # Normal workflow (with checks)
 alias gcp="git commit -am 'update' && git push"
