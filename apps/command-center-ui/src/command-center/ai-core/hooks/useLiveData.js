@@ -23,6 +23,14 @@ const defaultStreams = {
   ],
 }
 
+/**
+ * Restricts a number to be within the specified minimum and maximum bounds.
+ *
+ * @param {number} value - The number to clamp.
+ * @param {number} min - The minimum allowed value.
+ * @param {number} max - The maximum allowed value.
+ * @returns {number} The clamped value.
+ */
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
 
 const computeEnergyLevel = (metrics) => {
