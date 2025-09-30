@@ -8,7 +8,7 @@ import { NavigationProvider, useNavigation } from './contexts/NavigationContext'
 import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import MobileShell from './components/layout/MobileShell'
 import TopBar from './components/layout/TopBar'
-import ModuleScroller from './components/layout/ModuleScroller'
+import ModuleScroller from './modules/_shared/components/ModuleScroller'
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
