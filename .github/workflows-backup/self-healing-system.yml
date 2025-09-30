@@ -4,7 +4,7 @@ name: 🔄 Empire Self-Healing & Auto-Recovery System
 on:
   schedule:
     # Run every 15 minutes for continuous monitoring
-    - cron: '*/15 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       healing_type:
@@ -421,6 +421,6 @@ with app.test_client() as client:
       - name: 📈 Health Metrics
         run: |
           echo "📈 Updating health metrics..."
-          echo "Next automated check: $(date -d '+15 minutes' -u)"
+          echo "Next automated check: $(date -d '+30 minutes' -u)"
           echo "System reliability: Continuously monitored"
           echo "Self-healing: Active and operational"
