@@ -28,6 +28,7 @@ import {
 
 import { useApiService } from '../../hooks/useApiService';
 import { useRealTimeData } from '../../hooks/useRealTimeData';
+import { ensureArray } from '../../utils/array-utils';
 import { useNotifications } from '../../hooks/useNotifications';
 
 
@@ -130,7 +131,7 @@ export const MarketingAutomationModule: React.FC = () => {
       }
 
       if (recommendationsResponse.data && !recommendationsResponse.error) {
-        setRecommendations(recommendationsResponse.data.recommendations);
+        setRecommendations(ensureArray(recommendationsResponse.data.recommendations));
       }
 
       if (integrationsResponse.data && !integrationsResponse.error) {
@@ -142,7 +143,7 @@ export const MarketingAutomationModule: React.FC = () => {
       }
 
       if (campaignsResponse.data && !campaignsResponse.error) {
-        setActiveCampaigns(campaignsResponse.data.active_campaigns.email || []);
+        setActiveCampaigns(ensureArray(campaignsResponse.data.active_campaigns?.email));
       }
 
     } catch (error) {

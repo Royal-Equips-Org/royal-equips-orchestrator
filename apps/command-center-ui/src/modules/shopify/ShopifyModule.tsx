@@ -14,6 +14,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { ensureArray } from '../../utils/array-utils';
 import { 
   ShoppingCart, 
   Package, 
@@ -173,8 +174,8 @@ export default function ShopifyModule() {
       ]);
 
       setMetrics(metricsResponse.data);
-      setProducts(productsResponse.data.products);
-      setOrders(ordersResponse.data.orders);
+      setProducts(ensureArray(productsResponse.data?.products));
+      setOrders(ensureArray(ordersResponse.data?.orders));
     } catch (error) {
       console.error('Failed to fetch Shopify data:', error);
     }
@@ -183,7 +184,7 @@ export default function ShopifyModule() {
   const fetchAutomationAgents = async () => {
     try {
       const response = await apiClient.get('/api/agents/shopify');
-      setAgents(response.data.agents);
+      setAgents(ensureArray(response.data?.agents));
     } catch (error) {
       console.error('Failed to fetch automation agents:', error);
       setAgents([]);
