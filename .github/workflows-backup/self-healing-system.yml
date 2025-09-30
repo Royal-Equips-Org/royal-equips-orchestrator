@@ -3,7 +3,7 @@ name: 🔄 Empire Self-Healing & Auto-Recovery System
 
 on:
   schedule:
-    # Run every 15 minutes for continuous monitoring
+    # Run every 30 minutes for continuous monitoring
     - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
