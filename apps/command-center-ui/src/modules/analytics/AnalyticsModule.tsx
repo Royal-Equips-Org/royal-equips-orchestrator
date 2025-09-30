@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { empireService } from '../../services/empire-service';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -96,7 +95,7 @@ export default function AnalyticsModule() {
       setError(null);
 
       // Fetch main analytics data
-      const response = await fetch('/v1/metrics');
+      const response = await fetch('/api/analytics/dashboard');
       if (!response.ok) {
         throw new Error(`Analytics API error: ${response.status}`);
       }

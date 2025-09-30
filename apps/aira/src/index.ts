@@ -23,7 +23,7 @@ import { opportunitiesRoute } from './routes/opportunities.js';
 import { campaignsRoute } from './routes/campaigns.js';
 import { openaiService } from './services/openai-service.js';
 import { empireRepo } from './repository/empire-repo.js';
-// import { enhancedAIRARoutes } from './routes/enhanced-aira-routes.js'; // Demo import - removed
+import { enhancedAIRARoutes } from './routes/enhanced-aira-routes.js';
 
 // Optional Redis circuit breaker
 declare module 'fastify' {
@@ -46,12 +46,12 @@ const app = Fastify({
   }
 });
 
-// Security and CORS middleware (casting to any for TypeScript compatibility)
-await app.register(helmet as any, {
+// Security and CORS middleware
+await app.register(helmet, {
   contentSecurityPolicy: false // Allow for development
 });
 
-await app.register(cors as any, {
+await app.register(cors, {
   origin: [
     'http://localhost:3000', 
     'http://localhost:5173', 
@@ -62,7 +62,7 @@ await app.register(cors as any, {
 });
 
 // Rate limiting middleware - Production-ready configuration
-await app.register(rateLimit as any, {
+await app.register(rateLimit, {
   max: 100, // Max 100 requests per window
   timeWindow: '1 minute', // Per minute
   skipOnError: false, // Don't skip rate limiting on errors
@@ -71,7 +71,7 @@ await app.register(rateLimit as any, {
     'x-ratelimit-remaining': true,
     'x-ratelimit-reset': true
   },
-  errorResponseBuilder: (request: any, context: any) => {
+  errorResponseBuilder: (request, context) => {
     return {
       error: 'Rate limit exceeded',
       message: `Too many requests, maximum ${context.max} requests per minute allowed`,
@@ -79,7 +79,7 @@ await app.register(rateLimit as any, {
       timestamp: new Date().toISOString()
     };
   },
-  keyGenerator: (request: any) => {
+  keyGenerator: (request) => {
     // Use IP + User-Agent for more accurate rate limiting
     return `${request.ip}:${request.headers['user-agent'] || 'unknown'}`;
   }
@@ -123,7 +123,7 @@ await app.register(opportunitiesRoute);
 await app.register(campaignsRoute);
 
 // Register Enhanced AIRA Intelligence routes
-// await app.register(enhancedAIRARoutes); // Demo routes - removed
+await app.register(enhancedAIRARoutes);
 
 // Simple chat endpoint for basic functionality
 interface EmpireChatRequestBody {

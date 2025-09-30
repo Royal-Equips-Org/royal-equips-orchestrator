@@ -21,7 +21,7 @@ import {
   Settings
 } from 'lucide-react';
 
-import { useSocketStore } from '../../stores/socket-store';
+import { useModuleSocket } from '../../stores/socket-store';
 import { usePerformance } from '../../hooks/usePerformance';
 
 interface FinancialMetrics {
@@ -87,7 +87,7 @@ const FinanceModule: React.FC = () => {
   const [selectedView, setSelectedView] = useState('dashboard');
 
   const socketStore = useSocketStore();
-  const { trackInteraction } = usePerformance();
+  const { trackPerformance } = usePerformance();
 
   // Fetch dashboard data
   const fetchDashboardData = async () => {
@@ -145,12 +145,12 @@ const FinanceModule: React.FC = () => {
 
     socket.on('finance_update', (data: any) => {
       setDashboardData(prev => prev ? { ...prev, ...data } : data);
-      trackInteraction('finance_realtime_update');
+      trackPerformance('finance_realtime_update');
     });
 
     socket.on('transaction_processed', (transaction: any) => {
       setTransactions(prev => [transaction, ...prev.slice(0, 49)]);
-      trackInteraction('finance_transaction_update');
+      trackPerformance('finance_transaction_update');
     });
 
     socket.on('fraud_alert', (alert: any) => {
@@ -160,7 +160,7 @@ const FinanceModule: React.FC = () => {
           fraud_alerts: [alert, ...prev.fraud_alerts]
         } : prev);
       }
-      trackInteraction('finance_fraud_alert');
+      trackPerformance('finance_fraud_alert');
     });
 
     return () => {
@@ -168,7 +168,7 @@ const FinanceModule: React.FC = () => {
       socket.off('transaction_processed');
       socket.off('fraud_alert');
     };
-  }, [socketStore.socket, dashboardData, trackInteraction]);
+  }, [socketStore.socket, dashboardData, trackPerformance]);
 
   // Calculated metrics
   const calculatedMetrics = useMemo(() => {
