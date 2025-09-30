@@ -20,8 +20,8 @@ The repository now supports a **flexible, developer-friendly workflow** that doe
 ### Skip Options Available
 ```bash
 # Skip individual checks
-SKIP_LINT=1 git commit -m "quick fix"
-SKIP_CHECKS=1 git push
+SKIP_LINT=1 git commit -m "quick fix"     # Skip linting
+RUN_CHECKS=1 git push                      # Enable typecheck/tests (disabled by default)
 SKIP_HUSKY=1 git commit -m "bypass all hooks"
 
 # Automatically skipped in CI
@@ -30,13 +30,13 @@ CI=1 # (set automatically in GitHub Actions)
 
 ## Recommended Workflows
 
-### 🏃‍♂️ Quick Development (Fast Iteration)
+### 🏃‍♂️ Quick Development (Fast Iteration - Default)
 ```bash
 # Load helpful aliases (optional)
 source scripts/git-aliases.sh
 
-# Quick commit + push without any checks
-SKIP_LINT=1 git commit -am "wip: quick changes" && SKIP_CHECKS=1 git push
+# Quick commit + push (TypeScript checks disabled by default)
+SKIP_LINT=1 git commit -am "wip: quick changes" && git push
 
 # Or use the convenient alias
 gcp-fast  # Quick commit + push

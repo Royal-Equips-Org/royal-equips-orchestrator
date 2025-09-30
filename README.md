@@ -212,7 +212,7 @@ The platform is designed for exponential growth:
 
 ## 🚀 Development Workflow
 
-### Quick Development (No Checks)
+### Quick Development (Default - No Checks)
 ```bash
 # Load helpful git aliases (optional)
 source scripts/git-aliases.sh
@@ -221,25 +221,30 @@ source scripts/git-aliases.sh
 SKIP_LINT=1 git commit -m "quick fix"
 # Or use alias: gc-fast -m "quick fix"
 
-# Quick push without type/test checks  
-SKIP_CHECKS=1 git push
+# Normal push (TypeScript checks and tests are disabled by default)
+git push
 # Or use alias: gp-fast
 
 # Super quick commit + push
-SKIP_LINT=1 git commit -am "quick fix" && SKIP_CHECKS=1 git push
+SKIP_LINT=1 git commit -am "quick fix" && git push
 # Or use alias: gcp-fast
 ```
 
-### Normal Development (With Checks)
+### Quality-Focused Development (With Checks)
 ```bash
-# Normal development workflow with quality checks
+# Development workflow with quality checks enabled
+SKIP_LINT=0 git commit -m "Add feature"  # Run lint checks
+RUN_CHECKS=1 git push                     # Run typecheck and tests
+
+# Or manually run checks before commit/push
+pnpm lint --fix && pnpm typecheck && pnpm test
 git commit -m "Add feature"
 git push
 ```
 
-### Available Skip Flags
+### Available Control Flags
 - `SKIP_LINT=1` - Skip eslint in pre-commit hook
-- `SKIP_CHECKS=1` - Skip typecheck and tests in pre-push hook  
+- `RUN_CHECKS=1` - Enable typecheck and tests in pre-push hook (disabled by default)
 - `SKIP_HUSKY=1` - Skip all husky hooks
 - `CI=1` - Skip hooks (automatically set in CI)
 
