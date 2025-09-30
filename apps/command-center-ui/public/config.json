@@ -2,13 +2,13 @@
   "$schema": "./config.schema.json",
   "apiRelativeBase": "/api",
   "featureFlags": {
-    "enable3D": false,
+    "enable3D": true,
     "enableMetricsPolling": true,
     "enableCircuitBreaker": true,
     "enableHealthMonitoring": true
   },
   "polling": {
-    "metricsInterval": 15000,
+    "metricsInterval": 10000,
     "healthCheckInterval": 5000
   },
   "circuitBreaker": {
@@ -18,5 +18,10 @@
   "secrets": {
     "cacheTTLms": 300000,
     "enableMetrics": true
+  },
+  "backends": {
+    "flask": "http://localhost:10000",
+    "aira": "http://localhost:3001",
+    "orchestrator": "http://localhost:3002"
   }
 }

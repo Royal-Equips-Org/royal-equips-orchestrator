@@ -1,4 +1,4 @@
-// TEMPORARY IN-MEMORY STORE (Replace with Postgres/Supabase adapter)
+// HYBRID STORE - Uses real Flask backend when available, falls back to in-memory data
 import { randomUUID } from 'crypto';
 
 export interface Agent {
@@ -91,6 +91,176 @@ class EmpireRepository {
       profit_margin_avg: 35.5,
       timestamp: new Date().toISOString()
     };
+  }
+
+  // Flask backend integration methods
+  private async fetchFromFlask<T>(endpoint: string): Promise<T | null> {
+    try {
+      const flaskBaseUrl = process.env.FLASK_API_URL || 'http://localhost:10000';
+      
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const response = await fetch(`${flaskBaseUrl}${endpoint}`, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.warn(`Flask API ${endpoint} returned ${response.status}: ${response.statusText}`);
+        return null;
+      }
+      
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn(`Flask API ${endpoint} request timed out`);
+      } else {
+        console.warn(`Failed to fetch from Flask ${endpoint}:`, error);
+      }
+      return null;
+    }
+  }
+
+  private transformFlaskAgentToAgent(flaskAgent: any): Agent {
+    return {
+      id: flaskAgent.id || randomUUID(),
+      name: flaskAgent.name || 'Unknown Agent',
+      type: flaskAgent.type || 'monitoring',
+      status: flaskAgent.status || 'inactive',
+      performance_score: flaskAgent.performance_score || 0,
+      discoveries_count: flaskAgent.discoveries_count || 0,
+      success_rate: flaskAgent.success_rate || 0,
+      last_execution: flaskAgent.last_execution ? new Date(flaskAgent.last_execution) : undefined,
+      health: flaskAgent.health || 'warning',
+      emoji: flaskAgent.emoji || '🤖'
+    };
+  }
+
+  private transformFlaskOpportunityToOpportunity(flaskOpp: any): ProductOpportunity {
+    return {
+      id: flaskOpp.id || randomUUID(),
+      title: flaskOpp.product_name || flaskOpp.title || 'Unknown Product',
+      description: flaskOpp.description || 'No description available',
+      price_range: flaskOpp.price_range || '$0-0',
+      trend_score: flaskOpp.trend_score || 0,
+      profit_potential: flaskOpp.profit_potential || 'Low',
+      platform: flaskOpp.platform || 'Unknown',
+      supplier_leads: flaskOpp.supplier_leads || [],
+      market_insights: flaskOpp.market_insights || flaskOpp.market_demand || 'No insights available',
+      search_volume: flaskOpp.search_volume,
+      competition_level: flaskOpp.competition_level || `Score: ${flaskOpp.competition_score || 'N/A'}`,
+      seasonal_factor: flaskOpp.seasonal_factor,
+      confidence_score: flaskOpp.confidence_score || Math.round(flaskOpp.trend_score || 0),
+      profit_margin: flaskOpp.profit_margin || flaskOpp.profit_potential_value || 0,
+      monthly_searches: flaskOpp.monthly_searches || flaskOpp.search_volume || 0
+    };
+  }
+
+  async getAgents(): Promise<Agent[]> {
+    // Try to fetch real data from Flask backend first
+    const flaskAgents = await this.fetchFromFlask<any>('/api/empire/agents');
+    
+    if (flaskAgents?.agents && Array.isArray(flaskAgents.agents)) {
+      console.log('✅ Using real agents data from Flask backend');
+      return flaskAgents.agents.map((agent: any) => this.transformFlaskAgentToAgent(agent));
+    }
+    
+    // Fallback to in-memory data
+    console.log('⚠️ Using fallback agents data (Flask backend unavailable)');
+    if (this.agents.length === 0) {
+      this.seed();
+    }
+    return this.agents;
+  }
+
+  async getMetrics(): Promise<EmpireMetrics> {
+    // Try to fetch real data from Flask backend first
+    const flaskMetrics = await this.fetchFromFlask<any>('/api/empire/metrics');
+    
+    if (flaskMetrics && typeof flaskMetrics === 'object') {
+      console.log('✅ Using real metrics data from Flask backend');
+      
+      // Transform Flask metrics to match our interface
+      return {
+        total_agents: flaskMetrics.total_agents || 0,
+        active_agents: flaskMetrics.active_agents || 0,
+        total_opportunities: flaskMetrics.total_opportunities || 0,
+        approved_products: flaskMetrics.approved_products || 0,
+        revenue_progress: flaskMetrics.revenue_progress || 0,
+        target_revenue: flaskMetrics.target_revenue || 100000000,
+        automation_level: flaskMetrics.automation_level || 0,
+        system_uptime: flaskMetrics.system_uptime || 0,
+        daily_discoveries: flaskMetrics.daily_discoveries || 0,
+        profit_margin_avg: flaskMetrics.profit_margin_avg || 0,
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    // Fallback to in-memory data
+    console.log('⚠️ Using fallback metrics data (Flask backend unavailable)');
+    this.metrics.timestamp = new Date().toISOString();
+    return this.metrics;
+  }
+
+  async getOpportunities(): Promise<ProductOpportunity[]> {
+    // Try to fetch real data from Flask backend first
+    const flaskOpportunities = await this.fetchFromFlask<any>('/api/empire/opportunities');
+    
+    if (flaskOpportunities?.opportunities && Array.isArray(flaskOpportunities.opportunities)) {
+      console.log('✅ Using real opportunities data from Flask backend');
+      return flaskOpportunities.opportunities.map((opp: any) => this.transformFlaskOpportunityToOpportunity(opp));
+    }
+    
+    // Fallback to in-memory data
+    console.log('⚠️ Using fallback opportunities data (Flask backend unavailable)');
+    if (this.opportunities.length === 0) {
+      this.seed();
+    }
+    return this.opportunities;
+  }
+
+  async getCampaigns(): Promise<MarketingCampaign[]> {
+    // Try to fetch real data from Flask backend first
+    const flaskCampaigns = await this.fetchFromFlask<any>('/api/empire/campaigns');
+    
+    if (flaskCampaigns?.campaigns && Array.isArray(flaskCampaigns.campaigns)) {
+      console.log('✅ Using real campaigns data from Flask backend');
+      // Transform Flask campaigns to match our interface (simplified mapping)
+      return flaskCampaigns.campaigns.map((campaign: any) => ({
+        id: campaign.id || randomUUID(),
+        name: campaign.name || campaign.campaign_name || 'Unknown Campaign',
+        platform: campaign.platform || 'Unknown',
+        status: campaign.status || 'paused',
+        budget: campaign.budget || campaign.daily_spend || 0,
+        spent: campaign.spent || campaign.total_spent || 0,
+        impressions: campaign.impressions || 0,
+        clicks: campaign.clicks || 0,
+        conversions: campaign.conversions || 0,
+        roas: campaign.roas || 0,
+        created_at: campaign.created_at ? new Date(campaign.created_at) : new Date(),
+        content: {
+          headline: campaign.headline || 'No headline',
+          description: campaign.description || 'No description',
+          call_to_action: campaign.call_to_action || 'Learn More',
+          image_url: campaign.image_url,
+          video_url: campaign.video_url
+        }
+      }));
+    }
+    
+    // Fallback to in-memory data
+    console.log('⚠️ Using fallback campaigns data (Flask backend unavailable)');
+    if (this.campaigns.length === 0) {
+      this.seed();
+    }
+    return this.campaigns;
   }
 
   // TODO: Migrate in-memory store to Postgres/Supabase.
@@ -291,24 +461,6 @@ class EmpireRepository {
       total_opportunities: this.opportunities.length,
       timestamp: new Date().toISOString()
     };
-  }
-
-  // Repository methods
-  getMetrics(): EmpireMetrics {
-    this.updateMetrics();
-    return this.metrics;
-  }
-
-  getAgents(): Agent[] {
-    return [...this.agents];
-  }
-
-  getOpportunities(): ProductOpportunity[] {
-    return [...this.opportunities];
-  }
-
-  getCampaigns(): MarketingCampaign[] {
-    return [...this.campaigns];
   }
 
   // Simulate transaction abstraction for future database implementation

@@ -83,7 +83,7 @@ export const metricsRoute: FastifyPluginAsync = async (app) => {
 
   // Legacy empire metrics endpoint
   app.get('/api/empire/metrics', async () => {
-    return empireRepo.getMetrics();
+    return await empireRepo.getMetrics();
   });
 
   // Add instrumentation hooks

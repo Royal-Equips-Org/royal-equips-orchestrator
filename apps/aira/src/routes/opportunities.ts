@@ -3,7 +3,7 @@ import { empireRepo } from '../repository/empire-repo.js';
 
 export const opportunitiesRoute: FastifyPluginAsync = async (app) => {
   app.get('/api/empire/opportunities', async () => {
-    return empireRepo.getOpportunities();
+    return await empireRepo.getOpportunities();
   });
 
   app.post<{
