@@ -26,6 +26,7 @@ const CustomerSupportModule = lazy(() => import('./modules/customer-support/Cust
 const SecurityModule = lazy(() => import('./modules/security/SecurityModule'));
 const FinanceModule = lazy(() => import('./modules/finance/FinanceModule'));
 const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AIRAIntelligenceModule'));
+const ErrorTest = lazy(() => import('./test/ErrorTest'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
@@ -142,6 +143,12 @@ function AppContent() {
         return <div className="h-full flex items-center justify-center text-hologram">System Monitoring - Coming Soon</div>;
       case 'settings':
         return <div className="h-full flex items-center justify-center text-hologram">Settings - Coming Soon</div>;
+      case 'error-test':
+        return (
+          <Suspense fallback={loadingFallback('Error Test')}>
+            <ErrorTest />
+          </Suspense>
+        );
       default:
         return <EmpireDashboard />;
     }
