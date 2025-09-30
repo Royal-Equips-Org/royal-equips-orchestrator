@@ -208,7 +208,7 @@ export function ComprehensiveShopifyIntegration() {
   const fetchRealProducts = async () => {
     try {
       // Call the real Shopify API to fetch products
-      const response = await fetch('/api/v1/shopify/products');
+      const response = await fetch('/v1/shopify/products');
       const data = await response.json();
       
       if (data.success && data.products) {
@@ -255,7 +255,7 @@ export function ComprehensiveShopifyIntegration() {
   const fetchRealCustomers = async () => {
     try {
       // Call the real Shopify API to fetch customers
-      const response = await fetch('/api/v1/shopify/customers');
+      const response = await fetch('/v1/shopify/customers');
       const data = await response.json();
       
       if (data.success && data.customers) {
@@ -293,7 +293,7 @@ export function ComprehensiveShopifyIntegration() {
   const fetchRealOrders = async () => {
     try {
       // Call the real Shopify API to fetch orders
-      const response = await fetch('/api/v1/shopify/orders');
+      const response = await fetch('/v1/shopify/orders');
       const data = await response.json();
       
       if (data.success && data.orders) {

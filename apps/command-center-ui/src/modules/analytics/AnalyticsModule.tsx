@@ -96,7 +96,7 @@ export default function AnalyticsModule() {
       setError(null);
 
       // Fetch main analytics data
-      const response = await fetch('/api/analytics/dashboard');
+      const response = await fetch('/v1/metrics');
       if (!response.ok) {
         throw new Error(`Analytics API error: ${response.status}`);
       }
