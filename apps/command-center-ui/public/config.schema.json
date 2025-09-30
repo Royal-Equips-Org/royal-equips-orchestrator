@@ -30,6 +30,32 @@
         "resetEndpoint": { "type": "string" }
       },
       "additionalProperties": false
+    },
+    "secrets": {
+      "type": "object",
+      "properties": {
+        "cacheTTLms": { "type": "number", "minimum": 1000 },
+        "enableMetrics": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "development": {
+      "type": "object",
+      "description": "Development-specific configuration overrides",
+      "properties": {
+        "apiRelativeBase": { 
+          "type": "string",
+          "description": "Development API base URL (e.g., 'http://localhost:10000')"
+        },
+        "circuitBreaker": {
+          "type": "object",
+          "properties": {
+            "resetEndpoint": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": ["apiRelativeBase"],

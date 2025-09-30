@@ -23,6 +23,65 @@ export interface RuntimeConfig {
 let globalConfig: RuntimeConfig | null = null;
 
 /**
+ * Detect if we're running in a development environment
+ */
+function isDevelopment(): boolean {
+  // Check for common development indicators
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const port = typeof window !== 'undefined' ? window.location.port : '';
+  
+  // Development indicators:
+  // 1. Running on localhost
+  // 2. Running on development ports (3000, 5173, etc.)
+  // 3. Vite dev server detected
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  // Make dev ports configurable via environment variable, fallback to defaults
+  const devPortsEnv = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_DEV_PORTS) ? process.env.REACT_APP_DEV_PORTS : '';
+  const devPorts = devPortsEnv
+    ? devPortsEnv.split(',').map(p => p.trim())
+    : ['3000', '5173', '8080', '4000'];
+  const isDevPort = devPorts.includes(port);
+  const isViteDev = typeof window !== 'undefined' && window.location.search.includes('vite');
+  
+  return isLocalhost || isDevPort || isViteDev || (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development');
+}
+
+/**
+ * Get the appropriate API base URL based on environment
+ */
+function getApiBaseUrl(config: any): string {
+  // In development, try to use the mock server if available
+  if (isDevelopment()) {
+    // Check if development config exists and use it
+    if (config.development?.apiRelativeBase) {
+      return config.development.apiRelativeBase;
+    }
+    // Fallback to localhost if no development config
+    return 'http://localhost:10000';
+  }
+  
+  // In production, always use relative paths
+  return config.apiRelativeBase || '/api';
+}
+
+/**
+ * Get the appropriate circuit breaker reset endpoint based on environment
+ */
+function getCircuitBreakerEndpoint(config: any): string {
+  // In development, use development endpoint if available
+  if (isDevelopment()) {
+    if (config.development?.circuitBreaker?.resetEndpoint) {
+      return config.development.circuitBreaker.resetEndpoint;
+    }
+    // Fallback to localhost if no development config
+    return 'http://localhost:10000/admin/circuit/reset';
+  }
+  
+  // In production, always use relative paths
+  return config.circuitBreaker?.resetEndpoint || '/api/admin/circuit/reset';
+}
+
+/**
  * Load runtime configuration from /public/config.json
  * This is called once during app initialization
  */
@@ -39,14 +98,13 @@ export async function loadRuntimeConfig(): Promise<RuntimeConfig> {
     
     const config = await response.json();
     
-    // Validate required fields
-    if (!config.apiRelativeBase) {
-      throw new Error('Missing required config field: apiRelativeBase');
-    }
+    // Get environment-appropriate URLs
+    const apiRelativeBase = getApiBaseUrl(config);
+    const resetEndpoint = getCircuitBreakerEndpoint(config);
     
     // Set defaults for optional fields
     globalConfig = {
-      apiRelativeBase: config.apiRelativeBase,
+      apiRelativeBase,
       featureFlags: {
         enable3D: config.featureFlags?.enable3D ?? true,
         enableMetricsPolling: config.featureFlags?.enableMetricsPolling ?? true,
@@ -59,18 +117,22 @@ export async function loadRuntimeConfig(): Promise<RuntimeConfig> {
       },
       circuitBreaker: {
         enabled: config.circuitBreaker?.enabled ?? true,
-        resetEndpoint: config.circuitBreaker?.resetEndpoint ?? '/api/admin/circuit/reset',
+        resetEndpoint,
       },
     };
     
-    console.log('✅ Runtime config loaded successfully:', globalConfig);
+    const env = isDevelopment() ? 'development' : 'production';
+    console.log(`✅ Runtime config loaded successfully (${env}):`, globalConfig);
     return globalConfig;
   } catch (error) {
     console.error('❌ Failed to load runtime config, using defaults:', error);
     
-    // Fallback configuration
+    // Fallback configuration with environment detection
+    const apiRelativeBase = isDevelopment() ? 'http://localhost:10000' : '/api';
+    const resetEndpoint = isDevelopment() ? 'http://localhost:10000/admin/circuit/reset' : '/api/admin/circuit/reset';
+    
     globalConfig = {
-      apiRelativeBase: '/api',
+      apiRelativeBase,
       featureFlags: {
         enable3D: true,
         enableMetricsPolling: true,
@@ -83,7 +145,7 @@ export async function loadRuntimeConfig(): Promise<RuntimeConfig> {
       },
       circuitBreaker: {
         enabled: true,
-        resetEndpoint: '/api/admin/circuit/reset',
+        resetEndpoint,
       },
     };
     
