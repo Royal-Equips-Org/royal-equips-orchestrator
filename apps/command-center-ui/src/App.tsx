@@ -147,7 +147,7 @@ function AppContent() {
   };
 
   return (
-
+    <div>
       <MobileShell>
         {/* Mobile-first responsive navigation */}
         <TopBar className="lg:hidden" />
@@ -158,19 +158,19 @@ function AppContent() {
         </div>
         
         {/* Module navigation scroller */}
-        <div className="
+        <div className={`
           lg:hidden sticky top-16 z-30
           bg-bg/80 backdrop-blur-md
           border-b border-quantum-primary/20
-        ">
+        `}>
           <ModuleScroller />
         </div>
         
         {/* Main content area with responsive padding */}
-        <main className="
+        <main className={`
           pt-16 lg:pt-32
           min-h-screen
-        ">
+        `}>
           <div className="px-4 sm:px-6 lg:px-8">
             {renderCurrentModule()}
           </div>
