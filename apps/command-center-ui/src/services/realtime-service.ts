@@ -82,12 +82,12 @@ export class RealTimeService {
           reject(new Error('Connection timeout'));
         }, 10000);
 
-        this.ws!.onopen = () => {
+        this.ws.onopen = () => {
           clearTimeout(timeout);
           resolve();
         };
 
-        this.ws!.onerror = () => {
+        this.ws.onerror = () => {
           clearTimeout(timeout);
           reject(new Error('WebSocket connection error'));
         };

@@ -121,7 +121,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
         isConnected: true,
         connectionError: null
       });
-    } catch (error) {
+    } catch (_error) {
       logger.error('Failed to refresh all data', { error: String(error) });
       set({ 
         isConnected: false,
@@ -136,7 +136,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
     try {
       const metrics = await empireService.fetchMetrics();
       set({ metrics, metricsLoading: false });
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error && typeof error === 'object' && 'message' in error 
         ? (error as ServiceError).message 
         : 'Failed to load metrics';
@@ -154,7 +154,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
     try {
       const agents = await empireService.fetchAgents();
       set({ agents, agentsLoading: false });
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error && typeof error === 'object' && 'message' in error 
         ? (error as ServiceError).message 
         : 'Failed to load agents';
@@ -172,7 +172,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
     try {
       const productOpportunities = await empireService.fetchProductOpportunities();
       set({ productOpportunities, oppsLoading: false });
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error && typeof error === 'object' && 'message' in error 
         ? (error as ServiceError).message 
         : 'Failed to load product opportunities';
@@ -190,7 +190,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
     try {
       const marketingCampaigns = await empireService.fetchMarketingCampaigns();
       set({ marketingCampaigns, campaignsLoading: false });
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error && typeof error === 'object' && 'message' in error 
         ? (error as ServiceError).message 
         : 'Failed to load marketing campaigns';
@@ -239,7 +239,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
         message: 'Product approved and deployment initiated',
         resolved: false,
       });
-    } catch (error) {
+    } catch (_error) {
       get().addAlert({
         type: 'warning',
         message: 'Failed to approve product',
@@ -255,7 +255,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
       set(state => ({
         productOpportunities: state.productOpportunities.filter(opp => opp.id !== productId),
       }));
-    } catch (error) {
+    } catch (_error) {
       get().addAlert({
         type: 'warning',
         message: 'Failed to reject product',
@@ -311,7 +311,7 @@ export const useEmpireStore = create<EmpireStore>((set, get) => ({
             : msg
         )
       }));
-    } catch (error) {
+    } catch (_error) {
       // Enhanced error classification based on error type
       let errorMessage = 'Sorry, I encountered an error processing your request. Please try again.';
       

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createElement } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, Search, Star, Clock, 
@@ -158,10 +158,13 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
               className="bg-black/40 px-4 py-1 rounded-full border border-cyan-500/30 flex items-center space-x-2"
               layoutId="current-module"
             >
-              {currentModule && (
+              {currentModuleInfo && (
                 <>
-                  <currentModuleInfo?.icon className="w-4 h-4" style={{ color: currentModule.color }} />
-                  <span className="text-white font-mono text-sm">{currentModuleInfo?.label}</span>
+                  {createElement(currentModuleInfo.icon, { 
+                    className: "w-4 h-4", 
+                    style: { color: currentModuleInfo.color } 
+                  })}
+                  <span className="text-white font-mono text-sm">{currentModuleInfo.label}</span>
                 </>
               )}
             </motion.div>

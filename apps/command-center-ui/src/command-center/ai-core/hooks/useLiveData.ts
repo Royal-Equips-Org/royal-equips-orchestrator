@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import * as d3 from 'd3'
 import { useEmpireStore } from '../../../store/empire-store'
-import { empireService } from '../../../services/empire-service'
 import { RealTimeService } from '../../../services/realtime-service'
 import { logger } from '../../../services/log'
 import { EmpireMetrics, Agent, ProductOpportunity, MarketingCampaign } from '../../../types/empire'
@@ -123,7 +122,7 @@ export function useLiveData(): LiveDataReturn {
   const [wsStatus, setWsStatus] = useState<WSStatus>({ connected: false, reconnecting: false, latency: 0 })
   const [supabaseStatus, setSupabaseStatus] = useState('idle')
   const [dataStreams, setDataStreams] = useState<DataStreams>(defaultStreams)
-  const [voiceActivity, setVoiceActivity] = useState<VoiceActivity>({ volume: 0, lastTranscript: null })
+  const [voiceActivity, _setVoiceActivity] = useState<VoiceActivity>({ volume: 0, lastTranscript: null })
   const [alerts, setAlerts] = useState<Alert[]>([])
 
   const wsRef = useRef<RealTimeService | null>(null)

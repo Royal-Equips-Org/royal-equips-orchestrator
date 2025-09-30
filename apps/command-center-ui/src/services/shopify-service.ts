@@ -119,13 +119,7 @@ export class ShopifyService {
     try {
       logger.info('Fetching Shopify store health');
       
-      const response = await apiClient.get(`${this.baseUrl}/status`) as {
-        configured: boolean;
-        shop_info?: {
-          name?: string;
-        };
-        error?: string;
-      };
+      const response = await apiClient.get(`${this.baseUrl}/status`);
       
       if (response.configured) {
         return {
@@ -158,10 +152,7 @@ export class ShopifyService {
       const response = await apiClient.post(`${this.baseUrl}/sync-products`, {
         limit: 100,
         force: false
-      }) as {
-        job_id: string;
-        message?: string;
-      };
+      });
       
       return {
         jobId: response.job_id,
@@ -180,9 +171,7 @@ export class ShopifyService {
     try {
       logger.info('Fetching Shopify sync jobs');
       
-      const response = await apiClient.get(`${this.baseUrl}/jobs`) as {
-        jobs?: any[];
-      };
+      const response = await apiClient.get(`${this.baseUrl}/jobs`);
       return response.jobs || [];
     } catch (error) {
       logger.error('Failed to fetch jobs', { error: String(error) });
@@ -213,7 +202,7 @@ export class ShopifyService {
       logger.info('Fetching real Shopify metrics from backend');
 
       // Call the new real metrics endpoint
-      const response = await apiClient.get(`${this.baseUrl}/metrics`) as ShopifyMetrics;
+      const response = await apiClient.get(`${this.baseUrl}/metrics`);
       
       logger.info('Successfully fetched real Shopify metrics', {
         totalRevenue: response.totalRevenue,

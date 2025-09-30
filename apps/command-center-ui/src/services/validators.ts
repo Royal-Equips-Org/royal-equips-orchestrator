@@ -122,11 +122,11 @@ export function isMarketingCampaign(obj: unknown): obj is MarketingCampaign {
     isString(campaign.product_id) &&
     isString(campaign.product_title) &&
     isString(campaign.platform) &&
-    ['facebook', 'instagram', 'google', 'tiktok', 'twitter'].includes(campaign.platform as string) &&
+    ['facebook', 'instagram', 'google', 'tiktok', 'twitter'].includes(campaign.platform) &&
     isString(campaign.format) &&
-    ['image', 'video', 'carousel', 'story'].includes(campaign.format as string) &&
+    ['image', 'video', 'carousel', 'story'].includes(campaign.format) &&
     isString(campaign.status) &&
-    ['active', 'paused', 'completed', 'draft', 'error'].includes(campaign.status as string) &&
+    ['active', 'paused', 'completed', 'draft', 'error'].includes(campaign.status) &&
     isNumber(campaign.budget) &&
     isNumber(campaign.spent) &&
     isNumber(campaign.reach) &&

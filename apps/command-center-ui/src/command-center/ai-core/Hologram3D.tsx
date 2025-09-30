@@ -1,6 +1,6 @@
 import { memo, useMemo, useRef } from 'react'
 import { Canvas, extend, useFrame } from '@react-three/fiber'
-import { Float, OrbitControls, Stars, Line, Text, Html, Sphere, shaderMaterial } from '@react-three/drei'
+import { Float, OrbitControls, Stars, Line, Text, Html, shaderMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 
 // Types for component props
@@ -104,7 +104,7 @@ function HologramCore({ intensity, colorTone, voiceLevel }: HologramCoreProps) {
     <group>
       <mesh>
         <sphereGeometry args={[1.6, 96, 96]} />
-        {/* @ts-ignore - Three.js extended material */}
+        {/* @ts-expect-error - Three.js extended material */}
         <coreMaterial ref={material} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
       <mesh>
@@ -221,7 +221,7 @@ function NeonGrid({ size = 18, divisions = 40, color = '#0ff1ff' }: NeonGridProp
   )
 }
 
-const Hologram3D = memo(function Hologram3D({ metrics, agents, opportunities, liveIntensity, dataStreams }: Hologram3DProps) {
+const Hologram3D = memo(function Hologram3D({ metrics, agents, opportunities, liveIntensity, dataStreams: _dataStreams }: Hologram3DProps) {
   const energy = liveIntensity?.energyLevel ?? 0.5
   const colorTone = liveIntensity?.colorTone ?? '#0ff1ff'
   const voiceLevel = liveIntensity?.voiceActivity?.volume ?? 0
