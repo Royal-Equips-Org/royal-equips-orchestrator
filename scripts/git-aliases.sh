@@ -24,7 +24,7 @@ alias gcp="git commit -am 'update' && git push"
 alias gcp-check="git commit -am 'update' && RUN_CHECKS=1 git push"
 
 echo "✅ Git aliases loaded:"
-echo "  gp-fast / gp-quick    - Push (checks disabled by default)"
+echo "  gp-fast / gp-quick    - Quick push"
 echo "  gp-check              - Push with typecheck/tests enabled"
 echo "  gc-fast / gc-quick    - Commit without lint"  
 echo "  gcp-fast              - Quick commit + push (no checks)"
