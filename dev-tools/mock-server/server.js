@@ -244,7 +244,7 @@ app.get('/inventory/overview', (req, res) => {
   });
 });
 
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, '127.0.0.1', () => {
   console.log(`🚀 Royal Equips Mock API Server running on http://localhost:${port}`);
   console.log(`Available endpoints:
   - Health: /healthz, /readyz  
