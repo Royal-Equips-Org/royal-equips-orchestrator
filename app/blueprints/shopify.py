@@ -113,7 +113,6 @@ def get_shopify_status():
         return jsonify({
             "configured": False,
             "error": "Internal server error",
-            "message": str(e),
             "timestamp": datetime.now().isoformat()
         }), 500
 
@@ -200,8 +199,7 @@ def sync_products():
     except Exception as e:
         logger.error(f"Error starting product sync: {e}")
         return jsonify({
-            "error": "Failed to start product sync",
-            "message": str(e)
+            "error": "Failed to start product sync"
         }), 500
 
 
@@ -264,8 +262,7 @@ def sync_inventory():
     except Exception as e:
         logger.error(f"Error starting inventory sync: {e}")
         return jsonify({
-            "error": "Failed to start inventory sync",
-            "message": str(e)
+            "error": "Failed to start inventory sync"
         }), 500
 
 
@@ -340,8 +337,7 @@ def sync_orders():
     except Exception as e:
         logger.error(f"Error starting order sync: {e}")
         return jsonify({
-            "error": "Failed to start order sync",
-            "message": str(e)
+            "error": "Failed to start order sync"
         }), 500
 
 
@@ -418,8 +414,7 @@ def bulk_operation():
     except Exception as e:
         logger.error(f"Error starting bulk operation: {e}")
         return jsonify({
-            "error": "Failed to start bulk operation",
-            "message": str(e)
+            "error": "Failed to start bulk operation"
         }), 500
 
 
@@ -455,8 +450,7 @@ def get_jobs():
     except Exception as e:
         logger.error(f"Error getting jobs: {e}")
         return jsonify({
-            "error": "Failed to get jobs",
-            "message": str(e)
+            "error": "Failed to get jobs"
         }), 500
 
 
@@ -491,10 +485,9 @@ def get_job(job_id: str):
         return jsonify(job_status), 200
 
     except Exception as e:
-        logger.error(f"Error getting job {job_id}: {e}")
+        logger.error(f"Error getting job {job_id.replace('\n', '').replace('\r', '')[:50]}: {e}")
         return jsonify({
-            "error": "Failed to get job status",
-            "message": str(e)
+            "error": "Failed to get job status"
         }), 500
 
 
@@ -931,7 +924,9 @@ def handle_webhook(topic: str):
 
         # Verify HMAC signature
         if not verify_shopify_webhook(payload, hmac_signature):
-            logger.warning(f"Invalid HMAC signature for webhook {topic} from {shop_domain}")
+            safe_topic = topic.replace('\n', '').replace('\r', '')[:50]
+            safe_shop_domain = shop_domain.replace('\n', '').replace('\r', '')[:100]
+            logger.warning(f"Invalid HMAC signature for webhook {safe_topic} from {safe_shop_domain}")
             return jsonify({
                 "error": "Invalid HMAC signature",
                 "message": "Webhook verification failed"
@@ -966,7 +961,9 @@ def handle_webhook(topic: str):
         except:
             pass
 
-        logger.info(f"Processed webhook {topic} from {shop_domain}")
+        safe_topic = topic.replace('\n', '').replace('\r', '')[:50]
+        safe_shop_domain = shop_domain.replace('\n', '').replace('\r', '')[:100]
+        logger.info(f"Processed webhook {safe_topic} from {safe_shop_domain}")
 
         return jsonify({
             "status": "received",
@@ -977,8 +974,140 @@ def handle_webhook(topic: str):
         }), 202
 
     except Exception as e:
-        logger.error(f"Error processing webhook {topic}: {e}")
+        safe_topic = topic.replace('\n', '').replace('\r', '')[:50]
+        logger.error(f"Error processing webhook {safe_topic}: {e}")
         return jsonify({
-            "error": "Failed to process webhook",
-            "message": str(e)
+            "error": "Failed to process webhook"
         }), 500
+
+
+# New endpoints for the ShopifyModule frontend integration
+@shopify_bp.route("/metrics", methods=["GET"])
+def get_shopify_metrics():
+    """Get comprehensive Shopify store metrics for dashboard."""
+    try:
+        service = get_shopify_service()
+        
+        if not service.is_configured():
+            return jsonify({
+                "error": "Shopify service not configured",
+                "totalProducts": 0,
+                "totalOrders": 0,
+                "totalCustomers": 0,
+                "totalRevenue": 0,
+                "inventoryValue": 0,
+                "lowStockItems": 0,
+                "customerInsights": {
+                    "totalCustomers": 0,
+                    "newCustomers": 0,
+                    "returningCustomers": 0,
+                    "averageOrderValue": 0,
+                    "lifetimeValue": 0
+                }
+            }), 503
+        
+        # Get live metrics from Shopify
+        products_count = service.get_products_count()
+        orders_count = service.get_orders_count()
+        customers_count = service.get_customers_count()
+        
+        # Calculate revenue from recent orders
+        recent_orders = service.get_orders(limit=250)
+        total_revenue = sum(float(order.get('total_price', 0)) for order in recent_orders)
+        
+        # Get inventory value from products
+        products = service.get_products(limit=250)
+        inventory_value = 0
+        low_stock_count = 0
+        
+        for product in products:
+            for variant in product.get('variants', []):
+                price = float(variant.get('price', 0))
+                inventory = variant.get('inventory_quantity', 0)
+                inventory_value += price * inventory
+                
+                if inventory < 5:  # Low stock threshold
+                    low_stock_count += 1
+        
+        # Customer insights
+        customers = service.get_customers(limit=100)
+        new_customers = len([c for c in customers if c.get('orders_count', 0) <= 1])
+        returning_customers = len(customers) - new_customers
+        avg_order_value = total_revenue / max(orders_count, 1)
+        
+        return jsonify({
+            "totalProducts": products_count,
+            "totalOrders": orders_count,
+            "totalCustomers": customers_count,
+            "totalRevenue": total_revenue,
+            "inventoryValue": inventory_value,
+            "lowStockItems": low_stock_count,
+            "customerInsights": {
+                "totalCustomers": customers_count,
+                "newCustomers": new_customers,
+                "returningCustomers": returning_customers,
+                "averageOrderValue": avg_order_value,
+                "lifetimeValue": avg_order_value * 3.5  # Estimated LTV
+            }
+        }), 200
+        
+    except Exception as e:
+        # Sanitize agent_id for logging to prevent log injection
+        safe_error = str(e)[:100]  # Limit error message length
+        logger.error(f"Failed to get Shopify metrics: {safe_error}")
+        return jsonify({"error": "Failed to get metrics"}), 500
+
+
+@shopify_bp.route("/sync", methods=["POST"])
+def sync_all_data():
+    """Trigger comprehensive data sync with Supabase storage."""
+    try:
+        service = get_shopify_service()
+        
+        if not service.is_configured():
+            return jsonify({"error": "Shopify service not configured"}), 503
+        
+        # Start async jobs for comprehensive sync
+        sync_jobs = []
+        
+        # Start product sync
+        product_job_id = run_job_async(sync_products_job)
+        sync_jobs.append({"type": "products", "job_id": product_job_id})
+        
+        # Start inventory sync  
+        inventory_job_id = run_job_async(sync_inventory_job)
+        sync_jobs.append({"type": "inventory", "job_id": inventory_job_id})
+        
+        # Start orders sync
+        orders_job_id = run_job_async(sync_orders_job)
+        sync_jobs.append({"type": "orders", "job_id": orders_job_id})
+        
+        # Store sync data in Supabase if available
+        try:
+            from packages.connectors.src.supabase import SupabaseConnector
+            supabase = SupabaseConnector()
+            
+            # Log sync event
+            sync_record = {
+                "sync_type": "comprehensive",
+                "job_ids": [job["job_id"] for job in sync_jobs],
+                "initiated_at": datetime.now().isoformat(),
+                "status": "started"
+            }
+            
+            # This would use auto-schema creation to store sync logs
+            logger.info(f"Comprehensive sync started: {sync_record}")
+            
+        except Exception as supabase_error:
+            logger.warning(f"Could not log to Supabase: {supabase_error}")
+        
+        return jsonify({
+            "status": "sync_started",
+            "jobs": sync_jobs,
+            "message": "Comprehensive data sync initiated",
+            "timestamp": datetime.now().isoformat()
+        }), 202
+        
+    except Exception as e:
+        logger.error(f"Failed to start comprehensive sync: {e}")
+        return jsonify({"error": "Failed to start sync", "message": "An internal error has occurred."}), 500

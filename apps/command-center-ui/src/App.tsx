@@ -9,6 +9,7 @@ import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import MobileShell from './components/layout/MobileShell'
 import TopBar from './components/layout/TopBar'
 import ModuleScroller from './modules/_shared/components/ModuleScroller'
+import ErrorBoundary from './components/error/ErrorBoundary'
 
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
@@ -25,6 +26,7 @@ const CustomerSupportModule = lazy(() => import('./modules/customer-support/Cust
 const SecurityModule = lazy(() => import('./modules/security/SecurityModule'));
 const FinanceModule = lazy(() => import('./modules/finance/FinanceModule'));
 const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AIRAIntelligenceModule'));
+const ShopifyModule = lazy(() => import('./modules/shopify/ShopifyModule'));
 
 function AppContent() {
   const { isConnected, refreshAll } = useEmpireStore();
@@ -106,7 +108,11 @@ function AppContent() {
           </Suspense>
         );
       case 'shopify':
-        return <ShopifyDashboard />;
+        return (
+          <Suspense fallback={loadingFallback('Shopify Integration')}>
+            <ShopifyModule />
+          </Suspense>
+        );
       case 'marketing':
         return (
           <Suspense fallback={loadingFallback('Marketing Automation')}>
@@ -141,6 +147,12 @@ function AppContent() {
         return <div className="h-full flex items-center justify-center text-hologram">System Monitoring - Coming Soon</div>;
       case 'settings':
         return <div className="h-full flex items-center justify-center text-hologram">Settings - Coming Soon</div>;
+      case 'error-test':
+        return (
+          <Suspense fallback={loadingFallback('Error Test')}>
+            <ErrorTest />
+          </Suspense>
+        );
       default:
         return <EmpireDashboard />;
     }
@@ -185,11 +197,13 @@ function AppContent() {
 
 function App() {
   return (
-    <NavigationProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </NavigationProvider>
+    <ErrorBoundary>
+      <NavigationProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </NavigationProvider>
+    </ErrorBoundary>
   )
 }
 

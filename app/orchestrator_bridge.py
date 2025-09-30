@@ -49,11 +49,15 @@ class SimpleOrchestrator:
             )
             thread.start()
             
-            logger.info(f"Started agent {agent_id} with execution ID {execution_id}")
+            # Sanitize agent_id for logging to prevent log injection
+            safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+            logger.info(f"Started agent {safe_agent_id} with execution ID {execution_id}")
             return execution_record
             
         except Exception as e:
-            logger.error(f"Failed to start agent {agent_id}: {e}")
+            safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+            safe_error = str(e)[:100]
+            logger.error(f"Failed to start agent {safe_agent_id}: {safe_error}")
             raise
     
     def stop_agent(self, agent_id: str) -> bool:
@@ -67,11 +71,15 @@ class SimpleOrchestrator:
                     record['stopped_at'] = datetime.now().isoformat()
                     stopped_count += 1
             
-            logger.info(f"Stopped {stopped_count} executions for agent {agent_id}")
+            # Sanitize agent_id for logging to prevent log injection
+            safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+            logger.info(f"Stopped {stopped_count} executions for agent {safe_agent_id}")
             return stopped_count > 0
             
         except Exception as e:
-            logger.error(f"Failed to stop agent {agent_id}: {e}")
+            safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+            safe_error = str(e)[:100]
+            logger.error(f"Failed to stop agent {safe_agent_id}: {safe_error}")
             return False
     
     def get_agent_status(self, agent_id: str) -> str:
@@ -141,11 +149,13 @@ class SimpleOrchestrator:
                 logger.info(f"Agent {agent_id} execution {execution_id} completed")
         
         except Exception as e:
-            logger.error(f"Error executing agent {agent_id}: {e}")
+            safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+            safe_error = str(e)[:100]
+            logger.error(f"Error executing agent {safe_agent_id}: {safe_error}")
             record = active_executions.get(execution_id)
             if record:
                 record['status'] = 'error'
-                record['error'] = str(e)
+                record['error'] = safe_error  # Store sanitized error
                 record['failed_at'] = datetime.now().isoformat()
     
     def _get_estimated_duration(self, agent_id: str) -> int:
