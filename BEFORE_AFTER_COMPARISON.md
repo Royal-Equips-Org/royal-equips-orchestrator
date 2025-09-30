@@ -64,20 +64,25 @@ on:
 
 ### Husky Hooks
 ```bash
-# AFTER: Non-blocking with easy skip options
-if [ -n "$SKIP_CHECKS" ] || [ -n "$SKIP_HUSKY" ]; then
+# AFTER: TypeScript checks and tests disabled by default
+if [ -n "$SKIP_HUSKY" ] || [ -n "$CI" ]; then
   echo "Husky pre-push skipped"; exit 0
 fi
 
-# All checks are non-blocking
-pnpm typecheck || echo "⚠️ Type issues found. Run 'pnpm typecheck' to fix or use SKIP_CHECKS=1 git push to skip."
-pnpm test || echo "⚠️ Test issues found. Run 'pnpm test' to fix or use SKIP_CHECKS=1 git push to skip."
+# Checks only run when explicitly enabled with RUN_CHECKS=1
+if [ -n "$RUN_CHECKS" ]; then
+  pnpm typecheck || echo "⚠️ Type issues found."
+  pnpm test || echo "⚠️ Test issues found."
+else
+  echo "✅ Pre-push checks skipped (disabled by default)"
+fi
 ```
 
 ### Developer Experience  
 - ✅ **No CI on regular pushes** - saves GitHub Actions minutes
-- ✅ **Non-blocking warnings** - see issues but can still push
-- ✅ **Multiple skip options** - `SKIP_LINT=1`, `SKIP_CHECKS=1`, `SKIP_HUSKY=1`
+- ✅ **No checks by default** - push immediately without waiting
+- ✅ **Optional quality checks** - enable with `RUN_CHECKS=1` when needed
+- ✅ **Multiple control options** - `SKIP_LINT=1`, `RUN_CHECKS=1`, `SKIP_HUSKY=1`
 - ✅ **Convenient aliases** - `gcp-fast` for super quick workflow
 - ✅ **Fast development** - no waiting for unnecessary checks
 - ✅ **Quality on PRs** - full checks where they matter most
@@ -101,20 +106,21 @@ git push
 
 ### After (Smooth) 🚀
 ```bash
-# Quick development workflow
+# Quick development workflow (default behavior)
 SKIP_LINT=1 git commit -m "wip: fixing bug"  # ✅ Commits immediately
-SKIP_CHECKS=1 git push                       # ✅ Pushes immediately
+git push                                      # ✅ Pushes immediately, no checks run
 
 # Or use convenient aliases
 source scripts/git-aliases.sh
 gcp-fast  # ✅ Quick commit + push in one command
 
-# Normal development (with non-blocking checks)
+# Normal development (no checks by default)
 git commit -m "Add feature"  # ✅ Shows lint warnings but commits
-git push                     # ✅ Shows type/test warnings but pushes
+git push                     # ✅ Pushes immediately, no TypeScript checks
                             # ✅ No CI triggered on push
 
-# Quality-focused development (when ready)
+# Quality-focused development (when you want checks)
+RUN_CHECKS=1 git push        # ✅ Runs typecheck and tests (optional)
 pnpm lint --fix && pnpm typecheck && pnpm test  # ✅ Manual quality check
 git commit -m "feat: production ready"
 # When creating PR: ✅ Full CI runs with all checks
