@@ -15,7 +15,7 @@ vi.mock('../services/empire-service', () => ({
   }
 }));
 
-const mockEmpireService = empireService.empireService as {
+const mockEmpireService = empireService.empireService as any as {
   fetchMetrics: ReturnType<typeof vi.fn>;
   fetchAgents: ReturnType<typeof vi.fn>;
   fetchProductOpportunities: ReturnType<typeof vi.fn>;
