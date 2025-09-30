@@ -81,8 +81,8 @@ export function EnhancedAIDashboard() {
     try {
       // Fetch real business metrics from APIs
       const [empireMetrics, shopifyMetrics] = await Promise.all([
-        fetch('/api/v1/empire/metrics').then(r => r.json()).catch(() => null),
-        fetch('/api/v1/shopify/metrics').then(r => r.json()).catch(() => null)
+        fetch('/v1/metrics').then(r => r.json()).catch(() => null),
+        fetch('/v1/shopify/analytics').then(r => r.json()).catch(() => null)
       ]);
       
       // Calculate real predictive alerts based on actual data

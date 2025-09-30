@@ -38,12 +38,18 @@ const marketingRoutes: FastifyPluginAsync = async (app) => {
       let campaigns;
       
       if (platform === 'meta') {
-        const token = process.env.META_ACCESS_TOKEN || 'demo_token';
-        const actId = process.env.META_ACCOUNT_ID || 'demo_account';
+        const token = process.env.META_ACCESS_TOKEN;
+        const actId = process.env.META_ACCOUNT_ID;
+        if (!token || !actId) {
+          return { success: false, error: 'Meta credentials not configured' };
+        }
         campaigns = await metaCampaigns(token, actId);
       } else if (platform === 'tiktok') {
-        const token = process.env.TIKTOK_ACCESS_TOKEN || 'demo_token';
-        const advertiserId = process.env.TIKTOK_ADVERTISER_ID || 'demo_advertiser';
+        const token = process.env.TIKTOK_ACCESS_TOKEN;
+        const advertiserId = process.env.TIKTOK_ADVERTISER_ID;
+        if (!token || !advertiserId) {
+          return { success: false, error: 'TikTok credentials not configured' };
+        }
         campaigns = await tiktokCampaigns(token, advertiserId);
       }
       
@@ -56,30 +62,6 @@ const marketingRoutes: FastifyPluginAsync = async (app) => {
       app.log.error(`Marketing campaigns fetch failed`);
       throw new Error("Failed to fetch campaigns");
     }
-  });
-
-  // Mock endpoint for all platforms
-  app.get("/marketing/campaigns/all", async () => {
-    return {
-      meta: {
-        total: 12,
-        active: 8,
-        paused: 4,
-        spend_today: "$1,234.56"
-      },
-      tiktok: {
-        total: 6,
-        active: 4,
-        paused: 2,
-        spend_today: "$567.89"
-      },
-      google: {
-        total: 15,
-        active: 12,
-        paused: 3,
-        spend_today: "$2,100.00"
-      }
-    };
   });
 };
 

@@ -158,10 +158,10 @@ export default function ProductsPage() {
       'live_shopify': { text: 'Live Data', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
       'enhanced_cached_data': { text: 'Enhanced Data', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
       'cached_data': { text: 'Cached Data', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-      'mock_data': { text: 'Demo Data', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' }
+      'no_data': { text: 'No Data', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' }
     };
     
-    const badge = badges[dataSource as keyof typeof badges] || badges.mock_data;
+    const badge = badges[dataSource as keyof typeof badges] || badges.no_data;
     return (
       <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${badge.color}`}>
         {badge.text}

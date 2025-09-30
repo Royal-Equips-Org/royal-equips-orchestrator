@@ -56,24 +56,28 @@ export default function AgentsModule() {
     setError(null);
     
     try {
-      // Fetch from AIRA agents endpoint
-      const agentsResponse = await fetch('/api/empire/agents');
+      // Fetch from real agents endpoint
+      const agentsResponse = await fetch('/v1/agents');
       let agentsData = [];
       
       if (agentsResponse.ok) {
         agentsData = await agentsResponse.json();
       }
 
-      // Fetch active agent sessions from Flask backend
-      const sessionsResponse = await fetch('/api/agents/sessions');
+      // Fetch recent logs as sessions preview from backend
       let sessionsData = [];
-      
-      if (sessionsResponse.ok) {
-        sessionsData = await sessionsResponse.json();
+      const agentId = (agentsData as any)?.agents?.[0]?.id;
+      if (agentId) {
+        const sessionsResponse = await fetch(`/v1/agents/${agentId}/logs`);
+        if (sessionsResponse.ok) {
+          sessionsData = await sessionsResponse.json();
+        }
+      } else {
+        setError('No agents available to fetch sessions.');
       }
 
       // Fetch metrics to get agent performance data
-      const metricsResponse = await fetch('/api/metrics');
+      const metricsResponse = await fetch('/v1/metrics');
       let metricsData = null;
       
       if (metricsResponse.ok) {
@@ -149,15 +153,14 @@ export default function AgentsModule() {
   // Agent management actions
   const createAgentSession = async () => {
     try {
-      const response = await fetch('/api/agents/session', {
+      const agentId = selectedAgent || (agents[0]?.id ?? 'quantum-001');
+      const response = await fetch(`/v1/agents/${agentId}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
-      
       if (response.ok) {
-        const newSession = await response.json();
-        console.log('New agent session created:', newSession.session_id);
-        fetchAgentData(); // Refresh data
+        await response.json();
+        fetchAgentData();
       }
     } catch (err) {
       console.error('Failed to create agent session:', err);

@@ -30,8 +30,8 @@ export function usePerformance(): UsePerformanceReturn {
       setLoading(true);
       setError(null);
       
-      // Simulate API call or replace with real endpoint
-      const response = await fetch('/api/performance/metrics');
+      // Real metrics endpoint
+      const response = await fetch('/v1/metrics');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -39,16 +39,8 @@ export function usePerformance(): UsePerformanceReturn {
       
       const data = await response.json();
       
-      // Transform data or use mock data for development
-      const performanceData: PerformanceMetrics = data || {
-        cpuUsage: Math.random() * 80 + 10, // 10-90%
-        memoryUsage: Math.random() * 70 + 20, // 20-90%
-        networkLatency: Math.random() * 50 + 10, // 10-60ms
-        activeConnections: Math.floor(Math.random() * 500) + 100,
-        requestsPerSecond: Math.floor(Math.random() * 1000) + 200,
-        errorRate: Math.random() * 2, // 0-2%
-        uptime: 99.9 + Math.random() * 0.1 // 99.9-100%
-      };
+      // Require real data; surface error if missing
+      const performanceData: PerformanceMetrics = data;
       
       setMetrics(performanceData);
     } catch (err) {

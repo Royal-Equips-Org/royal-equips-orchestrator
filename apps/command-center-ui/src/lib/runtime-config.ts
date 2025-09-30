@@ -50,18 +50,21 @@ function isDevelopment(): boolean {
  * Get the appropriate API base URL based on environment
  */
 function getApiBaseUrl(config: any): string {
-  // In development, try to use the mock server if available
+  // Always target Fastify API base /v1 (reverse-proxied in prod)
   if (isDevelopment()) {
-    // Check if development config exists and use it
-    if (config.development?.apiRelativeBase) {
-      return config.development.apiRelativeBase;
-    }
-    // Fallback to localhost if no development config
-    return 'http://localhost:10000';
+    return config.development?.apiRelativeBase || 'http://localhost:10000/v1';
   }
-  
-  // In production, always use relative paths
-  return config.apiRelativeBase || '/api';
+  if (config.apiRelativeBase) {
+    // If apiRelativeBase is absolute, use URL constructor
+    try {
+      const url = new URL('/v1', config.apiRelativeBase);
+      return url.toString();
+    } catch {
+      // If apiRelativeBase is relative, fallback to safe string concatenation
+      return config.apiRelativeBase.replace(/\/$/, '') + '/v1';
+    }
+  }
+  return '/v1';
 }
 
 /**

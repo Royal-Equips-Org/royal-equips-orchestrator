@@ -127,8 +127,8 @@ const GQL_CUSTOMERS = `
 const shopifyRoutes: FastifyPluginAsync = async (app) => {
   // Initialize Shopify client
   const shopifyClient = new ShopifyGraphQL(
-    process.env.SHOPIFY_GRAPHQL_ENDPOINT || 'https://demo.myshopify.com/admin/api/2024-01/graphql.json',
-    process.env.SHOPIFY_ACCESS_TOKEN || 'demo_token'
+    process.env.SHOPIFY_GRAPHQL_ENDPOINT || '',
+    process.env.SHOPIFY_ACCESS_TOKEN || ''
   );
 
   // Function to get the latest shopify data file
@@ -168,7 +168,7 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
       const { cursor, limit = '50' } = request.query as { cursor?: string; limit?: string };
       
       // Try to get real data from Shopify first
-      if (process.env.SHOPIFY_ACCESS_TOKEN && process.env.SHOPIFY_ACCESS_TOKEN !== 'demo_token') {
+      if (process.env.SHOPIFY_ACCESS_TOKEN) {
         try {
           const products = await shopifyClient.query(GQL_PRODUCTS, { cursor });
           return reply.send({ 
@@ -181,7 +181,7 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
         }
       }
 
-      // Fallback to cached data
+      // Fallback to cached data if available
       const cachedProducts = await getLatestShopifyData('products');
       if (cachedProducts) {
         // Apply pagination simulation
@@ -246,15 +246,11 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
-      // Final fallback - professional mock data (should not happen with real data)
-      return reply.send({
-        products: {
-          edges: [],
-          pageInfo: { hasNextPage: false }
-        },
-        success: true,
-        source: 'no_data_available',
-        message: 'No product data available'
+      // No data available
+      return reply.code(404).send({
+        error: 'No product data available',
+        success: false,
+        source: 'no_data'
       });
     } catch (error) {
       app.log.error('Shopify products fetch failed');
@@ -334,7 +330,7 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
       const { cursor } = request.query as { cursor?: string };
       
       // Enhanced Shopify API with proper error handling
-      if (process.env.SHOPIFY_ACCESS_TOKEN && process.env.SHOPIFY_ACCESS_TOKEN !== 'demo_token') {
+      if (process.env.SHOPIFY_ACCESS_TOKEN) {
         try {
           const orders = await shopifyClient.query(GQL_ORDERS, { cursor });
           
@@ -409,7 +405,7 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
       const { cursor } = request.query as { cursor?: string };
       
       // Enhanced Shopify API with proper error handling
-      if (process.env.SHOPIFY_ACCESS_TOKEN && process.env.SHOPIFY_ACCESS_TOKEN !== 'demo_token') {
+      if (process.env.SHOPIFY_ACCESS_TOKEN) {
         try {
           const customers = await shopifyClient.query(GQL_CUSTOMERS, { cursor });
           
@@ -492,20 +488,11 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
-      // Mock analytics if no cached data
-      return reply.send({
-        analytics: {
-          summary: {
-            total_products: 0,
-            active_products: 0,
-            avg_price: 0,
-            price_range: { min: 0, max: 0 }
-          },
-          categories: {},
-          opportunities: []
-        },
-        success: true,
-        source: 'mock_data'
+      // No analytics available
+      return reply.code(404).send({
+        error: 'No analytics data available',
+        success: false,
+        source: 'no_data'
       });
     } catch (error) {
       app.log.error('Shopify analytics fetch failed');
