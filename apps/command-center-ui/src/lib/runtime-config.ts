@@ -54,7 +54,17 @@ function getApiBaseUrl(config: any): string {
   if (isDevelopment()) {
     return config.development?.apiRelativeBase || 'http://localhost:10000/v1';
   }
-  return (config.apiRelativeBase ? `${config.apiRelativeBase.replace(/\/$/, '')}` : '') + '/v1';
+  if (config.apiRelativeBase) {
+    // If apiRelativeBase is absolute, use URL constructor
+    try {
+      const url = new URL('/v1', config.apiRelativeBase);
+      return url.toString();
+    } catch {
+      // If apiRelativeBase is relative, fallback to safe string concatenation
+      return config.apiRelativeBase.replace(/\/$/, '') + '/v1';
+    }
+  }
+  return '/v1';
 }
 
 /**
