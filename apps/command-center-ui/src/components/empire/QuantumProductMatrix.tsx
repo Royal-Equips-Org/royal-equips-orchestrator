@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Search, Filter, Grid, List, Heart, ShoppingCart, Eye, Share2, Star, Zap, Package, TrendingUp } from 'lucide-react';
+import { ensureArray } from '../../utils/array-utils';
 
 interface Product {
   id: string;
@@ -38,12 +39,14 @@ export default function QuantumProductMatrix() {
     fetch('/v1/shopify/products')
       .then(res => res.json())
       .then(data => {
-        const enhancedProducts = data.products.map((product: any, index: number) => ({
+        // Use ensureArray to safely handle potentially undefined products array
+        const rawProducts = ensureArray(data.products);
+        const enhancedProducts = rawProducts.map((product: any, index: number) => ({
           ...product,
           rating: 4.2 + Math.random() * 0.8,
           reviews: Math.floor(Math.random() * 150) + 20,
           stock: Math.floor(Math.random() * 100) + 10,
-          description: `Premium ${product.productType.toLowerCase()} featuring advanced technology and superior craftsmanship. Perfect for modern lifestyles.`
+          description: `Premium ${product.productType?.toLowerCase() || 'product'} featuring advanced technology and superior craftsmanship. Perfect for modern lifestyles.`
         }));
         setProducts(enhancedProducts);
         setFilteredProducts(enhancedProducts);
