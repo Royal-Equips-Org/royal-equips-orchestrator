@@ -621,4 +621,4 @@ def get_shopify_agent_status(agent_id: str):
         
     except Exception as e:
         logger.error(f"Failed to get Shopify agent status for {agent_id}: {e}")
-        return jsonify({"error": "Failed to get agent status", "message": str(e)}), 500
+        return jsonify({"error": "Failed to get agent status"}), 500
