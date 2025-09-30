@@ -149,7 +149,7 @@ export function EnhancedAIDashboard() {
       setAIContext(context);
     } catch (error) {
       console.error('AI Context initialization failed:', error);
-      // Fallback to minimal context without fake data
+      // Fallback to minimal context with real metrics
       setAIContext({
         userBehavior: {
           sessionDuration: Date.now() - performance.timing.navigationStart,
@@ -267,8 +267,14 @@ export function EnhancedAIDashboard() {
       // Execute pre-approved autonomous fixes
       console.log(`Executing autonomous action for ${alert.id}:`, alert.suggestedActions[0]);
       
-      // Simulate autonomous resolution
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Execute real autonomous resolution via backend API
+      const response = await fetch('/api/agents/autonomous-resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alertId: alert.id, action: alert.suggestedActions[0] })
+      });
+      
+      if (!response.ok) throw new Error('Autonomous resolution failed');
       
       // Update alert status
       setAIContext(prev => prev ? {

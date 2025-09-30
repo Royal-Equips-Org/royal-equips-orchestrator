@@ -82,34 +82,43 @@ export default function DashboardModule() {
 
   const { isConnected } = useEmpireStore();
 
-  // Simulate real-time updates
+  // Real-time updates from backend APIs
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => prev.map(metric => {
-        // Randomly update some metrics to simulate real-time data
-        if (Math.random() > 0.7) {
-          const currentValue = parseFloat(metric.value.replace(/[^0-9.]/g, ''));
-          const variation = (Math.random() - 0.5) * 0.1; // ±5% variation
-          const newValue = currentValue * (1 + variation);
+    const fetchRealTimeMetrics = async () => {
+      try {
+        const response = await fetch('/api/metrics/real-time');
+        if (response.ok) {
+          const realTimeData = await response.json();
           
-          let formattedValue = '';
-          if (metric.id === 'revenue') {
-            formattedValue = `$${newValue.toLocaleString()}`;
-          } else if (metric.id === 'conversion' || metric.id === 'performance') {
-            formattedValue = `${newValue.toFixed(1)}%`;
-          } else {
-            formattedValue = Math.round(newValue).toLocaleString();
-          }
+          setMetrics(prev => prev.map(metric => {
+            const backendValue = realTimeData[metric.id];
+            if (backendValue) {
+              let formattedValue = '';
+              if (metric.id === 'revenue') {
+                formattedValue = `$${backendValue.value.toLocaleString()}`;
+              } else if (metric.id === 'conversion' || metric.id === 'performance') {
+                formattedValue = `${backendValue.value.toFixed(1)}%`;
+              } else {
+                formattedValue = Math.round(backendValue.value).toLocaleString();
+              }
 
-          return {
-            ...metric,
-            value: formattedValue,
-            trend: variation > 0 ? 'up' : variation < 0 ? 'down' : 'neutral'
-          };
+              return {
+                ...metric,
+                value: formattedValue,
+                change: backendValue.change,
+                trend: backendValue.trend
+              };
+            }
+            return metric;
+          }));
         }
-        return metric;
-      }));
-    }, 5000);
+      } catch (error) {
+        console.error('Failed to fetch real-time metrics:', error);
+      }
+    };
+
+    const interval = setInterval(fetchRealTimeMetrics, 5000);
+    fetchRealTimeMetrics(); // Initial fetch
 
     return () => clearInterval(interval);
   }, []);

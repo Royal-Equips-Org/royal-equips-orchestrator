@@ -7,10 +7,10 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
 import { apiClient } from '../../services/api-client';
 
 interface ConsciousnessState {

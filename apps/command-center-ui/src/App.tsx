@@ -1,4 +1,4 @@
-import { useEffect, Suspense, lazy } from 'react'
+import { useEffect, Suspense, lazy, useState } from 'react'
 import EmpireDashboard from './components/empire/EmpireDashboard'
 import ShopifyDashboard from './components/shopify/ShopifyDashboard'  
 import NavigationBar from './components/navigation/NavigationBar'
@@ -9,6 +9,7 @@ import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import MobileShell from './components/layout/MobileShell'
 import TopBar from './components/layout/TopBar'
 import ModuleScroller from './modules/_shared/components/ModuleScroller'
+
 import './styles/globals.css'
 import { useEmpireStore } from './store/empire-store'
 
@@ -30,6 +31,7 @@ function AppContent() {
   const { toasts, removeToast } = useToastContext();
   const { state } = useNavigation();
   const { optimizePerformance, metrics, recommendations } = usePerformanceOptimization();
+
 
   useEffect(() => {
     // Initialize empire systems and load all data
@@ -145,37 +147,39 @@ function AppContent() {
   };
 
   return (
-    <MobileShell>
-      {/* Mobile-first responsive navigation */}
-      <TopBar className="lg:hidden" />
-      
-      {/* Desktop navigation (hidden on mobile) */}
-      <div className="hidden lg:block">
-        <NavigationBar />
-      </div>
-      
-      {/* Module navigation scroller */}
-      <div className="
-        lg:hidden sticky top-16 z-30
-        bg-bg/80 backdrop-blur-md
-        border-b border-quantum-primary/20
-      ">
-        <ModuleScroller />
-      </div>
-      
-      {/* Main content area with responsive padding */}
-      <main className="
-        pt-16 lg:pt-32
-        min-h-screen
-      ">
-        <div className="px-4 sm:px-6 lg:px-8">
-          {renderCurrentModule()}
+
+      <MobileShell>
+        {/* Mobile-first responsive navigation */}
+        <TopBar className="lg:hidden" />
+        
+        {/* Desktop navigation (hidden on mobile) */}
+        <div className="hidden lg:block">
+          <NavigationBar />
         </div>
-      </main>
-      
-      {/* Toast notifications */}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
-    </MobileShell>
+        
+        {/* Module navigation scroller */}
+        <div className="
+          lg:hidden sticky top-16 z-30
+          bg-bg/80 backdrop-blur-md
+          border-b border-quantum-primary/20
+        ">
+          <ModuleScroller />
+        </div>
+        
+        {/* Main content area with responsive padding */}
+        <main className="
+          pt-16 lg:pt-32
+          min-h-screen
+        ">
+          <div className="px-4 sm:px-6 lg:px-8">
+            {renderCurrentModule()}
+          </div>
+        </main>
+        
+        {/* Toast notifications */}
+        <ToastContainer toasts={toasts} onClose={removeToast} />
+      </MobileShell>
+    </div>
   )
 }
 
