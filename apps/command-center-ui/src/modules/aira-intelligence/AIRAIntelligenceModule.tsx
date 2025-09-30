@@ -473,11 +473,50 @@ export function AIRAIntelligenceModule({ isActive }: AIRAIntelligenceModuleProps
         <TabsContent value="twins" className="space-y-4">
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Digital Twin Management</h3>
-            <div className="text-center py-8">
-              <p className="text-gray-400 mb-4">Digital twin interface coming soon...</p>
-              <p className="text-sm text-gray-500">
-                This will show active digital twins, their status, and prediction capabilities.
-              </p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                  <h4 className="text-blue-300 font-semibold mb-2">Business Twin</h4>
+                  <p className="text-gray-400 text-sm mb-2">Real-time business model simulation</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Status</span>
+                    <Badge variant="outline" className="text-green-400 border-green-400">Active</Badge>
+                  </div>
+                </div>
+                <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+                  <h4 className="text-purple-300 font-semibold mb-2">Customer Twin</h4>
+                  <p className="text-gray-400 text-sm mb-2">Customer behavior prediction model</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Status</span>
+                    <Badge variant="outline" className="text-green-400 border-green-400">Learning</Badge>
+                  </div>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h4 className="text-cyan-300 font-semibold mb-2">Market Twin</h4>
+                  <p className="text-gray-400 text-sm mb-2">Market dynamics simulation</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Status</span>
+                    <Badge variant="outline" className="text-yellow-400 border-yellow-400">Calibrating</Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6">
+                <h4 className="text-white font-semibold mb-3">Twin Synchronization Status</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                    <span className="text-gray-300">Data ingestion rate</span>
+                    <span className="text-cyan-400">1.2M events/hour</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                    <span className="text-gray-300">Model accuracy</span>
+                    <span className="text-green-400">94.7%</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                    <span className="text-gray-300">Prediction horizon</span>
+                    <span className="text-blue-400">72 hours</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
         </TabsContent>

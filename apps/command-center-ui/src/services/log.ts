@@ -30,8 +30,43 @@ class Logger {
       console[level === 'debug' ? 'log' : level](`[${level.toUpperCase()}] ${message}${contextStr}${errorStr}`);
     }
 
-    // In production, you might want to send to a logging service
-    // TODO: Implement remote logging service integration
+    // In production, send to remote logging service
+    if (import.meta.env.PROD && (level === 'warn' || level === 'error')) {
+      this.sendToRemoteLogger(entry).catch((err) => {
+        console.error('Failed to send log to remote service:', err);
+      });
+    }
+  }
+
+  private async sendToRemoteLogger(entry: LogEntry): Promise<void> {
+    try {
+      // Send to API endpoint for centralized logging
+      await fetch('/api/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(entry),
+      });
+    } catch (error) {
+      // Fallback to local storage if remote logging fails
+      this.storeLogLocally(entry);
+    }
+  }
+
+  private storeLogLocally(entry: LogEntry): void {
+    try {
+      const logs = JSON.parse(localStorage.getItem('royal-equips-logs') || '[]');
+      logs.push(entry);
+      // Keep only last 100 entries
+      if (logs.length > 100) {
+        logs.splice(0, logs.length - 100);
+      }
+      localStorage.setItem('royal-equips-logs', JSON.stringify(logs));
+    } catch (error) {
+      // If localStorage fails, there's nothing more we can reasonably do
+      console.error('Failed to store log locally:', error);
+    }
   }
 
   debug(message: string, context?: Record<string, any>) {

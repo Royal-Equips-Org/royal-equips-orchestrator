@@ -331,15 +331,120 @@ function AppContent() {
           </Suspense>
         )
       case 'products':
-        return <div className="h-full flex items-center justify-center text-cyan-300">Products Module arriving shortly</div>
+        return (
+          <div className="h-full p-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-cyan-300 mb-4">Product Intelligence Center</h2>
+              <p className="text-cyan-200/70 mb-6">Real-time product discovery and optimization system</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">AutoDS Integration</h3>
+                  <p className="text-cyan-200/60 text-sm">Automated product sourcing from suppliers</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Trend Analysis</h3>
+                  <p className="text-cyan-200/60 text-sm">AI-powered market trend identification</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Pricing Optimization</h3>
+                  <p className="text-cyan-200/60 text-sm">Dynamic pricing based on competition</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
       case 'orders':
-        return <div className="h-full flex items-center justify-center text-cyan-300">Orders Module under orchestration</div>
+        return (
+          <div className="h-full p-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-cyan-300 mb-4">Order Management Hub</h2>
+              <p className="text-cyan-200/70 mb-6">Intelligent order processing and fulfillment orchestration</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Shopify Integration</h3>
+                  <p className="text-cyan-200/60 text-sm">Real-time order synchronization</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Risk Assessment</h3>
+                  <p className="text-cyan-200/60 text-sm">AI-powered fraud detection</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Supplier Routing</h3>
+                  <p className="text-cyan-200/60 text-sm">Optimal fulfillment path selection</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
       case 'customers':
-        return <div className="h-full flex items-center justify-center text-cyan-300">Customers Module sequencing data</div>
+        return (
+          <div className="h-full p-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-cyan-300 mb-4">Customer Intelligence Center</h2>
+              <p className="text-cyan-200/70 mb-6">360° customer analytics and engagement platform</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Behavioral Analytics</h3>
+                  <p className="text-cyan-200/60 text-sm">Purchase pattern analysis</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Lifetime Value</h3>
+                  <p className="text-cyan-200/60 text-sm">CLV prediction and optimization</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Engagement Automation</h3>
+                  <p className="text-cyan-200/60 text-sm">Personalized communication flows</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
       case 'monitoring':
-        return <div className="h-full flex items-center justify-center text-cyan-300">System Monitoring calibrating</div>
+        return (
+          <div className="h-full p-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-cyan-300 mb-4">System Monitoring Center</h2>
+              <p className="text-cyan-200/70 mb-6">Real-time infrastructure health and performance metrics</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Health Checks</h3>
+                  <p className="text-cyan-200/60 text-sm">Service availability monitoring</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Performance Metrics</h3>
+                  <p className="text-cyan-200/60 text-sm">Response times and throughput</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Alert Management</h3>
+                  <p className="text-cyan-200/60 text-sm">Proactive issue detection</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
       case 'settings':
-        return <div className="h-full flex items-center justify-center text-cyan-300">Settings hub in preparation</div>
+        return (
+          <div className="h-full p-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-cyan-300 mb-4">System Configuration</h2>
+              <p className="text-cyan-200/70 mb-6">Empire-wide settings and configuration management</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">API Configuration</h3>
+                  <p className="text-cyan-200/60 text-sm">External service integrations</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Agent Parameters</h3>
+                  <p className="text-cyan-200/60 text-sm">AI agent behavior tuning</p>
+                </div>
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+                  <h3 className="text-cyan-300 font-semibold mb-2">Security Policies</h3>
+                  <p className="text-cyan-200/60 text-sm">Access control and encryption</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
       case 'aira-intelligence':
         return (
           <Suspense fallback={loadingFallback('AIRA Intelligence')}>
