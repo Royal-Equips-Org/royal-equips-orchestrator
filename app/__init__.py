@@ -111,8 +111,7 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.aria', 'aria_bp', None),
         ('app.routes.docs', 'docs_bp', None),
         ('app.routes.auto_fix', 'auto_fix_bp', None),
-        ('app.routes.empire', 'empire_bp', None),  # Empire management endpoints
-        ('app.routes.empire_production', 'empire_bp', None),  # Production Empire API with real business logic
+        ('app.routes.empire_real', 'empire_bp', None),  # Real Empire API with business logic
         ('app.blueprints.shopify', 'shopify_bp', None),
         ('app.blueprints.github', 'github_bp', None),
         ('app.blueprints.ai_assistant', 'assistant_bp', None),

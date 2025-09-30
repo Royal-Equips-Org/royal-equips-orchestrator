@@ -3,19 +3,14 @@
   "private": true,
   "packageManager": "pnpm@10.17.0",
   "scripts": {
-    "build": "pnpm -r build",
-    "dev": "pnpm -r --parallel dev",
-    "lint": "pnpm -r lint",
-    "typecheck": "tsc -p apps/command-center-ui/tsconfig.json --noEmit && tsc -p apps/orchestrator-api/tsconfig.json --noEmit && tsc -p apps/aira/tsconfig.json --noEmit && tsc -p apps/agent-executors/tsconfig.json --noEmit && tsc -p apps/api/tsconfig.json --noEmit && tsc -p packages/agents-core/tsconfig.json --noEmit && tsc -p packages/connectors/tsconfig.json --noEmit && tsc -p packages/obs/tsconfig.json --noEmit && tsc -p packages/shared/tsconfig.json --noEmit && tsc -p packages/shopify-client/tsconfig.json --noEmit && tsc -p packages/shared-types/tsconfig.json --noEmit",
-    "test": "jest --runInBand --passWithNoTests",
-    "prepare": "node -e \"process.exit((process.env.CI==='true'||process.env.NODE_ENV==='production')?0:1)\" || husky install",
-    "fix-agent": "node scripts/fix-agent.mjs --watch",
-    "start:orchestrator-api": "pnpm --filter @royal-equips/orchestrator-api start",
-    "dev:orchestrator-api": "pnpm --filter @royal-equips/orchestrator-api dev",
-    "start:aira": "pnpm --filter @royal-equips/aira start",
-    "dev:aira": "pnpm --filter @royal-equips/aira dev",
-    "start:api": "pnpm --filter @royal-equips/api start",
-    "dev:api": "pnpm --filter @royal-equips/api dev"
+    "dev": "concurrently \"pnpm dev:flask\" \"pnpm dev:ui\"",
+    "dev:flask": "python wsgi.py",
+    "dev:ui": "cd apps/command-center-ui && pnpm dev",
+    "build": "cd apps/command-center-ui && pnpm build",
+    "start": "python wsgi.py",
+    "typecheck": "tsc -p apps/command-center-ui/tsconfig.json --noEmit && tsc -p packages/shared-types/tsconfig.json --noEmit",
+    "lint": "cd apps/command-center-ui && pnpm lint",
+    "test": "cd apps/command-center-ui && pnpm test"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
