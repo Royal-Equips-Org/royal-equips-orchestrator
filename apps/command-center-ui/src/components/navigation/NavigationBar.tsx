@@ -129,11 +129,8 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={goBack}
-                disabled={!canGoBack}
-                className={`p-1 rounded ${canGoBack 
-                  ? 'text-white hover:text-hologram hover:bg-white/10' 
-                  : 'text-gray-600 cursor-not-allowed'}`}
+                onClick={() => navigate(-1)}
+                className="p-1 rounded text-white hover:text-hologram hover:bg-white/10"
               >
                 <ChevronLeft className="w-4 h-4" />
               </motion.button>
@@ -141,11 +138,8 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={goForward}
-                disabled={!canGoForward}
-                className={`p-1 rounded ${canGoForward 
-                  ? 'text-white hover:text-hologram hover:bg-white/10' 
-                  : 'text-gray-600 cursor-not-allowed'}`}
+                onClick={() => navigate(1)}
+                className="p-1 rounded text-white hover:text-hologram hover:bg-white/10"
               >
                 <ChevronRight className="w-4 h-4" />
               </motion.button>
@@ -203,7 +197,7 @@ export default function NavigationBar({ className = '' }: NavigationBarProps) {
               const module = getModuleById(moduleId);
               if (!module) return null;
               
-              const isActive = state.currentModule === moduleId;
+              const isActive = currentModule === moduleId;
               const isFavorite = favorites.includes(moduleId);
               
               return (
