@@ -23,7 +23,7 @@ import { apiClient } from '../services/api-client';
 // Lazy load enterprise modules for optimal performance
 const SettingsModule = lazy(() => import('../modules/settings/SettingsModule'));
 const AuditComplianceModule = lazy(() => import('../modules/audit/AuditComplianceModule'));
-const EnhancedAnalyticsModule = lazy(() => import('../modules/analytics/EnhancedAnalyticsModule'));
+const AnalyticsModule = lazy(() => import('../modules/analytics/AnalyticsModule'));
 const AIRAIntelligenceModule = lazy(() => import('../modules/aira/AIRAIntelligenceModule'));
 const AgentsModule = lazy(() => import('../modules/agents/AgentsModule'));
 const RevenueModule = lazy(() => import('../modules/revenue/RevenueModule'));
@@ -200,7 +200,7 @@ export default function EnterpriseApp() {
 
     switch (appState.currentModule) {
       case 'enhanced-analytics':
-        return <EnhancedAnalyticsModule {...moduleProps} />;
+        return <AnalyticsModule {...moduleProps} />;
       case 'enterprise-settings':
         return <SettingsModule {...moduleProps} />;
       case 'audit-compliance':
