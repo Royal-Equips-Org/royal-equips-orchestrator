@@ -1,12 +1,21 @@
 name: 🛍️ Shopify Integration
 
 on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'packages/shopify-client/**'
+      - 'packages/connectors/**'
+      - 'apps/api/src/v1/shopify.ts'
   push:
     branches: [main, master]
     paths:
       - 'packages/shopify-client/**'
       - 'packages/connectors/**'
       - 'apps/api/src/v1/shopify.ts'
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
   schedule:
     - cron: '0 */6 * * *' # Every 6 hours for sync validation
   workflow_dispatch:

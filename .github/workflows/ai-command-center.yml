@@ -1,6 +1,11 @@
 name: 🧠 AI Command Center
 
 on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'apps/command-center-ui/**'
+      - 'apps/aira/**'
   push:
     branches: [main, master]
     paths:

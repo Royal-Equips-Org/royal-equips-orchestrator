@@ -8,6 +8,11 @@ on:
       - 'packages/**'
       - 'workers/**'
       - 'edge-functions/**'
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '**/test/**'
+      - '**/tests/**'
   workflow_dispatch:
     inputs:
       environment:

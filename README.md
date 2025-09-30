@@ -210,13 +210,47 @@ The platform is designed for exponential growth:
 4. **Inventory Management**: Real-time sync across multiple suppliers and channels
 5. **Performance Optimization**: ML-driven pricing and demand forecasting
 
+## 🚀 Development Workflow
+
+### Quick Development (No Checks)
+```bash
+# Load helpful git aliases (optional)
+source scripts/git-aliases.sh
+
+# Quick commit without lint checks
+SKIP_LINT=1 git commit -m "quick fix"
+# Or use alias: gc-fast -m "quick fix"
+
+# Quick push without type/test checks  
+SKIP_CHECKS=1 git push
+# Or use alias: gp-fast
+
+# Super quick commit + push
+SKIP_LINT=1 git commit -am "quick fix" && SKIP_CHECKS=1 git push
+# Or use alias: gcp-fast
+```
+
+### Normal Development (With Checks)
+```bash
+# Normal development workflow with quality checks
+git commit -m "Add feature"
+git push
+```
+
+### Available Skip Flags
+- `SKIP_LINT=1` - Skip eslint in pre-commit hook
+- `SKIP_CHECKS=1` - Skip typecheck and tests in pre-push hook  
+- `SKIP_HUSKY=1` - Skip all husky hooks
+- `CI=1` - Skip hooks (automatically set in CI)
+
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+3. Make changes using the quick workflow above for faster iteration
+4. When ready, ensure code quality: `pnpm lint && pnpm typecheck && pnpm test`
+5. Push to branch: `git push origin feature/amazing-feature`
+6. Open a Pull Request (CI will run full checks)
 
 ## 📜 License
 
