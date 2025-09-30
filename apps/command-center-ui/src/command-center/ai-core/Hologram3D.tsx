@@ -3,6 +3,61 @@ import { Canvas, extend, useFrame } from '@react-three/fiber'
 import { Float, OrbitControls, Stars, Line, Text, Html, Sphere, shaderMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 
+// Types for component props
+interface HologramCoreProps {
+  intensity: number
+  colorTone: string
+  voiceLevel: number
+}
+
+interface EnergyRingProps {
+  radius: number
+  rotation: [number, number, number]
+  color: string
+  speed?: number
+}
+
+interface DataPulseProps {
+  position: [number, number, number]
+  color: string
+  size: number
+  speed: number
+}
+
+interface DataOrbitProps {
+  points: number[][]
+  color: string
+}
+
+interface NeonGridProps {
+  size?: number
+  divisions?: number
+  color?: string
+}
+
+interface Hologram3DProps {
+  metrics?: {
+    revenue_progress?: number
+    profit_margin_avg?: number
+    total_agents?: number
+  }
+  agents?: Array<any>
+  opportunities?: Array<any>
+  liveIntensity?: {
+    energyLevel?: number
+    colorTone?: string
+    voiceActivity?: {
+      volume?: number
+    }
+    commandRate?: number
+    wsStatus?: {
+      connected?: boolean
+    }
+    supabaseStatus?: string
+  }
+  dataStreams?: any
+}
+
 const CoreMaterial = shaderMaterial(
   {
     uTime: 0,
@@ -33,8 +88,8 @@ const CoreMaterial = shaderMaterial(
 )
 extend({ CoreMaterial })
 
-function HologramCore({ intensity, colorTone, voiceLevel }) {
-  const material = useRef()
+function HologramCore({ intensity, colorTone, voiceLevel }: HologramCoreProps) {
+  const material = useRef<any>()
   useFrame((state) => {
     const { clock } = state
     const hueColor = new THREE.Color(colorTone)
@@ -49,6 +104,7 @@ function HologramCore({ intensity, colorTone, voiceLevel }) {
     <group>
       <mesh>
         <sphereGeometry args={[1.6, 96, 96]} />
+        {/* @ts-ignore - Three.js extended material */}
         <coreMaterial ref={material} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
       <mesh>
@@ -65,13 +121,15 @@ function HologramCore({ intensity, colorTone, voiceLevel }) {
   )
 }
 
-function EnergyRing({ radius, rotation, color, speed = 1 }) {
-  const ring = useRef()
+function EnergyRing({ radius, rotation, color, speed = 1 }: EnergyRingProps) {
+  const ring = useRef<THREE.Group>(null)
   useFrame((state) => {
-    ring.current.rotation.y += 0.0015 * speed
-    ring.current.rotation.x = rotation[0]
-    ring.current.rotation.z = rotation[2]
-    ring.current.position.y = Math.sin(state.clock.elapsedTime * 0.8 * speed) * 0.12
+    if (ring.current) {
+      ring.current.rotation.y += 0.0015 * speed
+      ring.current.rotation.x = rotation[0]
+      ring.current.rotation.z = rotation[2]
+      ring.current.position.y = Math.sin(state.clock.elapsedTime * 0.8 * speed) * 0.12
+    }
   })
   return (
     <group ref={ring}>
@@ -99,11 +157,13 @@ function EnergyRing({ radius, rotation, color, speed = 1 }) {
   )
 }
 
-function DataPulse({ position, color, size, speed }) {
-  const mesh = useRef()
+function DataPulse({ position, color, size, speed }: DataPulseProps) {
+  const mesh = useRef<THREE.Mesh>(null)
   useFrame((state) => {
-    mesh.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * speed) * 0.35
-    mesh.current.rotation.y += 0.01 * speed
+    if (mesh.current) {
+      mesh.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * speed) * 0.35
+      mesh.current.rotation.y += 0.01 * speed
+    }
   })
   return (
     <Float speed={speed * 0.6} rotationIntensity={0.6} floatIntensity={0.8}>
@@ -122,7 +182,7 @@ function DataPulse({ position, color, size, speed }) {
   )
 }
 
-function DataOrbit({ points, color }) {
+function DataOrbit({ points, color }: DataOrbitProps) {
   const positions = useMemo(() => points.map(point => new THREE.Vector3(...point)), [points])
   return (
     <Line
@@ -138,8 +198,8 @@ function DataOrbit({ points, color }) {
   )
 }
 
-function NeonGrid({ size = 18, divisions = 40, color = '#0ff1ff' }) {
-  const lines = []
+function NeonGrid({ size = 18, divisions = 40, color = '#0ff1ff' }: NeonGridProps) {
+  const lines: number[][][] = []
   const halfSize = size / 2
   for (let i = 0; i <= divisions; i += 1) {
     const offset = (i / divisions) * size - halfSize
@@ -161,7 +221,7 @@ function NeonGrid({ size = 18, divisions = 40, color = '#0ff1ff' }) {
   )
 }
 
-const Hologram3D = memo(function Hologram3D({ metrics, agents, opportunities, liveIntensity, dataStreams }) {
+const Hologram3D = memo(function Hologram3D({ metrics, agents, opportunities, liveIntensity, dataStreams }: Hologram3DProps) {
   const energy = liveIntensity?.energyLevel ?? 0.5
   const colorTone = liveIntensity?.colorTone ?? '#0ff1ff'
   const voiceLevel = liveIntensity?.voiceActivity?.volume ?? 0
@@ -170,7 +230,7 @@ const Hologram3D = memo(function Hologram3D({ metrics, agents, opportunities, li
   const supabaseStatus = liveIntensity?.supabaseStatus ?? 'disabled'
 
   const orbitPoints = useMemo(() => {
-    const base = []
+    const base: number[][] = []
     const radius = 4.5
     const steps = 180
     for (let i = 0; i < steps; i += 1) {
@@ -187,21 +247,21 @@ const Hologram3D = memo(function Hologram3D({ metrics, agents, opportunities, li
         label: 'Revenue velocity',
         value: metrics?.revenue_progress ? `€${metrics.revenue_progress.toLocaleString()}` : 'Loading…',
         delta: metrics?.profit_margin_avg ? `${metrics.profit_margin_avg.toFixed(1)}% margin` : 'Calibrating',
-        position: [-5.8, 2.4, -1.8],
+        position: [-5.8, 2.4, -1.8] as [number, number, number],
         color: '#0ff1ff',
       },
       {
         label: 'Active agents',
         value: agents ? `${agents.length}/${metrics?.total_agents ?? 0}` : '0',
         delta: commandRate ? `${commandRate} cmds/min` : 'Tracking',
-        position: [5.6, 2.0, 1.6],
+        position: [5.6, 2.0, 1.6] as [number, number, number],
         color: '#6f8cff',
       },
       {
         label: 'Opportunities pipeline',
         value: opportunities ? `${opportunities.length}` : '0',
         delta: `${Math.round(energy * 100)}% orchestration`,
-        position: [-4.2, -1.8, 3.4],
+        position: [-4.2, -1.8, 3.4] as [number, number, number],
         color: '#31ffc5',
       }
     ]
@@ -209,10 +269,10 @@ const Hologram3D = memo(function Hologram3D({ metrics, agents, opportunities, li
 
   const pulses = useMemo(() => (
     [
-      { position: [3.6, 1.6, -2.8], color: '#63f6ff', size: 0.45, speed: 1.4 },
-      { position: [-3.2, -1.2, 3.2], color: '#2bd1ff', size: 0.38, speed: 1.1 },
-      { position: [0.2, 2.8, 2.6], color: '#00f4ff', size: 0.3, speed: 1.8 },
-      { position: [-2.4, 2.2, -3.6], color: '#24ffb8', size: 0.42, speed: 1.3 },
+      { position: [3.6, 1.6, -2.8] as [number, number, number], color: '#63f6ff', size: 0.45, speed: 1.4 },
+      { position: [-3.2, -1.2, 3.2] as [number, number, number], color: '#2bd1ff', size: 0.38, speed: 1.1 },
+      { position: [0.2, 2.8, 2.6] as [number, number, number], color: '#00f4ff', size: 0.3, speed: 1.8 },
+      { position: [-2.4, 2.2, -3.6] as [number, number, number], color: '#24ffb8', size: 0.42, speed: 1.3 },
     ]
   ), [])
 
