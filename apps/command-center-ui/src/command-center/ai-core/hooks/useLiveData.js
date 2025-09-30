@@ -145,7 +145,7 @@ export function useLiveData() {
     const opportunityUnsubscribe = service.subscribe('product-opportunities', payload => {
       if (!payload) return
       try {
-        useEmpireStore.setState({ productOpportunities: payload })
+        useEmpireStore.updateProductOpportunities(payload)
       } catch (error) {
         logger.error('Failed to sync product opportunities stream', { error })
       }
