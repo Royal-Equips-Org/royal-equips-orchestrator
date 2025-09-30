@@ -113,7 +113,6 @@ def get_shopify_status():
         return jsonify({
             "configured": False,
             "error": "Internal server error",
-            "message": str(e),
             "timestamp": datetime.now().isoformat()
         }), 500
 
@@ -200,8 +199,7 @@ def sync_products():
     except Exception as e:
         logger.error(f"Error starting product sync: {e}")
         return jsonify({
-            "error": "Failed to start product sync",
-            "message": str(e)
+            "error": "Failed to start product sync"
         }), 500
 
 
@@ -264,8 +262,7 @@ def sync_inventory():
     except Exception as e:
         logger.error(f"Error starting inventory sync: {e}")
         return jsonify({
-            "error": "Failed to start inventory sync",
-            "message": str(e)
+            "error": "Failed to start inventory sync"
         }), 500
 
 
@@ -340,8 +337,7 @@ def sync_orders():
     except Exception as e:
         logger.error(f"Error starting order sync: {e}")
         return jsonify({
-            "error": "Failed to start order sync",
-            "message": str(e)
+            "error": "Failed to start order sync"
         }), 500
 
 
@@ -418,8 +414,7 @@ def bulk_operation():
     except Exception as e:
         logger.error(f"Error starting bulk operation: {e}")
         return jsonify({
-            "error": "Failed to start bulk operation",
-            "message": str(e)
+            "error": "Failed to start bulk operation"
         }), 500
 
 
@@ -455,8 +450,7 @@ def get_jobs():
     except Exception as e:
         logger.error(f"Error getting jobs: {e}")
         return jsonify({
-            "error": "Failed to get jobs",
-            "message": str(e)
+            "error": "Failed to get jobs"
         }), 500
 
 
@@ -491,10 +485,9 @@ def get_job(job_id: str):
         return jsonify(job_status), 200
 
     except Exception as e:
-        logger.error(f"Error getting job {job_id}: {e}")
+        logger.error(f"Error getting job {job_id.replace('\n', '').replace('\r', '')[:50]}: {e}")
         return jsonify({
-            "error": "Failed to get job status",
-            "message": str(e)
+            "error": "Failed to get job status"
         }), 500
 
 
@@ -931,7 +924,9 @@ def handle_webhook(topic: str):
 
         # Verify HMAC signature
         if not verify_shopify_webhook(payload, hmac_signature):
-            logger.warning(f"Invalid HMAC signature for webhook {topic} from {shop_domain}")
+            safe_topic = topic.replace('\n', '').replace('\r', '')[:50]
+            safe_shop_domain = shop_domain.replace('\n', '').replace('\r', '')[:100]
+            logger.warning(f"Invalid HMAC signature for webhook {safe_topic} from {safe_shop_domain}")
             return jsonify({
                 "error": "Invalid HMAC signature",
                 "message": "Webhook verification failed"
@@ -966,7 +961,9 @@ def handle_webhook(topic: str):
         except:
             pass
 
-        logger.info(f"Processed webhook {topic} from {shop_domain}")
+        safe_topic = topic.replace('\n', '').replace('\r', '')[:50]
+        safe_shop_domain = shop_domain.replace('\n', '').replace('\r', '')[:100]
+        logger.info(f"Processed webhook {safe_topic} from {safe_shop_domain}")
 
         return jsonify({
             "status": "received",
@@ -977,10 +974,10 @@ def handle_webhook(topic: str):
         }), 202
 
     except Exception as e:
-        logger.error(f"Error processing webhook {topic}: {e}")
+        safe_topic = topic.replace('\n', '').replace('\r', '')[:50]
+        logger.error(f"Error processing webhook {safe_topic}: {e}")
         return jsonify({
-            "error": "Failed to process webhook",
-            "message": str(e)
+            "error": "Failed to process webhook"
         }), 500
 
 
@@ -1055,8 +1052,10 @@ def get_shopify_metrics():
         }), 200
         
     except Exception as e:
-        logger.error(f"Failed to get Shopify metrics: {e}")
-        return jsonify({"error": "Failed to get metrics", "message": str(e)}), 500
+        # Sanitize agent_id for logging to prevent log injection
+        safe_error = str(e)[:100]  # Limit error message length
+        logger.error(f"Failed to get Shopify metrics: {safe_error}")
+        return jsonify({"error": "Failed to get metrics"}), 500
 
 
 @shopify_bp.route("/sync", methods=["POST"])

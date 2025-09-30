@@ -546,8 +546,9 @@ def get_shopify_agents():
         }), 200
         
     except Exception as e:
-        logger.error(f"Failed to get Shopify agents: {e}")
-        return jsonify({"error": "Failed to get Shopify agents", "message": str(e)}), 500
+        safe_error = str(e)[:100]  # Limit error message length
+        logger.error(f"Failed to get Shopify agents: {safe_error}")
+        return jsonify({"error": "Failed to get Shopify agents"}), 500
 
 
 @agents_bp.route("/shopify/<agent_id>/toggle", methods=["POST"])
@@ -592,8 +593,11 @@ def toggle_shopify_agent(agent_id: str):
         }), 200
         
     except Exception as e:
-        logger.error(f"Failed to toggle Shopify agent {agent_id}: {e}")
-        return jsonify({"error": "Failed to toggle agent", "message": str(e)}), 500
+        # Sanitize agent_id for logging to prevent log injection
+        safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+        safe_error = str(e)[:100]
+        logger.error(f"Failed to toggle Shopify agent {safe_agent_id}: {safe_error}")
+        return jsonify({"error": "Failed to toggle agent"}), 500
 
 
 @agents_bp.route("/shopify/<agent_id>/status", methods=["GET"])
@@ -620,5 +624,8 @@ def get_shopify_agent_status(agent_id: str):
         }), 200
         
     except Exception as e:
-        logger.error(f"Failed to get Shopify agent status for {agent_id}: {e}")
+        # Sanitize agent_id for logging to prevent log injection
+        safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+        safe_error = str(e)[:100]
+        logger.error(f"Failed to get Shopify agent status for {safe_agent_id}: {safe_error}")
         return jsonify({"error": "Failed to get agent status"}), 500
