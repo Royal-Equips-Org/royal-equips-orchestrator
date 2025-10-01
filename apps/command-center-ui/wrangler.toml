@@ -1,0 +1,15 @@
+name = "royal-equips-command-center"
+compatibility_date = "2024-12-01"
+pages_build_output_dir = "dist"
+
+[build]
+command = "npm install && npm run build"
+
+[[pages.functions]]
+directory = "functions"
+  
+[env.production]
+account_id = "your-account-id"
+
+[env.preview]
+account_id = "your-account-id"
