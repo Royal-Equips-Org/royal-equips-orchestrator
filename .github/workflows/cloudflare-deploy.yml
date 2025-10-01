@@ -54,7 +54,9 @@ jobs:
       - name: 🏗️ Install & Build
         run: |
           pnpm install --frozen-lockfile --ignore-scripts
-          pnpm --filter "@royal-equips/*" build
+          pnpm --filter "@royal-equips/command-center-ui" build
+          # Verify functions are included in build
+          ls -la apps/command-center-ui/dist/functions/api/webhooks/
         env:
           HUSKY: 0
 
