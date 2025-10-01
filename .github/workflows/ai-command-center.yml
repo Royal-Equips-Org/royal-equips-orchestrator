@@ -229,7 +229,7 @@ jobs:
             echo "⚠️ Secrets detected! See gitleaks-report.json for details"
             if [ -f gitleaks-report.json ]; then
               echo "📊 Secret scan results:"
-              cat gitleaks-report.json | jq -r '.[] | "  ❌ \(.File):\(.StartLine) - \(.Description)"' || cat gitleaks-report.json
+              jq -r '.[] | "  ❌ \(.File):\(.StartLine) - \(.Description)"' gitleaks-report.json || cat gitleaks-report.json
             fi
             exit 1
           }
