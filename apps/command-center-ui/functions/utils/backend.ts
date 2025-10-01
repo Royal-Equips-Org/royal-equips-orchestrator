@@ -51,8 +51,8 @@ export class BackendForwarder {
       failed,
     });
 
-    // Return success even if some endpoints failed (fire-and-forget pattern)
-    return true; // Always return success to avoid blocking webhook responses
+    // Return true if at least one endpoint succeeded, false if all failed
+    return successful > 0;
   }
 
   /**
