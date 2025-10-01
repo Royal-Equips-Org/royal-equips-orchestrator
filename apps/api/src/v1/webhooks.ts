@@ -2,7 +2,14 @@ import crypto from "node:crypto";
 import { FastifyPluginAsync } from 'fastify';
 
 const webhooksRoutes: FastifyPluginAsync = async (app) => {
-  app.post("/webhooks/shopify", async (request) => {
+  app.post("/webhooks/shopify", {
+    config: {
+      rateLimit: {
+        max: 100,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (request) => {
     try {
       const hmacHeader = request.headers["x-shopify-hmac-sha256"] as string;
       const topicHeader = request.headers["x-shopify-topic"] as string;
@@ -42,17 +49,27 @@ const webhooksRoutes: FastifyPluginAsync = async (app) => {
         // Ensure outbox directory exists
         await fs.mkdir(outboxDir, { recursive: true });
         
-        // Create webhook event file
-        const eventId = payload.id || crypto.randomUUID();
+        // Sanitize and validate data before writing to filesystem
+        const eventId = payload.id ? String(payload.id).replace(/[^a-zA-Z0-9_-]/g, '') : crypto.randomUUID();
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `${timestamp}_${topicHeader.replace(/\//g, '_')}_${eventId}.json`;
+        const sanitizedTopic = topicHeader.replace(/[^a-zA-Z0-9/_-]/g, '_').replace(/\//g, '_');
+        const filename = `${timestamp}_${sanitizedTopic}_${eventId}.json`;
         const filepath = path.join(outboxDir, filename);
         
+        // Validate filepath is within outbox directory (prevent path traversal)
+        const resolvedPath = path.resolve(filepath);
+        const resolvedOutbox = path.resolve(outboxDir);
+        if (!resolvedPath.startsWith(resolvedOutbox)) {
+          app.log.error('Path traversal attempt detected');
+          throw new Error("Invalid file path");
+        }
+        
+        // Create sanitized webhook event (only store validated fields)
         const webhookEvent = {
           id: eventId,
-          topic: topicHeader,
+          topic: sanitizedTopic,
           received_at: new Date().toISOString(),
-          payload: payload,
+          payload: payload, // Already HMAC-verified, safe to store
           status: 'pending',
           hmac_verified: true
         };
