@@ -32,7 +32,7 @@ def get_all_agents():
         return jsonify(registry.to_dict()), 200
     except Exception as e:
         logger.error(f"Error fetching agents: {e}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error has occurred.'}), 500
 
 
 @agent_orchestration_bp.route('/api/orchestration/agents/<agent_id>', methods=['GET'])
@@ -73,7 +73,7 @@ def get_agent_details(agent_id: str):
         }), 200
     except Exception as e:
         logger.error(f"Error fetching agent {agent_id}: {e}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error has occurred.'}), 500
 
 
 @agent_orchestration_bp.route('/api/orchestration/agents/by-capability/<capability>', methods=['GET'])
@@ -109,7 +109,7 @@ def get_agents_by_capability(capability: str):
         }), 200
     except Exception as e:
         logger.error(f"Error fetching agents by capability: {e}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error has occurred.'}), 500
 
 
 @agent_orchestration_bp.route('/api/orchestration/stats', methods=['GET'])
