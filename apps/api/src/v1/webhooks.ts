@@ -62,8 +62,8 @@ const webhooksRoutes: FastifyPluginAsync = async (app) => {
         app.log.info(`Stored Shopify webhook: ${topicHeader} for ${eventId} at ${filepath}`);
       } catch (storageError) {
         app.log.error(`Failed to store webhook in outbox: ${storageError}`);
-        // Don't fail the webhook response - we've already verified it
-        // The event is lost but we acknowledge receipt to Shopify
+        // Fail the webhook response so Shopify will retry delivery
+        throw new Error("Failed to persist webhook event");
       }
       
       app.log.info(`Processed Shopify webhook: ${topicHeader} for ${payload.id}`);
