@@ -99,7 +99,7 @@ export async function verifyShopifySignature(
 
     // Convert ArrayBuffer to base64
     const bytes = new Uint8Array(mac);
-    const computedSignature = btoa(String.fromCharCode.apply(null, Array.from(bytes)));
+    const computedSignature = btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''));
 
     return timingSafeEqual(
       new TextEncoder().encode(computedSignature),
