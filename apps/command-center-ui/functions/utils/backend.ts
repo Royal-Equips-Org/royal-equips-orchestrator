@@ -119,12 +119,13 @@ export class BackendForwarder {
       }
     }
 
-    // Don't throw - log failure but don't block webhook response
+    // All retry attempts failed: log and throw to propagate error
     this.logger.error('All retry attempts failed for endpoint', {
       endpoint,
       event_id: event.id,
       error: lastError?.message || 'Unknown error',
     });
+    throw lastError ?? new Error('Unknown error forwarding event');
   }
 
   /**
