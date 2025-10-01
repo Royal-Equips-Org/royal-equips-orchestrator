@@ -9,7 +9,7 @@ command = "npm install && npm run build"
 directory = "functions"
   
 [env.production]
-account_id = "your-account-id"
+account_id = "${CF_ACCOUNT_ID}"
 
 [env.preview]
-account_id = "your-account-id"
+account_id = "${CF_ACCOUNT_ID}"
