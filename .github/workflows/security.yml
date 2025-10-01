@@ -46,9 +46,15 @@ jobs:
 
       - name: 🔍 Secret Scan (using CLI)
         run: |
-          # Install gitleaks CLI directly (no third-party action needed)
-          wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz
-          tar -xzf gitleaks_8.18.2_linux_x64.tar.gz
+          # Install gitleaks CLI directly (no third-party action needed) with checksum verification
+          GITLEAKS_VERSION=8.18.2
+          GITLEAKS_TAR="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          GITLEAKS_CHECKSUMS="gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          wget -q "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${GITLEAKS_TAR}"
+          wget -q "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${GITLEAKS_CHECKSUMS}"
+          grep "${GITLEAKS_TAR}" "${GITLEAKS_CHECKSUMS}" > gitleaks_checksum.txt
+          sha256sum -c gitleaks_checksum.txt
+          tar -xzf "${GITLEAKS_TAR}"
           chmod +x gitleaks
           ./gitleaks detect --source . --report-path gitleaks-report.json --report-format json --exit-code 0
           if [ -f gitleaks-report.json ]; then
