@@ -88,13 +88,17 @@ export class ProductResearchAgent extends BaseAgent {
     const startTime = Date.now();
     
     try {
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'dry_run_started',
+        planId: plan.id,
+        agentId: this.config.id
+      }, 'Starting product research dry run');
       
-      // Simulate finding trending products
-      const mockProducts = await this.simulateTrendingProducts(plan.parameters);
+      // Find trending products using real APIs
+      const trendingProducts = await this.findTrendingProducts(plan.parameters);
       
       // Validate products meet criteria
-      const validProducts = this.validateProductCriteria(mockProducts, plan.parameters);
+      const validProducts = this.validateProductCriteria(trendingProducts, plan.parameters);
       
       return {
         planId: plan.id,
@@ -114,7 +118,12 @@ export class ProductResearchAgent extends BaseAgent {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.log("TODO: logging");
+      this.logger.error({
+        event: 'dry_run_failed',
+        planId: plan.id,
+        error: error instanceof Error ? error.message : String(error)
+      }, 'Dry run execution failed');
+      
       return {
         planId: plan.id,
         status: 'error',
@@ -136,15 +145,28 @@ export class ProductResearchAgent extends BaseAgent {
     const createdProducts = [];
     
     try {
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'apply_started',
+        planId: plan.id,
+        agentId: this.config.id
+      }, 'Starting product research execution');
       
       // Step 1: Research trending products
       const trendingProducts = await this.findTrendingProducts(plan.parameters);
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'products_found',
+        count: trendingProducts.length,
+        planId: plan.id
+      }, `Found ${trendingProducts.length} trending products`);
       
       // Step 2: Validate and filter products
       const validProducts = this.validateProductCriteria(trendingProducts, plan.parameters);
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'products_validated',
+        validCount: validProducts.length,
+        totalCount: trendingProducts.length,
+        planId: plan.id
+      }, `Validated ${validProducts.length} products out of ${trendingProducts.length}`);
       
       // Step 3: Create products in Shopify as drafts
       for (const product of validProducts) {
@@ -200,12 +222,30 @@ export class ProductResearchAgent extends BaseAgent {
       };
       
     } catch (error) {
-      console.log("TODO: logging");
+      this.logger.error({
+        event: 'execution_failed',
+        planId: plan.id,
+        error: error instanceof Error ? error.message : String(error),
+        partialResults: createdProducts.length
+      }, 'Product research execution failed');
       
       // Attempt to rollback created products
       if (createdProducts.length > 0) {
-        console.log("TODO: logging");
-        // Note: In a real implementation, we would delete the created products here
+        this.logger.warn({
+          event: 'rollback_needed',
+          planId: plan.id,
+          productsToRollback: createdProducts.length
+        }, 'Attempting to rollback partially created products');
+        
+        // Delete the created products from Shopify
+        for (const product of createdProducts) {
+          try {
+            await this.shopify.deleteProduct(product.shopifyId);
+            this.logger.info(`Rolled back product: ${product.title} (${product.shopifyId})`);
+          } catch (rollbackError) {
+            this.logger.error(`Failed to rollback product ${product.shopifyId}: ${rollbackError}`);
+          }
+        }
       }
       
       return {
@@ -231,30 +271,60 @@ export class ProductResearchAgent extends BaseAgent {
     const startTime = Date.now();
     
     try {
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'rollback_started',
+        planId: plan.id
+      }, 'Starting rollback for product research plan');
       
-      // In a real implementation, we would:
-      // 1. Get list of products created by this plan
-      // 2. Delete them from Shopify
-      // 3. Clean up any related data
+      // Get list of products created by this plan from metadata/storage
+      // In a production system, this would query a database or state store
+      const createdProductIds = plan.parameters.createdProductIds as string[] || [];
+      
+      let removedCount = 0;
+      let failedCount = 0;
+      
+      // Delete each product from Shopify
+      for (const productId of createdProductIds) {
+        try {
+          await this.shopify.deleteProduct(productId);
+          removedCount++;
+          this.logger.info(`Removed product ${productId} during rollback`);
+        } catch (error) {
+          failedCount++;
+          this.logger.error(`Failed to remove product ${productId}: ${error}`);
+        }
+      }
+      
+      this.logger.info({
+        event: 'rollback_completed',
+        planId: plan.id,
+        removedCount,
+        failedCount
+      }, `Rollback completed: ${removedCount} products removed, ${failedCount} failed`);
       
       return {
         planId: plan.id,
-        status: 'success',
+        status: failedCount === 0 ? 'success' : 'partial',
         results: {
           rollbackCompleted: true,
-          productsRemoved: 0 // Would be actual count
+          productsRemoved: removedCount,
+          productsFailed: failedCount
         },
         metrics: {
           duration: Date.now() - startTime,
-          resourcesUsed: 0,
-          apiCalls: 0,
-          dataProcessed: 0
+          resourcesUsed: removedCount,
+          apiCalls: createdProductIds.length,
+          dataProcessed: createdProductIds.length
         },
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.log("TODO: logging");
+      this.logger.error({
+        event: 'rollback_failed',
+        planId: plan.id,
+        error: error instanceof Error ? error.message : String(error)
+      }, 'Rollback failed');
+      
       return {
         planId: plan.id,
         status: 'error',
@@ -272,74 +342,94 @@ export class ProductResearchAgent extends BaseAgent {
   }
 
   private async findTrendingProducts(params: any): Promise<TrendingProduct[]> {
-    // In a real implementation, this would:
-    // 1. Call Google Trends API
-    // 2. Call AliExpress/AutoDS APIs
-    // 3. Use AI to analyze trends
-    // 4. Return actual trending products
+    this.logger.info({
+      event: 'finding_trending_products',
+      category: params.category,
+      maxProducts: params.maxProducts
+    }, 'Searching for trending products');
     
-    return this.simulateTrendingProducts(params);
-  }
-
-  private async simulateTrendingProducts(params: any): Promise<TrendingProduct[]> {
-    // Simulate trending products for demonstration
-    const mockProducts: TrendingProduct[] = [
-      {
-        title: "Smart Fitness Tracker Pro",
-        description: "Advanced fitness tracking with heart rate monitoring and GPS",
-        estimatedPrice: 89.99,
-        supplierPrice: 35.00,
-        margin: 61.1,
-        category: "Electronics",
-        tags: ["fitness", "health", "wearable", "smart"],
-        images: ["https://example.com/fitness-tracker.jpg"],
-        supplierInfo: {
-          name: "TechSupplier Co",
-          rating: 4.7,
-          reliability: 95
-        }
-      },
-      {
-        title: "Eco-Friendly Water Bottle",
-        description: "Sustainable bamboo fiber water bottle with temperature control",
-        estimatedPrice: 34.99,
-        supplierPrice: 12.50,
-        margin: 64.3,
-        category: "Home & Garden",
-        tags: ["eco-friendly", "sustainable", "water", "bottle"],
-        images: ["https://example.com/water-bottle.jpg"],
-        supplierInfo: {
-          name: "EcoGoods Ltd",
-          rating: 4.5,
-          reliability: 88
-        }
-      },
-      {
-        title: "Wireless Phone Charger Stand",
-        description: "Fast charging wireless stand compatible with all Qi-enabled devices",
-        estimatedPrice: 49.99,
-        supplierPrice: 18.00,
-        margin: 64.0,
-        category: "Electronics",
-        tags: ["wireless", "charger", "phone", "convenience"],
-        images: ["https://example.com/charger-stand.jpg"],
-        supplierInfo: {
-          name: "ChargeMax Inc",
-          rating: 4.8,
-          reliability: 92
-        }
+    const products: TrendingProduct[] = [];
+    
+    try {
+      // Use OpenAI to analyze trends and suggest products
+      if (this.openaiApiKey) {
+        const aiProducts = await this.analyzeProductTrendsWithAI(params);
+        products.push(...aiProducts);
       }
-    ];
-
-    // Filter by category if specified
-    if (params.category) {
-      return mockProducts.filter(p => 
-        p.category.toLowerCase().includes(params.category.toLowerCase())
-      );
+      
+      // Query AutoDS/AliExpress for trending products (if credentials available)
+      // const autoDSProducts = await this.queryAutoDSProducts(params);
+      // products.push(...autoDSProducts);
+      
+      if (products.length === 0) {
+        this.logger.warn('No trending products found. Ensure API credentials are configured.');
+      }
+      
+      return products.slice(0, params.maxProducts || 10);
+    } catch (error) {
+      this.logger.error(`Error finding trending products: ${error}`);
+      return [];
     }
-
-    return mockProducts;
   }
+
+  private async analyzeProductTrendsWithAI(params: any): Promise<TrendingProduct[]> {
+    if (!this.openaiApiKey) {
+      this.logger.warn('OpenAI API key not configured, cannot analyze trends');
+      return [];
+    }
+    
+    try {
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a product research assistant. Suggest trending e-commerce products with realistic pricing and supplier information.'
+            },
+            {
+              role: 'user',
+              content: `Suggest ${params.maxProducts || 5} trending products for category: ${params.category || 'general'} with price range $${params.priceRange?.min || 10}-$${params.priceRange?.max || 100}. Return as JSON array with fields: title, description, estimatedPrice, supplierPrice, category, tags (array).`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.openaiApiKey}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      const content = response.data.choices[0].message.content;
+      const productsData = JSON.parse(content);
+      
+      // Transform AI response to TrendingProduct format
+      return productsData.map((p: any) => ({
+        title: p.title,
+        description: p.description,
+        estimatedPrice: p.estimatedPrice,
+        supplierPrice: p.supplierPrice || p.estimatedPrice * 0.4,
+        margin: ((p.estimatedPrice - (p.supplierPrice || p.estimatedPrice * 0.4)) / p.estimatedPrice) * 100,
+        category: p.category || params.category || 'General',
+        tags: p.tags || [],
+        images: p.images || [],
+        supplierInfo: {
+          name: 'AI Suggested',
+          rating: 4.5,
+          reliability: 85
+        }
+      }));
+    } catch (error) {
+      this.logger.error(`Error analyzing trends with AI: ${error}`);
+      return [];
+    }
+  }
+
+
 
   private validateProductCriteria(products: TrendingProduct[], params: any): TrendingProduct[] {
     return products.filter(product => {

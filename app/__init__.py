@@ -10,6 +10,7 @@ This module provides a production-ready Flask application with:
 - Circuit breaker patterns and fallbacks
 - Structured logging and error handling
 - CORS configuration
+- Sentry error monitoring and tracking
 """
 
 import logging
@@ -17,6 +18,12 @@ import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from flask import Flask
 from flask_cors import CORS
@@ -36,6 +43,9 @@ def create_app(config: Optional[str] = None) -> Flask:
     Returns:
         Configured Flask application
     """
+    # Initialize Sentry error monitoring (before everything else)
+    init_sentry()
+    
     # Set correct paths for templates and static files relative to project root
     template_dir = Path(__file__).parent.parent / "templates" 
     static_dir = Path(__file__).parent.parent / "static"
@@ -82,6 +92,72 @@ def create_app(config: Optional[str] = None) -> Flask:
     return app
 
 
+def init_sentry() -> None:
+    """
+    Initialize Sentry error monitoring with production-ready configuration.
+    
+    Uses environment variables for configuration:
+    - SENTRY_DSN: Sentry project DSN (required)
+    - ENVIRONMENT: Deployment environment (production/staging/development)
+    - SENTRY_TRACES_SAMPLE_RATE: Transaction sampling rate (0.0-1.0)
+    - SENTRY_PROFILES_SAMPLE_RATE: Profiling sampling rate (0.0-1.0)
+    """
+    sentry_dsn = os.environ.get('SENTRY_DSN')
+    
+    if not sentry_dsn:
+        logging.warning("SENTRY_DSN not set - error monitoring disabled")
+        return
+    
+    environment = os.environ.get('ENVIRONMENT', 'production')
+    traces_sample_rate = float(os.environ.get('SENTRY_TRACES_SAMPLE_RATE', '1.0'))
+    profiles_sample_rate = float(os.environ.get('SENTRY_PROFILES_SAMPLE_RATE', '1.0'))
+    
+    try:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            environment=environment,
+            
+            # Integrations for Flask ecosystem
+            integrations=[
+                FlaskIntegration(
+                    transaction_style="url",  # Track by URL pattern
+                ),
+                RedisIntegration(),  # Redis operations tracking
+                SqlalchemyIntegration(),  # Database query tracking
+                LoggingIntegration(
+                    level=logging.INFO,  # Capture info and above
+                    event_level=logging.ERROR  # Send errors as events
+                ),
+            ],
+            
+            # Performance monitoring
+            traces_sample_rate=traces_sample_rate,
+            profiles_sample_rate=profiles_sample_rate,
+            
+            # Enhanced data collection
+            send_default_pii=True,  # Include user IP, headers for debugging
+            attach_stacktrace=True,  # Always include stack traces
+            
+            # Release tracking
+            release=os.environ.get('RELEASE_VERSION', 'dev'),
+            
+            # Error filtering
+            ignore_errors=[
+                KeyboardInterrupt,
+                SystemExit,
+            ],
+            
+            # Performance
+            max_breadcrumbs=50,
+            debug=False,
+        )
+        
+        logging.info(f"✅ Sentry error monitoring initialized (environment: {environment})")
+        
+    except Exception as e:
+        logging.error(f"❌ Failed to initialize Sentry: {e}")
+
+
 def setup_logging(app: Flask) -> None:
     """Configure application logging."""
     if not app.debug:
@@ -124,6 +200,7 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.security', 'security_bp', None),  # Production Security with AI Fraud Detection
         ('app.routes.finance', 'finance_bp', None),  # Production Finance with Payment Intelligence
         ('app.routes.aira_intelligence', 'aira_intelligence_bp', None),  # Enhanced AIRA Intelligence System
+        ('app.routes.agent_orchestration', 'agent_orchestration_bp', None),  # Agent Orchestration for 100+ Agents
     ]
     
     registered_count = 0
@@ -191,3 +268,32 @@ def init_autonomous_empire(app: Flask) -> None:
     except Exception as e:
         app.logger.error(f"❌ Failed to initialize autonomous empire: {e}")
         # Don't fail the entire app startup - empire can be started manually
+    
+    # Initialize Agent Orchestration System
+    try:
+        import asyncio
+        from orchestrator.core.agent_initialization import initialize_all_agents
+        
+        def init_agents():
+            """Initialize agents in background thread."""
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(initialize_all_agents())
+                app.logger.info(
+                    f"🏰 Agent Orchestration initialized: {result['successful']}/{result['total_agents']} agents registered"
+                )
+            except Exception as e:
+                app.logger.error(f"❌ Failed to initialize agent orchestration: {e}", exc_info=True)
+            finally:
+                loop.close()
+        
+        # Start agent initialization in background
+        import threading
+        agent_thread = threading.Thread(target=init_agents, daemon=True)
+        agent_thread.start()
+        
+        app.logger.info("🏰 Agent Orchestration System initialization started")
+        
+    except Exception as e:
+        app.logger.error(f"❌ Failed to start agent orchestration: {e}", exc_info=True)

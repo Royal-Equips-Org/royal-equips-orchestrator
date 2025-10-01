@@ -28,6 +28,7 @@ const SecurityModule = lazy(() => import('./modules/security/SecurityModule'));
 const FinanceModule = lazy(() => import('./modules/finance/FinanceModule'));
 const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AIRAIntelligenceModule'));
 const ShopifyModule = lazy(() => import('./modules/shopify/ShopifyModule'));
+const AgentOrchestrationModule = lazy(() => import('./modules/agent-orchestration/AgentOrchestrationModule'));
 const ErrorTest = lazy(() => import('./test/ErrorTest'));
 
 function AppContent() {
@@ -113,6 +114,12 @@ function AppContent() {
         return (
           <Suspense fallback={loadingFallback('Shopify Integration')}>
             <ShopifyModule />
+          </Suspense>
+        );
+      case 'agent-orchestration':
+        return (
+          <Suspense fallback={loadingFallback('Agent Orchestration')}>
+            <AgentOrchestrationModule />
           </Suspense>
         );
       case 'marketing':
