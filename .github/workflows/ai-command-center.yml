@@ -172,7 +172,7 @@ jobs:
       - name: 🔍 GitHub Advanced Security
         uses: github/codeql-action/init@6db8d6351fd0be61f9ed8ebd12ccd35dcec51fea # v3.26.11
         with:
-          languages: javascript-typescript
+          languages: javascript
 
       - name: 🔎 CodeQL Analyze
         uses: github/codeql-action/analyze@6db8d6351fd0be61f9ed8ebd12ccd35dcec51fea # v3.26.11
