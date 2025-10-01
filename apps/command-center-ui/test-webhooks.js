@@ -5,26 +5,20 @@
 
 import crypto from 'crypto';
 
-// Mock Cloudflare Pages Functions environment
-globalThis.crypto = {
+// Mock Cloudflare Pages Functions environment 
+// Note: We no longer need to mock timingSafeEqual since we use our own implementation
+const mockCrypto = {
   subtle: crypto.webcrypto.subtle,
   randomUUID: crypto.randomUUID,
-  timingSafeEqual: (a, b) => {
-    const aBytes = new Uint8Array(a);
-    const bBytes = new Uint8Array(b);
-    
-    if (aBytes.length !== bBytes.length) {
-      return false;
-    }
-    
-    let result = 0;
-    for (let i = 0; i < aBytes.length; i++) {
-      result |= aBytes[i] ^ bBytes[i];
-    }
-    
-    return result === 0;
-  }
+  // No timingSafeEqual - we use our own implementation
 };
+
+// Override globalThis.crypto for testing
+Object.defineProperty(globalThis, 'crypto', {
+  value: mockCrypto,
+  writable: false,
+  configurable: true
+});
 
 // Test the crypto utilities
 async function testCrypto() {

@@ -31,9 +31,11 @@ export class BackendForwarder {
 
   /**
    * Forward webhook event to backend services
+   * Uses Promise.allSettled for parallel, non-blocking execution
    */
   async forwardEvent(event: WebhookEvent): Promise<boolean> {
     const endpoints = this.getEndpoints(event.type);
+    // Use Promise.allSettled for parallel execution to avoid blocking
     const results = await Promise.allSettled(
       endpoints.map(endpoint => this.sendToEndpoint(endpoint, event))
     );
@@ -49,7 +51,8 @@ export class BackendForwarder {
       failed,
     });
 
-    return successful > 0; // At least one endpoint succeeded
+    // Return true if at least one endpoint succeeded, false if all failed
+    return successful > 0;
   }
 
   /**
@@ -76,10 +79,11 @@ export class BackendForwarder {
   }
 
   /**
-   * Send event to specific endpoint with retry logic
+   * Send event to specific endpoint with optimized retry logic
+   * Minimal retries and short timeouts to stay within webhook SLAs
    */
   private async sendToEndpoint(endpoint: string, event: WebhookEvent): Promise<void> {
-    const maxRetries = 3;
+    const maxRetries = 1; // Only 1 retry to minimize total time
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -109,13 +113,19 @@ export class BackendForwarder {
         });
 
         if (attempt < maxRetries) {
-          // Exponential backoff: 100ms, 200ms, 400ms
-          await this.delay(100 * Math.pow(2, attempt - 1));
+          // Very short backoff: 25ms
+          await this.delay(25);
         }
       }
     }
 
-    throw lastError || new Error('All retry attempts failed');
+    // All retry attempts failed: log and throw to propagate error
+    this.logger.error('All retry attempts failed for endpoint', {
+      endpoint,
+      event_id: event.id,
+      error: lastError?.message || 'Unknown error',
+    });
+    throw lastError ?? new Error('Unknown error forwarding event');
   }
 
   /**
@@ -175,7 +185,7 @@ export function createBackendForwarder(
     {
       baseUrl: baseUrl.replace(/\/$/, ''), // Remove trailing slash
       apiSecret,
-      timeout: 10000, // 10 seconds
+      timeout: 2000, // Reduced to 2s to stay well within Shopify's 5s SLA
     },
     logger
   );
