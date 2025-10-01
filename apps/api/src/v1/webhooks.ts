@@ -31,16 +31,44 @@ const webhooksRoutes: FastifyPluginAsync = async (app) => {
 
       const payload = request.body as any;
       
-      // TODO: Store in outbox pattern for processing
-      // await db.outbox.insert({ 
-      //   topic: topicHeader, 
-      //   shopify_event_id: payload.id, 
-      //   payload 
-      // });
+      // Store webhook event for processing using outbox pattern
+      // This ensures reliable event processing even if downstream services fail
+      try {
+        // Store in file-based outbox for now (can be replaced with database)
+        const outboxDir = process.env.WEBHOOK_OUTBOX_DIR || './webhook_outbox';
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        
+        // Ensure outbox directory exists
+        await fs.mkdir(outboxDir, { recursive: true });
+        
+        // Create webhook event file
+        const eventId = payload.id || crypto.randomUUID();
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = `${timestamp}_${topicHeader.replace(/\//g, '_')}_${eventId}.json`;
+        const filepath = path.join(outboxDir, filename);
+        
+        const webhookEvent = {
+          id: eventId,
+          topic: topicHeader,
+          received_at: new Date().toISOString(),
+          payload: payload,
+          status: 'pending',
+          hmac_verified: true
+        };
+        
+        await fs.writeFile(filepath, JSON.stringify(webhookEvent, null, 2));
+        
+        app.log.info(`Stored Shopify webhook: ${topicHeader} for ${eventId} at ${filepath}`);
+      } catch (storageError) {
+        app.log.error(`Failed to store webhook in outbox: ${storageError}`);
+        // Don't fail the webhook response - we've already verified it
+        // The event is lost but we acknowledge receipt to Shopify
+      }
       
-      app.log.info(`Received Shopify webhook: ${topicHeader} for ${payload.id}`);
+      app.log.info(`Processed Shopify webhook: ${topicHeader} for ${payload.id}`);
       
-      return { ok: true };
+      return { ok: true, event_id: payload.id };
     } catch (error) {
       app.log.error('Webhook processing failed');
       throw new Error("Internal server error");

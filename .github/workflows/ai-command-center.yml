@@ -114,16 +114,52 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || secrets.ORG_OPENAI_API_KEY }}
 
-      - name: 📊 Performance Analytics
+      - name: 📊 AI Performance Analytics
         run: |
+          echo "🤖 AI Performance Analytics"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "AI Action: ${{ github.event.inputs.ai_action || 'scheduled_optimization' }}"
-          # Add analytics/insights logic here
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Branch: ${{ github.ref_name }}"
+          
+          # Real analytics collection
+          echo "📈 Collecting AI Model Performance Metrics..."
+          if [ -d "./apps/aira/dist" ]; then
+            # Calculate build size for performance tracking
+            AIRA_SIZE=$(du -sh ./apps/aira/dist 2>/dev/null | cut -f1 || echo "unknown")
+            echo "  • AIRA Bundle Size: $AIRA_SIZE"
+            
+            # Check for TypeScript compilation artifacts
+            TS_FILES=$(find ./apps/aira/dist -name "*.js" | wc -l || echo "0")
+            echo "  • Compiled Files: $TS_FILES"
+          fi
+          
+          if [ -d "./apps/command-center-ui/dist" ]; then
+            UI_SIZE=$(du -sh ./apps/command-center-ui/dist 2>/dev/null | cut -f1 || echo "unknown")
+            echo "  • UI Bundle Size: $UI_SIZE"
+          fi
+          
+          echo "✅ Analytics collection complete"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || secrets.ORG_OPENAI_API_KEY }}
 
-      - name: 🚀 Deploy AI Updates
-        if: github.ref == 'refs/heads/main'
+      - name: 🚀 Deploy AI Updates to Cloudflare
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: |
-          echo "Deploying AI optimizations to Cloudflare..."
-          # Insert production deploy script (use OIDC + GitHub secrets, never hardcoded creds)
+          echo "🚀 Deploying AI optimizations to Cloudflare..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Real deployment trigger using GitHub CLI
+          echo "📦 Triggering Cloudflare deployment workflow..."
+          gh workflow run cloudflare-deploy.yml \
+            --ref ${{ github.ref_name }} \
+            -f environment=production
+          
+          echo "✅ Deployment workflow triggered successfully"
+          echo "🔗 Monitor deployment: https://github.com/${{ github.repository }}/actions"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.ORG_CLOUDFLARE_API_TOKEN }}
 
   autonomous-intelligence:
     name: 🔮 Autonomous Intelligence
@@ -168,14 +204,44 @@ jobs:
     steps:
       - name: 📥 Checkout repo
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        with:
+          fetch-depth: 0  # Required for secret scanning
 
       - name: 🔍 GitHub Advanced Security
         uses: github/codeql-action/init@6db8d6351fd0be61f9ed8ebd12ccd35dcec51fea # v3.26.11
         with:
-          languages: javascript
+          languages: javascript-typescript
 
       - name: 🔎 CodeQL Analyze
         uses: github/codeql-action/analyze@6db8d6351fd0be61f9ed8ebd12ccd35dcec51fea # v3.26.11
+
+      - name: 🔒 Secret Scanning (Gitleaks)
+        run: |
+          echo "🔍 Running secret scanning with gitleaks..."
+          # Install gitleaks CLI directly (no third-party action needed)
+          wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz
+          tar -xzf gitleaks_8.18.2_linux_x64.tar.gz
+          chmod +x gitleaks
+          
+          # Run gitleaks detect on entire repository
+          ./gitleaks detect --source . --report-path gitleaks-report.json --report-format json --exit-code 1 || {
+            echo "⚠️ Secrets detected! See gitleaks-report.json for details"
+            if [ -f gitleaks-report.json ]; then
+              echo "📊 Secret scan results:"
+              cat gitleaks-report.json | jq -r '.[] | "  ❌ \(.File):\(.StartLine) - \(.Description)"' || cat gitleaks-report.json
+            fi
+            exit 1
+          }
+          echo "✅ No secrets detected in codebase"
+        continue-on-error: false
+
+      - name: ⬆️ Upload Secret Scan Results
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+          if-no-files-found: ignore
 
       - name: 📝 Upload SARIF results (if exists)
         if: always()
