@@ -1,15 +1,5 @@
 name = "royal-equips-command-center"
 compatibility_date = "2024-12-01"
-pages_build_output_dir = "dist"
 
-[build]
-command = "npm install && npm run build"
-
-[[pages.functions]]
+[functions]
 directory = "functions"
-  
-[env.production]
-account_id = "${CF_ACCOUNT_ID}"
-
-[env.preview]
-account_id = "${CF_ACCOUNT_ID}"
