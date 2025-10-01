@@ -3,16 +3,13 @@ name: ☁️ Cloudflare Deploy
 on:
   push:
     branches: [main, master]
+    # Only trigger when these folders change (cannot combine with paths-ignore)
     paths:
       - 'apps/**'
       - 'packages/**'
       - 'workers/**'
       - 'edge-functions/**'
-    paths-ignore:
-      - '**.md'
-      - '**.txt'
-      - '**/test/**'
-      - '**/tests/**'
+    # NOTE: Cannot use paths-ignore here due to GitHub Actions limitation.
   workflow_dispatch:
     inputs:
       environment:
@@ -84,3 +81,5 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+# --- END ---
