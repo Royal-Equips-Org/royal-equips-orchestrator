@@ -238,7 +238,8 @@ def cancel_task(task_id: str):
             'message': f'Task {task_id} cancelled successfully'
         }), 200
     except Exception as e:
-        logger.error(f"Error cancelling task {task_id}: {e}", exc_info=True)
+        safe_task_id = task_id.replace('\r', '').replace('\n', '')
+        logger.error(f"Error cancelling task {safe_task_id}: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 
