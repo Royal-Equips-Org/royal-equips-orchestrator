@@ -124,7 +124,7 @@ export class BackendForwarder {
       endpoint,
       event_id: event.id,
       error: lastError?.message || 'Unknown error',
-    } as any);
+    });
   }
 
   /**
