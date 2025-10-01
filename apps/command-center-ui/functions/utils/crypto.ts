@@ -4,6 +4,26 @@
  */
 
 /**
+ * Timing-safe comparison function for Cloudflare runtime
+ * Prevents timing attacks on signature comparison
+ */
+function timingSafeEqual(a: Uint8Array | ArrayBuffer, b: Uint8Array | ArrayBuffer): boolean {
+  const aBytes = new Uint8Array(a);
+  const bBytes = new Uint8Array(b);
+  
+  if (aBytes.length !== bBytes.length) {
+    return false;
+  }
+  
+  let result = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    result |= aBytes[i] ^ bBytes[i];
+  }
+  
+  return result === 0;
+}
+
+/**
  * Verify GitHub webhook signature using SHA-256 HMAC
  * @param signature The X-Hub-Signature-256 header value
  * @param body The raw request body as string
@@ -40,7 +60,7 @@ export async function verifyGitHubSignature(
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-    return crypto.timingSafeEqual(
+    return timingSafeEqual(
       new TextEncoder().encode(computedSignature),
       new TextEncoder().encode(expectedSignature)
     );
@@ -78,9 +98,10 @@ export async function verifyShopifySignature(
     );
 
     // Convert ArrayBuffer to base64
-    const computedSignature = btoa(String.fromCharCode(...new Uint8Array(mac)));
+    const bytes = new Uint8Array(mac);
+    const computedSignature = btoa(String.fromCharCode.apply(null, Array.from(bytes)));
 
-    return crypto.timingSafeEqual(
+    return timingSafeEqual(
       new TextEncoder().encode(computedSignature),
       new TextEncoder().encode(signature)
     );

@@ -108,16 +108,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       payload,
     };
 
-    // Forward to backend services if configured
+    // Forward to backend services if configured (non-blocking)
     const forwarder = createBackendForwarder(env, logger);
     if (forwarder) {
-      try {
-        await forwarder.forwardEvent(webhookEvent);
+      // Don't await - fire and forget to avoid blocking webhook response
+      forwarder.forwardEvent(webhookEvent).then(() => {
         logger.info('Event forwarded to backend services');
-      } catch (error) {
+      }).catch(error => {
         logger.error('Failed to forward event to backend', error as Error);
-        // Don't fail the webhook - GitHub expects 2xx response
-      }
+      });
     }
 
     // Process specific GitHub events
