@@ -192,3 +192,32 @@ def init_autonomous_empire(app: Flask) -> None:
     except Exception as e:
         app.logger.error(f"❌ Failed to initialize autonomous empire: {e}")
         # Don't fail the entire app startup - empire can be started manually
+    
+    # Initialize Agent Orchestration System
+    try:
+        import asyncio
+        from orchestrator.core.agent_initialization import initialize_all_agents
+        
+        def init_agents():
+            """Initialize agents in background thread."""
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(initialize_all_agents())
+                app.logger.info(
+                    f"🏰 Agent Orchestration initialized: {result['successful']}/{result['total_agents']} agents registered"
+                )
+            except Exception as e:
+                app.logger.error(f"❌ Failed to initialize agent orchestration: {e}", exc_info=True)
+            finally:
+                loop.close()
+        
+        # Start agent initialization in background
+        import threading
+        agent_thread = threading.Thread(target=init_agents, daemon=True)
+        agent_thread.start()
+        
+        app.logger.info("🏰 Agent Orchestration System initialization started")
+        
+    except Exception as e:
+        app.logger.error(f"❌ Failed to start agent orchestration: {e}", exc_info=True)
