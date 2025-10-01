@@ -51,7 +51,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: 📦 Setup pnpm
-        # Using pinned commit SHA for security (v4.0.0 verified marketplace action)
+        # SECURITY: Using pinned commit SHA instead of tag for immutability
+        # This is v4.0.0 from verified marketplace publisher (pnpm)
+        # Commit hash ensures action code cannot be changed, preventing supply chain attacks
+        # @pnpm/action-setup is verified and trusted, pinned at exact commit fe02b34
         uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398466c2d53 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}

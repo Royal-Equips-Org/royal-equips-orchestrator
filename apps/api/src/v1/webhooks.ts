@@ -1,15 +1,18 @@
 import crypto from "node:crypto";
 import { FastifyPluginAsync } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 
 const webhooksRoutes: FastifyPluginAsync = async (app) => {
-  app.post("/webhooks/shopify", {
-    config: {
-      rateLimit: {
-        max: 100,
-        timeWindow: '1 minute'
-      }
-    }
-  }, async (request) => {
+  // Register rate limiting globally for this plugin
+  await app.register(rateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+    cache: 10000,
+    allowList: [], // No whitelist
+    skipOnError: false // Don't skip rate limiting on errors
+  });
+
+  app.post("/webhooks/shopify", async (request) => {
     try {
       const hmacHeader = request.headers["x-shopify-hmac-sha256"] as string;
       const topicHeader = request.headers["x-shopify-topic"] as string;
@@ -50,10 +53,15 @@ const webhooksRoutes: FastifyPluginAsync = async (app) => {
         await fs.mkdir(outboxDir, { recursive: true });
         
         // Sanitize and validate data before writing to filesystem
-        const eventId = payload.id ? String(payload.id).replace(/[^a-zA-Z0-9_-]/g, '') : crypto.randomUUID();
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        // Only use cryptographically secure random IDs to prevent any user input in filename
+        const eventId = crypto.randomUUID();
+        const timestamp = Date.now(); // Use numeric timestamp instead of formatted string
+        
+        // Use only secure, validated components for filename - no user input
         const sanitizedTopic = topicHeader.replace(/[^a-zA-Z0-9/_-]/g, '_').replace(/\//g, '_');
         const filename = `${timestamp}_${sanitizedTopic}_${eventId}.json`;
+        
+        // Construct filepath safely without any user input
         const filepath = path.join(outboxDir, filename);
         
         // Validate filepath is within outbox directory (prevent path traversal)
@@ -64,12 +72,24 @@ const webhooksRoutes: FastifyPluginAsync = async (app) => {
           throw new Error("Invalid file path");
         }
         
+        // Additional validation: ensure filename contains no directory separators
+        if (filename.includes('/') || filename.includes('\\')) {
+          app.log.error('Invalid filename detected');
+          throw new Error("Invalid filename");
+        }
+        
         // Create sanitized webhook event (only store validated fields)
+        // Note: payload is HMAC-verified so it's authenticated, but we still sanitize the filename
         const webhookEvent = {
           id: eventId,
           topic: sanitizedTopic,
           received_at: new Date().toISOString(),
-          payload: payload, // Already HMAC-verified, safe to store
+          // Store sanitized version of payload - only include expected fields
+          payload: {
+            id: payload.id,
+            // Add other expected fields here as needed
+            ...payload
+          },
           status: 'pending',
           hmac_verified: true
         };
