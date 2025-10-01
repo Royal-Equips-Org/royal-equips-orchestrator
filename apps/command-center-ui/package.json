@@ -8,7 +8,7 @@
     "build": "vite build && npm run copy-functions",
     "build:cloudflare": "npm install && vite build && npm run copy-functions",
     "copy-functions": "cp -r functions dist/",
-    "build:with-types": "tsc && vite build && pnpm copy-functions",
+    "build:with-types": "tsc && vite build && npm run copy-functions",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
