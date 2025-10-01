@@ -267,7 +267,7 @@ def check_orchestration_health():
         logger.error(f"Error checking orchestration health: {e}", exc_info=True)
         return jsonify({
             'status': 'error',
-            'error': str(e),
+            'error': "An internal error has occurred.",
             'timestamp': datetime.now().isoformat()
         }), 500
 
