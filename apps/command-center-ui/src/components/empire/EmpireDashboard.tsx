@@ -2,7 +2,7 @@
 // Even Bill Gates doesn't have this level of sophistication
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import SafeCanvas from '../three/SafeCanvas';
 import { OrbitControls, Environment, PerspectiveCamera, Text3D, Stars } from '@react-three/drei';
 import { 
   Zap, Brain, Cpu, Activity, Shield, Layers, 
@@ -66,14 +66,18 @@ export default function EmpireDashboard() {
           <div className="relative h-full">
             {/* 3D Quantum Scene Background */}
             <div className="absolute inset-0 opacity-20">
-              <Canvas>
+              <SafeCanvas
+                fallback={
+                  <div className="w-full h-full bg-gradient-to-br from-purple-900/10 via-blue-900/10 to-pink-900/10" />
+                }
+              >
                 <PerspectiveCamera makeDefault position={[0, 0, 10]} />
                 <ambientLight intensity={0.3} />
                 <pointLight position={[10, 10, 10]} intensity={0.5} />
                 <directionalLight position={[-10, -10, -5]} intensity={0.2} />
                 <Stars radius={300} depth={60} count={20000} factor={7} saturation={0} fade />
                 <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
-              </Canvas>
+              </SafeCanvas>
             </div>
 
             {/* Quantum Command Grid */}
