@@ -64,7 +64,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 
 ## 🚨 Critical Rules
 
-1. **No mock data or placeholders in production code** — system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket). Automated tests may use controlled mocks only as documented in [🧪 Testing Strategy](#-testing-strategy).
+1. **No mock data or placeholders in production code** — system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket). Automated tests may use controlled mocks only as documented in [🧪 Testing Strategy](#testing-strategy).
 2. **Agent pattern** - All agents inherit from `orchestrator.core.agent_base.AgentBase`, implement `async def _execute_task()`.
 3. **Multi-service coordination** - Flask main API delegates to `/orchestrator/core/orchestrator.py` for agent management.
 4. **Secret management** - Use `/core/secrets/secret_provider.py` (UnifiedSecretResolver) - cascades ENV → GitHub → Cloudflare → cache.
