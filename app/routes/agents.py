@@ -465,74 +465,88 @@ def stop_agent(agent_id: str):
 # Shopify-specific agent endpoints
 @agents_bp.route("/shopify", methods=["GET"])
 def get_shopify_agents():
-    """Get all Shopify automation agents and their status."""
+    """Get all Shopify automation agents and their status from real orchestrator."""
     try:
         from app.orchestrator_bridge import get_orchestrator
         orchestrator = get_orchestrator()
         
-        # Define Shopify automation agents
-        shopify_agents = [
-            {
-                "id": "shopify_inventory_sync",
+        # Define agent metadata (descriptions and types)
+        agent_metadata = {
+            "shopify_inventory_sync": {
                 "name": "Inventory Sync Agent",
                 "type": "inventory",
-                "description": "Automatically syncs inventory levels between Shopify and warehouse systems",
-                "status": "active",
-                "lastRun": "2024-01-15T10:30:00.000Z",
-                "tasksCompleted": 1247,
-                "performance": 98.5
+                "description": "Automatically syncs inventory levels between Shopify and warehouse systems"
             },
-            {
-                "id": "shopify_order_processor",
+            "shopify_order_processor": {
                 "name": "Order Processing Agent",
                 "type": "orders",
-                "description": "Automates order processing, fulfillment routing, and customer notifications",
-                "status": "active",
-                "lastRun": "2024-01-15T10:25:00.000Z",
-                "tasksCompleted": 892,
-                "performance": 99.2
+                "description": "Automates order processing, fulfillment routing, and customer notifications"
             },
-            {
-                "id": "shopify_pricing_optimizer",
+            "shopify_pricing_optimizer": {
                 "name": "Dynamic Pricing Agent",
                 "type": "pricing",
-                "description": "Optimizes product pricing based on market conditions and inventory levels",
-                "status": "processing",
-                "lastRun": "2024-01-15T09:45:00.000Z",
-                "tasksCompleted": 534,
-                "performance": 96.8
+                "description": "Optimizes product pricing based on market conditions and inventory levels"
             },
-            {
-                "id": "shopify_marketing_automation",
+            "shopify_marketing_automation": {
                 "name": "Marketing Automation Agent",
                 "type": "marketing",
-                "description": "Manages email campaigns, customer segmentation, and promotional activities",
-                "status": "active",
-                "lastRun": "2024-01-15T10:15:00.000Z",
-                "tasksCompleted": 678,
-                "performance": 94.3
+                "description": "Manages email campaigns, customer segmentation, and promotional activities"
             },
-            {
-                "id": "shopify_analytics_reporter",
+            "shopify_analytics_reporter": {
                 "name": "Analytics & Reporting Agent",
                 "type": "analytics",
-                "description": "Generates business reports, analyzes performance, and provides insights",
-                "status": "active",
-                "lastRun": "2024-01-15T10:00:00.000Z",
-                "tasksCompleted": 445,
-                "performance": 97.1
+                "description": "Generates business reports, analyzes performance, and provides insights"
             }
-        ]
+        }
         
-        # Update with real status from orchestrator if available
-        for agent in shopify_agents:
+        shopify_agents = []
+        
+        # Get real agent status from orchestrator
+        for agent_id, metadata in agent_metadata.items():
             try:
-                real_status = orchestrator.get_agent_status(agent["id"])
-                if real_status:
-                    agent["status"] = real_status
-            except Exception:
-                # Keep default status if orchestrator not available
-                pass
+                # Try to get real agent from orchestrator
+                agent = orchestrator.get_agent(agent_id)
+                
+                if agent:
+                    # Real agent found - use its actual data
+                    agent_info = {
+                        "id": agent_id,
+                        "name": metadata["name"],
+                        "type": metadata["type"],
+                        "description": metadata["description"],
+                        "status": orchestrator.get_agent_status(agent_id) or "inactive",
+                        "lastRun": agent.last_run.isoformat() if hasattr(agent, 'last_run') and agent.last_run else None,
+                        "tasksCompleted": agent.tasks_completed if hasattr(agent, 'tasks_completed') else 0,
+                        "performance": agent.performance if hasattr(agent, 'performance') else 0
+                    }
+                else:
+                    # Agent not registered yet - show as inactive
+                    agent_info = {
+                        "id": agent_id,
+                        "name": metadata["name"],
+                        "type": metadata["type"],
+                        "description": metadata["description"],
+                        "status": "inactive",
+                        "lastRun": None,
+                        "tasksCompleted": 0,
+                        "performance": 0
+                    }
+                
+                shopify_agents.append(agent_info)
+                
+            except Exception as e:
+                logger.warning(f"Could not get agent {agent_id}: {e}")
+                # Add agent with inactive status if there's an error
+                shopify_agents.append({
+                    "id": agent_id,
+                    "name": metadata["name"],
+                    "type": metadata["type"],
+                    "description": metadata["description"],
+                    "status": "error",
+                    "lastRun": None,
+                    "tasksCompleted": 0,
+                    "performance": 0
+                })
         
         return jsonify({
             "agents": shopify_agents,
@@ -541,6 +555,7 @@ def get_shopify_agents():
                 "active": len([a for a in shopify_agents if a["status"] == "active"]),
                 "processing": len([a for a in shopify_agents if a["status"] == "processing"]),
                 "inactive": len([a for a in shopify_agents if a["status"] == "inactive"]),
+                "error": len([a for a in shopify_agents if a["status"] == "error"]),
                 "lastUpdated": datetime.now().isoformat()
             }
         }), 200

@@ -82,6 +82,12 @@ class SimpleOrchestrator:
             logger.error(f"Failed to stop agent {safe_agent_id}: {safe_error}")
             return False
     
+    def get_agent(self, agent_id: str) -> Optional[Any]:
+        """Get agent instance by ID (returns None if not registered)."""
+        # Simple orchestrator doesn't maintain agent instances
+        # Return None to indicate agent not available
+        return None
+    
     def get_agent_status(self, agent_id: str) -> str:
         """Get current status of an agent."""
         for record in active_executions.values():
