@@ -7,7 +7,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 ### Architecture
 - **Hybrid monorepo**: Python (Flask orchestrator) + TypeScript (React UI, limited packages via pnpm)
 - **Flask** (`/app/`, `/wsgi.py`) - main orchestrator API, agent coordination, health monitoring (port 10000)
-- **FastAPI services** (planned) - `/apps/aira/`, `/apps/api/`, `/apps/orchestrator-api/` (ports 3000-3003)
+- **FastAPI services** - `/apps/aira/`, `/apps/api/`, `/apps/orchestrator-api/` (ports 3000-3003)
 - **React UI** - `/apps/command-center-ui/` with Vite + lazy loading (port 5173)
 - **Agent system** - `/orchestrator/core/` (orchestrator.py, agent_base.py) + `/orchestrator/agents/` (implementations)
 - **Shared utilities** - `/core/` (secrets, health, logging, security)
