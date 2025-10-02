@@ -46,7 +46,8 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - [ ] Make minimal changes following patterns in existing code
 - [ ] Run tests: `make test`
 - [ ] Run linter: `make lint`
-- [ ] Commit with conventional commits: `git commit -m "feat: description"`
+- [ ] Commit with conventional commits: `git commit -S -m "feat: description"`
+  > 🔐 **Policy:** Unsigned commits are rejected—always include the `-S` flag for a signed commit. For setup, see [GitHub's guide on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
 - [ ] Open PR to `develop` branch
 - [ ] Before requesting deploy, review deployment/rollback steps against `docs/RUNBOOK.md` and `reports/STACK_REPORT.md`.
 
