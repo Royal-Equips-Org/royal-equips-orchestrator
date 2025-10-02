@@ -225,10 +225,14 @@ export default function AiraModule() {
       }
     } catch (error) {
       console.error('AIRA chat error:', error);
-      // Error fallback with professional response
+      // Provide specific error response based on actual error
+      const errorMessage = error instanceof Error 
+        ? `Service error: ${error.message}. Please check system connectivity.`
+        : 'Unable to process request. Please verify backend services are running.';
+      
       const errorResponse = {
         type: 'aira' as const,
-        message: 'I\'m experiencing connectivity issues but empire operations continue normally. Please try your request again.',
+        message: errorMessage,
         timestamp: new Date().toISOString()
       };
       setChatHistory(prev => [...prev, errorResponse]);

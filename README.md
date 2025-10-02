@@ -148,26 +148,14 @@ pnpm run build
 
 #### Full Development Setup
 ```bash
-# Terminal 1: Backend
+# Terminal 1: Backend (Flask API on port 10000)
 python3 wsgi.py
 
-# Terminal 2: Frontend  
+# Terminal 2: Frontend (React UI on port 5173)
 cd apps/command-center-ui && pnpm run dev
 ```
 
-#### Mock API Server (Development)
-For development when the Flask orchestrator is not available:
-```bash
-# Terminal 1: Mock API Server
-cd dev-tools/mock-server
-npm install
-npm start
-
-# Terminal 2: Frontend
-cd apps/command-center-ui && pnpm run dev
-```
-
-The mock server provides realistic API endpoints on http://localhost:10000 for testing the Command Center UI.
+The Flask backend provides real API endpoints on http://localhost:10000 for the Command Center UI.
 
 ## 📊 Performance Metrics
 
