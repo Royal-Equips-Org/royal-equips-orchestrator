@@ -47,20 +47,32 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: |
+            **/pnpm-lock.yaml
 
-      - name: Setup pnpm (JS/TS only)
+      # Robust pnpm install with PATH fix and fallback
+      - name: Ensure pnpm (JS/TS only)
         if: ${{ matrix.language == 'javascript-typescript' }}
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9.9.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+          mkdir -p "$NPM_CONFIG_PREFIX/bin"
+          export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+          # Try corepack first, then fallback to npm -g
+          (corepack enable && corepack prepare pnpm@9.9.0 --activate) || true
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm i -g pnpm@9.9.0
+          fi
+          pnpm -v
 
       - name: Install JS deps (JS/TS only)
         if: ${{ matrix.language == 'javascript-typescript' }}
         env:
           HUSKY: '0'
           CI: 'true'
+          PATH: $HOME/.npm-global/bin:${{ env.PATH }}
         run: |
-          pnpm --version
           if [ -f pnpm-lock.yaml ]; then
             pnpm install --frozen-lockfile --ignore-scripts
           elif [ -f package-lock.json ]; then
@@ -94,8 +106,6 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix['build-mode'] }}
           # queries: security-extended,security-and-quality
-
-      # For compiled languages: switch build-mode and add a build step here.
 
       - name: Analyze
         uses: github/codeql-action/analyze@v3
