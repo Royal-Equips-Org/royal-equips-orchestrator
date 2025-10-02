@@ -53,30 +53,8 @@ export default function AgentsModule() {
   const { isConnected } = useEmpireStore();
 
   // Business logic validation for agents data
-  const normalizeAgentPayload = (payload: Record<string, unknown>): Record<string, unknown>[] => {
+  const normalizeAgentPayload = (rawData: unknown): Record<string, unknown>[] => {
     const collections: unknown[] = [];
-
-    if (Array.isArray(payload.agents)) {
-      collections.push(...payload.agents);
-    }
-
-    if (Array.isArray(payload.data)) {
-      collections.push(...payload.data);
-    }
-
-    if (typeof payload.data === 'object' && payload.data !== null) {
-      const nested = payload.data as Record<string, unknown>;
-      if (Array.isArray(nested.agents)) {
-        collections.push(...nested.agents);
-      }
-      if (Array.isArray(nested.results)) {
-        collections.push(...nested.results);
-      }
-    }
-
-    if (Array.isArray(payload.results)) {
-      collections.push(...payload.results);
-    }
 
     const agentLike = (candidate: unknown): candidate is Record<string, unknown> => {
       if (!candidate || typeof candidate !== 'object') {
@@ -103,8 +81,38 @@ export default function AgentsModule() {
       return true;
     };
 
-    if (collections.length === 0 && agentLike(payload)) {
-      collections.push(payload);
+    // Handle plain array response (e.g., [agent1, agent2])
+    if (Array.isArray(rawData)) {
+      collections.push(...rawData);
+    } else if (rawData && typeof rawData === 'object') {
+      const payload = rawData as Record<string, unknown>;
+
+      if (Array.isArray(payload.agents)) {
+        collections.push(...payload.agents);
+      }
+
+      if (Array.isArray(payload.data)) {
+        collections.push(...payload.data);
+      }
+
+      if (typeof payload.data === 'object' && payload.data !== null) {
+        const nested = payload.data as Record<string, unknown>;
+        if (Array.isArray(nested.agents)) {
+          collections.push(...nested.agents);
+        }
+        if (Array.isArray(nested.results)) {
+          collections.push(...nested.results);
+        }
+      }
+
+      if (Array.isArray(payload.results)) {
+        collections.push(...payload.results);
+      }
+
+      // If no arrays found but the payload itself looks like an agent, use it
+      if (collections.length === 0 && agentLike(payload)) {
+        collections.push(payload);
+      }
     }
 
     return collections.filter((candidate): candidate is Record<string, unknown> => agentLike(candidate));
@@ -120,7 +128,7 @@ export default function AgentsModule() {
       return [];
     }
 
-    const agentsArray = normalizeAgentPayload(rawData as Record<string, unknown>);
+    const agentsArray = normalizeAgentPayload(rawData);
 
     if (agentsArray.length === 0) {
       logger.warn('No agents data available, triggering empty state recovery', {

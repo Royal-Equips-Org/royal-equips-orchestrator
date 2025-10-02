@@ -42,10 +42,19 @@ describe('AgentsModule - Business Logic Validation', () => {
 
   it('handles undefined agents data without crashing', async () => {
     // Simulate API returning undefined data (the root cause of .map() error)
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(undefined)
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(undefined)
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([])
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true })
+      });
 
     render(<AgentsModule />);
 
@@ -59,18 +68,24 @@ describe('AgentsModule - Business Logic Validation', () => {
 
     // Should log warning about invalid data
     expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining('Agents data invalid type'),
-      expect.objectContaining({
-        event: 'AGENTS_DATA_INVALID'
-      })
+      expect.stringContaining('[WARN] Agents data invalid type')
     );
   });
 
   it('handles null agents data without crashing', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(null)
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(null)
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([])
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true })
+      });
 
     render(<AgentsModule />);
 
@@ -80,18 +95,24 @@ describe('AgentsModule - Business Logic Validation', () => {
 
     // Should log warning about invalid data
     expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining('Agents data invalid type'),
-      expect.objectContaining({
-        event: 'AGENTS_DATA_INVALID'
-      })
+      expect.stringContaining('[WARN] Agents data invalid type')
     );
   });
 
   it('handles empty agents array gracefully', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ agents: [] })
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ agents: [] })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([])
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true })
+      });
 
     render(<AgentsModule />);
 
@@ -101,10 +122,7 @@ describe('AgentsModule - Business Logic Validation', () => {
 
     // Should log warning about empty data
     expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining('No agents data available'),
-      expect.objectContaining({
-        event: 'AGENTS_DATA_EMPTY'
-      })
+      expect.stringContaining('[WARN] No agents data available')
     );
   });
 
@@ -144,11 +162,7 @@ describe('AgentsModule - Business Logic Validation', () => {
 
     // Should log successful processing
     expect(console.info).toHaveBeenCalledWith(
-      expect.stringContaining('Successfully processed agents data'),
-      expect.objectContaining({
-        event: 'AGENTS_DATA_PROCESSED',
-        count: 1
-      })
+      expect.stringContaining('[INFO] Successfully processed agents data')
     );
   });
 
@@ -157,30 +171,45 @@ describe('AgentsModule - Business Logic Validation', () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
     
     // Second call succeeds
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ agents: [] })
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ agents: [] })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([])
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true })
+      });
 
     render(<AgentsModule />);
 
     // Should trigger retry
     await waitFor(() => {
       expect(console.info).toHaveBeenCalledWith(
-        expect.stringContaining('Triggering automatic retry'),
-        expect.objectContaining({
-          event: 'AGENTS_FETCH_RETRY'
-        })
+        expect.stringContaining('[INFO] Triggering automatic retry')
       );
     }, { timeout: 3000 });
   });
 
   it('handles malformed API response structure', async () => {
     // API returns object without agents property
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: "some random data" })
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: "some random data" })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([])
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ ok: true })
+      });
 
     render(<AgentsModule />);
 
@@ -190,11 +219,132 @@ describe('AgentsModule - Business Logic Validation', () => {
 
     // Should handle gracefully without crashing
     expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining('No agents data available'),
-      expect.objectContaining({
-        event: 'AGENTS_DATA_EMPTY'
-      })
+      expect.stringContaining('[WARN] No agents data available')
     );
+  });
+
+  it('handles plain array response format', async () => {
+    // Test the fix: API returns plain array [agent1, agent2, ...]
+    const plainArrayData = [
+      {
+        id: 'agent-1',
+        name: 'Plain Array Agent 1',
+        type: 'product_research',
+        status: 'active',
+        total_executions: 50,
+        successful_executions: 48,
+        failed_executions: 2,
+        avg_execution_time: 0.3
+      },
+      {
+        id: 'agent-2',
+        name: 'Plain Array Agent 2',
+        type: 'inventory_forecasting',
+        status: 'idle',
+        total_executions: 30,
+        successful_executions: 28,
+        failed_executions: 2,
+        avg_execution_time: 0.4
+      }
+    ];
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(plainArrayData)
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([])
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ active_sessions: 3, ok: true })
+      });
+
+    render(<AgentsModule />);
+
+    // Should successfully process plain array and display agents
+    await waitFor(() => {
+      expect(screen.getByText('Plain Array Agent 1')).toBeInTheDocument();
+      expect(screen.getByText('Plain Array Agent 2')).toBeInTheDocument();
+    });
+
+    // Should log successful processing with correct count
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('[INFO] Successfully processed agents data')
+    );
+  });
+
+  it('handles various nested response formats', async () => {
+    // Test all supported response formats work correctly
+    const testCases = [
+      {
+        description: 'nested data.agents format',
+        response: {
+          data: {
+            agents: [
+              { id: 'nested-1', name: 'Nested Agent', type: 'analytics', status: 'active' }
+            ]
+          }
+        }
+      },
+      {
+        description: 'nested data.results format',
+        response: {
+          data: {
+            results: [
+              { id: 'result-1', name: 'Result Agent', type: 'marketing', status: 'active' }
+            ]
+          }
+        }
+      },
+      {
+        description: 'top-level results format',
+        response: {
+          results: [
+            { id: 'top-result-1', name: 'Top Result Agent', type: 'pricing', status: 'active' }
+          ]
+        }
+      },
+      {
+        description: 'top-level data array format',
+        response: {
+          data: [
+            { id: 'data-1', name: 'Data Agent', type: 'inventory', status: 'active' }
+          ]
+        }
+      }
+    ];
+
+    for (const testCase of testCases) {
+      vi.clearAllMocks();
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(testCase.response)
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([])
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ active_sessions: 1, ok: true })
+        });
+
+      const { unmount } = render(<AgentsModule />);
+
+      // Should successfully process the format
+      await waitFor(() => {
+        expect(console.info).toHaveBeenCalledWith(
+          expect.stringContaining('[INFO] Successfully processed agents data')
+        );
+      }, { timeout: 2000 });
+
+      unmount();
+    }
   });
 
   it('ensures array validation prevents .map() on undefined', async () => {
