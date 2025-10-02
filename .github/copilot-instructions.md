@@ -48,7 +48,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - [ ] Run linter: `make lint`
 - [ ] Commit with conventional commits: `git commit -m "feat: description"`
 - [ ] Open PR to `develop` branch
-- [ ] Before requesting deploy, follow the deployment and rollback runbooks in `docs/RUNBOOK.md` to align with current stack state from `reports/STACK_REPORT.md`
+- [ ] Before requesting deploy, review deployment/rollback steps against `docs/RUNBOOK.md` and `reports/STACK_REPORT.md`.
 
 ### Creating Your First Agent
 - [ ] Copy agent template from existing agent (e.g., `product_research.py`)
