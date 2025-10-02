@@ -507,30 +507,17 @@ def get_shopify_agents():
                 # Try to get real agent from orchestrator
                 agent = orchestrator.get_agent(agent_id)
                 
-                if agent:
-                    # Real agent found - use its actual data
-                    agent_info = {
-                        "id": agent_id,
-                        "name": metadata["name"],
-                        "type": metadata["type"],
-                        "description": metadata["description"],
-                        "status": orchestrator.get_agent_status(agent_id) or "inactive",
-                        "lastRun": agent.last_run.isoformat() if hasattr(agent, 'last_run') and agent.last_run else None,
-                        "tasksCompleted": agent.tasks_completed if hasattr(agent, 'tasks_completed') else 0,
-                        "performance": agent.performance if hasattr(agent, 'performance') else 0
-                    }
-                else:
-                    # Agent not registered yet - show as inactive
-                    agent_info = {
-                        "id": agent_id,
-                        "name": metadata["name"],
-                        "type": metadata["type"],
-                        "description": metadata["description"],
-                        "status": "inactive",
-                        "lastRun": None,
-                        "tasksCompleted": 0,
-                        "performance": 0
-                    }
+                # Agent not registered yet - show as inactive
+                agent_info = {
+                    "id": agent_id,
+                    "name": metadata["name"],
+                    "type": metadata["type"],
+                    "description": metadata["description"],
+                    "status": "inactive",
+                    "lastRun": None,
+                    "tasksCompleted": 0,
+                    "performance": 0
+                }
                 
                 shopify_agents.append(agent_info)
                 
