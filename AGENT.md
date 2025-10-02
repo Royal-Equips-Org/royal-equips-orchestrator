@@ -466,7 +466,7 @@ python -m orchestrator.agents.product_research  # Test agent
 
 ### Important URLs
 - **Development**: http://localhost:5173 (React) + http://localhost:10000 (Flask)
-- **Production**: https://command-center.royalequips.com
+- **Production**: https://command.royalequips.nl
 - **Health**: http://localhost:10000/healthz
 - **Metrics**: http://localhost:10000/metrics
 - **API Docs**: http://localhost:10000/docs
