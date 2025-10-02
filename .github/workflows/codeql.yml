@@ -1,0 +1,104 @@
+name: CodeQL Advanced
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  merge_group:
+    branches: [ master ]
+  schedule:
+    - cron: '29 17 * * 6'
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+  actions: read
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-13') || 'ubuntu-22.04' }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: python
+            build-mode: none
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # JS/TS dependency graph without running project scripts (avoids Husky, etc.)
+      - name: Setup Node (JS/TS only)
+        if: matrix.language == 'javascript-typescript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Prepare pnpm (JS/TS only)
+        if: matrix.language == 'javascript-typescript'
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm --version
+
+      - name: Install JS deps (JS/TS only)
+        if: matrix.language == 'javascript-typescript'
+        env:
+          HUSKY: '0'
+          CI: 'true'
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --frozen-lockfile --ignore-scripts
+          elif [ -f package-lock.json ]; then
+            npm ci --ignore-scripts
+          elif [ -f yarn.lock ]; then
+            yarn install --ignore-scripts --frozen-lockfile
+          else
+            echo "No lockfile detected; skipping JS dependency install."
+          fi
+
+      # Optional: lightweight Python deps to improve resolution (keeps scripts off)
+      - name: Setup Python (Python only)
+        if: matrix.language == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps (Python only)
+        if: matrix.language == 'python'
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt || true
+          else
+            echo "No requirements.txt; skipping Python deps."
+          fi
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # Uncomment to extend queries:
+          # queries: security-extended,security-and-quality
+
+      # For compiled languages switch build-mode to "autobuild" or "manual" and add build here.
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
