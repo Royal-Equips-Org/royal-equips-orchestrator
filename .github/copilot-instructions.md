@@ -23,6 +23,10 @@ Production e-commerce platform with autonomous AI agents managing product resear
 
 ## ⚡ Quick Start Checklist for New AI Agents/Developers
 
+### Discovery First
+- [ ] Review `reports/STACK_REPORT.md` for a living snapshot of active providers, services, ports, health endpoints, CI/CD gates, and known gaps across the orchestrator. This establishes the current production shape before any local changes.
+- [ ] Read `docs/RUNBOOK.md` for end-to-end operational procedures covering environment bootstrapping, deployment and rollback workflows, required secrets, and on-call escalation paths. Use this as the canonical run sequence.
+
 ### First 15 Minutes
 - [ ] Clone repository: `git clone https://github.com/Royal-Equips-Org/royal-equips-orchestrator.git`
 - [ ] Copy environment template: `cp .env.example .env`
@@ -42,8 +46,10 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - [ ] Make minimal changes following patterns in existing code
 - [ ] Run tests: `make test`
 - [ ] Run linter: `make lint`
-- [ ] Commit with conventional commits: `git commit -m "feat: description"`
+- [ ] Commit with conventional commits: `git commit -S -m "feat: description"`
+  > 🔐 **Policy:** Unsigned commits are rejected—always include the `-S` flag for a signed commit. For setup, see [GitHub's guide on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
 - [ ] Open PR to `develop` branch
+- [ ] Before requesting deploy, review deployment/rollback steps against `docs/RUNBOOK.md` and `reports/STACK_REPORT.md`.
 
 ### Creating Your First Agent
 - [ ] Copy agent template from existing agent (e.g., `product_research.py`)
@@ -61,6 +67,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - [ ] Logging added at key points
 - [ ] Tests written (unit + integration)
 - [ ] Documentation updated (docstrings + README if needed)
+- [ ] Deployment + rollback steps verified against `docs/RUNBOOK.md` and cross-checked with live service inventory in `reports/STACK_REPORT.md`
 
 ## 🚨 Critical Rules
 
@@ -94,6 +101,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 ## 🔧 Development Workflows
 
 ### Setup and Running
+➡️ **Reference:** `docs/RUNBOOK.md` includes detailed environment bootstrap, secret provisioning, and multi-service startup coordination steps aligned with the architecture captured in `reports/STACK_REPORT.md`.
 ```bash
 # Python setup (virtualenv recommended)
 make setup              # Creates .venv, installs requirements.txt
