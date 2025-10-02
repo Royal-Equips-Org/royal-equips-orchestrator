@@ -166,7 +166,7 @@ def get_agents_status():
 - **Shopify** - `/royal_platform/` with GraphQL client (`/app/services/shopify_graphql_service.py`)
 - **AutoDS** - Dropshipping automation, product sourcing
 - **Spocket** - EU supplier integration for faster shipping
-- **BigQuery** - Analytics data warehouse (optional dependency)
+- **BigQuery** - Analytics data warehouse (optional dependency, implemented)
 
 ### External Service Communication
 ```python
