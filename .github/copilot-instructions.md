@@ -1,4 +1,4 @@
-# Royal Equips Orchestrator — AI Development Guide
+# ROYAL EQUIPS ORCHESTRATOR — AI Development Guide
 
 ## 🏰 System Overview
 
