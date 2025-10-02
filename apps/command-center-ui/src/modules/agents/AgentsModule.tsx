@@ -53,32 +53,88 @@ export default function AgentsModule() {
   const { isConnected } = useEmpireStore();
 
   // Business logic validation for agents data
-  const validateAndProcessAgentsData = (rawData: unknown): Agent[] => {
+  const normalizeAgentPayload = (payload: Record<string, unknown>): Record<string, unknown>[] => {
+    const collections: unknown[] = [];
+
+    if (Array.isArray(payload.agents)) {
+      collections.push(...payload.agents);
+    }
+
+    if (Array.isArray(payload.data)) {
+      collections.push(...payload.data);
+    }
+
+    if (typeof payload.data === 'object' && payload.data !== null) {
+      const nested = payload.data as Record<string, unknown>;
+      if (Array.isArray(nested.agents)) {
+        collections.push(...nested.agents);
+      }
+      if (Array.isArray(nested.results)) {
+        collections.push(...nested.results);
+      }
+    }
+
+    if (Array.isArray(payload.results)) {
+      collections.push(...payload.results);
+    }
+
+    const agentLike = (candidate: unknown): candidate is Record<string, unknown> => {
+      if (!candidate || typeof candidate !== 'object') {
+        return false;
+      }
+
+      const record = candidate as Record<string, unknown>;
+      const identifier = record.id ?? record.agent_id ?? record.uuid ?? record.slug;
+      const status = record.status ?? record.agent_status;
+      const agentType = record.type ?? record.agent_type;
+
+      if (typeof identifier !== 'string' || identifier.length === 0) {
+        return false;
+      }
+
+      if (
+        typeof status !== 'string' &&
+        typeof agentType !== 'string' &&
+        typeof record.name !== 'string'
+      ) {
+        return false;
+      }
+
+      return true;
+    };
+
+    if (collections.length === 0 && agentLike(payload)) {
+      collections.push(payload);
+    }
+
+    return collections.filter((candidate): candidate is Record<string, unknown> => agentLike(candidate));
+  };
+
+  const validateAndProcessAgentsData = (rawData: unknown): Record<string, unknown>[] => {
     if (!rawData || typeof rawData !== 'object') {
-      logger.warn('Agents data invalid type, triggering fallback', { 
-        event: 'AGENTS_DATA_INVALID', 
+      logger.warn('Agents data invalid type, triggering fallback', {
+        event: 'AGENTS_DATA_INVALID',
         rawData: typeof rawData,
-        context: 'AgentsModule.validateAndProcessAgentsData' 
+        context: 'AgentsModule.validateAndProcessAgentsData'
       });
       return [];
     }
 
-    // Ensure we have a valid array for business logic processing
-    const agentsArray = ensureArray((rawData as any)?.agents || rawData);
-    
+    const agentsArray = normalizeAgentPayload(rawData as Record<string, unknown>);
+
     if (agentsArray.length === 0) {
-      logger.warn('No agents data available, triggering empty state recovery', { 
-        event: 'AGENTS_DATA_EMPTY', 
+      logger.warn('No agents data available, triggering empty state recovery', {
+        event: 'AGENTS_DATA_EMPTY',
         rawData,
-        context: 'AgentsModule.validateAndProcessAgentsData' 
+        context: 'AgentsModule.validateAndProcessAgentsData'
       });
       return [];
     }
 
-    logger.info('Successfully processed agents data', { 
-      event: 'AGENTS_DATA_PROCESSED', 
+    logger.info('Successfully processed agents data', {
+      event: 'AGENTS_DATA_PROCESSED',
       count: agentsArray.length,
-      context: 'AgentsModule.validateAndProcessAgentsData' 
+      context: 'AgentsModule.validateAndProcessAgentsData'
     });
 
     return agentsArray;
@@ -116,7 +172,19 @@ export default function AgentsModule() {
 
       // Validate and process the data through business logic layer
       const processedAgents = processAgentsBusinessLogic(agentsData);
-      
+
+      if (processedAgents.length === 0) {
+        logger.info('No agent records available after processing, skipping auxiliary fetches', {
+          event: 'AGENTS_EMPTY_DATASET',
+          context: 'AgentsModule.fetchAgentDataWithRecovery'
+        });
+
+        setAgents([]);
+        setSessions([]);
+        setError(null);
+        return;
+      }
+
       // Fetch additional data if primary agents exist
       const sessionsData = await fetchSessionsData(processedAgents);
       const metricsData = await fetchMetricsData();
@@ -354,7 +422,9 @@ export default function AgentsModule() {
     };
     
     return capabilityMap[agentType] || ['Task Processing', 'Data Analysis', 'Automation'];
-  };  useEffect(() => {
+  };
+
+  useEffect(() => {
     fetchAgentData();
     
     // Set up real-time updates
