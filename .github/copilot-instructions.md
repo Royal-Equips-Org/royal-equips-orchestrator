@@ -6,7 +6,7 @@
 
 ## 🏰 System Overview
 
-Production e-commerce platform with autonomous AI agents managing product research, inventory, marketing, and fulfillment. **No placeholders or mock data** - all integrations are real.
+Production e-commerce platform with autonomous AI agents managing product research, inventory, marketing, and fulfillment. **No placeholders or mock data in production code** — all live integrations must remain real.
 
 ### Architecture
 - **Hybrid monorepo**: Python (Flask orchestrator) + TypeScript (React UI, limited packages via pnpm)
@@ -22,6 +22,10 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - **React UI (5173)** - Command center dashboard, served by Vite in dev, built static assets served by Flask in production
 
 ## ⚡ Quick Start Checklist for New AI Agents/Developers
+
+### Discovery First
+- [ ] Review `reports/STACK_REPORT.md` for a living snapshot of active providers, services, ports, health endpoints, CI/CD gates, and known gaps across the orchestrator. This establishes the current production shape before any local changes.
+- [ ] Read `docs/RUNBOOK.md` for end-to-end operational procedures covering environment bootstrapping, deployment and rollback workflows, required secrets, and on-call escalation paths. Use this as the canonical run sequence.
 
 ### First 15 Minutes
 - [ ] Clone repository: `git clone https://github.com/Royal-Equips-Org/royal-equips-orchestrator.git`
@@ -45,6 +49,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - [ ] Commit with conventional commits: `git commit -S -m "feat: description"`
   > 🔐 **Policy:** Unsigned commits are rejected—always include the `-S` flag for a signed commit. For setup, see [GitHub's guide on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
 - [ ] Open PR to `develop` branch
+- [ ] Before requesting deploy, review deployment/rollback steps against `docs/RUNBOOK.md` and `reports/STACK_REPORT.md`.
 
 ### Creating Your First Agent
 - [ ] Copy agent template from existing agent (e.g., `product_research.py`)
@@ -62,10 +67,11 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - [ ] Logging added at key points
 - [ ] Tests written (unit + integration)
 - [ ] Documentation updated (docstrings + README if needed)
+- [ ] Deployment + rollback steps verified against `docs/RUNBOOK.md` and cross-checked with live service inventory in `reports/STACK_REPORT.md`
 
 ## 🚨 Critical Rules
 
-1. **No mock data or placeholders** - system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket).
+1. **No mock data or placeholders in production code** — system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket). Automated tests may use controlled mocks only as documented in [🧪 Testing Strategy](#testing-strategy).
 2. **Agent pattern** - All agents inherit from `orchestrator.core.agent_base.AgentBase`, implement `async def _execute_task()`.
 3. **Multi-service coordination** - Flask main API delegates to `/orchestrator/core/orchestrator.py` for agent management.
 4. **Secret management** - Use `/core/secrets/secret_provider.py` (UnifiedSecretResolver) - cascades ENV → GitHub → Cloudflare → cache.
@@ -95,6 +101,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 ## 🔧 Development Workflows
 
 ### Setup and Running
+➡️ **Reference:** `docs/RUNBOOK.md` includes detailed environment bootstrap, secret provisioning, and multi-service startup coordination steps aligned with the architecture captured in `reports/STACK_REPORT.md`.
 ```bash
 # Python setup (virtualenv recommended)
 make setup              # Creates .venv, installs requirements.txt
@@ -452,6 +459,8 @@ The React UI and Flask backend are **independent in development** but **integrat
 
 ## 🧪 Testing Strategy
 
+> ℹ️ **Mocking policy:** Critical Rule #1 still applies — production code must never rely on mock data. Automated test suites may introduce tightly scoped mocks or fixtures solely to isolate behavior while preserving real-data contracts.
+
 ### Test Organization
 ```
 tests/
@@ -462,7 +471,7 @@ tests/
 ```
 
 ### Testing with External APIs
-- **No VCR.py currently**: Tests use real API calls or mocks via `unittest.mock`
+- **No VCR.py currently**: Tests use real API calls or tightly controlled mocks via `unittest.mock`
 - **Integration tests**: Marked with `@pytest.mark.integration`, require real API keys
 - **CI/CD**: Integration tests skipped in CI unless secrets available
 - **Recommendation**: Add VCR.py/pytest-vcr for recording HTTP interactions in future
