@@ -274,7 +274,8 @@ class ProductResearchAgent(BaseAgent):
         self.http_client = httpx.AsyncClient(
             timeout=30.0,
             headers={
-                "User-Agent": "ProductResearchAgent/1.0 (+https://yourdomain.com/contact)",
+                # Use the real Royal Equips domain from configuration, not a placeholder
+                "User-Agent": f"ProductResearchAgent/1.0 (+https://{settings.COMPANY_DOMAIN}/contact)",
             },
         )
         self.research_keywords = [
