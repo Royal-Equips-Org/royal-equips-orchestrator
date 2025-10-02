@@ -83,10 +83,8 @@ class SimpleOrchestrator:
             return False
     
     def get_agent(self, agent_id: str) -> Optional[Any]:
-        """Get agent instance by ID (returns None if not registered)."""
-        # Simple orchestrator doesn't maintain agent instances
-        # Return None to indicate agent not available
-        return None
+        """Agent retrieval is not supported in SimpleOrchestrator."""
+        raise NotImplementedError("SimpleOrchestrator does not maintain agent instances.")
     
     def get_agent_status(self, agent_id: str) -> str:
         """Get current status of an agent."""
