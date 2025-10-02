@@ -218,7 +218,7 @@ SUPABASE_ANON_KEY=<key>
 4. **Health endpoints** - Plain text "ok" for `/healthz`, JSON with dependency status for `/readyz`
 5. **Blueprint prefixes** - All Flask routes use blueprints with URL prefixes (e.g., `/agents`, `/empire`)
 6. **Type hints encouraged** - Python 3.10+ type hints, but not strictly enforced (mypy runs on `royal_mcp/` only)
-7. **Testing markers** - Use pytest markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
+7. **Testing markers** - Recommended: use pytest markers such as `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow` (adopt when adding or updating tests)
 
 ## 📚 Key Documentation Files
 
