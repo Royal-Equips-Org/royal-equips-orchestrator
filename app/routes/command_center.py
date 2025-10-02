@@ -22,7 +22,7 @@ command_center_bp = Blueprint("command_center", __name__, url_prefix="/command-c
 
 # Path to built React app
 STATIC_DIR = Path(__file__).parent.parent / "static"
-ADMIN_BUILD_DIR = Path(__file__).parent.parent.parent / "apps" / "control-center" / "dist"
+ADMIN_BUILD_DIR = Path(__file__).parent.parent.parent / "apps" / "command-center-ui" / "dist"
 
 @command_center_bp.route("/", defaults={'path': ''})
 @command_center_bp.route("/<path:path>")
