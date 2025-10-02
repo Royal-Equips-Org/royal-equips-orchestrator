@@ -6,7 +6,7 @@
 
 ## 🏰 System Overview
 
-Production e-commerce platform with autonomous AI agents managing product research, inventory, marketing, and fulfillment. **No placeholders or mock data** - all integrations are real.
+Production e-commerce platform with autonomous AI agents managing product research, inventory, marketing, and fulfillment. **No placeholders or mock data in production code** — all live integrations must remain real.
 
 ### Architecture
 - **Hybrid monorepo**: Python (Flask orchestrator) + TypeScript (React UI, limited packages via pnpm)
@@ -64,7 +64,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 
 ## 🚨 Critical Rules
 
-1. **No mock data or placeholders** - system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket).
+1. **No mock data or placeholders in production code** — system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket). Automated tests may use controlled mocks only as documented in [🧪 Testing Strategy](#-testing-strategy).
 2. **Agent pattern** - All agents inherit from `orchestrator.core.agent_base.AgentBase`, implement `async def _execute_task()`.
 3. **Multi-service coordination** - Flask main API delegates to `/orchestrator/core/orchestrator.py` for agent management.
 4. **Secret management** - Use `/core/secrets/secret_provider.py` (UnifiedSecretResolver) - cascades ENV → GitHub → Cloudflare → cache.
@@ -451,6 +451,8 @@ The React UI and Flask backend are **independent in development** but **integrat
 
 ## 🧪 Testing Strategy
 
+> ℹ️ **Mocking policy:** Critical Rule #1 still applies — production code must never rely on mock data. Automated test suites may introduce tightly scoped mocks or fixtures solely to isolate behavior while preserving real-data contracts.
+
 ### Test Organization
 ```
 tests/
@@ -461,7 +463,7 @@ tests/
 ```
 
 ### Testing with External APIs
-- **No VCR.py currently**: Tests use real API calls or mocks via `unittest.mock`
+- **No VCR.py currently**: Tests use real API calls or tightly controlled mocks via `unittest.mock`
 - **Integration tests**: Marked with `@pytest.mark.integration`, require real API keys
 - **CI/CD**: Integration tests skipped in CI unless secrets available
 - **Recommendation**: Add VCR.py/pytest-vcr for recording HTTP interactions in future
