@@ -1,0 +1,34 @@
+name: "CodeQL Config"
+
+# Paths to exclude from analysis
+paths-ignore:
+  - '**/node_modules/**'
+  - '**/dist/**'
+  - '**/build/**'
+  - '**/coverage/**'
+  - '**/*.min.js'
+  - '**/*.bundle.js'
+  - 'app/static/assets/**'
+  - 'reports/**'
+  - 'tests/**'
+  - '**/__tests__/**'
+  - '**/*.test.js'
+  - '**/*.test.ts'
+  - '**/*.spec.js'
+  - '**/*.spec.ts'
+
+# Paths to include in analysis
+paths:
+  - 'app/**'
+  - 'orchestrator/**'
+  - 'core/**'
+  - 'royal_platform/**'
+  - 'royal_mcp/**'
+  - 'apps/**'
+  - 'packages/**'
+  - 'edge-functions/**'
+  - 'scripts/**'
+
+# Query suites to run
+queries:
+  - uses: security-and-quality
