@@ -707,7 +707,7 @@ async def _scrape_tiktok_trends(self) -> list[str]:
             content = response.text
             hashtag_pattern = r'#(\w+)'
             hashtags = re.findall(hashtag_pattern, content, re.IGNORECASE)
-            product_keywords = ["gadget", "product", "tool", "device", "accessory", "must", "have"]
+            product_keywords = ["gadget", "product", "tool", "device", "accessory", "musthave", "amazonfinds"]
             relevant_hashtags = [
                 hashtag
                 for hashtag in hashtags[:50]
