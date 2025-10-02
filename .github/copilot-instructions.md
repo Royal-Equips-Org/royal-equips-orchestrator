@@ -42,7 +42,8 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - [ ] Make minimal changes following patterns in existing code
 - [ ] Run tests: `make test`
 - [ ] Run linter: `make lint`
-- [ ] Commit with conventional commits: `git commit -m "feat: description"`
+- [ ] Commit with conventional commits: `git commit -S -m "feat: description"`
+  > 🔐 **Policy:** Unsigned commits are rejected—always include the `-S` flag for a signed commit.
 - [ ] Open PR to `develop` branch
 
 ### Creating Your First Agent
