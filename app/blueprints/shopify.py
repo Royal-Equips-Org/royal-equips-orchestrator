@@ -666,8 +666,116 @@ def get_products():
         }), 500
 
 
-@shopify_bp.route("/metrics", methods=["GET"])
-def get_shopify_metrics():
+@shopify_bp.route("/orders", methods=["GET"])
+def get_orders():
+    """
+    Get orders from Shopify.
+    ---
+    tags:
+      - Shopify
+    parameters:
+      - name: limit
+        in: query
+        type: integer
+        description: Maximum number of orders to return (default 20, max 250)
+        minimum: 1
+        maximum: 250
+      - name: status
+        in: query
+        type: string
+        description: Order status filter (any, open, closed, cancelled)
+    responses:
+      200:
+        description: Orders from Shopify
+      503:
+        description: Shopify service not configured or unavailable
+    """
+    try:
+        service = get_shopify_service()
+
+        if not service.is_configured():
+            return jsonify({
+                "orders": [],
+                "timestamp": datetime.now().isoformat(),
+                "error": "Shopify credentials not configured"
+            }), 503
+
+        # Get query parameters
+        limit = request.args.get('limit', 20, type=int)
+        status = request.args.get('status', 'any')
+        
+        # Validate limit
+        if limit < 1 or limit > 250:
+            return jsonify({
+                "error": "Invalid limit parameter",
+                "message": "Limit must be between 1 and 250"
+            }), 400
+
+        try:
+            # Get orders from Shopify
+            orders_data, _ = service.list_orders(limit=limit, status=status)
+            
+            # Transform to the expected format
+            transformed_orders = []
+            
+            for order in orders_data:
+                line_items = []
+                for item in order.get('line_items', []):
+                    line_items.append({
+                        "productId": str(item.get('product_id', '')),
+                        "title": item.get('title', ''),
+                        "quantity": item.get('quantity', 0),
+                        "price": item.get('price', '0')
+                    })
+                
+                transformed_order = {
+                    "id": f"gid://shopify/Order/{order.get('id')}",
+                    "orderNumber": str(order.get('order_number', order.get('name', ''))),
+                    "totalPrice": order.get('total_price', '0'),
+                    "financialStatus": order.get('financial_status', 'pending').upper(),
+                    "fulfillmentStatus": (order.get('fulfillment_status') or 'unfulfilled').upper(),
+                    "customerEmail": order.get('email', order.get('customer', {}).get('email', '')),
+                    "createdAt": order.get('created_at', datetime.now().isoformat()),
+                    "lineItems": line_items
+                }
+                
+                transformed_orders.append(transformed_order)
+            
+            response_data = {
+                "orders": transformed_orders,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            return jsonify(response_data), 200
+            
+        except ShopifyAuthError as e:
+            logger.error(f"Shopify authentication error: {e}")
+            return jsonify({
+                "orders": [],
+                "timestamp": datetime.now().isoformat(),
+                "error": "Authentication failed"
+            }), 401
+            
+        except ShopifyAPIError as e:
+            logger.error(f"Shopify API error: {e}")
+            return jsonify({
+                "orders": [],
+                "timestamp": datetime.now().isoformat(),
+                "error": "API error occurred"
+            }), 503
+
+    except Exception as e:
+        logger.error(f"Error getting orders: {e}")
+        return jsonify({
+            "orders": [],
+            "timestamp": datetime.now().isoformat(),
+            "error": "Internal server error"
+        }), 500
+
+
+# NOTE: Duplicate /metrics endpoint - using the comprehensive one at line 985+ instead
+@shopify_bp.route("/metrics_old", methods=["GET"])
+def get_shopify_metrics_old():
     """
     Get comprehensive Shopify store metrics from live data.
     ---
