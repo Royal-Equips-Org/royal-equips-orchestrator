@@ -32,7 +32,7 @@ export function SafeCanvas({ fallback, onError, children, ...canvasProps }: Safe
       onError?.(errorMessage);
       
       // Log capabilities for debugging
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || import.meta.env.VITE_ENABLE_WEBGL_LOGGING === 'true') {
         logWebGLInfo();
       }
     }
