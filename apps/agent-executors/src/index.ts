@@ -3,7 +3,14 @@ import cors from 'cors';
 import { config } from 'dotenv';
 import { pino } from 'pino';
 import { ShopifyConnector } from '@royal-equips/connectors';
-import { ProductResearchAgent, OrderManagementAgent, InventoryManagementAgent } from './agents/index.js';
+import { 
+  ProductResearchAgent, 
+  OrderManagementAgent, 
+  InventoryManagementAgent,
+  MarketingAgent,
+  AdvertisingAgent,
+  CustomerServiceAgent
+} from './agents/index.js';
 
 // Load environment variables
 config();
@@ -258,6 +265,206 @@ app.post('/agents/inventory-management/execute', async (req, res) => {
   }
 });
 
+/**
+ * POST /agents/marketing/execute
+ * Execute marketing agent
+ */
+app.post('/agents/marketing/execute', async (req, res) => {
+  try {
+    if (!shopifyConnector) {
+      return res.status(503).json({ error: 'Shopify not configured' });
+    }
+    
+    const parameters = req.body;
+    const agentConfig = {
+      id: 'marketing',
+      name: 'Marketing Agent',
+      type: 'marketing' as const,
+      schedule: '0 9 * * *',
+      enabled: true,
+      retryPolicy: {
+        maxRetries: 3,
+        backoffStrategy: 'exponential' as const,
+        initialDelay: 1000,
+        maxDelay: 10000
+      },
+      alertPolicy: {
+        errorThreshold: 3,
+        responseTimeThreshold: 180000,
+        channels: []
+      },
+      resources: {
+        maxMemory: 512,
+        maxCpu: 1,
+        timeout: 300000,
+        concurrency: 1
+      }
+    };
+    
+    const agent = new MarketingAgent(
+      agentConfig,
+      logger,
+      shopifyConnector,
+      {
+        sendgrid: process.env.SENDGRID_API_KEY,
+        mailgun: process.env.MAILGUN_API_KEY
+      }
+    );
+    
+    const result = await agent.execute(parameters);
+    
+    res.json({
+      agentType: 'marketing',
+      executionId: result.planId,
+      status: result.status,
+      results: result.results,
+      metrics: result.metrics,
+      errors: result.errors,
+      timestamp: result.timestamp
+    });
+  } catch (error) {
+    logger.error('Marketing execution failed', { error });
+    res.status(500).json({
+      error: 'Agent execution failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * POST /agents/advertising/execute
+ * Execute advertising agent
+ */
+app.post('/agents/advertising/execute', async (req, res) => {
+  try {
+    if (!shopifyConnector) {
+      return res.status(503).json({ error: 'Shopify not configured' });
+    }
+    
+    const parameters = req.body;
+    const agentConfig = {
+      id: 'advertising',
+      name: 'Advertising Agent',
+      type: 'marketing' as const,
+      schedule: '0 */4 * * *',
+      enabled: true,
+      retryPolicy: {
+        maxRetries: 3,
+        backoffStrategy: 'exponential' as const,
+        initialDelay: 1000,
+        maxDelay: 10000
+      },
+      alertPolicy: {
+        errorThreshold: 3,
+        responseTimeThreshold: 240000,
+        channels: []
+      },
+      resources: {
+        maxMemory: 512,
+        maxCpu: 1,
+        timeout: 400000,
+        concurrency: 1
+      }
+    };
+    
+    const agent = new AdvertisingAgent(
+      agentConfig,
+      logger,
+      shopifyConnector,
+      {
+        googleAds: process.env.GOOGLE_ADS_API_KEY,
+        facebook: process.env.FACEBOOK_API_KEY,
+        tiktok: process.env.TIKTOK_API_KEY
+      }
+    );
+    
+    const result = await agent.execute(parameters);
+    
+    res.json({
+      agentType: 'advertising',
+      executionId: result.planId,
+      status: result.status,
+      results: result.results,
+      metrics: result.metrics,
+      errors: result.errors,
+      timestamp: result.timestamp
+    });
+  } catch (error) {
+    logger.error('Advertising execution failed', { error });
+    res.status(500).json({
+      error: 'Agent execution failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * POST /agents/customer-service/execute
+ * Execute customer service agent
+ */
+app.post('/agents/customer-service/execute', async (req, res) => {
+  try {
+    if (!shopifyConnector) {
+      return res.status(503).json({ error: 'Shopify not configured' });
+    }
+    
+    const parameters = req.body;
+    const agentConfig = {
+      id: 'customer-service',
+      name: 'Customer Service Agent',
+      type: 'cx' as const,
+      schedule: '*/30 * * * *',
+      enabled: true,
+      retryPolicy: {
+        maxRetries: 3,
+        backoffStrategy: 'exponential' as const,
+        initialDelay: 1000,
+        maxDelay: 10000
+      },
+      alertPolicy: {
+        errorThreshold: 5,
+        responseTimeThreshold: 180000,
+        channels: []
+      },
+      resources: {
+        maxMemory: 512,
+        maxCpu: 1,
+        timeout: 300000,
+        concurrency: 1
+      }
+    };
+    
+    const agent = new CustomerServiceAgent(
+      agentConfig,
+      logger,
+      shopifyConnector,
+      {
+        openai: process.env.OPENAI_API_KEY,
+        zendesk: process.env.ZENDESK_API_KEY,
+        freshdesk: process.env.FRESHDESK_API_KEY
+      }
+    );
+    
+    const result = await agent.execute(parameters);
+    
+    res.json({
+      agentType: 'customer-service',
+      executionId: result.planId,
+      status: result.status,
+      results: result.results,
+      metrics: result.metrics,
+      errors: result.errors,
+      timestamp: result.timestamp
+    });
+  } catch (error) {
+    logger.error('Customer service execution failed', { error });
+    res.status(500).json({
+      error: 'Agent execution failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 // Agent status endpoints
 app.get('/agents/status', (req, res) => {
   res.json({
@@ -282,15 +489,45 @@ app.get('/agents/status', (req, res) => {
         type: 'inventory',
         status: 'active',
         endpoint: '/agents/inventory-management/execute'
+      },
+      { 
+        id: 'marketing',
+        name: 'Marketing Agent', 
+        type: 'marketing',
+        status: 'active',
+        endpoint: '/agents/marketing/execute'
+      },
+      { 
+        id: 'advertising',
+        name: 'Advertising Agent', 
+        type: 'marketing',
+        status: 'active',
+        endpoint: '/agents/advertising/execute'
+      },
+      { 
+        id: 'customer-service',
+        name: 'Customer Service Agent', 
+        type: 'cx',
+        status: 'active',
+        endpoint: '/agents/customer-service/execute'
       }
     ],
-    total: 3,
-    active: 3,
+    total: 6,
+    active: 6,
     shopifyConnected: !!shopifyConnector,
     supplierConfigured: {
       autods: !!supplierKeys.autods,
       spocket: !!supplierKeys.spocket,
       printful: !!supplierKeys.printful
+    },
+    servicesConfigured: {
+      sendgrid: !!process.env.SENDGRID_API_KEY,
+      mailgun: !!process.env.MAILGUN_API_KEY,
+      googleAds: !!process.env.GOOGLE_ADS_API_KEY,
+      facebook: !!process.env.FACEBOOK_API_KEY,
+      tiktok: !!process.env.TIKTOK_API_KEY,
+      zendesk: !!process.env.ZENDESK_API_KEY,
+      freshdesk: !!process.env.FRESHDESK_API_KEY
     }
   });
 });
@@ -299,5 +536,7 @@ app.get('/agents/status', (req, res) => {
 app.listen(PORT, () => {
   logger.info(`🤖 Agent Executors Service running on port ${PORT}`);
   logger.info(`Shopify: ${shopifyConnector ? 'Connected' : 'Not configured'}`);
+  logger.info(`Agents Available: 6 (Product Research, Order Management, Inventory, Marketing, Advertising, Customer Service)`);
   logger.info(`Suppliers: AutoDS=${!!supplierKeys.autods}, Spocket=${!!supplierKeys.spocket}, Printful=${!!supplierKeys.printful}`);
+  logger.info(`Services: SendGrid=${!!process.env.SENDGRID_API_KEY}, GoogleAds=${!!process.env.GOOGLE_ADS_API_KEY}, Zendesk=${!!process.env.ZENDESK_API_KEY}`);
 });
