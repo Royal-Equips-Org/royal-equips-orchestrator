@@ -6,7 +6,7 @@
 
 ## 🏰 System Overview
 
-Production e-commerce platform with autonomous AI agents managing product research, inventory, marketing, and fulfillment. **No placeholders or mock data** - all integrations are real.
+Production e-commerce platform with autonomous AI agents managing product research, inventory, marketing, and fulfillment. **No placeholders or mock data in production code** — all live integrations must remain real.
 
 ### Architecture
 - **Hybrid monorepo**: Python (Flask orchestrator) + TypeScript (React UI, limited packages via pnpm)
@@ -64,7 +64,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 
 ## 🚨 Critical Rules
 
-1. **No mock data or placeholders** - system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket).
+1. **No mock data or placeholders in production code** — system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket). Automated tests may use controlled mocks only as documented in [🧪 Testing Strategy](#-testing-strategy).
 2. **Agent pattern** - All agents inherit from `orchestrator.core.agent_base.AgentBase`, implement `async def _execute_task()`.
 3. **Multi-service coordination** - Flask main API delegates to `/orchestrator/core/orchestrator.py` for agent management.
 4. **Secret management** - Use `/core/secrets/secret_provider.py` (UnifiedSecretResolver) - cascades ENV → GitHub → Cloudflare → cache.
@@ -140,38 +140,95 @@ Located in `/orchestrator/agents/`:
 - **CustomerSupportAgent** - AI classification, sentiment analysis
 - **SecurityAgent** - Fraud detection, vulnerability scanning
 
-All agents follow pattern in `/orchestrator/core/agent_base.py`:
+All agents follow the production base class in `/royal_platform/core/agent_base.py`:
 ```python
-class MyAgent(AgentBase):
-    def __init__(self, name: str):
-        super().__init__(name, agent_type="custom", description="...")
-    
-    async def _agent_initialize(self):
-        # One-time setup (API clients, DB connections)
-        # Called once before agent starts operating
-        self.api_client = await setup_api_client()
-        pass
-    
-    async def _execute_task(self):
-        # Main logic - called by orchestrator on schedule
-        # Return dict with results or raise exception
-        result = await self._do_work()
-        return {"status": "success", "data": result}
+class BaseAgent(ABC):
+    def __init__(self, config: AgentConfig):
+        self.config = config
+        self.logger = logging.getLogger(f"agent.{config.name}")
+        self.current_run_id: Optional[str] = None
+        self.start_time: Optional[datetime] = None
+
+    @abstractmethod
+    async def execute(self) -> AgentResult:
+        """Agents implement their production business logic here."""
+
+    async def run(self) -> AgentResult:
+        if not self.config.enabled:
+            return AgentResult(success=False, errors=["Agent is disabled"])
+        if not await self._check_rate_limits():
+            return AgentResult(success=False, errors=["Rate limit exceeded"])
+
+        self.current_run_id = str(uuid.uuid4())
+        self.start_time = datetime.now()
+        run_record = AgentRun(
+            id=uuid.UUID(self.current_run_id),
+            agent_name=self.config.name,
+            status=AgentStatus.ACTIVE,
+            started_at=self.start_time,
+            metadata={"priority": self.config.priority.value},
+        )
+        with get_db_session() as session:
+            session.add(run_record)
+            session.commit()
+
+        self.logger.info(
+            f"Starting agent {self.config.name} execution (run_id: {self.current_run_id})"
+        )
+        try:
+            result = await asyncio.wait_for(
+                self.execute(),
+                timeout=self.config.max_execution_time,
+            )
+            result.execution_time_seconds = (
+                datetime.now() - self.start_time
+            ).total_seconds()
+            return result
+        except asyncio.TimeoutError as exc:
+            self.logger.error(
+                f"Agent {self.config.name} timed out after {self.config.max_execution_time}s"
+            )
+            return AgentResult(success=False, errors=[str(exc)])
 ```
 
 ## 🏗️ Key Architecture Patterns
 
 ### Agent Registration & Execution
 ```python
-# /orchestrator/core/orchestrator.py - Central coordinator
-orchestrator = Orchestrator()
-orchestrator.register_agent(ProductResearchAgent("ProductResearch"), interval=3600)  # Run every hour
-orchestrator.start()  # Starts asyncio tasks for all agents
+# /orchestrator/core/agent_initialization.py
+async def initialize_all_agents() -> dict[str, Any]:
+    registry = get_agent_registry()
+    integration = get_aira_integration()
+    successful: list[str] = []
+    failed: list[str] = []
 
-# Flask routes bridge to orchestrator (see /app/routes/agents.py)
-from app.orchestrator_bridge import get_orchestrator
-orchestrator = get_orchestrator()
-health = await orchestrator.health()  # Returns status of all agents
+    for config in AGENT_CONFIGURATIONS:
+        try:
+            success = await registry.register_agent(
+                agent_id=config["agent_id"],
+                name=config["name"],
+                agent_type=config["type"],
+                capabilities=config["capabilities"],
+                max_concurrent_tasks=config.get("max_concurrent_tasks", 10),
+                tags=config.get("tags", set()),
+                metadata={"auto_registered": True, "config_version": "1.0"},
+            )
+            (successful if success else failed).append(config["agent_id"])
+        except Exception as exc:
+            failed.append(config["agent_id"])
+            logger.error(f"✗ Error registering {config['agent_id']}: {exc}", exc_info=True)
+
+    await registry.start_monitoring()
+    await integration.start_task_processing()
+    return {
+        "total_agents": len(AGENT_CONFIGURATIONS),
+        "successful": len(successful),
+        "failed": len(failed),
+        "successful_agents": successful,
+        "failed_agents": failed,
+        "registry_stats": registry.get_registry_stats(),
+        "status": "success" if not failed else "partial",
+    }
 ```
 
 ### Agent Registration Location
@@ -190,16 +247,71 @@ Agents are registered in **two locations** depending on the pattern used:
 **Recommended**: Use modern AgentRegistry pattern. See existing agents in `/orchestrator/agents/` for examples.
 
 ```python
-# Example from /app/__init__.py
-from orchestrator.core.agent_registry import get_agent_registry, AgentCapability
+# /royal_platform/agents/product_research_agent.py
+class ProductResearchAgent(BaseAgent):
+    """Production agent that runs the full product discovery pipeline."""
 
-registry = get_agent_registry()
-await registry.register_agent(
-    agent_id="product_research",
-    name="Product Research Agent",
-    agent_type="research",
-    capabilities=[AgentCapability.DATA_COLLECTION, AgentCapability.ANALYSIS]
-)
+    def __init__(self) -> None:
+        config = AgentConfig(
+            name="product_research_agent",
+            priority=AgentPriority.HIGH,
+            max_execution_time=1800,
+            retry_count=3,
+            max_runs_per_hour=4,
+            max_runs_per_day=50,
+        )
+        super().__init__(config)
+
+        self.trends_client = TrendReq(hl="en-US", tz=360)
+        self.http_client = httpx.AsyncClient(
+            timeout=30.0,
+            headers={
+                "User-Agent": "ProductResearchAgent/1.0 (+https://yourdomain.com/contact)",
+            },
+        )
+        self.research_keywords = [
+            "smart home gadgets",
+            "fitness accessories",
+            "car accessories",
+            "tiktok gadgets",
+            "eco friendly",
+        ]
+        self.scoring_weights = {
+            "trend_score": 0.35,
+            "interest_7d": 0.25,
+            "volatility_index": 0.15,
+            "cross_source_consistency": 0.25,
+        }
+
+    async def execute(self) -> AgentResult:
+        self.logger.info("Starting product research cycle with real data sources")
+
+        trends_data = await self._analyze_google_trends()
+        social_data = await self._analyze_social_trends()
+        competition_data = await self._analyze_competition()
+        scored_opportunities = await self._score_opportunities(
+            trends_data, social_data, competition_data
+        )
+        stored_count = await self._store_research_results(scored_opportunities)
+        alerts_sent = await self._send_priority_alerts(scored_opportunities)
+
+        return AgentResult(
+            success=True,
+            actions_taken=5 + alerts_sent,
+            items_processed=len(scored_opportunities),
+            metadata={
+                "opportunities_found": len(scored_opportunities),
+                "high_priority_count": len(
+                    [o for o in scored_opportunities if o["priority_score"] > 8.0]
+                ),
+                "research_sources": [
+                    "google_trends",
+                    "social_media",
+                    "competition_analysis",
+                ],
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
 ```
 
 ### Secret Resolution (Multi-Provider Cascade)
@@ -305,28 +417,34 @@ SUPABASE_ANON_KEY=<key>
 
 ### Testing Marker Examples
 ```python
-# Example test with markers
-@pytest.mark.unit
-async def test_agent_initialization():
-    """Unit test for agent initialization."""
-    agent = MyAgent("test")
-    await agent.initialize()
-    assert agent.status == AgentStatus.IDLE
-
-@pytest.mark.integration
-@pytest.mark.slow
-async def test_shopify_product_sync():
-    """Integration test with real Shopify API."""
-    agent = ProductResearchAgent("ProductResearch")
-    result = await agent._execute_task()
-    assert result["status"] == "success"
+# tests/test_agents.py
+@pytest.mark.asyncio
+async def test_research_agent_initialization(self, research_agent):
+    assert research_agent.config.name == "product_research_agent"
+    assert research_agent.config.priority == AgentPriority.HIGH
+    assert len(research_agent.research_keywords) > 0
+    assert research_agent.trends_client is not None
 
 @pytest.mark.asyncio
-async def test_agent_error_handling():
-    """Test agent error handling."""
-    agent = MyAgent("test")
-    with pytest.raises(ValueError):
-        await agent._execute_task()
+async def test_opportunity_scoring(self, research_agent):
+    mock_trends_data = {"smart home gadgets": {"interest_7d": 70, "trend_strength": 15, "volatility": 5}}
+    mock_social_data = {"smart home gadgets": {"social_score": 6, "mentions": 3}}
+    mock_competition_data = {"smart home gadgets": {"competition_score": 4, "avg_market_price": 50.0}}
+
+    opportunities = await research_agent._score_opportunities(
+        mock_trends_data, mock_social_data, mock_competition_data
+    )
+
+    assert isinstance(opportunities, list)
+    if opportunities:
+        assert "priority_score" in opportunities[0]
+        assert opportunities[0]["profit_potential"] in {"HIGH", "MEDIUM", "LOW"}
+
+def test_margin_calculation(self, pricing_agent):
+    selling_price = Decimal("100.00")
+    cost_price = Decimal("60.00")
+    margin = pricing_agent._calculate_margin_percent(selling_price, cost_price)
+    assert margin == 40.0
 ```
 
 ## 📚 Key Documentation Files
@@ -451,6 +569,8 @@ The React UI and Flask backend are **independent in development** but **integrat
 
 ## 🧪 Testing Strategy
 
+> ℹ️ **Mocking policy:** Critical Rule #1 still applies — production code must never rely on mock data. Automated test suites may introduce tightly scoped mocks or fixtures solely to isolate behavior while preserving real-data contracts.
+
 ### Test Organization
 ```
 tests/
@@ -461,7 +581,7 @@ tests/
 ```
 
 ### Testing with External APIs
-- **No VCR.py currently**: Tests use real API calls or mocks via `unittest.mock`
+- **No VCR.py currently**: Tests use real API calls or tightly controlled mocks via `unittest.mock`
 - **Integration tests**: Marked with `@pytest.mark.integration`, require real API keys
 - **CI/CD**: Integration tests skipped in CI unless secrets available
 - **Recommendation**: Add VCR.py/pytest-vcr for recording HTTP interactions in future
@@ -513,88 +633,157 @@ make coverage
 
 ### Recipe 1: Creating a New Agent
 ```python
-# /orchestrator/agents/my_new_agent.py
-from orchestrator.core.agent_base import AgentBase
-from core.secrets.secret_provider import UnifiedSecretResolver
+# /royal_platform/agents/inventory_pricing_agent.py
+class InventoryPricingAgent(BaseAgent):
+    def __init__(self) -> None:
+        config = AgentConfig(
+            name="inventory_pricing_agent",
+            priority=AgentPriority.HIGH,
+            max_execution_time=2400,
+            retry_count=3,
+            max_runs_per_hour=6,
+            max_runs_per_day=100,
+        )
+        super().__init__(config)
 
-class MyNewAgent(AgentBase):
-    def __init__(self, name: str):
-        super().__init__(name, agent_type="custom", description="My new agent")
-        self.secrets = UnifiedSecretResolver()
-    
-    async def _agent_initialize(self):
-        """Setup API clients and connections."""
-        api_key = await self.secrets.get_secret('MY_API_KEY')
-        self.client = MyAPIClient(api_key)
-        self.logger.info(f"✅ {self.name} initialized")
-    
-    async def _execute_task(self):
-        """Main agent logic."""
-        try:
-            data = await self.client.fetch_data()
-            result = await self._process_data(data)
-            return {"status": "success", "processed": len(result)}
-        except Exception as e:
-            self.logger.error(f"❌ Task failed: {e}")
-            raise
+        self.pricing_config = {
+            "min_margin_percent": 25,
+            "target_margin_percent": 40,
+            "max_price_increase_percent": 15,
+            "max_price_decrease_percent": 20,
+            "low_stock_threshold": 10,
+            "overstock_threshold": 100,
+            "price_elasticity_factor": 0.3,
+        }
+        self.inventory_config = {
+            "reorder_point_days": 14,
+            "safety_stock_days": 7,
+            "max_stock_days": 90,
+            "lead_time_days": 21,
+            "seasonal_factor": 1.2,
+        }
 
-# Register agent in /app/__init__.py:init_autonomous_empire()
-from orchestrator.agents.my_new_agent import MyNewAgent
-await registry.register_agent(
-    agent_id="my_new_agent",
-    name="My New Agent",
-    agent_type="custom",
-    capabilities=[AgentCapability.DATA_PROCESSING]
-)
+    async def execute(self) -> AgentResult:
+        self.logger.info("Starting inventory and pricing optimization cycle")
+
+        shopify_client = ShopifyClient()
+        inventory_analysis = await self._analyze_inventory_levels(shopify_client)
+        demand_patterns = await self._calculate_demand_patterns()
+        pricing_updates = await self._optimize_pricing(
+            shopify_client, inventory_analysis, demand_patterns
+        )
+        inventory_recommendations = await self._generate_inventory_recommendations(
+            inventory_analysis, demand_patterns
+        )
+        research_processed = await self._process_research_opportunities(shopify_client)
+        changes_applied = await self._apply_changes(shopify_client, pricing_updates)
+        await shopify_client.close()
+
+        return AgentResult(
+            success=True,
+            actions_taken=5 + changes_applied,
+            items_processed=len(pricing_updates) + research_processed,
+            metadata={
+                "pricing_updates": len(pricing_updates),
+                "inventory_recommendations": len(inventory_recommendations),
+                "research_opportunities_processed": research_processed,
+                "changes_applied": changes_applied,
+                "analysis_timestamp": datetime.now().isoformat(),
+            },
+        )
 ```
 
 ### Recipe 2: Adding External API Integration
 ```python
-# Use retry logic for resilience
-from tenacity import retry, stop_after_attempt, wait_exponential
-import httpx
-
-class MyAgent(AgentBase):
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    async def _fetch_from_api(self, endpoint: str):
-        """Fetch data with automatic retry."""
-        async with httpx.AsyncClient() as client:
-            response = await client.get(endpoint, timeout=30)
-            response.raise_for_status()
-            return response.json()
+# /royal_platform/agents/product_research_agent.py
+async def _scrape_tiktok_trends(self) -> list[str]:
+    trends: list[str] = []
+    try:
+        response = await self.http_client.get(
+            "https://www.tiktok.com/trending",
+            follow_redirects=True,
+        )
+        if response.status_code == 200:
+            content = response.text
+            hashtag_pattern = r'#(\w+)'
+            hashtags = re.findall(hashtag_pattern, content, re.IGNORECASE)
+            product_keywords = ["gadget", "product", "tool", "device", "accessory", "must", "have"]
+            relevant_hashtags = [
+                hashtag
+                for hashtag in hashtags[:50]
+                if any(keyword in hashtag.lower() for keyword in product_keywords)
+            ]
+            trends.extend(relevant_hashtags[:10])
+        await asyncio.sleep(3)  # Respect rate limits
+    except Exception as exc:
+        self.logger.warning(f"TikTok trends scraping failed: {exc}")
+    return trends
 ```
 
 ### Recipe 3: Scheduled Agent Task
 ```python
-# Agents are auto-scheduled by orchestrator based on registration
-# To customize schedule, modify interval during registration:
+# /royal_platform/core/agent_base.py
+async def _check_rate_limits(self) -> bool:
+    try:
+        with get_db_session() as session:
+            now = datetime.now()
+            hourly_runs = session.query(AgentRun).filter(
+                AgentRun.agent_name == self.config.name,
+                AgentRun.started_at >= now - timedelta(hours=1),
+            ).count()
+            if hourly_runs >= self.config.max_runs_per_hour:
+                self.logger.warning(
+                    f"Agent {self.config.name} exceeded hourly rate limit"
+                )
+                return False
 
-# Run every hour
-orchestrator.register_agent(MyAgent("MyAgent"), interval=3600)
+            daily_runs = session.query(AgentRun).filter(
+                AgentRun.agent_name == self.config.name,
+                AgentRun.started_at >= now - timedelta(days=1),
+            ).count()
+            if daily_runs >= self.config.max_runs_per_day:
+                self.logger.warning(
+                    f"Agent {self.config.name} exceeded daily rate limit"
+                )
+                return False
 
-# Run every 15 minutes
-orchestrator.register_agent(MyAgent("MyAgent"), interval=900)
-
-# Run once per day
-orchestrator.register_agent(MyAgent("MyAgent"), interval=86400)
+            return True
+    except Exception as exc:
+        self.logger.error(f"Error checking rate limits: {exc}")
+        return True  # Fail open to avoid blocking critical agents
 ```
 
 ### Recipe 4: Agent with Health Check
 ```python
-class MyAgent(AgentBase):
-    async def health_check(self) -> dict:
-        """Custom health check for monitoring."""
-        try:
-            # Test critical dependencies
-            api_ok = await self._test_api_connection()
-            return {
-                "status": "healthy" if api_ok else "degraded",
-                "api_connection": api_ok,
-                "last_run": self.last_execution,
-                "uptime": time.time() - self.start_time
+# /royal_platform/agents/product_research_agent.py
+def get_health_status(self) -> dict[str, Any]:
+    try:
+        with get_db_session() as session:
+            recent_research = (
+                session.query(ResearchHistory)
+                .filter(ResearchHistory.researched_at >= datetime.now() - timedelta(hours=24))
+                .count()
+            )
+            api_health = {
+                "google_trends": True,
+                "http_client": self.http_client is not None,
+                "database": recent_research is not None,
             }
-        except Exception as e:
-            return {"status": "unhealthy", "error": str(e)}
+            return {
+                "agent_name": self.config.name,
+                "status": "healthy" if all(api_health.values()) else "degraded",
+                "last_24h_research_count": recent_research,
+                "api_health": api_health,
+                "research_keywords_count": len(self.research_keywords),
+                "last_check": datetime.now().isoformat(),
+            }
+    except Exception as exc:
+        return {
+            "agent_name": self.config.name,
+            "status": "error",
+            "error": str(exc),
+            "last_check": datetime.now().isoformat(),
+        }
 ```
 
 ## ⚡ Performance Tuning
@@ -607,18 +796,47 @@ class MyAgent(AgentBase):
 
 ### Example: Optimized Data Processing
 ```python
-# ❌ Slow: Sequential processing
-async def _process_items(self, items):
-    results = []
-    for item in items:
-        result = await self._process_one(item)
-        results.append(result)
-    return results
+# /royal_platform/agents/inventory_pricing_agent.py
+for item in inventory_analysis["overstock_items"]:
+    variant_id = item["variant_id"]
+    current_price = Decimal(str(item["price"]))
+    demand_pattern = demand_patterns.get(variant_id)
+    if not demand_pattern:
+        continue
 
-# ✅ Fast: Concurrent processing
-async def _process_items(self, items):
-    tasks = [self._process_one(item) for item in items]
-    return await asyncio.gather(*tasks, return_exceptions=True)
+    avg_daily_demand = demand_pattern["avg_daily_demand"]
+    stock_level = item["stock_level"]
+    if avg_daily_demand > 0:
+        days_remaining = stock_level / avg_daily_demand
+        if days_remaining > self.inventory_config["max_stock_days"]:
+            overstock_factor = min(
+                (days_remaining - self.inventory_config["max_stock_days"])
+                / self.inventory_config["max_stock_days"],
+                1.0,
+            )
+            price_decrease_percent = min(
+                overstock_factor * self.pricing_config["max_price_decrease_percent"],
+                self.pricing_config["max_price_decrease_percent"],
+            )
+            new_price = current_price * (1 - price_decrease_percent / 100)
+            if self._calculate_margin_percent(
+                new_price, current_price * Decimal("0.6")
+            ) >= self.pricing_config["min_margin_percent"]:
+                pricing_updates.append(
+                    {
+                        "product_id": item["product_id"],
+                        "variant_id": variant_id,
+                        "sku": item["sku"],
+                        "title": item["title"],
+                        "current_price": float(current_price),
+                        "new_price": float(new_price),
+                        "price_change_percent": -price_decrease_percent,
+                        "reason": "overstock_slow_demand",
+                        "stock_level": stock_level,
+                        "days_remaining": days_remaining,
+                        "approved": True,
+                    }
+                )
 ```
 
 ### Flask Performance
