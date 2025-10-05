@@ -70,8 +70,7 @@ Production e-commerce platform with autonomous AI agents managing product resear
 - [ ] Deployment + rollback steps verified against `docs/RUNBOOK.md` and cross-checked with live service inventory in `reports/STACK_REPORT.md`
 
 ## 🚨 Critical Rules
-
-1. **No mock data or placeholders in production code** — system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket). Automated tests may use controlled mocks only as documented in [🧪 Testing Strategy](#testing-strategy).
+1. **No mock data or placeholders in production code** — system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket). Automated tests may use controlled mocks only as documented in [🧪 Testing Strategy](#-testing-strategy).
 2. **Agent pattern** - All agents inherit from `orchestrator.core.agent_base.AgentBase`, implement `async def _execute_task()`.
 3. **Multi-service coordination** - Flask main API delegates to `/orchestrator/core/orchestrator.py` for agent management.
 4. **Secret management** - Use `/core/secrets/secret_provider.py` (UnifiedSecretResolver) - cascades ENV → GitHub → Cloudflare → cache.
@@ -274,8 +273,7 @@ class ProductResearchAgent(BaseAgent):
         self.http_client = httpx.AsyncClient(
             timeout=30.0,
             headers={
-                # Use the real Royal Equips domain from configuration, not a placeholder
-                "User-Agent": f"ProductResearchAgent/1.0 (+https://{settings.COMPANY_DOMAIN}/contact)",
+                "User-Agent": "ProductResearchAgent/1.0 (+https://yourdomain.com/contact)",
             },
         )
         self.research_keywords = [
