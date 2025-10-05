@@ -18,11 +18,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-import json
+from typing import Any, Dict, List, Optional, Set
 
 
 class AgentStatus(Enum):
@@ -76,7 +75,7 @@ class AgentRegistry:
     Central registry for managing all agents in the Royal Equips Empire.
     Provides agent discovery, health monitoring, and orchestration capabilities.
     """
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.agents: Dict[str, AgentMetadata] = {}
@@ -86,7 +85,7 @@ class AgentRegistry:
         self.health_check_interval = 30  # seconds
         self.heartbeat_timeout = 90  # seconds
         self._monitoring_task: Optional[asyncio.Task] = None
-        
+
     async def register_agent(
         self,
         agent_id: str,
@@ -117,7 +116,7 @@ class AgentRegistry:
         try:
             if agent_id in self.agents:
                 self.logger.warning(f"Agent {agent_id} already registered, updating metadata")
-            
+
             agent_meta = AgentMetadata(
                 agent_id=agent_id,
                 name=name,
@@ -129,56 +128,56 @@ class AgentRegistry:
                 tags=tags or set(),
                 metadata=metadata or {}
             )
-            
+
             self.agents[agent_id] = agent_meta
-            
+
             # Update capability index
             for capability in capabilities:
                 self.capability_index[capability].add(agent_id)
-            
+
             self.logger.info(
                 f"Agent registered: {name} ({agent_id}) with capabilities: "
                 f"{[c.value for c in capabilities]}"
             )
-            
+
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to register agent {agent_id}: {e}", exc_info=True)
             return False
-    
+
     async def unregister_agent(self, agent_id: str) -> bool:
         """Unregister an agent from the registry."""
         try:
             if agent_id not in self.agents:
                 self.logger.warning(f"Agent {agent_id} not found in registry")
                 return False
-            
+
             agent = self.agents[agent_id]
-            
+
             # Remove from capability index
             for capability in agent.capabilities:
                 self.capability_index[capability].discard(agent_id)
-            
+
             del self.agents[agent_id]
-            
+
             self.logger.info(f"Agent unregistered: {agent.name} ({agent_id})")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to unregister agent {agent_id}: {e}", exc_info=True)
             return False
-    
+
     async def update_agent_status(self, agent_id: str, status: AgentStatus) -> bool:
         """Update agent operational status."""
         if agent_id not in self.agents:
             self.logger.warning(f"Agent {agent_id} not found in registry")
             return False
-        
+
         self.agents[agent_id].status = status
         self.agents[agent_id].last_heartbeat = datetime.now()
         return True
-    
+
     async def agent_heartbeat(self, agent_id: str, metrics: Optional[Dict[str, Any]] = None) -> bool:
         """
         Record agent heartbeat and update metrics.
@@ -193,10 +192,10 @@ class AgentRegistry:
         if agent_id not in self.agents:
             self.logger.warning(f"Agent {agent_id} not found in registry")
             return False
-        
+
         agent = self.agents[agent_id]
         agent.last_heartbeat = datetime.now()
-        
+
         if metrics:
             if 'execution_count' in metrics:
                 agent.execution_count = metrics['execution_count']
@@ -206,33 +205,33 @@ class AgentRegistry:
                 agent.avg_execution_time = metrics['avg_execution_time']
             if 'current_load' in metrics:
                 agent.current_load = metrics['current_load']
-        
+
         return True
-    
+
     def get_agent(self, agent_id: str) -> Optional[AgentMetadata]:
         """Get agent metadata by ID."""
         return self.agents.get(agent_id)
-    
+
     def get_all_agents(self) -> List[AgentMetadata]:
         """Get all registered agents."""
         return list(self.agents.values())
-    
+
     def get_agents_by_capability(self, capability: AgentCapability) -> List[AgentMetadata]:
         """Get all agents that provide a specific capability."""
         agent_ids = self.capability_index.get(capability, set())
         return [self.agents[aid] for aid in agent_ids if aid in self.agents]
-    
+
     def get_agents_by_status(self, status: AgentStatus) -> List[AgentMetadata]:
         """Get all agents with a specific status."""
         return [agent for agent in self.agents.values() if agent.status == status]
-    
+
     def get_healthy_agents(self) -> List[AgentMetadata]:
         """Get all agents with healthy status (not ERROR or STOPPED)."""
         return [
             agent for agent in self.agents.values()
             if agent.status not in [AgentStatus.ERROR, AgentStatus.STOPPED]
         ]
-    
+
     def find_best_agent_for_task(
         self,
         capability: AgentCapability,
@@ -249,16 +248,16 @@ class AgentRegistry:
             AgentMetadata of the best available agent, or None
         """
         candidates = self.get_agents_by_capability(capability)
-        
+
         if not candidates:
             return None
-        
+
         # Filter healthy agents
         healthy = [a for a in candidates if a.status in [AgentStatus.READY, AgentStatus.IDLE, AgentStatus.RUNNING]]
-        
+
         if not healthy:
             return None
-        
+
         # Sort by load and status
         if prefer_idle:
             # Prefer IDLE > READY > RUNNING, then by lowest load
@@ -269,14 +268,14 @@ class AgentRegistry:
         else:
             # Just sort by load
             healthy.sort(key=lambda a: a.current_load)
-        
+
         return healthy[0]
-    
+
     async def check_agent_health(self):
         """Check health of all registered agents based on heartbeat timeout."""
         now = datetime.now()
         timeout_threshold = now - timedelta(seconds=self.heartbeat_timeout)
-        
+
         for agent_id, agent in list(self.agents.items()):
             if agent.last_heartbeat < timeout_threshold:
                 if agent.status not in [AgentStatus.STOPPED, AgentStatus.MAINTENANCE]:
@@ -285,16 +284,16 @@ class AgentRegistry:
                         f"Last heartbeat: {agent.last_heartbeat}"
                     )
                     agent.status = AgentStatus.ERROR
-    
+
     async def start_monitoring(self):
         """Start background health monitoring task."""
         if self._monitoring_task and not self._monitoring_task.done():
             self.logger.warning("Monitoring task already running")
             return
-        
+
         self._monitoring_task = asyncio.create_task(self._monitor_agents())
         self.logger.info("Agent monitoring started")
-    
+
     async def stop_monitoring(self):
         """Stop background health monitoring task."""
         if self._monitoring_task and not self._monitoring_task.done():
@@ -304,7 +303,7 @@ class AgentRegistry:
             except asyncio.CancelledError:
                 pass
             self.logger.info("Agent monitoring stopped")
-    
+
     async def _monitor_agents(self):
         """Background task for continuous agent health monitoring."""
         while True:
@@ -316,18 +315,18 @@ class AgentRegistry:
             except Exception as e:
                 self.logger.error(f"Error in agent monitoring: {e}", exc_info=True)
                 await asyncio.sleep(self.health_check_interval)
-    
+
     def get_registry_stats(self) -> Dict[str, Any]:
         """Get statistics about the agent registry."""
         total = len(self.agents)
         status_counts = {}
         for status in AgentStatus:
             status_counts[status.value] = len(self.get_agents_by_status(status))
-        
+
         capability_counts = {}
         for capability in AgentCapability:
             capability_counts[capability.value] = len(self.capability_index[capability])
-        
+
         return {
             'total_agents': total,
             'status_breakdown': status_counts,
@@ -335,7 +334,7 @@ class AgentRegistry:
             'healthy_agents': len(self.get_healthy_agents()),
             'timestamp': datetime.now().isoformat()
         }
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize registry to dictionary for API responses."""
         return {
@@ -373,3 +372,67 @@ def get_agent_registry() -> AgentRegistry:
     if _global_registry is None:
         _global_registry = AgentRegistry()
     return _global_registry
+
+
+async def register_autogen_agents(registry: AgentRegistry, count: int = 100) -> Dict[str, Any]:
+    """
+    FASE 2: Register dynamically generated agents to support 100+ agents.
+    
+    This function registers a configurable number of autogenerated agents
+    for RoyalGPT orchestration capabilities.
+    
+    Args:
+        registry: The agent registry instance
+        count: Number of agents to generate (default: 100)
+    
+    Returns:
+        Dictionary with registration results
+    """
+    import os
+
+    # Check if dynamic agent generation is enabled
+    if not os.getenv("ENABLE_ROYALGPT_ORCHESTRATION", "true").lower() == "true":
+        return {
+            "success": False,
+            "message": "Dynamic agent generation disabled",
+            "registered": 0
+        }
+
+    # Get authorized scope (default "*" means all agents)
+    authorized_scope = os.getenv("AUTHORIZED_AGENTS_SCOPE", "*")
+
+    registered_count = 0
+    failed_count = 0
+
+    for i in range(count):
+        try:
+            agent_id = f"autogen_agent_{i:03d}"
+            success = await registry.register_agent(
+                agent_id=agent_id,
+                name=f"AutoGen Agent {i}",
+                agent_type="autogenerated",
+                capabilities=[AgentCapability.AI_ORCHESTRATION],
+                version="1.0.0",
+                max_concurrent_tasks=10,
+                tags={"autogenerated", "royalgpt", "orchestration"},
+                metadata={
+                    "auto_registered": True,
+                    "generation_index": i,
+                    "authorized_scope": authorized_scope
+                }
+            )
+            if success:
+                registered_count += 1
+            else:
+                failed_count += 1
+        except Exception as e:
+            failed_count += 1
+            logging.getLogger(__name__).error(f"Failed to register agent {i}: {e}")
+
+    return {
+        "success": True,
+        "message": f"Registered {registered_count} autogenerated agents",
+        "registered": registered_count,
+        "failed": failed_count,
+        "total": count
+    }

@@ -19,6 +19,20 @@ def register_error_handlers(app: Flask) -> None:
         """Handle 404 errors with friendly HTML or JSON response."""
         logger.debug(f"404 error for path: {request.path}")
 
+        # FASE 1: Always return JSON for API routes and health endpoints
+        if request.path.startswith("/api/") or request.path.startswith("/health") or request.path in ["/healthz", "/readyz", "/liveness", "/readiness"]:
+            return (
+                jsonify(
+                    {
+                        "error": "Not Found",
+                        "status_code": 404,
+                        "message": "The requested resource was not found",
+                        "path": request.path,
+                    }
+                ),
+                404,
+            )
+
         # Check if request expects JSON
         if request.is_json or "application/json" in request.headers.get("Accept", ""):
             return (
@@ -33,7 +47,7 @@ def register_error_handlers(app: Flask) -> None:
                 404,
             )
 
-        # Try to render HTML template
+        # Try to render HTML template for non-API routes
         try:
             return (
                 render_template(

@@ -24,8 +24,17 @@ from flask import Flask
 from flask_cors import CORS
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+# Optional integrations - only import if available
+try:
+    from sentry_sdk.integrations.redis import RedisIntegration
+except ImportError:
+    RedisIntegration = None
+
+try:
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+except (ImportError, Exception):
+    SqlalchemyIntegration = None
 
 from app.config import get_config
 from app.routes.docs import init_swagger
@@ -112,22 +121,29 @@ def init_sentry() -> None:
     profiles_sample_rate = float(os.environ.get('SENTRY_PROFILES_SAMPLE_RATE', '1.0'))
 
     try:
+        # Build integrations list with optional components
+        integrations = [
+            FlaskIntegration(
+                transaction_style="url",  # Track by URL pattern
+            ),
+            LoggingIntegration(
+                level=logging.INFO,  # Capture info and above
+                event_level=logging.ERROR  # Send errors as events
+            ),
+        ]
+
+        # Add optional integrations if available
+        if RedisIntegration is not None:
+            integrations.append(RedisIntegration())
+        if SqlalchemyIntegration is not None:
+            integrations.append(SqlalchemyIntegration())
+
         sentry_sdk.init(
             dsn=sentry_dsn,
             environment=environment,
 
             # Integrations for Flask ecosystem
-            integrations=[
-                FlaskIntegration(
-                    transaction_style="url",  # Track by URL pattern
-                ),
-                RedisIntegration(),  # Redis operations tracking
-                SqlalchemyIntegration(),  # Database query tracking
-                LoggingIntegration(
-                    level=logging.INFO,  # Capture info and above
-                    event_level=logging.ERROR  # Send errors as events
-                ),
-            ],
+            integrations=integrations,
 
             # Performance monitoring
             traces_sample_rate=traces_sample_rate,
