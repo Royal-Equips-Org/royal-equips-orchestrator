@@ -15,7 +15,12 @@ const start = async () => {
       global: false, // Apply to all routes unless overridden
     });
 
-    // API routes
+    // Register health endpoints at root level (before other routes)
+    // Import health routes directly to register them at root
+    const healthRoutes = await import("./v1/health.js");
+    await app.register(healthRoutes.default);
+
+    // API routes under /v1 prefix
     app.register(api, { prefix: "/v1" });
 
     // Serve built UI from ../command-center-ui/dist (dev) or ./dist-web (production)
@@ -36,10 +41,23 @@ const start = async () => {
       }
     });
 
-    // SPA fallback for HTML requests
+    // SPA fallback for HTML requests (but not for API endpoints)
     app.setNotFoundHandler(async (req, reply) => {
       const accept = req.headers.accept || "";
-      if (req.method === "GET" && accept.includes("text/html")) {
+      const path = req.url;
+      
+      // Don't apply SPA fallback to API routes or health endpoints
+      const isApiRoute = path.startsWith('/v1/') || 
+                         path.startsWith('/api/') || 
+                         path === '/health' || 
+                         path === '/healthz' || 
+                         path === '/readyz' ||
+                         path === '/liveness' ||
+                         path === '/readiness' ||
+                         path === '/version' ||
+                         path === '/metrics';
+      
+      if (req.method === "GET" && accept.includes("text/html") && !isApiRoute) {
         // Send the index.html file directly (cast for TypeScript compatibility)
         return (reply as any).sendFile("index.html");
       }

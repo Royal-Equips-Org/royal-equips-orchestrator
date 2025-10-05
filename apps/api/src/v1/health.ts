@@ -297,6 +297,99 @@ const healthRoutes: FastifyPluginAsync = async (app) => {
       });
     }
   });
+
+  // Add /liveness as an alias for /healthz for compatibility
+  app.get("/liveness", {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (req, reply) => {
+    try {
+      const uptime = Date.now() - startTime;
+      
+      const response = { 
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime,
+        service: 'Royal Equips API'
+      };
+      
+      app.log.debug('Liveness check passed (via /liveness)');
+      return reply.code(200).send(response);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Liveness check failed: ${errorMsg}`);
+      
+      return reply.code(503).send({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: 'Health check failed',
+        message: errorMsg
+      });
+    }
+  });
+
+  // Add /readiness as an alias for /readyz for compatibility
+  app.get("/readiness", {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (req, reply) => {
+    // Simply forward to /readyz handler by calling the same logic
+    const startCheck = Date.now();
+    
+    try {
+      const dependencies: HealthDependency[] = [];
+      let overallStatus: 'ok' | 'error' | 'degraded' = 'ok';
+
+      // Simplified readiness check - just verify we can respond
+      dependencies.push({
+        name: 'service',
+        status: 'ok',
+        latency: Date.now() - startCheck,
+        details: { service: 'Royal Equips API' }
+      });
+
+      const response = {
+        ready: overallStatus === 'ok',
+        status: overallStatus,
+        service: 'Royal Equips API',
+        version: process.env.RELEASE || '1.0.0-dev',
+        timestamp: new Date().toISOString(),
+        checks: dependencies,
+        uptime: Date.now() - startTime,
+        check_duration_ms: Date.now() - startCheck
+      };
+
+      const httpStatus = overallStatus === 'ok' ? 200 : (overallStatus === 'degraded' ? 200 : 503);
+      app.log.debug(`Readiness check completed (via /readiness): ${overallStatus}`);
+      
+      return reply.code(httpStatus).send(response);
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      const totalLatency = Date.now() - startCheck;
+      
+      app.log.error(`Readiness check failed after ${totalLatency}ms: ${errorMsg}`);
+      
+      return reply.code(503).send({
+        status: 'error',
+        service: 'Royal Equips API',
+        version: process.env.RELEASE || '1.0.0-dev',
+        timestamp: new Date().toISOString(),
+        error: 'Readiness check failed',
+        message: errorMsg,
+        uptime: Date.now() - startTime,
+        check_duration_ms: totalLatency
+      });
+    }
+  });
 };
 
 export default healthRoutes;

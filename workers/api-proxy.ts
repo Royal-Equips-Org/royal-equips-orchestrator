@@ -21,8 +21,8 @@ app.use('*', cors({
   exposeHeaders: ['*']
 }));
 
-// Worker health endpoint
-app.get('/health', (c) => {
+// Worker health endpoint - shows worker status
+app.get('/worker/health', (c) => {
   return c.json({
     ok: true,
     worker: "cloudflare-api-proxy",
@@ -30,6 +30,173 @@ app.get('/health', (c) => {
     environment: c.env?.CF_ENVIRONMENT || 'unknown',
     upstreamConfigured: !!c.env?.UPSTREAM_API_BASE
   });
+});
+
+// Proxy root-level health endpoints to upstream backend
+app.get('/health', async (c) => {
+  const upstreamApiBase = c.env.UPSTREAM_API_BASE;
+  if (!upstreamApiBase) {
+    return c.json({ 
+      error: "UPSTREAM_API_BASE is not configured",
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
+
+  try {
+    const targetUrl = new URL('/health', upstreamApiBase);
+    const response = await fetch(targetUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Forwarded-For': c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || '',
+        'X-Forwarded-Proto': 'https'
+      }
+    });
+
+    return new Response(response.body, {
+      status: response.status,
+      headers: response.headers
+    });
+  } catch (error) {
+    return c.json({
+      error: "Upstream health check failed",
+      details: String(error),
+      timestamp: new Date().toISOString()
+    }, 502);
+  }
+});
+
+app.get('/healthz', async (c) => {
+  const upstreamApiBase = c.env.UPSTREAM_API_BASE;
+  if (!upstreamApiBase) {
+    return c.json({ 
+      error: "UPSTREAM_API_BASE is not configured",
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
+
+  try {
+    const targetUrl = new URL('/healthz', upstreamApiBase);
+    const response = await fetch(targetUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Forwarded-For': c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || '',
+        'X-Forwarded-Proto': 'https'
+      }
+    });
+
+    return new Response(response.body, {
+      status: response.status,
+      headers: response.headers
+    });
+  } catch (error) {
+    return c.json({
+      error: "Upstream liveness check failed",
+      details: String(error),
+      timestamp: new Date().toISOString()
+    }, 502);
+  }
+});
+
+app.get('/readyz', async (c) => {
+  const upstreamApiBase = c.env.UPSTREAM_API_BASE;
+  if (!upstreamApiBase) {
+    return c.json({ 
+      error: "UPSTREAM_API_BASE is not configured",
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
+
+  try {
+    const targetUrl = new URL('/readyz', upstreamApiBase);
+    const response = await fetch(targetUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Forwarded-For': c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || '',
+        'X-Forwarded-Proto': 'https'
+      }
+    });
+
+    return new Response(response.body, {
+      status: response.status,
+      headers: response.headers
+    });
+  } catch (error) {
+    return c.json({
+      error: "Upstream readiness check failed",
+      details: String(error),
+      timestamp: new Date().toISOString()
+    }, 502);
+  }
+});
+
+// Alias endpoints for compatibility
+app.get('/liveness', async (c) => {
+  const upstreamApiBase = c.env.UPSTREAM_API_BASE;
+  if (!upstreamApiBase) {
+    return c.json({ 
+      error: "UPSTREAM_API_BASE is not configured",
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
+
+  try {
+    const targetUrl = new URL('/liveness', upstreamApiBase);
+    const response = await fetch(targetUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Forwarded-For': c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || '',
+        'X-Forwarded-Proto': 'https'
+      }
+    });
+
+    return new Response(response.body, {
+      status: response.status,
+      headers: response.headers
+    });
+  } catch (error) {
+    return c.json({
+      error: "Upstream liveness check failed",
+      details: String(error),
+      timestamp: new Date().toISOString()
+    }, 502);
+  }
+});
+
+app.get('/readiness', async (c) => {
+  const upstreamApiBase = c.env.UPSTREAM_API_BASE;
+  if (!upstreamApiBase) {
+    return c.json({ 
+      error: "UPSTREAM_API_BASE is not configured",
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
+
+  try {
+    const targetUrl = new URL('/readiness', upstreamApiBase);
+    const response = await fetch(targetUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Forwarded-For': c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || '',
+        'X-Forwarded-Proto': 'https'
+      }
+    });
+
+    return new Response(response.body, {
+      status: response.status,
+      headers: response.headers
+    });
+  } catch (error) {
+    return c.json({
+      error: "Upstream readiness check failed",
+      details: String(error),
+      timestamp: new Date().toISOString()
+    }, 502);
+  }
 });
 
 // Handle CORS preflight requests
