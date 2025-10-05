@@ -431,8 +431,7 @@ components:
               price:
                 type: number
               compareAtPrice:
-                type: number
-                nullable: true
+                type: [number, "null"]
               inventoryQuantity:
                 type: integer
                 minimum: 0
