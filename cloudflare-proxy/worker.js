@@ -7,14 +7,6 @@ export default {
     upstream.pathname = url.pathname;
     upstream.search = url.search;
     
-    // Create new request with upstream URL but preserve all other properties
-    const upstreamRequest = new Request(upstream.toString(), {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
-      redirect: 'follow'
-    });
-    
     // Ensure Accept header includes application/json for health endpoints
     const isHealthEndpoint = url.pathname === '/health' || 
                              url.pathname === '/healthz' || 
@@ -22,15 +14,24 @@ export default {
                              url.pathname === '/liveness' ||
                              url.pathname === '/readiness';
     
+    // Create new request with upstream URL but preserve all other properties
+    let upstreamRequest;
     if (isHealthEndpoint && request.method === 'GET') {
-      const headers = new Headers(upstreamRequest.headers);
+      const headers = new Headers(request.headers);
       headers.set('Accept', 'application/json');
       // Create a new Request with the modified headers
       upstreamRequest = new Request(upstream.toString(), {
-        method: upstreamRequest.method,
+        method: request.method,
         headers: headers,
-        body: upstreamRequest.body,
-        redirect: upstreamRequest.redirect
+        body: request.body,
+        redirect: 'follow'
+      });
+    } else {
+      upstreamRequest = new Request(upstream.toString(), {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        redirect: 'follow'
       });
     }
     
