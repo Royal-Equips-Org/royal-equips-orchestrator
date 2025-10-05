@@ -2,8 +2,8 @@ name = "royal-equips-proxy"
 main = "worker.js"
 compatibility_date = "2024-08-17"
 
-# Production Cloudflare deployment configuration for Royal Equips
-# Covers both royalequips.com and royalequips.nl domains
+# Cloudflare deployment configuration for Royal Equips
+# Covers production, staging, and development environments with routes for both royalequips.com and royalequips.nl domains, including all subdomains.
 routes = [
   { pattern = "royalequips.com/*", zone_name = "royalequips.com" },
   { pattern = "*.royalequips.com/*", zone_name = "royalequips.com" },
