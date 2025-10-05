@@ -7,23 +7,38 @@ compatibility_date = "2025-08-10"
 [observability.logs]
 enabled = true
 
+# Route configuration for command.royalequips.nl domain
+# This ensures API requests are proxied to the Flask backend instead of serving the React UI
+routes = [
+  { pattern = "command.royalequips.nl/*", zone_name = "royalequips.nl" }
+]
+
 # Default environment variables (used when no specific environment is targeted)
 [vars]
-UPSTREAM_API_BASE = "http://localhost:10000"
+# Intentionally set to the same value as production; see the [env.production.vars] section.
+UPSTREAM_API_BASE = "https://royal-equips-orchestrator.onrender.com"
 ALLOWED_ORIGINS = "*"
 
 # Staging environment configuration
 [env.staging]
 name = "royal-equips-orchestrator-staging"
 
+[env.staging.routes]
+pattern = "command-staging.royalequips.nl/*"
+zone_name = "royalequips.nl"
+
 [env.staging.vars]
-UPSTREAM_API_BASE = "https://aira-staging.internal:10000"
+UPSTREAM_API_BASE = "https://royal-equips-orchestrator-staging.onrender.com"
 ALLOWED_ORIGINS = "https://staging.royalequips.com,https://command-center-staging.pages.dev"
 
 # Production environment configuration  
 [env.production]
 name = "royal-equips-orchestrator"
 
+[env.production.routes]
+pattern = "command.royalequips.nl/*"
+zone_name = "royalequips.nl"
+
 [env.production.vars]
-UPSTREAM_API_BASE = "https://aira.internal:10000"
+UPSTREAM_API_BASE = "https://royal-equips-orchestrator.onrender.com"
 ALLOWED_ORIGINS = "https://royalequips.com,https://command-center.pages.dev"
