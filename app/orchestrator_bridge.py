@@ -1,8 +1,8 @@
 """
-Simple orchestrator integration for running agents.
+Orchestrator integration for running agents.
 
-This module provides a lightweight way to execute agents when triggered
-by the API endpoints, bridging the Flask backend with the agent system.
+This module provides integration between Flask API endpoints and the agent system,
+with support for real agent instances and execution tracking.
 """
 
 import asyncio
@@ -18,9 +18,72 @@ logger = logging.getLogger(__name__)
 # Global registry for active agent executions
 active_executions: Dict[str, Dict[str, Any]] = {}
 
+# Global agent instances cache
+_agent_instances: Dict[str, Any] = {}
+
+
+def _get_or_create_agent(agent_id: str) -> Optional[Any]:
+    """Get or create an agent instance by ID."""
+    if agent_id in _agent_instances:
+        return _agent_instances[agent_id]
+    
+    try:
+        # Map agent IDs to their implementations
+        if agent_id == 'security_fraud':
+            from orchestrator.agents.security import SecurityAgent
+            agent = SecurityAgent(name='security_fraud')
+            _agent_instances[agent_id] = agent
+            return agent
+        
+        elif agent_id == 'production-analytics':
+            from orchestrator.agents.production_analytics import ProductionAnalyticsAgent
+            agent = ProductionAnalyticsAgent()
+            _agent_instances[agent_id] = agent
+            return agent
+            
+        elif agent_id == 'product_research':
+            from orchestrator.agents.product_research import ProductResearchAgent
+            agent = ProductResearchAgent()
+            _agent_instances[agent_id] = agent
+            return agent
+            
+        elif agent_id == 'inventory_pricing':
+            from orchestrator.agents.inventory_pricing import InventoryPricingAgent
+            agent = InventoryPricingAgent()
+            _agent_instances[agent_id] = agent
+            return agent
+            
+        elif agent_id == 'marketing_automation':
+            from orchestrator.agents.marketing_automation import MarketingAutomationAgent
+            agent = MarketingAutomationAgent()
+            _agent_instances[agent_id] = agent
+            return agent
+            
+        elif agent_id == 'customer_support':
+            from orchestrator.agents.customer_support import CustomerSupportAgent
+            agent = CustomerSupportAgent()
+            _agent_instances[agent_id] = agent
+            return agent
+            
+        elif agent_id == 'order_management':
+            from orchestrator.agents.order_management import OrderManagementAgent
+            agent = OrderManagementAgent()
+            _agent_instances[agent_id] = agent
+            return agent
+        
+        logger.warning(f"Unknown agent ID: {agent_id}")
+        return None
+        
+    except ImportError as e:
+        logger.error(f"Failed to import agent {agent_id}: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"Failed to create agent {agent_id}: {e}")
+        return None
+
 
 class SimpleOrchestrator:
-    """Simple orchestrator for executing agents."""
+    """Simple orchestrator for executing agents with real agent instance support."""
     
     def __init__(self):
         self.running = False
@@ -83,8 +146,15 @@ class SimpleOrchestrator:
             return False
     
     def get_agent(self, agent_id: str) -> Optional[Any]:
-        """Agent retrieval is not supported in SimpleOrchestrator."""
-        raise NotImplementedError("SimpleOrchestrator does not maintain agent instances.")
+        """Get an agent instance by ID.
+        
+        Args:
+            agent_id: The agent identifier (e.g., 'security_fraud')
+            
+        Returns:
+            Agent instance or None if not found
+        """
+        return _get_or_create_agent(agent_id)
     
     def get_agent_status(self, agent_id: str) -> str:
         """Get current status of an agent."""
@@ -172,7 +242,8 @@ class SimpleOrchestrator:
             "customer_support": 10,
             "order_management": 15,
             "product_recommendation": 25,
-            "analytics": 35
+            "analytics": 35,
+            "security_fraud": 20
         }
         return durations.get(agent_id, 30)
 
