@@ -506,26 +506,14 @@ class PredictiveForecaster:
             return self._generate_fallback_forecast(confidence, horizon)
     
     def _generate_fallback_forecast(self, current_confidence: float, horizon: int) -> ConfidenceForecast:
-        """Generate fallback forecast when ML models are unavailable."""
-        # Simple heuristic-based forecast
-        decay_factor = 0.95 ** (horizon / 6)  # Slight decay over time
-        predicted_confidence = current_confidence * decay_factor
-        
-        # Add some uncertainty based on time horizon
-        uncertainty = min(20, horizon * 2)
-        ci_lower = max(0, predicted_confidence - uncertainty)
-        ci_upper = min(100, predicted_confidence + uncertainty)
-        
-        return ConfidenceForecast(
-            forecast_horizon=horizon,
-            predicted_confidence=predicted_confidence,
-            confidence_interval_lower=ci_lower,
-            confidence_interval_upper=ci_upper,
-            prediction_accuracy=0.7,  # Default accuracy
-            trend_direction="stable",
-            volatility_forecast=0.3,  # Default moderate volatility
-            risk_level="medium",
-            timestamp=datetime.now()
+        """Raise error when ML models are unavailable - no fallback mock data."""
+        raise RuntimeError(
+            "Predictive forecasting requires ML models to be trained and available. "
+            "The confidence forecasting model is not loaded. Please ensure the following:\n"
+            "1. Prophet library is installed: pip install prophet\n"
+            "2. ML models are trained using the training data\n"
+            "3. Model files exist in the models directory\n"
+            "This system does not provide mock or simulated forecasts - only real ML-based predictions."
         )
     
     def forecast_market_conditions(self, 
