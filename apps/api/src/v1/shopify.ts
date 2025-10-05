@@ -131,35 +131,12 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     process.env.SHOPIFY_ACCESS_TOKEN || ''
   );
 
-  // Function to get the latest shopify data file
-  async function getLatestShopifyData(type: 'products' | 'analysis') {
-    try {
-      const dataDir = process.env.SHOPIFY_DATA_DIR
-        ? path.resolve(process.env.SHOPIFY_DATA_DIR)
-        : path.join(process.cwd(), '../../shopify_data');
-      const files = await fs.readdir(dataDir);
-      const typeFiles = files.filter(f => f.startsWith(`${type}_`) && f.endsWith('.json'));
-      
-      if (typeFiles.length === 0) {
-        return null;
-      }
-      
-      // Sort by date (latest first)
-      typeFiles.sort().reverse();
-      const latestFile = typeFiles[0];
-      
-      const content = await fs.readFile(path.join(dataDir, latestFile), 'utf-8');
-      return JSON.parse(content);
-    } catch (error) {
-      app.log.warn(`Failed to read ${type} data from file: ${error}`);
-      return null;
-    }
-  }
+
 
   app.get("/shopify/products", {
     config: {
       rateLimit: {
-        max: 15, // Restricted due to filesystem access
+        max: 15,
         timeWindow: '1 minute'
       }
     }
@@ -167,156 +144,88 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     try {
       const { cursor, limit = '50' } = request.query as { cursor?: string; limit?: string };
       
-      // Try to get real data from Shopify first
-      if (process.env.SHOPIFY_ACCESS_TOKEN) {
-        try {
-          const products = await shopifyClient.query(GQL_PRODUCTS, { cursor });
-          return reply.send({ 
-            products, 
-            success: true,
-            source: 'live_shopify'
-          });
-        } catch (error) {
-          app.log.warn('Live Shopify API failed, falling back to cached data');
-        }
-      }
-
-      // Fallback to cached data if available
-      const cachedProducts = await getLatestShopifyData('products');
-      if (cachedProducts) {
-        // Apply pagination simulation
-        const limitNum = parseInt(limit);
-        const startIndex = cursor ? parseInt(cursor) : 0;
-        const slicedProducts = cachedProducts.slice(startIndex, startIndex + limitNum);
-        
-        // Enhance products with professional images and additional data
-        const enhancedProducts = slicedProducts.map((product: any, index: number) => {
-          // Generate professional product images based on product type/category
-          const imageUrl = generateProductImage(product);
-          
-          return {
-            ...product,
-            images: product.images || {
-              edges: [{
-                node: {
-                  id: `image_${product.id}`,
-                  url: imageUrl,
-                  altText: product.title,
-                  width: 800,
-                  height: 600
-                }
-              }]
-            },
-            description: product.description || generateProductDescription(product),
-            vendor: product.vendor || "Royal Equips",
-            productType: product.productType || categorizeProduct(product.title),
-            tags: product.tags || generateProductTags(product.title),
-            totalInventory: product.totalInventory || Math.floor(Math.random() * 100) + 10,
-            onlineStoreUrl: product.onlineStoreUrl || `https://royalequips.com/products/${product.handle}`,
-            variants: product.variants || {
-              edges: [{
-                node: {
-                  id: `variant_${product.id}`,
-                  sku: `RE-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-                  price: (Math.random() * 200 + 20).toFixed(2),
-                  compareAtPrice: product.compareAtPrice || (Math.random() * 50 + 250).toFixed(2),
-                  availableForSale: true,
-                  inventoryQuantity: Math.floor(Math.random() * 100) + 5,
-                  weight: Math.random() * 5 + 0.1,
-                  weightUnit: "KILOGRAMS"
-                }
-              }]
-            }
-          };
+      // Require Shopify configuration
+      if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_GRAPHQL_ENDPOINT) {
+        return reply.code(503).send({
+          error: 'Shopify integration not configured',
+          message: 'Please configure SHOPIFY_ACCESS_TOKEN and SHOPIFY_GRAPHQL_ENDPOINT environment variables. ' +
+                   'Visit your Shopify Admin > Apps > Develop Apps to create API credentials. ' +
+                   'Required scopes: read_products, read_inventory.',
+          success: false,
+          source: 'config_error',
+          setup_required: true,
+          documentation: 'https://shopify.dev/docs/api/admin-graphql'
         });
-        
+      }
+      
+      try {
+        const products = await shopifyClient.query(GQL_PRODUCTS, { cursor });
         return reply.send({ 
-          products: {
-            edges: enhancedProducts.map((product: any, index: number) => ({
-              cursor: (startIndex + index + 1).toString(),
-              node: product
-            })),
-            pageInfo: {
-              hasNextPage: startIndex + limitNum < cachedProducts.length
-            }
-          },
+          products, 
           success: true,
-          source: 'enhanced_cached_data',
-          total: cachedProducts.length
+          source: 'live_shopify'
+        });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        app.log.error(`Shopify API failed: ${errorMsg}`);
+        
+        // Parse specific Shopify API errors
+        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
+          return reply.code(401).send({
+            error: 'Shopify authentication failed',
+            message: 'Your Shopify API credentials are invalid or expired. ' +
+                     'Please verify SHOPIFY_ACCESS_TOKEN in your environment configuration. ' +
+                     'You may need to regenerate the API token in your Shopify Admin.',
+            success: false,
+            source: 'auth_error'
+          });
+        }
+        
+        if (errorMsg.includes('403') || errorMsg.includes('Forbidden')) {
+          return reply.code(403).send({
+            error: 'Shopify API permissions insufficient',
+            message: 'Your Shopify API token does not have the required permissions. ' +
+                     'Please ensure the API token has "read_products" and "read_inventory" scopes. ' +
+                     'Update the API token permissions in Shopify Admin > Apps > Develop Apps.',
+            success: false,
+            source: 'permission_error'
+          });
+        }
+        
+        if (errorMsg.includes('429') || errorMsg.includes('rate limit')) {
+          return reply.code(429).send({
+            error: 'Shopify API rate limit exceeded',
+            message: 'Too many requests to Shopify API. Please wait a moment and try again. ' +
+                     'Consider implementing request caching or upgrading your Shopify plan for higher rate limits.',
+            success: false,
+            source: 'rate_limit_error',
+            retry_after: 60
+          });
+        }
+        
+        // Generic connection error
+        return reply.code(503).send({
+          error: 'Shopify API connection failed',
+          message: `Unable to connect to Shopify: ${errorMsg}. ` +
+                   'Please check your SHOPIFY_GRAPHQL_ENDPOINT URL and network connectivity. ' +
+                   'If the issue persists, Shopify may be experiencing service disruptions.',
+          success: false,
+          source: 'connection_error',
+          retry_available: true
         });
       }
-
-      // No data available
-      return reply.code(404).send({
-        error: 'No product data available',
-        success: false,
-        source: 'no_data'
-      });
     } catch (error) {
-      app.log.error('Shopify products fetch failed');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Shopify products request failed: ${errorMsg}`);
       return reply.code(500).send({ 
-        error: 'Failed to fetch products', 
+        error: 'Internal server error', 
+        message: 'An unexpected error occurred while processing your request. Please try again.',
         success: false 
       });
     }
   });
 
-  // Helper functions for product enhancement
-  function generateProductImage(product: any): string {
-    const categories = [
-      'electronics', 'fashion', 'home', 'beauty', 'sports', 'automotive', 
-      'jewelry', 'books', 'toys', 'health'
-    ];
-    
-    const category = categorizeProduct(product.title).toLowerCase();
-    const matchedCategory = categories.find(cat => category.includes(cat)) || 'electronics';
-    
-    // Use Unsplash for high-quality product images
-    const imageTopics = {
-      'electronics': 'technology,gadget,device',
-      'fashion': 'fashion,clothing,style',
-      'home': 'home,decor,furniture',
-      'beauty': 'beauty,cosmetics,skincare',
-      'sports': 'sports,fitness,athletic',
-      'automotive': 'car,automotive,vehicle',
-      'jewelry': 'jewelry,accessories,luxury',
-      'books': 'books,reading,literature',
-      'toys': 'toys,games,children',
-      'health': 'health,wellness,medical'
-    };
-    
-    const topic = imageTopics[matchedCategory as keyof typeof imageTopics] || 'product';
-    // Use Unsplash's random image endpoint with topics as query
-    return `https://source.unsplash.com/800x600/?${topic}`;
-  } // End of generateProductImage
 
-  function generateProductDescription(product: any): string {
-    return product.description || `Premium ${product.title} - Expertly crafted with attention to detail and superior quality. Perfect for discerning customers who appreciate excellence. Features advanced functionality and elegant design that sets it apart from ordinary products.`;
-  }
-
-  function categorizeProduct(title: string): string {
-    const keywords = {
-      'Electronics': ['charger', 'usb', 'cable', 'tech', 'electronic', 'digital', 'smart', 'device', 'gadget'],
-      'Fashion': ['dress', 'shoe', 'heel', 'boot', 'sneaker', 'clothing', 'apparel', 'fashion', 'wear'],
-      'Beauty': ['mask', 'skincare', 'beauty', 'cosmetic', 'facial', 'cream', 'serum'],
-      'Automotive': ['car', 'auto', 'vehicle', 'drive', 'motor'],
-      'Home': ['home', 'house', 'decor', 'furniture', 'kitchen'],
-      'Sports': ['sport', 'fitness', 'athletic', 'gym', 'exercise']
-    };
-    
-    for (const [category, words] of Object.entries(keywords)) {
-      if (words.some(word => title.toLowerCase().includes(word))) {
-        return category;
-      }
-    }
-    return 'General';
-  }
-
-  function generateProductTags(title: string): string[] {
-    const allTags = ['premium', 'bestseller', 'new-arrival', 'featured', 'trending', 'high-quality'];
-    const category = categorizeProduct(title).toLowerCase();
-    return [category, ...allTags.slice(0, Math.floor(Math.random() * 3) + 2)];
-  }
 
   app.get("/shopify/orders", {
     config: {
@@ -468,36 +377,55 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
     }
   });
 
-  // Product analytics endpoint using cached analysis data
+  // Product analytics endpoint - requires real-time Shopify data aggregation
   app.get("/shopify/analytics", {
     config: {
       rateLimit: {
-        max: 10, // More restrictive for analytics
+        max: 10,
         timeWindow: '1 minute'
       }  
     }
   }, async (request, reply) => {
     try {
-      const analysisData = await getLatestShopifyData('analysis');
-      
-      if (analysisData) {
-        return reply.send({
-          analytics: analysisData,
-          success: true,
-          source: 'cached_analysis'
+      // Require Shopify configuration for analytics
+      if (!process.env.SHOPIFY_ACCESS_TOKEN || !process.env.SHOPIFY_GRAPHQL_ENDPOINT) {
+        return reply.code(503).send({
+          error: 'Shopify analytics not available',
+          message: 'Shopify integration is not configured. Please configure SHOPIFY_ACCESS_TOKEN to enable analytics. ' +
+                   'Analytics data is calculated from real-time Shopify product, order, and customer data.',
+          success: false,
+          source: 'config_error',
+          setup_required: true
         });
       }
 
-      // No analytics available
-      return reply.code(404).send({
-        error: 'No analytics data available',
+      // TODO: Implement real-time analytics aggregation from Shopify API
+      // This should:
+      // 1. Query products with sales data
+      // 2. Calculate revenue, conversion rates, top performers
+      // 3. Aggregate customer metrics
+      // 4. Generate trend analysis
+      
+      return reply.code(501).send({
+        error: 'Analytics aggregation not yet implemented',
+        message: 'Real-time Shopify analytics aggregation is under development. ' +
+                 'This endpoint will calculate analytics from live Shopify data including: ' +
+                 'revenue trends, top products, customer segments, and conversion rates. ' +
+                 'Please use individual Shopify API endpoints (/shopify/products, /shopify/orders) for now.',
         success: false,
-        source: 'no_data'
+        source: 'not_implemented',
+        available_endpoints: [
+          '/shopify/products',
+          '/shopify/orders',
+          '/shopify/customers'
+        ]
       });
     } catch (error) {
-      app.log.error('Shopify analytics fetch failed');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      app.log.error(`Shopify analytics request failed: ${errorMsg}`);
       return reply.code(500).send({
-        error: 'Failed to fetch analytics',
+        error: 'Internal server error',
+        message: 'An unexpected error occurred while processing analytics request.',
         success: false
       });
     }

@@ -18,6 +18,7 @@ import {
 import { useEmpireStore } from '../../store/empire-store';
 import { empireService } from '../../services/empire-service';
 import { Agent } from '../../types/empire';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 
 interface AIRAStatus {
   online: boolean;
@@ -41,6 +42,8 @@ interface AIRAOperation {
 }
 
 export default function AiraModule() {
+  const { handleError } = useErrorHandler();
+  
   const [airaStatus, setAiraStatus] = useState<AIRAStatus>({
     online: true,
     processing: false,
@@ -103,24 +106,15 @@ export default function AiraModule() {
 
         setOperations(realOperations);
       } catch (error) {
-        console.error('Failed to load real operations:', error);
-        // Fallback to some basic operations
-        setOperations([
-          {
-            id: 'health_check',
-            type: 'scan',
-            status: 'completed',
-            description: 'Empire Health Monitoring',
-            progress: 100,
-            startTime: new Date(Date.now() - 300000).toISOString(),
-            duration: 15000
-          }
-        ]);
+        // Display user-friendly error notification
+        handleError(error, 'AIRA Operations');
+        // Set empty operations on error - no fallback mock data
+        setOperations([]);
       }
     };
 
     loadOperations();
-  }, []);
+  }, [handleError]);
 
   const getAgentTaskDescription = (agentType: string): string => {
     const taskMap = {
