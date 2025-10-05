@@ -20,10 +20,10 @@ from app.orchestrator_bridge import get_orchestrator
 try:
     from core.security.auth import require_auth, require_admin
 except ImportError:  # pragma: no cover - fallback for missing auth module
-    def _passthrough(func):
-        return func
-
-    require_auth = require_admin = _passthrough
+    raise ImportError(
+        "core.security.auth module is required for authentication and authorization. "
+        "Application cannot start without it. Please ensure core.security.auth is available."
+    )
 
 
 # Initialize rate limiter
