@@ -655,7 +655,7 @@ def execute_agent(agent_id: str):
                 logger.info(f"Agent {agent_id} execution completed: {result}")
             except Exception as exc:
                 logger.error(f"Agent {agent_id} execution failed: {exc}", exc_info=True)
-        thread = threading.Thread(target=run_agent, daemon=True)
+        thread = threading.Thread(target=run_agent)
         thread.start()
 
         return jsonify({
