@@ -38,8 +38,8 @@ class ProductResearchAgent(AgentBase):
         self.logger = logging.getLogger(self.name)
         self.trending_products: List[Dict[str, Any]] = []
         self.execution_params: Dict[str, Any] = {}
-        self.last_result: Optional[Dict[str, Any]] = None
-        self.discoveries_count: int = 0
+        self.last_result: Optional[Dict[str, Any]] = None  # Stores the results of the most recent execution
+        self.discoveries_count: int = 0  # Tracks the number of products discovered in the last run
 
     def set_execution_params(self, params: Dict[str, Any]) -> None:
         """Set execution parameters for the agent."""
