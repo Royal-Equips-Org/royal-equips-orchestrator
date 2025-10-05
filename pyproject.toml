@@ -10,11 +10,13 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 dependencies = [
-    "flask>=3.0",
+    "flask[async]>=3.0",
     "flask-cors>=6.0",
     "flask-socketio>=5.4",
+    "flask-limiter>=3.6.0",
     "eventlet>=0.33",
     "flasgger>=0.9.7.1",
+    "pyyaml>=6.0",
     "gunicorn>=21.2",
     "requests>=2.31",
     "tenacity>=8.2",
@@ -34,6 +36,7 @@ dependencies = [
     "google-cloud-bigquery>=3.13.0",
     "supabase>=2.0.0",
     "gitpython>=3.1.40",
+    "jsonschema>=4.20.0",
 ]
 
 [project.scripts]

@@ -2,6 +2,19 @@
 
 All notable changes to the Command Center UI are documented here following [Keep a Changelog](https://keepachangelog.com/) conventions and [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2025-02-15
+### Added
+- RoyalGPT OpenAPI 3.1.0 contract (`docs/openapi/royalgpt-command-api.yaml`) served at `/docs/apispec.json` for client discovery.
+- Versioned `/v2/products` endpoints exposing `Product` and `ProductAnalysis` responses aligned with Shopify data and deterministic fallbacks.
+- `/fraud/scan` RoyalGPT alias preserving auth/rate limiting while emitting the `FraudScanResult` payload.
+- `/intelligence/report` intelligence feed wrapping the analytics agent to supply the canonical `IntelligenceReport` structure.
+- Backend contract test suite (`tests/python/test_royalgpt_contract.py`) covering the new endpoints and OpenAPI advertisement.
+
+### Changed
+- `/health` now delivers structured diagnostics including uptime, build version, and agent counts.
+- CI (`ci.yml`) installs Python dependencies and executes the RoyalGPT contract tests alongside frontend checks.
+- `reports/STACK_REPORT.md` documents the RoyalGPT API surface for operational awareness.
+
 ## [1.1.0] - 2025-09-29
 ### Added
 - AI Core room layout with holographic Three.js avatar linked to live metrics and voice commands.
@@ -25,3 +38,5 @@ All notable changes to the Command Center UI are documented here following [Keep
 - Adjusted `public/config.json` and runtime config fallbacks to use the new base path.
 
 [1.0.1]: https://github.com/Royal-Equips-Org/royal-equips-orchestrator/releases/tag/v1.0.1
+[1.1.0]: https://github.com/Royal-Equips-Org/royal-equips-orchestrator/releases/tag/v1.1.0
+[1.2.0]: https://github.com/Royal-Equips-Org/royal-equips-orchestrator/releases/tag/v1.2.0
