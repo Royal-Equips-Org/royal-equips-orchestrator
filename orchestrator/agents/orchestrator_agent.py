@@ -144,7 +144,7 @@ class RoyalOrchestratorAgent(AgentBase):
         try:
             all_agents = self.registry.get_all_agents()
 
-            for agent_id, agent_metadata in all_agents.items():
+            for agent_metadata in all_agents:
                 # Check if agent is in a ready state
                 if agent_metadata.status in [RegistryAgentStatus.READY, RegistryAgentStatus.IDLE]:
                     # Check heartbeat freshness
@@ -153,10 +153,10 @@ class RoyalOrchestratorAgent(AgentBase):
                     if time_since_heartbeat < self.registry.heartbeat_timeout:
                         # Check if agent should execute based on custom logic
                         if await self._should_execute_agent(agent_metadata):
-                            ready_agents.append(agent_id)
+                            ready_agents.append(agent_metadata.agent_id)
                     else:
                         logger.warning(
-                            f"Agent {agent_id} heartbeat stale "
+                            f"Agent {agent_metadata.agent_id} heartbeat stale "
                             f"({time_since_heartbeat:.0f}s ago)"
                         )
         except Exception as e:
