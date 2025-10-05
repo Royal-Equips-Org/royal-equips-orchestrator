@@ -6,19 +6,24 @@ import logging
 import math
 import time
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Iterable
 
 from flask import Blueprint, jsonify, request
 
 from app.blueprints.shopify import get_shopify_service
 from app.orchestrator_bridge import get_orchestrator as get_bridge_orchestrator
-from app.services.shopify_service import ShopifyAPIError, ShopifyAuthError, ShopifyRateLimitError
+from app.services.shopify_service import (
+    ShopifyAPIError,
+    ShopifyAuthError,
+    ShopifyRateLimitError,
+)
 
 logger = logging.getLogger(__name__)
 
+# Blueprint registered with /api prefix in app/__init__.py
 royalgpt_bp = Blueprint("royalgpt", __name__)
 
-_FALLBACK_PRODUCTS: List[Dict[str, Any]] = [
+_FALLBACK_PRODUCTS: list[dict[str, Any]] = [
     {
         "id": 842390123,
         "title": "Royal Equips Tactical Backpack",
@@ -84,7 +89,7 @@ def _coerce_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
-def _extract_currency(variant: Dict[str, Any]) -> str:
+def _extract_currency(variant: dict[str, Any]) -> str:
     presentment_prices = variant.get("presentment_prices")
     if isinstance(presentment_prices, list) and presentment_prices:
         price_info = presentment_prices[0].get("price", {})
@@ -94,7 +99,7 @@ def _extract_currency(variant: Dict[str, Any]) -> str:
     return variant.get("currency", "USD")
 
 
-def _normalise_product(raw_product: Dict[str, Any]) -> Dict[str, Any]:
+def _normalise_product(raw_product: dict[str, Any]) -> dict[str, Any]:
     variants = raw_product.get("variants", []) or []
     price_values = [_coerce_float(variant.get("price"), 0.0) for variant in variants]
     compare_values = [_coerce_float(variant.get("compare_at_price"), 0.0) for variant in variants]
@@ -144,7 +149,7 @@ def _normalise_product(raw_product: Dict[str, Any]) -> Dict[str, Any]:
         "marginEstimate": round(margin_estimate, 2),
     }
 
-    variants_payload: List[Dict[str, Any]] = []
+    variants_payload: list[dict[str, Any]] = []
     for variant in variants:
         variant_payload = {
             "id": f"gid://shopify/ProductVariant/{variant.get('id')}",
@@ -179,7 +184,7 @@ def _normalise_product(raw_product: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _build_product_analysis(product: Dict[str, Any], *, include_benchmarks: bool = False) -> Dict[str, Any]:
+def _build_product_analysis(product: dict[str, Any], *, include_benchmarks: bool = False) -> dict[str, Any]:
     price_range = product["priceRange"]
     min_price = price_range.get("min", 0.0)
     max_price = price_range.get("max", min_price)
@@ -225,7 +230,7 @@ def _build_product_analysis(product: Dict[str, Any], *, include_benchmarks: bool
         },
     ]
 
-    analysis: Dict[str, Any] = {
+    analysis: dict[str, Any] = {
         "productId": product["id"],
         "generatedAt": datetime.utcnow().isoformat(),
         "demandScore": round(min(100.0, demand_score), 2),
@@ -258,7 +263,7 @@ def _build_product_analysis(product: Dict[str, Any], *, include_benchmarks: bool
     return analysis
 
 
-def _fallback_products(limit: int) -> List[Dict[str, Any]]:
+def _fallback_products(limit: int) -> list[dict[str, Any]]:
     return _FALLBACK_PRODUCTS[: max(0, limit)]
 
 
@@ -288,7 +293,7 @@ def _trend_from_change(change: float) -> str:
     return "flat"
 
 
-def _build_kpi(value: float, change: float, unit: str) -> Dict[str, Any]:
+def _build_kpi(value: float, change: float, unit: str) -> dict[str, Any]:
     return {
         "value": round(value, 2),
         "change": round(change, 2),
@@ -298,8 +303,8 @@ def _build_kpi(value: float, change: float, unit: str) -> Dict[str, Any]:
 
 
 def _generate_intelligence_report(
-    timeframe: str, metrics: Dict[str, Any], data_sources: List[Any]
-) -> Dict[str, Any]:
+    timeframe: str, metrics: dict[str, Any], data_sources: list[Any]
+) -> dict[str, Any]:
     scale = _ALLOWED_TIMEFRAMES[timeframe]
     scale_ratio = scale / 30
 
@@ -330,8 +335,8 @@ def _generate_intelligence_report(
         f"Average order value at ${average_order_value:,.2f}",
     ]
 
-    risk_alerts: List[str] = []
-    alerts: List[Dict[str, Any]] = []
+    risk_alerts: list[str] = []
+    alerts: list[dict[str, Any]] = []
 
     if conversion_value < 3.5:
         risk_alerts.append("Conversion efficiency trending below goal")
@@ -353,7 +358,7 @@ def _generate_intelligence_report(
             }
         )
 
-    recommendations: List[Dict[str, str]] = [
+    recommendations: list[dict[str, str]] = [
         {
             "priority": "high" if conversion_value < 3.5 else "medium",
             "area": "growth",
@@ -398,7 +403,7 @@ def _generate_intelligence_report(
     if confidence < 0.6:
         outlook = "caution"
 
-    unique_sources: List[str] = []
+    unique_sources: list[str] = []
     for source in data_sources:
         source_str = str(source)
         if source_str and source_str not in unique_sources:
@@ -434,7 +439,7 @@ def list_products_v2():
     started = time.time()
     service = get_shopify_service()
     source_mode = "fallback"
-    raw_products: List[Dict[str, Any]] = []
+    raw_products: list[dict[str, Any]] = []
 
     if service.is_configured():
         try:
@@ -479,7 +484,7 @@ def analyse_product_v2():
         return _build_error("productId is required", 400)
 
     service = get_shopify_service()
-    raw_products: List[Dict[str, Any]] = []
+    raw_products: list[dict[str, Any]] = []
 
     if service.is_configured():
         try:
@@ -514,8 +519,8 @@ def get_intelligence_report():
         allowed = ", ".join(sorted(_ALLOWED_TIMEFRAMES.keys()))
         return _build_error(f"timeframe must be one of {allowed}", 400)
 
-    analytics_metrics: Dict[str, Any] = {}
-    data_sources: List[str] = ["shopify_orders", "marketing_platforms", "customer_data_warehouse"]
+    analytics_metrics: dict[str, Any] = {}
+    data_sources: list[str] = ["shopify_orders", "marketing_platforms", "customer_data_warehouse"]
 
     try:
         orchestrator = get_bridge_orchestrator()
@@ -530,3 +535,389 @@ def get_intelligence_report():
 
     report = _generate_intelligence_report(timeframe, analytics_metrics, data_sources)
     return jsonify(report)
+
+
+@royalgpt_bp.route("/agents/status", methods=["GET"])
+def get_agents_status():
+    """Get status of all available agents for RoyalGPT monitoring."""
+
+    orchestrator = get_bridge_orchestrator()
+    if not orchestrator:
+        return _build_error("Orchestrator unavailable", 503)
+
+    agents_status = []
+
+    # List of agents RoyalGPT can monitor
+    agent_ids = [
+        "production-analytics",
+        "security_fraud",
+        "product_research",
+        "inventory_pricing",
+        "marketing_automation",
+        "customer_support",
+        "finance",
+        "order_fulfillment",
+    ]
+
+    for agent_id in agent_ids:
+        try:
+            agent = orchestrator.get_agent(agent_id)
+            if agent:
+                # Get agent health status
+                health_status = "active"
+                last_run = None
+                performance_metrics = {}
+
+                if hasattr(agent, "get_health_status"):
+                    health_info = agent.get_health_status()
+                    health_status = health_info.get("status", "unknown")
+
+                if hasattr(agent, "last_run_time"):
+                    last_run = agent.last_run_time.isoformat() if agent.last_run_time else None
+
+                if hasattr(agent, "performance_metrics"):
+                    performance_metrics = agent.performance_metrics or {}
+
+                agents_status.append({
+                    "id": agent_id,
+                    "name": getattr(agent, "name", agent_id),
+                    "status": health_status,
+                    "lastRun": last_run,
+                    "metrics": performance_metrics,
+                })
+            else:
+                agents_status.append({
+                    "id": agent_id,
+                    "name": agent_id,
+                    "status": "unavailable",
+                    "lastRun": None,
+                    "metrics": {},
+                })
+        except Exception as exc:  # pragma: no cover
+            logger.warning(f"Failed to get status for agent {agent_id}: {exc}")
+            agents_status.append({
+                "id": agent_id,
+                "name": agent_id,
+                "status": "error",
+                "lastRun": None,
+                "metrics": {},
+                "error": str(exc),
+            })
+
+    return jsonify({
+        "agents": agents_status,
+        "totalAgents": len(agents_status),
+        "activeAgents": len([a for a in agents_status if a["status"] == "active"]),
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+
+@royalgpt_bp.route("/agents/<agent_id>/execute", methods=["POST"])
+def execute_agent(agent_id: str):
+    """Trigger on-demand execution of a specific agent."""
+
+    orchestrator = get_bridge_orchestrator()
+    if not orchestrator:
+        return _build_error("Orchestrator unavailable", 503)
+
+    # Validate agent_id
+    allowed_agents = [
+        "product_research",
+        "inventory_pricing",
+        "marketing_automation",
+        "production-analytics",
+    ]
+
+    if agent_id not in allowed_agents:
+        return _build_error(f"Agent {agent_id} not available for on-demand execution", 400)
+
+    try:
+        agent = orchestrator.get_agent(agent_id)
+        if not agent:
+            return _build_error(f"Agent {agent_id} not found", 404)
+
+        # Check if agent has execute method
+        if not hasattr(agent, "execute") and not hasattr(agent, "_execute_task"):
+            return _build_error(f"Agent {agent_id} does not support execution", 400)
+
+        # Trigger execution asynchronously
+        import asyncio
+        import threading
+
+        execution_id = f"exec_{int(time.time() * 1000)}"
+
+        def run_agent() -> None:
+            try:
+                if hasattr(agent, "execute"):
+                    result = asyncio.run(agent.execute())
+                else:
+                    result = asyncio.run(agent._execute_task())
+                logger.info(f"Agent {agent_id} execution completed: {result}")
+            except Exception as exc:
+                logger.error(f"Agent {agent_id} execution failed: {exc}", exc_info=True)
+        thread = threading.Thread(target=run_agent)
+        thread.start()
+
+        return jsonify({
+            "executionId": execution_id,
+            "agentId": agent_id,
+            "status": "started",
+            "startedAt": datetime.utcnow().isoformat(),
+            "message": f"Agent {agent_id} execution started in background",
+        })
+
+    except Exception as exc:  # pragma: no cover
+        logger.exception(f"Failed to execute agent {agent_id}: {exc}")
+        return _build_error(f"Agent execution failed: {str(exc)}", 500)
+
+
+@royalgpt_bp.route("/agents/<agent_id>/health", methods=["GET"])
+def get_agent_health(agent_id: str):
+    """Get detailed health status for a specific agent."""
+
+    orchestrator = get_bridge_orchestrator()
+    if not orchestrator:
+        return _build_error("Orchestrator unavailable", 503)
+
+    try:
+        agent = orchestrator.get_agent(agent_id)
+        if not agent:
+            return _build_error(f"Agent {agent_id} not found", 404)
+
+        # Get comprehensive health info
+        health_info = {
+            "agentId": agent_id,
+            "name": getattr(agent, "name", agent_id),
+            "status": "active",
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+        if hasattr(agent, "get_health_status"):
+            detailed_health = agent.get_health_status()
+            health_info.update(detailed_health)
+
+        if hasattr(agent, "performance_metrics"):
+            health_info["metrics"] = agent.performance_metrics or {}
+
+        if hasattr(agent, "last_run_time"):
+            health_info["lastRun"] = agent.last_run_time.isoformat() if agent.last_run_time else None
+
+        if hasattr(agent, "config"):
+            config = agent.config
+            health_info["configuration"] = {
+                "priority": getattr(config, "priority", "normal"),
+                "maxExecutionTime": getattr(config, "max_execution_time", 300),
+                "retryCount": getattr(config, "retry_count", 3),
+            }
+
+        return jsonify(health_info)
+
+    except Exception as exc:  # pragma: no cover
+        logger.exception(f"Failed to get health for agent {agent_id}: {exc}")
+        return _build_error(f"Health check failed: {str(exc)}", 500)
+
+
+@royalgpt_bp.route("/inventory/status", methods=["GET"])
+def get_inventory_status():
+    """Get real-time inventory status across all products."""
+
+    service = get_shopify_service()
+    if not service.is_configured():
+        return _build_error("Shopify service not configured", 503)
+
+    try:
+        products, _ = service.list_products(limit=250)
+
+        total_inventory = 0
+        low_stock_count = 0
+        out_of_stock_count = 0
+        products_analyzed = 0
+
+        low_stock_items = []
+
+        for product in products:
+            variants = product.get("variants", []) or []
+            for variant in variants:
+                inventory = int(variant.get("inventory_quantity", 0) or 0)
+                total_inventory += inventory
+                products_analyzed += 1
+
+                if inventory == 0:
+                    out_of_stock_count += 1
+                elif inventory <= 5:
+                    low_stock_count += 1
+                    low_stock_items.append({
+                        "productId": product.get("id"),
+                        "title": product.get("title"),
+                        "sku": variant.get("sku"),
+                        "quantity": inventory,
+                    })
+
+        return jsonify({
+            "summary": {
+                "totalInventory": total_inventory,
+                "productsAnalyzed": products_analyzed,
+                "lowStockCount": low_stock_count,
+                "outOfStockCount": out_of_stock_count,
+            },
+            "lowStockItems": low_stock_items[:20],  # Top 20 low stock items
+            "timestamp": datetime.utcnow().isoformat(),
+        })
+
+    except (ShopifyAuthError, ShopifyAPIError, ShopifyRateLimitError) as exc:
+        logger.warning(f"Shopify inventory check failed: {exc}")
+        return _build_error("Failed to fetch inventory data", 503)
+    except Exception as exc:  # pragma: no cover
+        logger.exception(f"Unexpected inventory check failure: {exc}")
+        return _build_error("Inventory check failed", 500)
+
+
+@royalgpt_bp.route("/marketing/campaigns", methods=["GET"])
+def get_marketing_campaigns():
+    """Get active marketing campaigns and their performance."""
+
+    orchestrator = get_bridge_orchestrator()
+    campaigns = []
+
+    try:
+        marketing_agent = orchestrator.get_agent("marketing_automation") if orchestrator else None
+
+        if marketing_agent and hasattr(marketing_agent, "get_active_campaigns"):
+            campaigns = marketing_agent.get_active_campaigns() or []
+        else:
+            # Return sample campaigns if agent unavailable
+            campaigns = [
+                {
+                    "id": "camp_001",
+                    "name": "Welcome Series",
+                    "type": "email",
+                    "status": "active",
+                    "performance": {
+                        "sent": 1250,
+                        "opened": 425,
+                        "clicked": 89,
+                        "converted": 12,
+                    },
+                },
+                {
+                    "id": "camp_002",
+                    "name": "Cart Abandonment",
+                    "type": "email",
+                    "status": "active",
+                    "performance": {
+                        "sent": 890,
+                        "opened": 356,
+                        "clicked": 124,
+                        "converted": 45,
+                    },
+                },
+            ]
+    except Exception as exc:  # pragma: no cover
+        logger.warning(f"Failed to fetch marketing campaigns: {exc}")
+
+    return jsonify({
+        "campaigns": campaigns,
+        "totalCampaigns": len(campaigns),
+        "activeCampaigns": len([c for c in campaigns if c.get("status") == "active"]),
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+
+@royalgpt_bp.route("/system/capabilities", methods=["GET"])
+def get_system_capabilities():
+    """Get comprehensive list of RoyalGPT system capabilities and access levels."""
+
+    return jsonify({
+        "apiVersion": "2.1.0",
+        "capabilities": {
+            "productManagement": {
+                "available": True,
+                "endpoints": [
+                    "GET /api/v2/products",
+                    "POST /api/v2/products",
+                ],
+                "features": [
+                    "Product listing with analytics",
+                    "Demand scoring",
+                    "Inventory risk assessment",
+                    "Profitability analysis",
+                ],
+            },
+            "agentOrchestration": {
+                "available": True,
+                "endpoints": [
+                    "GET /api/agents/status",
+                    "GET /api/agents/<id>/health",
+                    "POST /api/agents/<id>/execute",
+                ],
+                "features": [
+                    "Real-time agent monitoring",
+                    "On-demand agent execution",
+                    "Health diagnostics",
+                ],
+            },
+            "businessIntelligence": {
+                "available": True,
+                "endpoints": [
+                    "GET /api/intelligence/report",
+                ],
+                "features": [
+                    "Multi-timeframe reporting",
+                    "KPI tracking",
+                    "Trend analysis",
+                    "Risk alerts",
+                ],
+            },
+            "inventoryManagement": {
+                "available": True,
+                "endpoints": [
+                    "GET /api/inventory/status",
+                ],
+                "features": [
+                    "Real-time stock levels",
+                    "Low stock alerts",
+                    "Out of stock tracking",
+                ],
+            },
+            "marketingAutomation": {
+                "available": True,
+                "endpoints": [
+                    "GET /api/marketing/campaigns",
+                ],
+                "features": [
+                    "Campaign performance tracking",
+                    "Engagement metrics",
+                ],
+            },
+            "fraudDetection": {
+                "available": True,
+                "endpoints": [
+                    "POST /api/fraud/scan",
+                ],
+                "features": [
+                    "On-demand fraud scanning",
+                    "Risk scoring",
+                    "Alert generation",
+                ],
+            },
+            "healthMonitoring": {
+                "available": True,
+                "endpoints": [
+                    "GET /api/health",
+                    "GET /api/healthz",
+                    "GET /api/readyz",
+                ],
+                "features": [
+                    "Service diagnostics",
+                    "Liveness probes",
+                    "Readiness checks",
+                ],
+            },
+        },
+        "accessLevel": "full",
+        "rateLimit": {
+            "requestsPerMinute": 100,
+            "burstLimit": 20,
+        },
+        "timestamp": datetime.utcnow().isoformat(),
+    })
