@@ -27,16 +27,9 @@ def _get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
     """
     if _secret_resolver:
         try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                value = loop.run_until_complete(
-                    _secret_resolver.get_secret_with_fallback(key, None)
-                )
-                if value:
-                    return value
-            finally:
-                loop.close()
+            value = asyncio.run(_secret_resolver.get_secret_with_fallback(key, None))
+            if value:
+                return value
         except Exception:
             pass
     
