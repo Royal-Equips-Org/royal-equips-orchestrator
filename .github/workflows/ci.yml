@@ -53,6 +53,19 @@ jobs:
       - name: 🧪 Test
         run: pnpm test --ci --reporters=default || echo "⚠️ Test issues found but continuing..."
 
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🧪 Backend Contract Tests
+        run: python -m pytest tests/python/test_royalgpt_contract.py
+
       - name: 📊 Upload Results
         if: always()
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3

@@ -28,6 +28,12 @@
 - WebSocket heartbeat and health monitoring handled by `realtime-service.ts`.
 - CI security scanning through CodeQL and Gitleaks; dependency scans (`pnpm audit`, `osv-scanner`).
 
+## RoyalGPT API Surface
+- OpenAPI 3.1.0 specification published at `/docs/apispec.json` (source `docs/openapi/royalgpt-command-api.yaml`).
+- `/v2/products` (GET/POST) delivers normalized `Product` and `ProductAnalysis` payloads sourced from Shopify with deterministic fallbacks.
+- `/fraud/scan` mirrors the security agent workflow while emitting the `FraudScanResult` structure expected by RoyalGPT clients.
+- `/intelligence/report` wraps the analytics agent to produce the canonical `IntelligenceReport` including KPI, trend, and recommendation data.
+
 ## CI/CD Flow
 1. **CI Pipeline (`ci.yml`)**: checkout → Node setup → pnpm install → build packages → TypeScript checks → Jest/Vitest suite → upload artifacts.
 2. **Security Pipeline (`security.yml`)**: CodeQL init/analyze → pnpm build → Gitleaks → `pnpm audit` + `osv-scanner`.

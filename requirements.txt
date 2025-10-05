@@ -2,9 +2,10 @@
 # Production-ready dependencies for autonomous e-commerce platform
 
 # Web Framework & API
-flask>=3.0
+flask[async]>=3.0
 flask-cors>=6.0
 flask-socketio>=5.4
+flask-limiter>=3.6.0
 fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
 gunicorn>=21.2
@@ -49,10 +50,12 @@ jinja2>=3.1
 
 # API Documentation
 flasgger>=0.9.7.1
+pyyaml>=6.0
 
 # Utilities
 tenacity>=8.2
 schedule>=1.2.0
+jsonschema>=4.20.0
 
 # Testing Framework
 pytest>=8.0
