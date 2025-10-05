@@ -647,19 +647,14 @@ def execute_agent(agent_id: str):
         execution_id = f"exec_{int(time.time() * 1000)}"
 
         def run_agent() -> None:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
             try:
                 if hasattr(agent, "execute"):
-                    result = loop.run_until_complete(agent.execute())
+                    result = asyncio.run(agent.execute())
                 else:
-                    result = loop.run_until_complete(agent._execute_task())
+                    result = asyncio.run(agent._execute_task())
                 logger.info(f"Agent {agent_id} execution completed: {result}")
             except Exception as exc:
                 logger.error(f"Agent {agent_id} execution failed: {exc}", exc_info=True)
-            finally:
-                loop.close()
-
         thread = threading.Thread(target=run_agent, daemon=True)
         thread.start()
 
