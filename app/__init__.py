@@ -186,7 +186,7 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.command_center', 'command_center_bp', None),
         ('app.routes.aria', 'aria_bp', None),
         ('app.routes.docs', 'docs_bp', None),
-        ('app.routes.royalgpt_api', 'royalgpt_bp', None),
+        ('app.routes.royalgpt_api', 'royalgpt_bp', '/api'),  # RoyalGPT API with /api prefix
         ('app.routes.auto_fix', 'auto_fix_bp', None),
         ('app.routes.empire_real', 'empire_bp', None),  # Real Empire API with business logic
         ('app.blueprints.shopify', 'shopify_bp', None),

@@ -95,7 +95,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v2/products:
+  /api/v2/products:
     get:
       operationId: listProductsV2
       summary: Retrieve curated Shopify products with insight overlays
@@ -223,7 +223,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /fraud/scan:
+  /api/fraud/scan:
     post:
       operationId: executeFraudScan
       summary: Execute an on-demand fraud scan
@@ -259,7 +259,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /intelligence/report:
+  /api/intelligence/report:
     get:
       operationId: getIntelligenceReport
       summary: Retrieve the RoyalGPT intelligence report
@@ -297,6 +297,286 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/agents/status:
+    get:
+      operationId: getAgentsStatus
+      summary: Get status of all available agents
+      description: |
+        Returns comprehensive status information for all agents that RoyalGPT
+        can monitor and control. Includes health status, last run time, and
+        performance metrics for each agent.
+      tags:
+        - Intelligence
+      responses:
+        '200':
+          description: Agents status collection.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - agents
+                  - totalAgents
+                  - activeAgents
+                  - timestamp
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AgentStatus'
+                  totalAgents:
+                    type: integer
+                    minimum: 0
+                  activeAgents:
+                    type: integer
+                    minimum: 0
+                  timestamp:
+                    type: string
+                    format: date-time
+        '503':
+          description: Orchestrator unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/agents/{agentId}/execute:
+    post:
+      operationId: executeAgent
+      summary: Trigger on-demand execution of a specific agent
+      description: |
+        Initiates asynchronous execution of the specified agent. Returns
+        immediately with an execution ID that can be used to track status.
+      tags:
+        - Intelligence
+      parameters:
+        - in: path
+          name: agentId
+          required: true
+          schema:
+            type: string
+          description: Agent identifier (e.g., product_research, inventory_pricing)
+      responses:
+        '200':
+          description: Agent execution started successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - executionId
+                  - agentId
+                  - status
+                  - startedAt
+                properties:
+                  executionId:
+                    type: string
+                  agentId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [started]
+                  startedAt:
+                    type: string
+                    format: date-time
+                  message:
+                    type: string
+        '400':
+          description: Invalid agent ID or agent not available for execution.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Agent not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Orchestrator unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/agents/{agentId}/health:
+    get:
+      operationId: getAgentHealth
+      summary: Get detailed health status for a specific agent
+      description: |
+        Returns comprehensive health diagnostics for the specified agent,
+        including configuration, metrics, and last run information.
+      tags:
+        - Intelligence
+      parameters:
+        - in: path
+          name: agentId
+          required: true
+          schema:
+            type: string
+          description: Agent identifier
+      responses:
+        '200':
+          description: Agent health information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentHealthDetails'
+        '404':
+          description: Agent not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Orchestrator unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/inventory/status:
+    get:
+      operationId: getInventoryStatus
+      summary: Get real-time inventory status across all products
+      description: |
+        Returns aggregated inventory metrics including total stock levels,
+        low stock alerts, and out of stock items.
+      tags:
+        - Products
+      responses:
+        '200':
+          description: Inventory status summary.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - summary
+                  - lowStockItems
+                  - timestamp
+                properties:
+                  summary:
+                    type: object
+                    required:
+                      - totalInventory
+                      - productsAnalyzed
+                      - lowStockCount
+                      - outOfStockCount
+                    properties:
+                      totalInventory:
+                        type: integer
+                        minimum: 0
+                      productsAnalyzed:
+                        type: integer
+                        minimum: 0
+                      lowStockCount:
+                        type: integer
+                        minimum: 0
+                      outOfStockCount:
+                        type: integer
+                        minimum: 0
+                  lowStockItems:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        productId:
+                          type: string
+                        title:
+                          type: string
+                        sku:
+                          type: string
+                        quantity:
+                          type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+        '503':
+          description: Shopify service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/marketing/campaigns:
+    get:
+      operationId: getMarketingCampaigns
+      summary: Get active marketing campaigns and their performance
+      description: |
+        Returns list of active marketing campaigns with engagement metrics
+        and performance data.
+      tags:
+        - Intelligence
+      responses:
+        '200':
+          description: Marketing campaigns collection.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - campaigns
+                  - totalCampaigns
+                  - activeCampaigns
+                  - timestamp
+                properties:
+                  campaigns:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        type:
+                          type: string
+                        status:
+                          type: string
+                        performance:
+                          type: object
+                  totalCampaigns:
+                    type: integer
+                    minimum: 0
+                  activeCampaigns:
+                    type: integer
+                    minimum: 0
+                  timestamp:
+                    type: string
+                    format: date-time
+  /api/system/capabilities:
+    get:
+      operationId: getSystemCapabilities
+      summary: Get comprehensive list of RoyalGPT system capabilities
+      description: |
+        Returns complete API capability map including available endpoints,
+        features, and access levels for RoyalGPT integration.
+      tags:
+        - Intelligence
+      responses:
+        '200':
+          description: System capabilities manifest.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - apiVersion
+                  - capabilities
+                  - accessLevel
+                  - timestamp
+                properties:
+                  apiVersion:
+                    type: string
+                  capabilities:
+                    type: object
+                    additionalProperties:
+                      type: object
+                  accessLevel:
+                    type: string
+                  rateLimit:
+                    type: object
+                  timestamp:
+                    type: string
+                    format: date-time
 components:
   schemas:
     HealthDiagnostics:
@@ -732,6 +1012,67 @@ components:
           enum: [up, flat, down]
         unit:
           type: string
+    AgentStatus:
+      type: object
+      required:
+        - id
+        - name
+        - status
+      properties:
+        id:
+          type: string
+          description: Unique agent identifier.
+        name:
+          type: string
+          description: Human-readable agent name.
+        status:
+          type: string
+          description: Current agent status.
+          enum: [active, unavailable, error, degraded]
+        lastRun:
+          type: [string, "null"]
+          format: date-time
+          description: Timestamp of last successful execution.
+        metrics:
+          type: object
+          additionalProperties: true
+          description: Agent-specific performance metrics.
+        error:
+          type: string
+          description: Error message if status is error.
+    AgentHealthDetails:
+      type: object
+      required:
+        - agentId
+        - name
+        - status
+        - timestamp
+      properties:
+        agentId:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, degraded, error, unavailable]
+        timestamp:
+          type: string
+          format: date-time
+        lastRun:
+          type: [string, "null"]
+          format: date-time
+        metrics:
+          type: object
+          additionalProperties: true
+        configuration:
+          type: object
+          properties:
+            priority:
+              type: string
+            maxExecutionTime:
+              type: integer
+            retryCount:
+              type: integer
     ErrorResponse:
       type: object
       required:
