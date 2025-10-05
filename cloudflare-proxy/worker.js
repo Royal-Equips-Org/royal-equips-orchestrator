@@ -8,11 +8,29 @@ export default {
     upstream.search = url.search;
     
     // Create new request with upstream URL but preserve all other properties
-    const upstreamRequest = new Request(upstream.toString(), request);
+    const upstreamRequest = new Request(upstream.toString(), {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      redirect: 'follow'
+    });
+    
+    // Ensure Accept header includes application/json for health endpoints
+    const isHealthEndpoint = url.pathname === '/health' || 
+                             url.pathname === '/healthz' || 
+                             url.pathname === '/readyz' ||
+                             url.pathname === '/liveness' ||
+                             url.pathname === '/readiness';
+    
+    if (isHealthEndpoint && request.method === 'GET') {
+      const headers = new Headers(upstreamRequest.headers);
+      headers.set('Accept', 'application/json');
+      upstreamRequest.headers = headers;
+    }
     
     try {
       // Forward request to upstream backend
-      const response = await fetch(upstreamRequest);
+      const response = await fetch(upstream.toString(), upstreamRequest);
       
       // Create a new response to modify headers
       const newResponse = new Response(response.body, response);
