@@ -634,7 +634,7 @@ def execute_agent(agent_id: str):
     # Parse execution parameters from request body
     payload = request.get_json(silent=True) or {}
     execution_params = payload.get("parameters", {})
-    
+
     try:
         agent = orchestrator.get_agent(agent_id)
         if not agent:
@@ -656,7 +656,7 @@ def execute_agent(agent_id: str):
         import uuid
 
         execution_id = str(uuid.uuid4())
-        
+
         # Store execution metadata globally for tracking
         from app.orchestrator_bridge import active_executions
         active_executions[execution_id] = {
@@ -675,7 +675,7 @@ def execute_agent(agent_id: str):
                     result = asyncio.run(agent.execute())
                 else:
                     result = asyncio.run(agent._execute_task())
-                
+
                 # Update execution record with result
                 active_executions[execution_id]['status'] = 'completed'
                 active_executions[execution_id]['completed_at'] = datetime.utcnow().isoformat()
@@ -692,7 +692,7 @@ def execute_agent(agent_id: str):
                 active_executions[execution_id]['error'] = str(exc)
                 active_executions[execution_id]['progress'] = 0
                 logger.error(f"Agent {agent_id} execution failed: {exc}", exc_info=True)
-                
+
         thread = threading.Thread(target=run_agent, daemon=True)
         thread.start()
 
@@ -713,13 +713,13 @@ def execute_agent(agent_id: str):
 @royalgpt_bp.route("/agents/executions/<execution_id>", methods=["GET"])
 def get_execution_status(execution_id: str):
     """Get the status and results of a specific agent execution."""
-    
+
     from app.orchestrator_bridge import active_executions
-    
+
     execution_record = active_executions.get(execution_id)
     if not execution_record:
         return _build_error(f"Execution {execution_id} not found", 404)
-    
+
     return jsonify(execution_record)
 
 
