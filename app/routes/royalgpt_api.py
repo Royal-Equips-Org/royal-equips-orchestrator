@@ -614,7 +614,18 @@ def get_agents_status():
 
 @royalgpt_bp.route("/agents/<agent_id>/execute", methods=["POST"])
 def execute_agent(agent_id: str):
-    """Trigger on-demand execution of a specific agent with optional parameters."""
+    """Trigger on-demand execution of a specific agent with optional parameters.
+    
+    FASE 2: Protected endpoint - requires RoyalGPT API key authentication.
+    """
+    from core.security.auth import is_royalgpt_authorized
+    
+    # Check authentication
+    if not is_royalgpt_authorized():
+        return jsonify({
+            "error": "Unauthorized",
+            "message": "Valid RoyalGPT API key required in Authorization header"
+        }), 401
 
     orchestrator = get_bridge_orchestrator()
     if not orchestrator:
