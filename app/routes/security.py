@@ -59,8 +59,13 @@ async def _execute_fraud_scan():
         total_risk += risk_score
 
         if risk_score >= threshold:
+            alert_id = transaction.get('id') or transaction.get('order_id')
+            if not alert_id:
+                logger.warning("Transaction processed with no stable identifier. A temporary UUID will be used.", extra={"transaction": transaction})
+                alert_id = str(uuid.uuid4())
+
             alert = {
-                'id': str(transaction.get('id') or transaction.get('order_id') or uuid.uuid4()),
+                'id': str(alert_id),
                 'type': transaction.get('type', 'transaction'),
                 'riskScore': round(risk_score, 3),
                 'action': 'manual_review',
