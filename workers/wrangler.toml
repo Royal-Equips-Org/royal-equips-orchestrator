@@ -40,6 +40,5 @@ pattern = "command.royalequips.nl/*"
 zone_name = "royalequips.nl"
 
 [env.production.vars]
-# Intentionally using the same UPSTREAM_API_BASE as the default environment.
 UPSTREAM_API_BASE = "https://royal-equips-orchestrator.onrender.com"
 ALLOWED_ORIGINS = "https://royalequips.com,https://command-center.pages.dev"
