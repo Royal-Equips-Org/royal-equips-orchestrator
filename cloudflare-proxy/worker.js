@@ -25,7 +25,13 @@ export default {
     if (isHealthEndpoint && request.method === 'GET') {
       const headers = new Headers(upstreamRequest.headers);
       headers.set('Accept', 'application/json');
-      upstreamRequest.headers = headers;
+      // Create a new Request with the modified headers
+      upstreamRequest = new Request(upstream.toString(), {
+        method: upstreamRequest.method,
+        headers: headers,
+        body: upstreamRequest.body,
+        redirect: upstreamRequest.redirect
+      });
     }
     
     try {
