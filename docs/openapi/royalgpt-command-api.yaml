@@ -1,0 +1,748 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: RoyalGPT Command API
+  version: 2.1.0
+  description: |
+    Royal Equips orchestrator surface for RoyalGPT-enabled clients.
+    Provides production-ready health diagnostics, product intelligence,
+    fraud detection, and operational analytics endpoints consumed by
+    RoyalGPT agents.
+servers:
+  - url: https://command.royalequips.nl
+    description: Production deployment
+  - url: http://localhost:10000
+    description: Local development
+  - url: https://staging.command.royalequips.nl
+    description: Staging environment
+tags:
+  - name: Health
+    description: Service level diagnostics and readiness probes.
+  - name: Products
+    description: Shopify-backed product catalog and insights.
+  - name: Fraud
+    description: Enterprise fraud detection workflows.
+  - name: Intelligence
+    description: Business intelligence and strategic reporting.
+paths:
+  /health:
+    get:
+      summary: Get orchestrator diagnostics snapshot
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service diagnostics payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthDiagnostics'
+        '503':
+          description: Diagnostics unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /healthz:
+    get:
+      summary: Liveness probe
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is alive.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded]
+                required:
+                  - status
+  /readyz:
+    get:
+      summary: Readiness probe with dependency status
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is ready for traffic.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  checks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthCheck'
+                required:
+                  - ready
+                  - status
+                  - timestamp
+                  - checks
+        '503':
+          description: One or more required checks failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v2/products:
+    get:
+      summary: Retrieve curated Shopify products with insight overlays
+      description: |
+        Returns the curated product catalog enriched with automation-ready
+        analytics derived from Shopify Admin data. Responses are normalized
+        to the RoyalGPT Product schema so autonomous agents can reason over
+        inventory, pricing, and growth opportunities.
+      tags:
+        - Products
+      parameters:
+        - in: query
+          name: limit
+          description: Maximum number of products to return (1-250).
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+      responses:
+        '200':
+          description: Product collection with embedded analyses.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - analysis
+                  - count
+                  - generatedAt
+                  - source
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  analysis:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductAnalysis'
+                  count:
+                    type: integer
+                    minimum: 0
+                  generatedAt:
+                    type: string
+                    format: date-time
+                  source:
+                    type: object
+                    required:
+                      - system
+                      - mode
+                      - latencyMs
+                    properties:
+                      system:
+                        type: string
+                        description: Underlying data source powering the response.
+                      mode:
+                        type: string
+                        description: Indicates whether the response was live or provided by a resilience fallback.
+                      latencyMs:
+                        type: integer
+                        minimum: 0
+                        description: Milliseconds required to assemble the response.
+        '400':
+          description: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Shopify service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Generate an intelligence analysis for a specific product
+      description: |
+        Produces a real-time ProductAnalysis for a given Shopify product
+        using live metrics when available. Designed for agents that need
+        rapid go/no-go decisions on catalog actions.
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+              properties:
+                productId:
+                  type: string
+                  description: Shopify product global identifier or numeric ID.
+                includeBenchmarks:
+                  type: boolean
+                  description: Toggle inclusion of benchmark comparisons in the response.
+                  default: false
+      responses:
+        '200':
+          description: Product analysis payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductAnalysis'
+        '400':
+          description: Invalid request payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product could not be located.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Shopify service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /fraud/scan:
+    post:
+      summary: Execute an on-demand fraud scan
+      description: |
+        Triggers the fraud detection pipeline managed by the security agent.
+        Applies machine-learning heuristics, rule-based checks, and
+        orchestration fallbacks. Requires administrative authorization and
+        is rate limited in parity with `/api/security/fraud-detection/run`.
+      tags:
+        - Fraud
+      responses:
+        '200':
+          description: Fraud scan completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudScanResult'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Fraud detection agent unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /intelligence/report:
+    get:
+      summary: Retrieve the RoyalGPT intelligence report
+      description: |
+        Generates a consolidated intelligence briefing for the requested
+        timeframe by aggregating analytics agent insights, finance signals,
+        and strategic heuristics. Designed for RoyalGPT system-of-systems
+        decision loops.
+      tags:
+        - Intelligence
+      parameters:
+        - in: query
+          name: timeframe
+          description: Reporting horizon.
+          required: true
+          schema:
+            type: string
+            enum: ['24h', '7d', '30d', '90d']
+      responses:
+        '200':
+          description: Intelligence report for the requested timeframe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntelligenceReport'
+        '400':
+          description: Invalid timeframe supplied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Intelligence systems unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    HealthDiagnostics:
+      type: object
+      required:
+        - status
+        - uptime
+        - version
+        - agents
+        - timestamp
+        - checks
+      properties:
+        status:
+          type: string
+          description: Overall health classification.
+          enum: [healthy, degraded, critical]
+        uptime:
+          type: object
+          required:
+            - startedAt
+            - seconds
+          properties:
+            startedAt:
+              type: string
+              format: date-time
+            seconds:
+              type: number
+              minimum: 0
+        version:
+          type: string
+          description: Service semantic version or build identifier.
+        agents:
+          type: object
+          properties:
+            active:
+              type: integer
+              minimum: 0
+            total:
+              type: integer
+              minimum: 0
+            degraded:
+              type: integer
+              minimum: 0
+          required:
+            - active
+            - total
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthCheck'
+    HealthCheck:
+      type: object
+      required:
+        - name
+        - healthy
+        - message
+      properties:
+        name:
+          type: string
+        healthy:
+          type: boolean
+        message:
+          type: string
+        required:
+          type: boolean
+        details:
+          type: object
+          additionalProperties: true
+    Product:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - totalInventory
+        - variants
+        - priceRange
+      properties:
+        id:
+          type: string
+          description: Shopify product global identifier.
+        title:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, DRAFT, ARCHIVED]
+        handle:
+          type: string
+        vendor:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        totalInventory:
+          type: integer
+          minimum: 0
+        priceRange:
+          type: object
+          required:
+            - currency
+            - min
+            - max
+          properties:
+            currency:
+              type: string
+            min:
+              type: number
+            max:
+              type: number
+        variants:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - sku
+              - price
+              - inventoryQuantity
+              - tracked
+            properties:
+              id:
+                type: string
+              sku:
+                type: string
+              price:
+                type: number
+              compareAtPrice:
+                type: [number, "null"]
+              inventoryQuantity:
+                type: integer
+                minimum: 0
+              tracked:
+                type: boolean
+        analytics:
+          type: object
+          properties:
+            demandScore:
+              type: number
+              minimum: 0
+              maximum: 100
+            sellThroughRate:
+              type: number
+            reorderRisk:
+              type: string
+              enum: [low, medium, high]
+            velocity:
+              type: number
+            marginEstimate:
+              type: number
+    ProductAnalysis:
+      type: object
+      required:
+        - productId
+        - generatedAt
+        - demandScore
+        - profitability
+        - inventory
+        - recommendations
+      properties:
+        productId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        demandScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        profitability:
+          type: object
+          required:
+            - grossMargin
+            - roi
+            - breakevenUnits
+          properties:
+            grossMargin:
+              type: number
+            roi:
+              type: number
+            breakevenUnits:
+              type: number
+            benchmarkVariance:
+              type: number
+        inventory:
+          type: object
+          required:
+            - available
+            - riskLevel
+            - daysOfCover
+          properties:
+            available:
+              type: integer
+              minimum: 0
+            riskLevel:
+              type: string
+              enum: [low, medium, high, critical]
+            daysOfCover:
+              type: number
+            recommendedReorderQuantity:
+              type: integer
+              minimum: 0
+        marketing:
+          type: object
+          properties:
+            conversionRate:
+              type: number
+            adSpendEfficiency:
+              type: number
+            topChannel:
+              type: string
+        recommendations:
+          type: array
+          items:
+            type: object
+            required:
+              - priority
+              - action
+              - rationale
+            properties:
+              priority:
+                type: string
+                enum: [high, medium, low]
+              action:
+                type: string
+              rationale:
+                type: string
+        benchmarks:
+          type: object
+          properties:
+            categoryMedianMargin:
+              type: number
+            velocityPercentile:
+              type: number
+    FraudScanResult:
+      type: object
+      required:
+        - status
+        - summary
+        - metrics
+        - alerts
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [completed, partial, failed]
+        summary:
+          type: object
+          required:
+            - analyzed
+            - highRisk
+            - alertsGenerated
+          properties:
+            analyzed:
+              type: integer
+              minimum: 0
+            highRisk:
+              type: integer
+              minimum: 0
+            alertsGenerated:
+              type: integer
+              minimum: 0
+            durationMs:
+              type: integer
+              minimum: 0
+        metrics:
+          type: object
+          properties:
+            averageRiskScore:
+              type: number
+            threshold:
+              type: number
+            falsePositiveRate:
+              type: number
+        alerts:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - type
+              - riskScore
+              - action
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              riskScore:
+                type: number
+              action:
+                type: string
+              orderId:
+                type: string
+              customerId:
+                type: string
+              reasons:
+                type: array
+                items:
+                  type: string
+        metadata:
+          type: object
+          properties:
+            triggeredBy:
+              type: string
+            correlationId:
+              type: string
+        timestamp:
+          type: string
+          format: date-time
+    IntelligenceReport:
+      type: object
+      required:
+        - timeframe
+        - generatedAt
+        - kpis
+        - trendSummary
+        - recommendations
+        - alerts
+        - dataSources
+        - confidence
+      properties:
+        timeframe:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        kpis:
+          type: object
+          required:
+            - revenue
+            - conversionRate
+            - averageOrderValue
+            - customerLifetimeValue
+          properties:
+            revenue:
+              $ref: '#/components/schemas/Kpi'
+            conversionRate:
+              $ref: '#/components/schemas/Kpi'
+            averageOrderValue:
+              $ref: '#/components/schemas/Kpi'
+            customerLifetimeValue:
+              $ref: '#/components/schemas/Kpi'
+        trendSummary:
+          type: object
+          properties:
+            growthSignals:
+              type: array
+              items:
+                type: string
+            riskAlerts:
+              type: array
+              items:
+                type: string
+            outlook:
+              type: string
+        recommendations:
+          type: array
+          items:
+            type: object
+            required:
+              - priority
+              - area
+              - action
+              - expectedImpact
+            properties:
+              priority:
+                type: string
+                enum: [high, medium, low]
+              area:
+                type: string
+              action:
+                type: string
+              expectedImpact:
+                type: string
+        alerts:
+          type: array
+          items:
+            type: object
+            required:
+              - severity
+              - metric
+              - message
+            properties:
+              severity:
+                type: string
+                enum: [info, warning, critical]
+              metric:
+                type: string
+              message:
+                type: string
+        dataSources:
+          type: array
+          items:
+            type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        operationalMetrics:
+          type: object
+          properties:
+            queriesExecuted:
+              type: integer
+            reportsGenerated:
+              type: integer
+            cacheHitRate:
+              type: number
+            anomaliesDetected:
+              type: integer
+    Kpi:
+      type: object
+      required:
+        - value
+        - change
+        - trend
+      properties:
+        value:
+          type: number
+        change:
+          type: number
+        trend:
+          type: string
+          enum: [up, flat, down]
+        unit:
+          type: string
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: true

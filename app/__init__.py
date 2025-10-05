@@ -186,6 +186,7 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.command_center', 'command_center_bp', None),
         ('app.routes.aria', 'aria_bp', None),
         ('app.routes.docs', 'docs_bp', None),
+        ('app.routes.royalgpt_api', 'royalgpt_bp', None),
         ('app.routes.auto_fix', 'auto_fix_bp', None),
         ('app.routes.empire_real', 'empire_bp', None),  # Real Empire API with business logic
         ('app.blueprints.shopify', 'shopify_bp', None),
@@ -198,6 +199,7 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.analytics', 'analytics_bp', None),  # Production Analytics with Business Intelligence
         ('app.routes.inventory', 'inventory_bp', None),
         ('app.routes.security', 'security_bp', None),  # Production Security with AI Fraud Detection
+        ('app.routes.security', 'fraud_api_bp', None),
         ('app.routes.finance', 'finance_bp', None),  # Production Finance with Payment Intelligence
         ('app.routes.aira_intelligence', 'aira_intelligence_bp', None),  # Enhanced AIRA Intelligence System
         ('app.routes.agent_orchestration', 'agent_orchestration_bp', None),  # Agent Orchestration for 100+ Agents
