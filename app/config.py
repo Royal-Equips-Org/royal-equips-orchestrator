@@ -31,6 +31,10 @@ class Config:
     SHOP_NAME = os.getenv("SHOP_NAME")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+    # Product Research Agent API keys
+    AUTO_DS_API_KEY = os.getenv("AUTO_DS_API_KEY") or os.getenv("AUTODS_API_KEY")
+    SPOCKET_API_KEY = os.getenv("SPOCKET_API_KEY")
+
     # BigQuery settings
     BIGQUERY_PROJECT_ID = os.getenv("BIGQUERY_PROJECT_ID")
     BIGQUERY_DATASET = os.getenv("BIGQUERY_DATASET")
