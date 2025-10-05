@@ -55,6 +55,11 @@ class Config:
         os.getenv("CIRCUIT_BREAKER_RECOVERY_TIMEOUT", "60")
     )
 
+    # FASE 2: RoyalGPT Orchestration Settings
+    ROYALGPT_ENABLED = os.getenv("ENABLE_ROYALGPT_ORCHESTRATION", "true").lower() == "true"
+    API_KEY_ROYALGPT = os.getenv("API_KEY_ROYALGPT", "")
+    AUTHORIZED_AGENTS_SCOPE = os.getenv("AUTHORIZED_AGENTS_SCOPE", "*")
+
 
 class DevelopmentConfig(Config):
     """Development configuration."""
