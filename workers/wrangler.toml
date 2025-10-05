@@ -15,7 +15,7 @@ routes = [
 
 # Default environment variables (used when no specific environment is targeted)
 [vars]
-# Intentionally set to the same value as production; see [env.production.vars] below.
+# Intentionally set to the same value as production; see the [env.production.vars] section.
 UPSTREAM_API_BASE = "https://royal-equips-orchestrator.onrender.com"
 ALLOWED_ORIGINS = "*"
 
