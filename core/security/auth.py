@@ -84,15 +84,14 @@ def is_royalgpt_authorized(req: Any = None) -> bool:
     if _secret_resolver:
         try:
             import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
             try:
-                secret_result = loop.run_until_complete(
+                secret_result = asyncio.run(
                     _secret_resolver.get_secret_with_fallback("API_KEY_ROYALGPT", None)
                 )
                 api_key = secret_result
-            finally:
-                loop.close()
+            except RuntimeError:
+                # If there's already a running event loop (e.g., in async context), fallback to environment variable
+                pass
         except Exception:
             # Fallback to environment variable
             pass
