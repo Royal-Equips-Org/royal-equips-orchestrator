@@ -20,7 +20,7 @@ def register_error_handlers(app: Flask) -> None:
         logger.debug(f"404 error for path: {request.path}")
 
         # FASE 1: Always return JSON for API routes and health endpoints
-        if request.path.startswith("/api/") or request.path in ["/healthz", "/readyz", "/health", "/liveness", "/readiness"]:
+        if request.path.startswith("/api/") or request.path.startswith("/health") or request.path in ["/healthz", "/readyz", "/liveness", "/readiness"]:
             return (
                 jsonify(
                     {

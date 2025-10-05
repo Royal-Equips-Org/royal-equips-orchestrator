@@ -40,14 +40,14 @@ def verify_heartbeats(max_age_seconds: int = 120) -> Dict[str, Any]:
 
     current_time = datetime.now()
 
-    for agent_id, agent_metadata in all_agents.items():
+    for agent_metadata in all_agents:
         # Calculate time since last heartbeat
         heartbeat_age = (current_time - agent_metadata.last_heartbeat).total_seconds()
 
         # Categorize agent based on status and heartbeat
         if agent_metadata.status == AgentStatus.ERROR:
             error_agents.append({
-                "agent_id": agent_id,
+                "agent_id": agent_metadata.agent_id,
                 "name": agent_metadata.name,
                 "status": agent_metadata.status.value,
                 "heartbeat_age": heartbeat_age,
@@ -55,7 +55,7 @@ def verify_heartbeats(max_age_seconds: int = 120) -> Dict[str, Any]:
             })
         elif heartbeat_age > max_age_seconds:
             stale_agents.append({
-                "agent_id": agent_id,
+                "agent_id": agent_metadata.agent_id,
                 "name": agent_metadata.name,
                 "status": agent_metadata.status.value,
                 "heartbeat_age": heartbeat_age,
@@ -63,7 +63,7 @@ def verify_heartbeats(max_age_seconds: int = 120) -> Dict[str, Any]:
             })
         else:
             healthy_agents.append({
-                "agent_id": agent_id,
+                "agent_id": agent_metadata.agent_id,
                 "name": agent_metadata.name,
                 "status": agent_metadata.status.value,
                 "heartbeat_age": heartbeat_age
@@ -149,15 +149,15 @@ async def send_health_alerts(threshold_error_count: int = 5) -> None:
 
     alerts_sent = 0
 
-    for agent_id, agent_metadata in all_agents.items():
+    for agent_metadata in all_agents:
         if agent_metadata.error_count >= threshold_error_count:
             logger.critical(
-                f"ALERT: Agent {agent_id} ({agent_metadata.name}) has "
+                f"ALERT: Agent {agent_metadata.agent_id} ({agent_metadata.name}) has "
                 f"{agent_metadata.error_count} errors - threshold: {threshold_error_count}"
             )
 
             # Here you would integrate with alerting systems:
-            # - send_email_alert(agent_id, agent_metadata)
+            # - send_email_alert(agent_metadata.agent_id, agent_metadata)
             # - send_slack_alert(agent_id, agent_metadata)
             # - create_pagerduty_incident(agent_id, agent_metadata)
 
