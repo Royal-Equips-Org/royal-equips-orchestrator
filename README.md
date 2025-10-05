@@ -167,6 +167,49 @@ The system tracks comprehensive performance metrics for each agent:
 - **Empire Score**: Product quality rating using 5-factor model
 - **Risk Assessment**: Order fraud detection and classification
 
+## 🏥 Health Monitoring
+
+The platform provides comprehensive health check endpoints for monitoring and orchestration:
+
+### Health Endpoints
+- **`/health`** - Detailed health diagnostics with service information
+- **`/healthz`** - Kubernetes-style liveness probe
+- **`/readyz`** - Readiness probe with dependency checks
+- **`/liveness`** - Alternative liveness endpoint
+- **`/readiness`** - Simplified readiness check
+
+All endpoints return JSON responses with proper status codes. See [Health Endpoints Documentation](docs/HEALTH_ENDPOINTS.md) for complete details.
+
+### Quick Health Check
+```bash
+# Check if service is running
+curl http://localhost:10000/healthz
+
+# Check if service is ready to accept traffic
+curl http://localhost:10000/readyz
+
+# Get detailed health information
+curl http://localhost:10000/health | jq
+```
+
+### Kubernetes/Docker Integration
+```yaml
+# Kubernetes example
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 10000
+  initialDelaySeconds: 10
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 10000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+```
+
 ## 🔐 Security & Compliance
 
 - **Secrets Management**: All API keys via environment variables/GitHub Secrets
@@ -255,6 +298,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Agent Instructions](AGENT_INSTRUCTIONS.md)
 - [Empire Prompt](EMPIRE_PROMPT.md)
 - [Security Guidelines](SECURITY.md)
+- [Health Endpoints Documentation](docs/HEALTH_ENDPOINTS.md)
+- [API Specification](docs/openapi/royalgpt-command-api.yaml)
 
 ---
 
