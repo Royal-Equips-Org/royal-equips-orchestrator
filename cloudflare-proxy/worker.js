@@ -30,7 +30,7 @@ export default {
     
     try {
       // Forward request to upstream backend
-      const response = await fetch(upstream.toString(), upstreamRequest);
+      const response = await fetch(upstreamRequest);
       
       // Create a new response to modify headers
       const newResponse = new Response(response.body, response);
