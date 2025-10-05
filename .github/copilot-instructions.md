@@ -445,7 +445,7 @@ async def test_opportunity_scoring(self, research_agent):
     assert isinstance(opportunities, list)
     if opportunities:
         assert "priority_score" in opportunities[0]
-        assert opportunities[0]["profit_potential"] in {"HIGH", "MEDIUM", "LOW"}
+        assert isinstance(opportunities[0]["profit_potential"], (int, float))
 
 def test_margin_calculation(self, pricing_agent):
     selling_price = Decimal("100.00")
