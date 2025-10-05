@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 import yaml
@@ -22,12 +22,12 @@ def royal_app():
 
 
 @pytest.fixture(scope="module")
-def royal_spec() -> Dict[str, Any]:
+def royal_spec() -> dict[str, Any]:
     with SPEC_PATH.open("r", encoding="utf-8") as handle:
         return yaml.safe_load(handle)
 
 
-def _validate(spec: Dict[str, Any], schema: Dict[str, Any], payload: Dict[str, Any]) -> None:
+def _validate(spec: dict[str, Any], schema: dict[str, Any], payload: dict[str, Any]) -> None:
     resolver = RefResolver.from_schema(spec)
     validator = Draft202012Validator(schema, resolver=resolver)
     validator.validate(payload)
