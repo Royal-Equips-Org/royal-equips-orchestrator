@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Manual integration test for health endpoints
 # Run this after starting the API server with: npm run dev
 
