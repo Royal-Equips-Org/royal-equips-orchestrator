@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # JS/TS dependency graph without running project scripts
       - name: Setup Node (JS/TS only)
