@@ -187,7 +187,17 @@ class ProductionInventoryAgent(AgentBase):
             }
     
     async def _sync_inventory_from_shopify(self) -> None:
-        """Sync inventory data from Shopify using GraphQL - PRODUCTION ONLY."""
+        """
+        Synchronize inventory data from Shopify using the GraphQL API.
+
+        This method retrieves all products and their variants from the connected Shopify store,
+        including product metadata (ID, title, handle, type, inventory totals, creation/update timestamps)
+        and variant-level details (ID, title, SKU, price, compare-at price, inventory quantity, cost, inventory policy, and tracking status).
+        Handles pagination to ensure all products are fetched.
+
+        Updates the agent's internal inventory state with the latest data from Shopify.
+        This method requires valid production Shopify credentials and does not use any mock data.
+        """
         try:
             if not self.shopify_service:
                 error_msg = "Shopify service unavailable. Real credentials required. No mock data in production."
