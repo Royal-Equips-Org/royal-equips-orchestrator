@@ -604,9 +604,10 @@ def get_inventory_metrics():
             out_of_stock_items = sum(1 for p in _FALLBACK_INVENTORY_PRODUCTS 
                                     for v in p.get('variants', []) 
                                     if v.get('inventory_quantity', 0) == 0)
-            total_value = sum(float(v.get('price', 0)) * v.get('inventory_quantity', 0)
-                             for p in _FALLBACK_INVENTORY_PRODUCTS 
-                             for v in p.get('variants', []))
+            total_value = 0.0
+            for p in _FALLBACK_INVENTORY_PRODUCTS:
+                for v in p.get('variants', []):
+                    total_value += float(v.get('price', 0)) * v.get('inventory_quantity', 0)
             
             return jsonify({
                 "totalProducts": total_products,
