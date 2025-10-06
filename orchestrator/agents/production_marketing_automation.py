@@ -432,7 +432,23 @@ class ProductionMarketingAutomationAgent(AgentBase):
             }
     
     async def _get_email_marketing_data(self) -> Dict[str, Any]:
-        """Get email marketing performance from Klaviyo - PRODUCTION ONLY."""
+        """
+        Fetch email marketing performance metrics from the Klaviyo API.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - 'active_campaigns': List of sent campaign objects.
+                - 'total_campaigns': Total number of campaigns.
+                - 'total_sent': Total number of emails sent.
+                - 'avg_open_rate': Average open rate (percentage).
+                - 'avg_click_rate': Average click rate (percentage).
+                - 'engagement_score': Aggregate engagement score.
+
+        Raises:
+            ValueError: If the Klaviyo API key is missing.
+            RuntimeError: If the Klaviyo API returns a non-200 status code.
+            Exception: For other unexpected errors.
+        """
         try:
             klaviyo_key = await self.secrets.get_secret('KLAVIYO_API_KEY')
             if not klaviyo_key:
