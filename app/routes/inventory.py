@@ -550,7 +550,7 @@ def _get_fallback_inventory_response(limit: int, start_time: float) -> tuple:
     
     response = {
         "timestamp": datetime.now().isoformat(),
-        "shop": "royal-equips.myshopify.com",
+        "shop": current_app.config.get("SHOP_DOMAIN", "royal-equips.myshopify.com"),
         "products": fallback_products,
         "meta": {
             "count": len(fallback_products),
