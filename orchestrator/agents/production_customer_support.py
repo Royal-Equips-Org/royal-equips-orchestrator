@@ -398,14 +398,16 @@ class ProductionCustomerSupportAgent(AgentBase):
             return {'tickets_processed': 0, 'error': str(e)}
     
     async def _get_new_zendesk_tickets(self) -> List[Dict[str, Any]]:
-        """Get new tickets from Zendesk API."""
+        """Get new tickets from Zendesk API - PRODUCTION ONLY."""
         try:
             zendesk_domain = await self.secrets.get_secret('ZENDESK_DOMAIN')
             zendesk_token = await self.secrets.get_secret('ZENDESK_API_TOKEN')
             zendesk_email = await self.secrets.get_secret('ZENDESK_EMAIL')
             
             if not all([zendesk_domain, zendesk_token, zendesk_email]):
-                return self._get_fallback_tickets()
+                error_msg = "Zendesk credentials required (ZENDESK_DOMAIN, ZENDESK_API_TOKEN, ZENDESK_EMAIL). No mock data in production."
+                logger.error(error_msg)
+                raise ValueError(error_msg)
             
             auth = (f"{zendesk_email}/token", zendesk_token)
             
@@ -426,20 +428,24 @@ class ProductionCustomerSupportAgent(AgentBase):
                 )
                 
                 if response.status_code != 200:
-                    return self._get_fallback_tickets()
+                    error_msg = f"Zendesk API returned status {response.status_code}"
+                    logger.error(error_msg)
+                    raise RuntimeError(error_msg)
                 
                 data = response.json()
                 return data.get('tickets', [])
                 
         except Exception as e:
             logger.error(f"Failed to get Zendesk tickets: {e}")
-            return self._get_fallback_tickets()
+            raise
     
     async def _analyze_ticket(self, ticket: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze support ticket using AI for priority, category, and sentiment."""
+        """Analyze support ticket using AI for priority, category, and sentiment - PRODUCTION ONLY."""
         try:
             if not self.openai_client:
-                return self._get_fallback_ticket_analysis()
+                error_msg = "OpenAI client not initialized. OPENAI_API_KEY required. No mock data in production."
+                logger.error(error_msg)
+                raise ValueError(error_msg)
             
             ticket_content = f"""
             Subject: {ticket.get('subject', 'No subject')}
@@ -487,13 +493,13 @@ class ProductionCustomerSupportAgent(AgentBase):
             try:
                 analysis = json.loads(analysis_text)
                 return analysis
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
                 logger.error(f"Invalid JSON from OpenAI: {analysis_text}")
-                return self._get_fallback_ticket_analysis()
+                raise ValueError(f"OpenAI returned invalid JSON: {e}")
                 
         except Exception as e:
             logger.error(f"Ticket analysis failed: {e}")
-            return self._get_fallback_ticket_analysis()
+            raise
     
     async def _generate_ticket_response(self, ticket: Dict[str, Any], analysis: Dict[str, Any]) -> Optional[str]:
         """Generate AI-powered response to customer ticket."""
@@ -770,30 +776,7 @@ class ProductionCustomerSupportAgent(AgentBase):
             logger.error(f"Rate limiting check failed for {service}: {e}")
             return True
     
-    # Fallback and helper methods
-    
-    def _get_fallback_tickets(self) -> List[Dict[str, Any]]:
-        """Fallback tickets when Zendesk is unavailable."""
-        return [
-            {
-                'id': 'fallback_001',
-                'subject': 'Order delivery question',
-                'description': 'Customer asking about delivery status',
-                'requester_id': 'customer_001',
-                'status': 'new'
-            }
-        ]
-    
-    def _get_fallback_ticket_analysis(self) -> Dict[str, Any]:
-        """Fallback ticket analysis when AI is unavailable."""
-        return {
-            'priority': 'medium',
-            'category': 'general',
-            'sentiment': 0,
-            'auto_response_appropriate': False,
-            'key_issues': ['general_inquiry'],
-            'reasoning': 'Fallback analysis - AI unavailable'
-        }
+    # NO FALLBACK METHODS - Production requires real API credentials
     
     async def _update_performance_metrics(self):
         """Update and store performance metrics."""
