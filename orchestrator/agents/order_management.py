@@ -309,10 +309,37 @@ class OrderFulfillmentAgent(AgentBase):
                 self.logger.error(error_msg)
                 raise ValueError(error_msg)
                 
-            # TODO: Implement real Printful API integration
-            # For now, raise error as real API not yet implemented
-            raise NotImplementedError("Printful API integration not yet implemented. Real API required.")
-            return True
+            # Implement real Printful API integration
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    'Authorization': f'Bearer {printful_key}',
+                    'Content-Type': 'application/json'
+                }
+
+                # Construct payload according to Printful's API (simplified)
+                payload = {
+                    'external_id': order.get('id'),
+                    'recipient': order.get('shipping_address'),
+                    'items': [{
+                        'variant_id': item.get('sku'),  # Printful uses variant_id
+                        'quantity': item.get('quantity'),
+                        'retail_price': str(item.get('price'))
+                    }]
+                }
+
+                response = await client.post(
+                    'https://api.printful.com/orders',
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
+
+                if response.status_code in (200, 201):
+                    self.logger.info(f"Order {order.get('id')} routed to Printful successfully")
+                    return True
+                else:
+                    self.logger.error(f"Printful routing failed: {response.status_code} - {response.text}")
+                    return False
             
         except Exception as e:
             self.logger.error(f"Error routing to Printful: {e}")
