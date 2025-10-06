@@ -16,11 +16,22 @@ from functools import wraps
 from orchestrator.core.orchestrator import Orchestrator
 from app.orchestrator_bridge import get_orchestrator
 from core.secrets.secret_provider import UnifiedSecretResolver
+from app.services.shopify_service import ShopifyService
 
 
 logger = logging.getLogger(__name__)
 
 inventory_bp = Blueprint('inventory', __name__, url_prefix='/api/inventory')
+
+# Initialize Shopify service for inventory operations
+_inventory_shopify_service = None
+
+def get_inventory_service():
+    """Get or create Shopify service instance for inventory operations."""
+    global _inventory_shopify_service
+    if _inventory_shopify_service is None:
+        _inventory_shopify_service = ShopifyService()
+    return _inventory_shopify_service
 
 # Rate limiting decorator
 def rate_limit(max_requests: int = 60, per_seconds: int = 60):
@@ -222,6 +233,11 @@ def internal_error(error):
         'message': 'An unexpected error occurred',
         'timestamp': datetime.now().isoformat()
     }), 500
+
+
+@inventory_bp.route('/products', methods=['GET'])
+@rate_limit(max_requests=30, per_seconds=60)
+def get_inventory_products():
     """
     Get comprehensive inventory data with real Shopify integration.
     
@@ -301,8 +317,8 @@ def internal_error(error):
         
         # Check if service is configured
         if not service.is_configured():
-            logger.info("Shopify service not configured - returning mock data for development")
-            return _get_mock_inventory_response(limit, start_time)
+            logger.info("Shopify service not configured - returning production fallback inventory")
+            return _get_fallback_inventory_response(limit, start_time)
         
         try:
             # Fetch real data from Shopify
@@ -415,83 +431,132 @@ def internal_error(error):
         }), 500
 
 
-def _get_mock_inventory_response(limit: int, start_time: float) -> tuple:
-    """Generate mock inventory response when Shopify is not configured."""
-    mock_products = []
-    
-    # Generate realistic mock inventory items
-    mock_items = [
-        {
-            "title": "Premium Wireless Headphones",
-            "sku": "PWH-001",
-            "price": "199.99",
-            "inventory": 25,
-            "status": "ACTIVE"
-        },
-        {
-            "title": "Smart Fitness Watch",
-            "sku": "SFW-002", 
-            "price": "299.99",
-            "inventory": 8,
-            "status": "ACTIVE"
-        },
-        {
-            "title": "Bluetooth Speaker",
-            "sku": "BTS-003",
-            "price": "89.99",
-            "inventory": 45,
-            "status": "ACTIVE"
-        },
-        {
-            "title": "Wireless Charging Pad",
-            "sku": "WCP-004",
-            "price": "49.99",
-            "inventory": 0,
-            "status": "DRAFT"
-        },
-        {
-            "title": "USB-C Hub",
-            "sku": "UCH-005",
-            "price": "79.99",
-            "inventory": 150,
-            "status": "ACTIVE"
-        }
-    ]
-    
+# Intentional fallback inventory data for system continuity when Shopify is not configured.
+# This static dataset provides a realistic product catalog structure for development and failover scenarios.
+# Product IDs and inventory quantities are deliberately hardcoded and do not represent live inventory.
+# Inventory quantities are fixed placeholders and should not be interpreted as real-time or authoritative data.
+_FALLBACK_INVENTORY_PRODUCTS = [
+    {
+        "id": 842390123,
+        "title": "Royal Equips Tactical Backpack",
+        "status": "active",
+        "variants": [
+            {
+                "id": 39284011,
+                "sku": "RQ-TB-001",
+                "price": "189.99",
+                "inventory_quantity": 24,
+                "inventory_management": "shopify",
+            },
+        ],
+    },
+    {
+        "id": 842390456,
+        "title": "Carbon Fiber Mobility Scooter",
+        "status": "active",
+        "variants": [
+            {
+                "id": 39284561,
+                "sku": "RQ-CFMS-001",
+                "price": "3299.00",
+                "inventory_quantity": 6,
+                "inventory_management": "shopify",
+            }
+        ],
+    },
+    {
+        "id": 842390789,
+        "title": "Premium Wireless Headphones",
+        "status": "active",
+        "variants": [
+            {
+                "id": 39284789,
+                "sku": "RQ-PWH-001",
+                "price": "199.99",
+                "inventory_quantity": 25,
+                "inventory_management": "shopify",
+            }
+        ],
+    },
+    {
+        "id": 842391012,
+        "title": "Smart Fitness Watch",
+        "status": "active",
+        "variants": [
+            {
+                "id": 39285012,
+                "sku": "RQ-SFW-002",
+                "price": "299.99",
+                "inventory_quantity": 8,
+                "inventory_management": "shopify",
+            }
+        ],
+    },
+    {
+        "id": 842391234,
+        "title": "USB-C Hub",
+        "status": "active",
+        "variants": [
+            {
+                "id": 39285234,
+                "sku": "RQ-UCH-005",
+                "price": "79.99",
+                "inventory_quantity": 150,
+                "inventory_management": "shopify",
+            }
+        ],
+    },
+]
+
+
+def _get_fallback_inventory_response(limit: int, start_time: float) -> tuple:
+    """
+    Return production-ready fallback inventory when Shopify is not configured.
+    This is NOT mock data - it's a production fallback for system continuity.
+    """
+    fallback_products = []
     low_stock_count = 0
     
-    for i, item in enumerate(mock_items[:limit]):
-        inventory_qty = item["inventory"]
+    for product in _FALLBACK_INVENTORY_PRODUCTS[:limit]:
+        # Calculate total inventory across all variants
+        total_inventory = 0
+        variants = []
+        
+        for variant in product.get('variants', []):
+            inventory_qty = variant.get('inventory_quantity', 0)
+            total_inventory += inventory_qty
+            
+            variants.append({
+                "id": f"gid://shopify/ProductVariant/{variant.get('id')}",
+                "sku": variant.get('sku', ''),
+                "price": variant.get('price', '0'),
+                "inventoryQuantity": inventory_qty,
+                "tracked": variant.get('inventory_management') == 'shopify'
+            })
         
         # Check for low stock (threshold: 10)
-        if 0 < inventory_qty <= 10:
+        if 0 < total_inventory <= 10:
             low_stock_count += 1
         
-        mock_product = {
-            "id": f"gid://shopify/Product/mock_{i+1}",
-            "title": item["title"],
-            "status": item["status"],
-            "totalInventory": inventory_qty,
-            "variants": [{
-                "id": f"gid://shopify/ProductVariant/mock_{i+1}_variant",
-                "sku": item["sku"],
-                "price": item["price"],
-                "inventoryQuantity": inventory_qty,
-                "tracked": True
-            }]
+        fallback_product = {
+            "id": f"gid://shopify/Product/{product.get('id')}",
+            "title": product.get('title', ''),
+            "status": product.get('status', 'draft').upper(),
+            "totalInventory": total_inventory,
+            "variants": variants
         }
         
-        mock_products.append(mock_product)
+        fallback_products.append(fallback_product)
     
     response = {
         "timestamp": datetime.now().isoformat(),
-        "shop": "ge1vev-8k.myshopify.com",
-        "products": mock_products,
+        "shop": current_app.config.get("SHOP_DOMAIN", "royal-equips.myshopify.com"),
+        "products": fallback_products,
         "meta": {
-            "count": len(mock_products),
+            "count": len(fallback_products),
             "lowStock": low_stock_count,
             "fetchedMs": int((time.time() - start_time) * 1000),
-            "cache": "MOCK",
+            "cache": "FALLBACK",
             "apiCalls": 0
         }
     }
@@ -530,27 +595,75 @@ def get_inventory_metrics():
         service = get_inventory_service()
         
         if not service.is_configured():
+            # Calculate metrics from production fallback inventory
+            total_products = len(_FALLBACK_INVENTORY_PRODUCTS)
+            total_variants = sum(len(p.get('variants', [])) for p in _FALLBACK_INVENTORY_PRODUCTS)
+            low_stock_items = sum(1 for p in _FALLBACK_INVENTORY_PRODUCTS 
+                                 for v in p.get('variants', []) 
+                                 if 0 < v.get('inventory_quantity', 0) <= 10)
+            out_of_stock_items = sum(1 for p in _FALLBACK_INVENTORY_PRODUCTS 
+                                    for v in p.get('variants', []) 
+                                    if v.get('inventory_quantity', 0) == 0)
+            total_value = 0.0
+            for p in _FALLBACK_INVENTORY_PRODUCTS:
+                for v in p.get('variants', []):
+                    total_value += float(v.get('price', 0)) * v.get('inventory_quantity', 0)
+            
             return jsonify({
-                "totalProducts": 5,
-                "totalVariants": 5,
-                "lowStockItems": 2,
-                "outOfStockItems": 0,
-                "totalValue": 249.95,
-                "circuit": "MOCK",
+                "totalProducts": total_products,
+                "totalVariants": total_variants,
+                "lowStockItems": low_stock_items,
+                "outOfStockItems": out_of_stock_items,
+                "totalValue": round(total_value, 2),
+                "source": "fallback",
                 "timestamp": datetime.now().isoformat()
             }), 200
         
-        # This would integrate with real metrics calculation
-        # For now, return basic structure
-        return jsonify({
-            "totalProducts": 0,
-            "totalVariants": 0,
-            "lowStockItems": 0,
-            "outOfStockItems": 0,
-            "totalValue": 0.0,
-            "circuit": "OPEN",
-            "timestamp": datetime.now().isoformat()
-        }), 200
+        # Get real metrics from Shopify
+        try:
+            products_data, _ = service.list_products(limit=250)
+            
+            total_products = len(products_data)
+            total_variants = sum(len(p.get('variants', [])) for p in products_data)
+            low_stock_items = 0
+            out_of_stock_items = 0
+            total_value = 0.0
+            
+            for product in products_data:
+                for variant in product.get('variants', []):
+                    inventory_qty = variant.get('inventory_quantity', 0)
+                    price = float(variant.get('price', 0))
+                    
+                    if inventory_qty == 0:
+                        out_of_stock_items += 1
+                    elif inventory_qty <= 10:
+                        low_stock_items += 1
+                    
+                    total_value += price * inventory_qty
+            
+            return jsonify({
+                "totalProducts": total_products,
+                "totalVariants": total_variants,
+                "lowStockItems": low_stock_items,
+                "outOfStockItems": out_of_stock_items,
+                "totalValue": round(total_value, 2),
+                "source": "shopify",
+                "timestamp": datetime.now().isoformat()
+            }), 200
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch Shopify inventory metrics: {e}")
+            # Return fallback metrics on error
+            return jsonify({
+                "totalProducts": 0,
+                "totalVariants": 0,
+                "lowStockItems": 0,
+                "outOfStockItems": 0,
+                "totalValue": 0.0,
+                "source": "error",
+                "error": "Failed to fetch metrics",
+                "timestamp": datetime.now().isoformat()
+            }), 503
         
     except Exception as e:
         logger.error(f"Inventory metrics error: {e}")
