@@ -431,10 +431,10 @@ def get_inventory_products():
         }), 500
 
 
-# Production-ready fallback inventory data (used when Shopify is not configured)
-# While this is NOT mock data and represents a realistic product catalog structure for system continuity,
-# the product IDs and inventory quantities are hardcoded and may not reflect actual live inventory.
-# Treat inventory quantities as estimates/placeholders until live Shopify data is available.
+# Intentional fallback inventory data for system continuity when Shopify is not configured.
+# This static dataset provides a realistic product catalog structure for development and failover scenarios.
+# Product IDs and inventory quantities are deliberately hardcoded and do not represent live inventory.
+# Inventory quantities are fixed placeholders and should not be interpreted as real-time or authoritative data.
 _FALLBACK_INVENTORY_PRODUCTS = [
     {
         "id": 842390123,
