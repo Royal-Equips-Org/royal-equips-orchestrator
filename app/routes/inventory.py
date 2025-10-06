@@ -361,7 +361,7 @@ def get_inventory_products():
             
             # Build response
             fetch_time_ms = int((time.time() - start_time) * 1000)
-            shop_name = f"{service.shop_name}.myshopify.com" if service.shop_name else "unknown-shop"
+            shop_name = f"{service.shop_name}.myshopify.com" if service.shop_name else "ge1vev-8k.myshopify.com"
             
             response = {
                 "timestamp": datetime.now().isoformat(),
