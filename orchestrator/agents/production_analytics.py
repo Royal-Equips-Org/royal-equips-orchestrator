@@ -151,7 +151,7 @@ class ProductionAnalyticsAgent(AgentBase):
             'alert_cooldown_minutes': 30,
             'max_data_points': 10000,
             'retry_attempts': 3,
-            'fallback_enabled': True
+            'fallback_enabled': False  # No fallback - production only
         }
         
         # Predefined queries and metrics
