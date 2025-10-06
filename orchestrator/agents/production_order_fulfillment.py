@@ -125,7 +125,16 @@ class ProductionOrderFulfillmentAgent(AgentBase):
             }
     
     async def _fetch_pending_orders(self) -> List[Dict[str, Any]]:
-        """Fetch pending orders from Shopify using GraphQL - PRODUCTION ONLY."""
+        """
+        Fetches all pending (unfulfilled) orders from Shopify using the GraphQL API.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries representing pending orders.
+
+        Raises:
+            ValueError: If the Shopify service is not available or credentials are missing.
+            Exception: If an error occurs during the API request.
+        """
         try:
             if not self.shopify_service:
                 error_msg = "Shopify service not available. Credentials required. No mock data in production."
