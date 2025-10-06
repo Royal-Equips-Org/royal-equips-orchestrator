@@ -101,14 +101,15 @@ class OrderFulfillmentAgent(AgentBase):
         )
 
     async def _fetch_new_orders(self) -> List[Dict[str, Any]]:
-        """Fetch new orders from Shopify."""
+        """Fetch new orders from Shopify - PRODUCTION ONLY."""
         try:
             shopify_token = os.getenv('SHOPIFY_ACCESS_TOKEN')
             shop_domain = os.getenv('SHOPIFY_STORE')
             
             if not shopify_token or not shop_domain:
-                self.logger.warning("Shopify credentials not found, using mock data")
-                return await self._get_mock_orders()
+                error_msg = "Shopify credentials required (SHOPIFY_ACCESS_TOKEN, SHOPIFY_STORE). No mock data in production."
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
                 
             async with httpx.AsyncClient() as client:
                 headers = {
@@ -134,42 +135,15 @@ class OrderFulfillmentAgent(AgentBase):
                     self.logger.info(f"Fetched {len(orders)} new orders from Shopify")
                     return orders
                 else:
-                    self.logger.error(f"Shopify API error: {response.status_code}")
-                    return await self._get_mock_orders()
+                    error_msg = f"Shopify API returned status {response.status_code}"
+                    self.logger.error(error_msg)
+                    raise RuntimeError(error_msg)
                     
         except Exception as e:
             self.logger.error(f"Error fetching orders: {e}")
-            return await self._get_mock_orders()
+            raise
 
-    async def _get_mock_orders(self) -> List[Dict[str, Any]]:
-        """Return mock orders for testing."""
-        return [
-            {
-                'id': '2001',
-                'order_number': '#2001',
-                'email': 'customer@example.com',
-                'total_price': '49.99',
-                'currency': 'USD',
-                'billing_address': {
-                    'country': 'United States',
-                    'city': 'New York',
-                    'zip': '10001'
-                },
-                'line_items': [
-                    {
-                        'title': 'Wireless Car Charger Mount',
-                        'quantity': 1,
-                        'price': '24.99',
-                        'sku': 'WCC-001'
-                    }
-                ],
-                'customer': {
-                    'orders_count': 1,
-                    'total_spent': '49.99'
-                },
-                'created_at': datetime.now().isoformat()
-            }
-        ]
+    # NO MOCK ORDERS - Production requires real Shopify orders
 
     async def _assess_order_risk(self, order: Dict[str, Any]) -> OrderRisk:
         """Assess order risk level using multiple factors."""
@@ -281,13 +255,13 @@ class OrderFulfillmentAgent(AgentBase):
         return 'autods'
 
     async def _route_to_autods(self, order: Dict[str, Any], item: Dict[str, Any]) -> bool:
-        """Route order to AutoDS for fulfillment."""
+        """Route order to AutoDS for fulfillment - PRODUCTION ONLY."""
         try:
             autods_key = os.getenv('AUTO_DS_API_KEY')
             if not autods_key:
-                self.logger.warning("AUTO_DS_API_KEY not found, using mock routing")
-                await self._mock_supplier_routing('AutoDS', order, item)
-                return True
+                error_msg = "AUTO_DS_API_KEY required. No mock routing in production."
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
                 
             async with httpx.AsyncClient() as client:
                 headers = {
@@ -327,17 +301,45 @@ class OrderFulfillmentAgent(AgentBase):
             return False
 
     async def _route_to_printful(self, order: Dict[str, Any], item: Dict[str, Any]) -> bool:
-        """Route order to Printful for fulfillment."""
+        """Route order to Printful for fulfillment - PRODUCTION ONLY."""
         try:
             printful_key = os.getenv('PRINTFUL_API_KEY')
             if not printful_key:
-                self.logger.warning("PRINTFUL_API_KEY not found, using mock routing")
-                await self._mock_supplier_routing('Printful', order, item)
-                return True
+                error_msg = "PRINTFUL_API_KEY required. No mock routing in production."
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
                 
-            # Printful API implementation would go here
-            await self._mock_supplier_routing('Printful', order, item)
-            return True
+            # Implement real Printful API integration
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    'Authorization': f'Bearer {printful_key}',
+                    'Content-Type': 'application/json'
+                }
+
+                # Construct payload according to Printful's API (simplified)
+                payload = {
+                    'external_id': order.get('id'),
+                    'recipient': order.get('shipping_address'),
+                    'items': [{
+                        'variant_id': item.get('sku'),  # Printful uses variant_id
+                        'quantity': item.get('quantity'),
+                        'retail_price': str(item.get('price'))
+                    }]
+                }
+
+                response = await client.post(
+                    'https://api.printful.com/orders',
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
+
+                if response.status_code in (200, 201):
+                    self.logger.info(f"Order {order.get('id')} routed to Printful successfully")
+                    return True
+                else:
+                    self.logger.error(f"Printful routing failed: {response.status_code} - {response.text}")
+                    return False
             
         except Exception as e:
             self.logger.error(f"Error routing to Printful: {e}")
@@ -348,12 +350,7 @@ class OrderFulfillmentAgent(AgentBase):
         self.logger.info(f"Order {order.get('id')} routed to manual processing")
         # Implementation for manual processing queue
 
-    async def _mock_supplier_routing(self, supplier: str, order: Dict[str, Any], item: Dict[str, Any]) -> None:
-        """Mock supplier routing for testing."""
-        await asyncio.sleep(0.1)  # Simulate API call
-        self.logger.info(
-            f"Mock routing: Order {order.get('id')} item '{item.get('title')}' → {supplier}"
-        )
+    # NO MOCK SUPPLIER ROUTING - Production requires real supplier APIs
 
     async def _update_order_status(self, order: Dict[str, Any]) -> None:
         """Update order status in Shopify and notify customer."""

@@ -125,11 +125,21 @@ class ProductionOrderFulfillmentAgent(AgentBase):
             }
     
     async def _fetch_pending_orders(self) -> List[Dict[str, Any]]:
-        """Fetch pending orders from Shopify using GraphQL."""
+        """
+        Fetches all pending (unfulfilled) orders from Shopify using the GraphQL API.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries representing pending orders.
+
+        Raises:
+            ValueError: If the Shopify service is not available or credentials are missing.
+            Exception: If an error occurs during the API request.
+        """
         try:
             if not self.shopify_service:
-                self.logger.warning("Shopify service not available, using fallback")
-                return await self._get_fallback_orders()
+                error_msg = "Shopify service not available. Credentials required. No mock data in production."
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
                 
             query = '''
             query($first: Int!) {
@@ -232,47 +242,9 @@ class ProductionOrderFulfillmentAgent(AgentBase):
             
         except Exception as e:
             self.logger.error(f"Error fetching orders from Shopify: {e}")
-            return await self._get_fallback_orders()
+            raise
     
-    async def _get_fallback_orders(self) -> List[Dict[str, Any]]:
-        """Fallback orders when Shopify is unavailable."""
-        return [
-            {
-                'id': f'fallback_{datetime.now().strftime("%Y%m%d_%H%M%S")}',
-                'order_number': '#FB-2001',
-                'email': 'customer@royalequips.com',
-                'total_price': '89.99',
-                'currency': 'USD',
-                'billing_address': {
-                    'country': 'United States',
-                    'city': 'Los Angeles',
-                    'zip': '90210'
-                },
-                'shipping_address': {
-                    'country': 'United States',
-                    'city': 'Los Angeles',
-                    'zip': '90210'
-                },
-                'line_items': [
-                    {
-                        'title': 'Premium Wireless Car Charger Mount',
-                        'quantity': 1,
-                        'price': '89.99',
-                        'sku': 'PWCCM-001',
-                        'product_type': 'Electronics'
-                    }
-                ],
-                'customer': {
-                    'id': 'fallback_customer',
-                    'email': 'customer@royalequips.com',
-                    'orders_count': 3,
-                    'total_spent': '247.89'
-                },
-                'shopify_risk_level': 'LOW',
-                'created_at': datetime.now().isoformat(),
-                'fallback_mode': True
-            }
-        ]
+    # NO FALLBACK METHODS - Production requires real Shopify orders
     
     async def _process_order(self, order: Dict[str, Any]) -> None:
         """Process individual order through complete workflow."""

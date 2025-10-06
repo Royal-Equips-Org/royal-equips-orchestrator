@@ -394,7 +394,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
             
         except Exception as e:
             logger.error(f"Performance analysis failed: {e}")
-            return self._get_fallback_performance_analysis()
+            raise
     
     async def _get_shopify_marketing_data(self) -> Dict[str, Any]:
         """Get marketing attribution data from Shopify."""
@@ -432,11 +432,29 @@ class ProductionMarketingAutomationAgent(AgentBase):
             }
     
     async def _get_email_marketing_data(self) -> Dict[str, Any]:
-        """Get email marketing performance from Klaviyo."""
+        """
+        Fetch email marketing performance metrics from the Klaviyo API.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - 'active_campaigns': List of sent campaign objects.
+                - 'total_campaigns': Total number of campaigns.
+                - 'total_sent': Total number of emails sent.
+                - 'avg_open_rate': Average open rate (percentage).
+                - 'avg_click_rate': Average click rate (percentage).
+                - 'engagement_score': Aggregate engagement score.
+
+        Raises:
+            ValueError: If the Klaviyo API key is missing.
+            RuntimeError: If the Klaviyo API returns a non-200 status code.
+            Exception: For other unexpected errors.
+        """
         try:
             klaviyo_key = await self.secrets.get_secret('KLAVIYO_API_KEY')
             if not klaviyo_key:
-                return self._get_fallback_email_data()
+                error_msg = "KLAVIYO_API_KEY required. No mock data in production."
+                logger.error(error_msg)
+                raise ValueError(error_msg)
             
             headers = {
                 'Authorization': f'Klaviyo-API-Key {klaviyo_key}',
@@ -456,7 +474,9 @@ class ProductionMarketingAutomationAgent(AgentBase):
                 )
                 
                 if response.status_code != 200:
-                    return self._get_fallback_email_data()
+                    error_msg = f"Klaviyo API returned status {response.status_code}"
+                    logger.error(error_msg)
+                    raise RuntimeError(error_msg)
                 
                 campaigns = response.json().get('data', [])
                 
@@ -476,14 +496,16 @@ class ProductionMarketingAutomationAgent(AgentBase):
                 
         except Exception as e:
             logger.error(f"Failed to get email marketing data: {e}")
-            return self._get_fallback_email_data()
+            raise
     
     async def _get_social_media_data(self) -> Dict[str, Any]:
-        """Get social media performance data."""
+        """Get social media performance data - PRODUCTION ONLY."""
         try:
             fb_token = await self.secrets.get_secret('FACEBOOK_ACCESS_TOKEN')
             if not fb_token:
-                return self._get_fallback_social_data()
+                error_msg = "FACEBOOK_ACCESS_TOKEN required. No mock data in production."
+                logger.error(error_msg)
+                raise ValueError(error_msg)
             
             # Rate limiting
             await self._check_rate_limit('facebook')
@@ -502,7 +524,9 @@ class ProductionMarketingAutomationAgent(AgentBase):
                 )
                 
                 if response.status_code != 200:
-                    return self._get_fallback_social_data()
+                    error_msg = f"Facebook API returned status {response.status_code}"
+                    logger.error(error_msg)
+                    raise RuntimeError(error_msg)
                 
                 insights = response.json().get('data', [])
                 
@@ -520,7 +544,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
                 
         except Exception as e:
             logger.error(f"Failed to get social media data: {e}")
-            return self._get_fallback_social_data()
+            raise
     
     async def _analyze_performance_with_ai(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Use OpenAI to analyze marketing performance and generate insights."""
@@ -575,10 +599,12 @@ class ProductionMarketingAutomationAgent(AgentBase):
             }
     
     async def _generate_campaign_recommendations(self, performance_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Generate new campaign recommendations based on performance."""
+        """Generate new campaign recommendations based on performance - PRODUCTION ONLY."""
         try:
             if not self.openai_client:
-                return self._get_fallback_campaign_recommendations()
+                error_msg = "OpenAI client not initialized. OPENAI_API_KEY required. No mock data in production."
+                logger.error(error_msg)
+                raise ValueError(error_msg)
             
             prompt = f"""
             Based on this marketing performance data, generate 3-5 specific campaign recommendations:
@@ -618,7 +644,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
                 
         except Exception as e:
             logger.error(f"Campaign recommendations generation failed: {e}")
-            return self._get_fallback_campaign_recommendations()
+            raise
     
     async def _execute_scheduled_campaigns(self) -> Dict[str, Any]:
         """Execute campaigns that are scheduled to run."""
@@ -842,66 +868,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
     
     # Fallback methods for when external services are unavailable
     
-    def _get_fallback_performance_analysis(self) -> Dict[str, Any]:
-        """Fallback performance analysis when integrations fail."""
-        return {
-            'revenue_attribution': {
-                'email_marketing': 8500.00,
-                'social_media': 6200.00,
-                'direct_traffic': 12300.00
-            },
-            'engagement_metrics': {
-                'email_open_rate': 24.5,
-                'email_click_rate': 3.2,
-                'social_engagement_rate': 5.8
-            },
-            'campaign_performance': {
-                'active_campaigns': 3,
-                'conversion_rate': 2.8,
-                'roas': 4.2
-            },
-            'fallback_mode': True
-        }
-    
-    def _get_fallback_email_data(self) -> Dict[str, Any]:
-        """Fallback email data."""
-        return {
-            'active_campaigns': 2,
-            'total_campaigns': 8,
-            'total_sent': 15420,
-            'avg_open_rate': 24.5,
-            'avg_click_rate': 3.2,
-            'engagement_score': 0.18
-        }
-    
-    def _get_fallback_social_data(self) -> Dict[str, Any]:
-        """Fallback social media data."""
-        return {
-            'impressions': 45600,
-            'engaged_users': 2640,
-            'engagement_rate': 5.8,
-            'reach_score': 1520,
-            'social_platforms': ['facebook', 'instagram']
-        }
-    
-    def _get_fallback_campaign_recommendations(self) -> List[Dict[str, Any]]:
-        """Fallback campaign recommendations."""
-        return [
-            {
-                'type': 'email',
-                'name': 'Holiday Season Promotion',
-                'target_audience': 'Previous customers',
-                'budget': 2500,
-                'timeline': '2 weeks'
-            },
-            {
-                'type': 'social_media',
-                'name': 'Product Showcase Campaign',
-                'target_audience': 'Lookalike audiences',
-                'budget': 1800,
-                'timeline': '1 month'
-            }
-        ]
+    # NO FALLBACK METHODS - Production requires real marketing API credentials
     
     async def _get_scheduled_campaigns(self) -> List[Dict[str, Any]]:
         """Get campaigns scheduled for execution."""

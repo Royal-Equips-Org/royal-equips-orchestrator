@@ -425,26 +425,43 @@ def trigger_edge_function_deployment(func_name, environment):
         }
 
 def fetch_edge_function_logs(func_name, limit, since):
-    """Fetch logs for edge function."""
+    """Fetch logs for edge function from Cloudflare - PRODUCTION ONLY."""
     try:
-        # This would integrate with Cloudflare Logs API
-        # For now, return mock logs
-        mock_logs = []
+        # Requires Cloudflare API credentials
+        import os
+        cf_api_token = os.getenv('CLOUDFLARE_API_TOKEN')
+        cf_account_id = os.getenv('CLOUDFLARE_ACCOUNT_ID')
         
-        for i in range(min(limit, 20)):  # Generate some mock logs
-            timestamp = datetime.utcnow() - timedelta(minutes=i * 5)
-            mock_logs.append({
-                'timestamp': timestamp.isoformat(),
-                'level': 'info' if i % 10 != 0 else 'error',
-                'message': f"Function {func_name} executed successfully" if i % 10 != 0 else f"Error in {func_name}",
-                'request_id': f"req_{timestamp.strftime('%Y%m%d_%H%M%S')}_{i}",
-                'duration': 120 + (i * 10)
-            })
+        if not cf_api_token or not cf_account_id:
+            error_msg = "Cloudflare credentials required (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID). No mock data in production."
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
-        return mock_logs
+        # Integrate with Cloudflare Logs API
+        headers = {
+            'Authorization': f'Bearer {cf_api_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(
+            f'https://api.cloudflare.com/client/v4/accounts/{cf_account_id}/logs/received',
+            headers=headers,
+            params={
+                'start': (datetime.utcnow() - timedelta(hours=1)).isoformat(),
+                'end': datetime.utcnow().isoformat(),
+                'limit': limit
+            },
+            timeout=30
+        )
+        
+        if response.status_code != 200:
+            raise RuntimeError(f"Cloudflare API returned status {response.status_code}")
+        
+        return response.json().get('result', [])
+        
     except Exception as e:
         logger.error(f"Log fetch error: {e}")
-        return []
+        raise
 
 # Real-time monitoring task
 def start_edge_functions_monitoring():

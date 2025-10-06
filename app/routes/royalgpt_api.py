@@ -23,56 +23,7 @@ logger = logging.getLogger(__name__)
 # Blueprint registered with /api prefix in app/__init__.py
 royalgpt_bp = Blueprint("royalgpt", __name__)
 
-_FALLBACK_PRODUCTS: list[dict[str, Any]] = [
-    {
-        "id": 842390123,
-        "title": "Royal Equips Tactical Backpack",
-        "handle": "royal-equips-tactical-backpack",
-        "vendor": "Royal Equips",
-        "status": "active",
-        "tags": "outdoors,featured,expedition",
-        "created_at": "2025-01-10T09:30:00Z",
-        "updated_at": "2025-02-02T11:45:00Z",
-        "variants": [
-            {
-                "id": 39284011,
-                "sku": "RQ-TB-001",
-                "price": "189.99",
-                "compare_at_price": "249.99",
-                "inventory_quantity": 24,
-                "inventory_management": "shopify",
-            },
-            {
-                "id": 39284012,
-                "sku": "RQ-TB-001-BLK",
-                "price": "199.99",
-                "compare_at_price": "259.99",
-                "inventory_quantity": 12,
-                "inventory_management": "shopify",
-            },
-        ],
-    },
-    {
-        "id": 842390456,
-        "title": "Carbon Fiber Mobility Scooter",
-        "handle": "carbon-fiber-mobility-scooter",
-        "vendor": "Royal Equips Mobility",
-        "status": "active",
-        "tags": ["mobility", "premium", "flagship"],
-        "created_at": "2024-11-18T15:00:00Z",
-        "updated_at": "2025-01-26T08:15:00Z",
-        "variants": [
-            {
-                "id": 39284561,
-                "sku": "RQ-CFMS-001",
-                "price": "3299.00",
-                "compare_at_price": "3799.00",
-                "inventory_quantity": 6,
-                "inventory_management": "shopify",
-            }
-        ],
-    },
-]
+# NO FALLBACK/MOCK DATA - Production system requires real Shopify authentication
 
 _ALLOWED_TIMEFRAMES = {
     "24h": 1,
@@ -263,8 +214,7 @@ def _build_product_analysis(product: dict[str, Any], *, include_benchmarks: bool
     return analysis
 
 
-def _fallback_products(limit: int) -> list[dict[str, Any]]:
-    return _FALLBACK_PRODUCTS[: max(0, limit)]
+# Fallback function removed - only real Shopify data allowed
 
 
 def _build_error(message: str, status_code: int):
@@ -438,21 +388,28 @@ def list_products_v2():
 
     started = time.time()
     service = get_shopify_service()
-    source_mode = "fallback"
+    
+    # REQUIRE Shopify credentials - no fallback data
+    if not service.is_configured():
+        return _build_error(
+            "Shopify API credentials required (SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME). No mock data in production.",
+            503
+        )
+    
+    source_mode = "live"
     raw_products: list[dict[str, Any]] = []
 
-    if service.is_configured():
-        try:
-            raw_products, _ = service.list_products(limit=limit)
-            source_mode = "live"
-        except (ShopifyAuthError, ShopifyAPIError, ShopifyRateLimitError) as exc:
-            logger.warning("Shopify product fetch failed: %s", exc)
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.exception("Unexpected Shopify failure: %s", exc)
-
+    try:
+        raw_products, _ = service.list_products(limit=limit)
+    except (ShopifyAuthError, ShopifyAPIError, ShopifyRateLimitError) as exc:
+        logger.error("Shopify product fetch failed: %s", exc)
+        return _build_error(f"Shopify API error: {str(exc)}", 503)
+    except Exception as exc:
+        logger.exception("Unexpected Shopify failure: %s", exc)
+        return _build_error(f"Internal error: {str(exc)}", 500)
+    
     if not raw_products:
-        raw_products = _fallback_products(limit)
-        source_mode = "fallback"
+        return _build_error("No products found in Shopify", 404)
 
     normalized = [_normalise_product(product) for product in raw_products]
     analyses = [_build_product_analysis(product, include_benchmarks=True) for product in normalized]
@@ -484,18 +441,27 @@ def analyse_product_v2():
         return _build_error("productId is required", 400)
 
     service = get_shopify_service()
+    
+    # REQUIRE Shopify credentials - no fallback data
+    if not service.is_configured():
+        return _build_error(
+            "Shopify API credentials required (SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME). No mock data in production.",
+            503
+        )
+    
     raw_products: list[dict[str, Any]] = []
 
-    if service.is_configured():
-        try:
-            raw_products, _ = service.list_products(limit=250)
-        except (ShopifyAuthError, ShopifyAPIError, ShopifyRateLimitError) as exc:
-            logger.warning("Shopify product analysis fetch failed: %s", exc)
-        except Exception as exc:  # pragma: no cover
-            logger.exception("Unexpected Shopify failure: %s", exc)
-
+    try:
+        raw_products, _ = service.list_products(limit=250)
+    except (ShopifyAuthError, ShopifyAPIError, ShopifyRateLimitError) as exc:
+        logger.error("Shopify product analysis fetch failed: %s", exc)
+        return _build_error(f"Shopify API error: {str(exc)}", 503)
+    except Exception as exc:
+        logger.exception("Unexpected Shopify failure: %s", exc)
+        return _build_error(f"Internal error: {str(exc)}", 500)
+    
     if not raw_products:
-        raw_products = _fallback_products(250)
+        return _build_error("No products found in Shopify", 404)
 
     for raw_product in raw_products:
         normalized = _normalise_product(raw_product)
