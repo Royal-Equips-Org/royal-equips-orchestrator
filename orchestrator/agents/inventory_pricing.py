@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 import json
 import numpy as np
@@ -111,71 +112,71 @@ class InventoryPricingAgent(AgentBase):
         )
 
     async def _sync_inventory_data(self) -> None:
-        """Synchronize inventory data from all sales channels."""
+        """Synchronize inventory data from all sales channels - PRODUCTION ONLY."""
         try:
-            self.logger.info("Syncing inventory data from all channels")
+            self.logger.info("Syncing inventory data from Shopify")
             
-            # In production: Connect to Shopify, Amazon, bol.com, warehouse systems
-            await asyncio.sleep(0.2)  # Simulate API calls
+            # REQUIRE Shopify credentials - no mock data
+            api_key = os.getenv("SHOPIFY_API_KEY")
+            api_secret = os.getenv("SHOPIFY_API_SECRET")
+            shop_name = os.getenv("SHOP_NAME")
             
-            # Mock inventory data
-            mock_items = [
-                {
-                    "sku": "PRO-001",
-                    "name": "Professional Gaming Chair",
-                    "current_stock": 45,
-                    "reserved_stock": 8,
-                    "cost_price": 89.99,
-                    "sell_price": 149.99,
-                    "velocity": 2.3
-                },
-                {
-                    "sku": "OFF-002", 
-                    "name": "Ergonomic Office Desk",
-                    "current_stock": 12,
-                    "reserved_stock": 3,
-                    "cost_price": 199.99,
-                    "sell_price": 349.99,
-                    "velocity": 1.1
-                },
-                {
-                    "sku": "ACC-003",
-                    "name": "Wireless Mouse Pad",
-                    "current_stock": 150,
-                    "reserved_stock": 25,
-                    "cost_price": 12.99,
-                    "sell_price": 24.99,
-                    "velocity": 5.7
-                }
-            ]
+            if not all([api_key, api_secret, shop_name]):
+                error_msg = "Shopify credentials required (SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME). No mock data in production."
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
             
-            for item_data in mock_items:
-                available = item_data["current_stock"] - item_data["reserved_stock"]
-                margin = ((item_data["sell_price"] - item_data["cost_price"]) / item_data["sell_price"]) * 100
+            # Connect to real Shopify API
+            import httpx
+            url = f"https://{api_key}:{api_secret}@{shop_name}.myshopify.com/admin/api/2024-01/products.json?limit=250"
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                data = response.json()
+                products = data.get("products", [])
+            
+            # Process real Shopify inventory data
+            for product in products:
+                for variant in product.get("variants", []):
+                    sku = variant.get("sku", "")
+                    if not sku:
+                        continue
+                    
+                    inventory_qty = variant.get("inventory_quantity", 0)
+                    price = float(variant.get("price", 0))
+                    cost = price * 0.6  # Estimate cost at 60% of price if not available
+                    
+                    # Calculate velocity from recent sales data (placeholder - should fetch from orders API)
+                    velocity = 1.0  # Default velocity
+                    
+                    available = max(0, inventory_qty)
+                    margin = ((price - cost) / price) * 100 if price > 0 else 0
+                    
+                    item = InventoryItem(
+                        sku=sku,
+                        name=variant.get("title", product.get("title", "Unknown")),
+                        current_stock=inventory_qty,
+                        reserved_stock=0,  # Would need to fetch from fulfillment API
+                        available_stock=available,
+                        reorder_point=int(velocity * 7),  # 7 days of sales
+                        max_stock=int(velocity * 30),     # 30 days of sales
+                        cost_price=cost,
+                        sell_price=price,
+                        competitor_price=None,  # Would need competitor API
+                        demand_forecast=velocity * self.demand_forecast_days,
+                        velocity=velocity,
+                        margin_percent=margin,
+                        last_updated=datetime.utcnow()
+                    )
+                    
+                    self.inventory_items[item.sku] = item
                 
-                item = InventoryItem(
-                    sku=item_data["sku"],
-                    name=item_data["name"],
-                    current_stock=item_data["current_stock"],
-                    reserved_stock=item_data["reserved_stock"],
-                    available_stock=available,
-                    reorder_point=int(item_data["velocity"] * 7),  # 7 days of sales
-                    max_stock=int(item_data["velocity"] * 30),     # 30 days of sales
-                    cost_price=item_data["cost_price"], 
-                    sell_price=item_data["sell_price"],
-                    competitor_price=None,
-                    demand_forecast=item_data["velocity"] * self.demand_forecast_days,
-                    velocity=item_data["velocity"],
-                    margin_percent=margin,
-                    last_updated=datetime.utcnow()
-                )
-                
-                self.inventory_items[item.sku] = item
-                
-            self.logger.info("Inventory sync completed: %d items updated", len(self.inventory_items))
+            self.logger.info("Inventory sync completed: %d items updated from Shopify", len(self.inventory_items))
             
         except Exception as exc:
             self.logger.error("Inventory sync failed: %s", exc)
+            raise
 
     async def _monitor_stock_levels(self) -> None:
         """Monitor stock levels and generate reorder alerts."""
