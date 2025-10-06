@@ -398,7 +398,7 @@ class ProductionCustomerSupportAgent(AgentBase):
             return {'tickets_processed': 0, 'error': str(e)}
     
     async def _get_new_zendesk_tickets(self) -> List[Dict[str, Any]]:
-        """Get new tickets from Zendesk API - PRODUCTION ONLY."""
+        """
         try:
             zendesk_domain = await self.secrets.get_secret('ZENDESK_DOMAIN')
             zendesk_token = await self.secrets.get_secret('ZENDESK_API_TOKEN')
