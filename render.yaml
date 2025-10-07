@@ -1,0 +1,62 @@
+services:
+  # Flask Backend API
+  - type: web
+    name: royal-equips-orchestrator
+    env: python
+    region: frankfurt
+    plan: starter
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT --timeout 120 --log-level info wsgi:app
+    healthCheckPath: /healthz
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: LOG_LEVEL
+        value: INFO
+      # Shopify credentials (to be set in Render dashboard)
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: SHOP_NAME
+        sync: false
+      - key: SHOPIFY_ACCESS_TOKEN
+        sync: false
+      - key: SHOPIFY_STORE
+        sync: false
+      # OpenAI for AI features
+      - key: OPENAI_API_KEY
+        sync: false
+      # Sentry for error monitoring
+      - key: SENTRY_DSN
+        sync: false
+      # Database (optional - Supabase or PostgreSQL)
+      - key: DATABASE_URL
+        sync: false
+      # Redis (optional for caching)
+      - key: REDIS_URL
+        sync: false
+      # GitHub integration
+      - key: GITHUB_TOKEN
+        sync: false
+      # Other integrations
+      - key: AUTO_DS_API_KEY
+        sync: false
+      - key: SPOCKET_API_KEY
+        sync: false
+      - key: KLAVIYO_API_KEY
+        sync: false
+      - key: FACEBOOK_ACCESS_TOKEN
+        sync: false
+      - key: ZENDESK_DOMAIN
+        sync: false
+      - key: ZENDESK_API_TOKEN
+        sync: false
+      - key: ZENDESK_EMAIL
+        sync: false
