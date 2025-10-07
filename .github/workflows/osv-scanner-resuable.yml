@@ -1,0 +1,18 @@
+# Minimal reusable workflow example
+on:
+  workflow_call:
+    inputs:
+      scan-args:
+        required: true
+        type: string
+
+jobs:
+  run-osv-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run OSV-Scanner
+        run: |
+          osv-scanner ${{ inputs.scan-args }}
