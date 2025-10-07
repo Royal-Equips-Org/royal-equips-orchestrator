@@ -6,7 +6,9 @@
 import { generateRequestId } from './utils/crypto';
 
 interface Env {
-  [key: string]: string;
+  GITHUB_WEBHOOK_SECRET: string;
+  SHOPIFY_WEBHOOK_SECRET: string;
+  // Add other required environment variables here as needed
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
