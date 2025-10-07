@@ -18,8 +18,8 @@ export default defineConfig({
   },
   build: { 
     sourcemap: true,
-    outDir: '../../static',
-    emptyOutDir: false, // Don't delete static/styles.css
+    outDir: 'dist',
+    emptyOutDir: true,
   },
   server: {
     port: 3000,

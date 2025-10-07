@@ -1,9 +1,0 @@
-{
-  "service": "royal-equips-command-center-ui",
-  "status": "ok",
-  "timestamp": "2025-09-29T18:54:01Z",
-  "checks": [
-    { "name": "static-content", "status": "pass" },
-    { "name": "runtime-config", "status": "pass", "details": "Served from /config.json" }
-  ]
-}
