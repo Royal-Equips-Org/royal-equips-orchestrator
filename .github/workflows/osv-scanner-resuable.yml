@@ -1,4 +1,4 @@
-# Minimal reusable workflow example
+# Reusable workflow for scheduled and push scans
 on:
   workflow_call:
     inputs:
@@ -12,6 +12,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install OSV-Scanner
+        run: |
+          curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner-linux-amd64 -o /usr/local/bin/osv-scanner
+          chmod +x /usr/local/bin/osv-scanner
 
       - name: Run OSV-Scanner
         run: |
