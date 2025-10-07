@@ -31,6 +31,20 @@ venv/
 # API production build artifacts
 apps/api/dist-web/
 
+# Command Center UI build artifacts
+apps/command-center-ui/dist/
+
+# Static folder build artifacts (generated during deployment)
+static/index.html
+static/_headers
+static/_redirects
+static/assets/
+static/functions/
+static/config.json
+static/config.local.json
+static/config.schema.json
+static/health.json
+
 reports/junit/
 # Additional build artifacts
 *.egg-info/

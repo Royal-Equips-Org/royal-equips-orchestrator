@@ -7,17 +7,24 @@ declare module 'fastify' {
 }
 
 async function shopifyPing(): Promise<boolean> {
-  // Real implementatie: call Shopify GraphQL / simple REST endpoint
-  // Placeholder: just resolve true (geen mock data leakage, enkel reachability)
+  // Check if Shopify credentials are configured
+  const shopifyStore = process.env.SHOPIFY_STORE;
+  const shopifyToken = process.env.SHOPIFY_ACCESS_TOKEN;
+  
+  if (!shopifyStore || !shopifyToken) {
+    console.warn('Shopify credentials not configured - skipping health check');
+    return false;
+  }
+  
   try {
-    // TODO: Replace with actual Shopify health check when available
-    // const response = await fetch('https://your-shop.myshopify.com/api/2023-10/shop.json', {
-    //   headers: {
-    //     'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN || ''
-    //   }
-    // });
-    // return response.ok;
-    return true;
+    // Real Shopify API health check
+    const response = await fetch(`https://${shopifyStore}/admin/api/2024-01/shop.json`, {
+      headers: {
+        'X-Shopify-Access-Token': shopifyToken,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.ok;
   } catch (error) {
     console.warn('Shopify ping failed:', error);
     return false;

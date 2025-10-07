@@ -17,7 +17,9 @@ export default defineConfig({
     },
   },
   build: { 
-    sourcemap: true
+    sourcemap: true,
+    outDir: 'dist',
+    emptyOutDir: true,
   },
   server: {
     port: 3000,
