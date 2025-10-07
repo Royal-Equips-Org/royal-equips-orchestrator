@@ -9,7 +9,7 @@ import logging
 import threading
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -100,7 +100,7 @@ class SimpleOrchestrator:
                 'execution_id': execution_id,
                 'agent_id': agent_id,
                 'status': 'running',
-                'started_at': datetime.now().isoformat(),
+                'started_at': datetime.now(timezone.utc).isoformat(),
                 'progress': 0,
                 'estimated_duration': self._get_estimated_duration(agent_id)
             }
@@ -134,7 +134,7 @@ class SimpleOrchestrator:
             for _execution_id, record in list(active_executions.items()):
                 if record['agent_id'] == agent_id and record['status'] == 'running':
                     record['status'] = 'stopped'
-                    record['stopped_at'] = datetime.now().isoformat()
+                    record['stopped_at'] = datetime.now(timezone.utc).isoformat()
                     stopped_count += 1
 
             # Sanitize agent_id for logging to prevent log injection
@@ -196,7 +196,7 @@ class SimpleOrchestrator:
                             'agent_id': agent_id,
                             'progress': progress,
                             'status': 'running' if i < steps else 'completed',
-                            'timestamp': datetime.now().isoformat()
+                            'timestamp': datetime.now(timezone.utc).isoformat()
                         }, namespace='/ws/system')
                 except Exception as ws_error:
                     logger.warning(f"Failed to emit progress update: {ws_error}")
@@ -207,7 +207,7 @@ class SimpleOrchestrator:
             # Mark as completed if not stopped
             if record['status'] == 'running':
                 record['status'] = 'completed'
-                record['completed_at'] = datetime.now().isoformat()
+                record['completed_at'] = datetime.now(timezone.utc).isoformat()
                 record['progress'] = 100
 
                 # Final completion event
@@ -218,7 +218,7 @@ class SimpleOrchestrator:
                             'execution_id': execution_id,
                             'agent_id': agent_id,
                             'status': 'completed',
-                            'timestamp': datetime.now().isoformat()
+                            'timestamp': datetime.now(timezone.utc).isoformat()
                         }, namespace='/ws/system')
                 except Exception:
                     pass
@@ -233,7 +233,7 @@ class SimpleOrchestrator:
             if record:
                 record['status'] = 'error'
                 record['error'] = safe_error  # Store sanitized error
-                record['failed_at'] = datetime.now().isoformat()
+                record['failed_at'] = datetime.now(timezone.utc).isoformat()
 
     def _get_estimated_duration(self, agent_id: str) -> int:
         """Get estimated duration for an agent execution."""

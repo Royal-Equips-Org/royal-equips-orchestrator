@@ -7,7 +7,7 @@ Handles: Agent Management, Product Research, Inventory, Marketing, Revenue Track
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
@@ -164,7 +164,7 @@ class RealEmpireService:
                     type=self._detect_agent_type(agent_id),
                     status=AgentStatus.ACTIVE if health_data.get('is_healthy') else AgentStatus.ERROR,
                     health=min(100, max(0, health_data.get('health_score', 0) * 100)),
-                    last_activity=datetime.now() - timedelta(seconds=health_data.get('seconds_since_last_run', 300)),
+                    last_activity=datetime.now(timezone.utc) - timedelta(seconds=health_data.get('seconds_since_last_run', 300)),
                     total_tasks=agent_stats['total_tasks'],
                     completed_tasks=agent_stats['completed_tasks'],
                     error_count=agent_stats['error_count'],
@@ -195,7 +195,7 @@ class RealEmpireService:
                 type=agent_type,
                 status=AgentStatus.ACTIVE,
                 health=85.0 + (hash(agent_id) % 15),  # Realistic variance
-                last_activity=datetime.now() - timedelta(minutes=hash(agent_id) % 30),
+                last_activity=datetime.now(timezone.utc) - timedelta(minutes=hash(agent_id) % 30),
                 total_tasks=1000 + (hash(agent_id) % 5000),
                 completed_tasks=950 + (hash(agent_id) % 4750),
                 error_count=5 + (hash(agent_id) % 50),
@@ -235,7 +235,7 @@ class RealEmpireService:
         success_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
         
         # Calculate throughput (tasks per hour)
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         hour_ago = now - timedelta(hours=1)
         recent_tasks = [e for e in agent_executions 
                       if datetime.fromisoformat(e.get('created_at', '')) > hour_ago]
@@ -373,15 +373,15 @@ class RealEmpireService:
             system_uptime=99.7,  # Real uptime from monitoring
             daily_discoveries=12,  # Real discoveries from research agents
             profit_margin_avg=34.2,  # Real margin from financial analysis
-            timestamp=datetime.now()
+            timestamp=datetime.now(timezone.utc)
         )
     
     async def get_agents(self) -> List[RealAgent]:
         """Get all agents with real performance data."""
         # Sync recent data if needed
-        if not self._last_sync or datetime.now() - self._last_sync > timedelta(minutes=5):
+        if not self._last_sync or datetime.now(timezone.utc) - self._last_sync > timedelta(minutes=5):
             await self._sync_real_agents()
-            self._last_sync = datetime.now()
+            self._last_sync = datetime.now(timezone.utc)
             
         return list(self.agents.values())
     
@@ -413,7 +413,7 @@ class RealEmpireService:
                 'session_id': session_result.get('session_id'),
                 'agent_id': agent_id,
                 'status': 'created',
-                'created_at': datetime.now().isoformat(),
+                'created_at': datetime.now(timezone.utc).isoformat(),
                 'parameters': parameters
             }
             

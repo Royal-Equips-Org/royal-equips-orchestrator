@@ -5,7 +5,7 @@ Manages business decision approval workflow with email reports and autonomous de
 import asyncio
 import smtplib
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from email.mime.text import MIMEText
@@ -143,7 +143,7 @@ class DecisionApprovalEngine(AgentBase):
                 data_sources=decision_data.get('data_sources', []),
                 recommended_action=decision_data.get('recommended_action', ''),
                 alternatives=decision_data.get('alternatives', []),
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
                 requires_approval=False,
                 auto_executable=False,
                 priority='medium'
@@ -226,10 +226,10 @@ class DecisionApprovalEngine(AgentBase):
                 status='pending',
                 requested_by='empire_system',
                 assigned_to=[self.approval_email] if self.approval_email else [],
-                approval_deadline=datetime.now() + timedelta(hours=24),
+                approval_deadline=datetime.now(timezone.utc) + timedelta(hours=24),
                 responses=[],
-                created_at=datetime.now(),
-                updated_at=datetime.now()
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
             )
             
             self.approval_requests[request.request_id] = request
@@ -372,7 +372,7 @@ class DecisionApprovalEngine(AgentBase):
                 'decision_id': decision.decision_id,
                 'title': decision.title,
                 'type': decision.decision_type,
-                'executed_at': datetime.now(),
+                'executed_at': datetime.now(timezone.utc),
                 'execution_method': 'autonomous',
                 'confidence_score': decision.confidence_score,
                 'revenue_impact': decision.estimated_revenue_impact
@@ -395,7 +395,7 @@ class DecisionApprovalEngine(AgentBase):
     
     async def get_daily_discoveries(self) -> int:
         """Get daily decision count"""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         return len([d for d in self.decision_history if d['executed_at'].date() == today])
     
     # Placeholder methods for future implementation
@@ -417,7 +417,7 @@ class DecisionApprovalEngine(AgentBase):
     
     async def _cleanup_old_decisions(self):
         """Clean up old decision records"""
-        cutoff_date = datetime.now() - timedelta(days=30)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
         self.decision_history = [
             d for d in self.decision_history 
             if d['executed_at'] > cutoff_date

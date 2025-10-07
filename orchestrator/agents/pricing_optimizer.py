@@ -17,7 +17,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any
 
 import requests
@@ -399,7 +399,7 @@ class PricingOptimizerAgent(AgentBase):
         shop_prices: Dict[str, float]
     ) -> None:
         """Update price history for trend analysis."""
-        timestamp = datetime.now()
+        timestamp = datetime.now(timezone.utc)
         
         for product_id in set(competitor_prices.keys()) | set(shop_prices.keys()):
             if product_id not in self.price_history:
@@ -671,7 +671,7 @@ class PricingOptimizerAgent(AgentBase):
     
     def _update_price_history(self, competitor_prices: Dict[str, float], sentiment: MarketSentimentData) -> None:
         """Update price history with sentiment context."""
-        timestamp = datetime.now()
+        timestamp = datetime.now(timezone.utc)
         
         for product_id, price in competitor_prices.items():
             if product_id not in self.price_history:
@@ -825,7 +825,7 @@ class PricingOptimizerAgent(AgentBase):
             
             performance = RulePerformance(
                 rule_id=f"rule_{recommendation.product_id}",
-                timestamp=datetime.now(),
+                timestamp=datetime.now(timezone.utc),
                 confidence_threshold=optimal_params.optimal_confidence_threshold,
                 price_change_percentage=(recommendation.recommended_price - recommendation.current_price) / recommendation.current_price,
                 revenue_impact=1000 * (recommendation.recommended_price - recommendation.current_price),  # Estimate

@@ -8,7 +8,7 @@ data for the control center dashboard.
 
 import logging
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import timezone, datetime
 import json
 import threading
 from typing import Dict, List, Any, Optional
@@ -719,7 +719,7 @@ def stream_metrics():
         while True:
             try:
                 data = {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "metrics": enhanced_controller.metrics_cache,
                     "health_score": enhanced_controller.metrics_cache["empire_status"].get("health_score", 0)
                 }

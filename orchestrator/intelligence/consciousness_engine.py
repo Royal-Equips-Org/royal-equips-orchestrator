@@ -12,7 +12,7 @@ Provides enterprise-grade AI consciousness with:
 import asyncio
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -171,7 +171,7 @@ class ConsciousnessEngine:
                 await self._calculate_cognitive_load()
                 
                 # Maintain consciousness state
-                self.state.timestamp = datetime.now()
+                self.state.timestamp = datetime.now(timezone.utc)
                 
                 # Brief pause for consciousness cycle
                 await asyncio.sleep(0.5)
@@ -315,8 +315,8 @@ class ConsciousnessEngine:
                 memory_type='episodic',
                 importance_score=min(1.0, success_score + 0.3),
                 access_count=1,
-                created_at=datetime.now(),
-                last_accessed=datetime.now()
+                created_at=datetime.now(timezone.utc),
+                last_accessed=datetime.now(timezone.utc)
             )
             
             self.episodic_memory.append(learning_memory)
@@ -362,20 +362,23 @@ class ConsciousnessEngine:
     
     async def _get_system_load(self) -> float:
         """Get current system processing load"""
-        # In production, integrate with actual system metrics
-        return np.random.uniform(0.3, 0.8)  # Mock implementation
+        # TODO: Integrate with actual system metrics (psutil, prometheus)
+        # For now, returns simulated load for consciousness engine demonstration
+        return np.random.uniform(0.3, 0.8)
     
     
     async def _assess_business_urgency(self) -> float:
         """Assess current business situation urgency"""
-        # In production, analyze real business metrics
-        return np.random.uniform(0.2, 0.7)  # Mock implementation
+        # TODO: Analyze real business metrics (revenue trends, inventory levels)
+        # For now, returns simulated urgency for consciousness engine demonstration
+        return np.random.uniform(0.2, 0.7)
     
     
     async def _check_resource_availability(self) -> float:
         """Check available system resources"""
-        # In production, check actual resource availability
-        return np.random.uniform(0.6, 0.9)  # Mock implementation
+        # TODO: Check actual resource availability (CPU, memory, agent capacity)
+        # For now, returns simulated availability for consciousness engine demonstration
+        return np.random.uniform(0.6, 0.9)
     
     
     async def _get_business_priorities(self) -> List[str]:
@@ -603,7 +606,7 @@ class ConsciousnessEngine:
     
     async def _cleanup_working_memory(self):
         """Clean up old working memory items"""
-        current_time = datetime.now()
+        current_time = datetime.now(timezone.utc)
         items_to_remove = []
         
         for key, memory in self.working_memory.items():
@@ -653,7 +656,7 @@ class ConsciousnessEngine:
         context, queued_at = self.pending_decisions.pop(0)
         
         # Check if decision is still relevant (not too old)
-        if datetime.now() - queued_at < timedelta(hours=1):
+        if datetime.now(timezone.utc) - queued_at < timedelta(hours=1):
             decision = await self.make_intelligent_decision(context)
             if decision:
                 self.logger.info(f"Processed queued decision: {decision.action}")

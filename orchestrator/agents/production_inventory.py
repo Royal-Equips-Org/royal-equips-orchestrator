@@ -10,7 +10,7 @@ import logging
 import time
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional, Tuple, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -450,7 +450,7 @@ class ProductionInventoryAgent(AgentBase):
                 'supplier_monitoring': supplier_monitoring,
                 'analytics_results': analytics_results,
                 'performance_metrics': self.performance_metrics,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             logger.info(f"Inventory management cycle completed in {execution_time:.2f}s")
@@ -461,7 +461,7 @@ class ProductionInventoryAgent(AgentBase):
             return {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _sync_inventory_levels(self) -> Dict[str, Any]:
@@ -476,7 +476,7 @@ class ProductionInventoryAgent(AgentBase):
                 'warehouse_sync': await self._sync_warehouse_data(),
                 'updated_items': 0,
                 'discrepancies_found': 0,
-                'sync_timestamp': datetime.now().isoformat()
+                'sync_timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             return sync_results
@@ -540,7 +540,7 @@ class ProductionInventoryAgent(AgentBase):
                             'current_stock': variant['inventoryQuantity'] or 0,
                             'selling_price': float(variant['price']) if variant['price'] else 0.0,
                             'weight_kg': variant['weight'] or 0.0,
-                            'last_sync': datetime.now().isoformat(),
+                            'last_sync': datetime.now(timezone.utc).isoformat(),
                             'source': 'shopify'
                         })
                         
@@ -818,7 +818,7 @@ class ProductionInventoryAgent(AgentBase):
             
             return {
                 'sku': item['sku'],
-                'forecast_date': datetime.now().isoformat(),
+                'forecast_date': datetime.now(timezone.utc).isoformat(),
                 'predicted_demand': float(ensemble_demand),
                 'confidence_interval_lower': float(ensemble_demand * 0.8),
                 'confidence_interval_upper': float(ensemble_demand * 1.2),
@@ -974,8 +974,8 @@ class ProductionInventoryAgent(AgentBase):
             for i in range(self.config['forecast_horizon_days']):
                 future_features = [
                     len(historical_data) + i,
-                    (datetime.now() + timedelta(days=i)).weekday(),
-                    (datetime.now() + timedelta(days=i)).day,
+                    (datetime.now(timezone.utc) + timedelta(days=i)).weekday(),
+                    (datetime.now(timezone.utc) + timedelta(days=i)).day,
                     np.mean(y[-7:]) if len(y) >= 7 else np.mean(y)
                 ]
                 prediction = model.predict([future_features])[0]
@@ -1189,7 +1189,7 @@ class ProductionInventoryAgent(AgentBase):
                 'reorder_frequency_per_year': float(reorder_frequency),
                 'days_between_orders': float(365 / reorder_frequency) if reorder_frequency > 0 else 365,
                 'cost_per_unit': float(total_annual_cost / annual_demand) if annual_demand > 0 else 0,
-                'optimization_timestamp': datetime.now().isoformat()
+                'optimization_timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1262,7 +1262,7 @@ class ProductionInventoryAgent(AgentBase):
                 'demand_variability': float(demand_variability),
                 'lead_time_days': lead_time,
                 'z_score_used': z_score,
-                'optimization_timestamp': datetime.now().isoformat()
+                'optimization_timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1289,7 +1289,7 @@ class ProductionInventoryAgent(AgentBase):
             basic_reorder_point = (avg_daily_demand * lead_time_days) + safety_stock
             
             # Apply seasonality adjustments if available
-            current_month = datetime.now().month
+            current_month = datetime.now(timezone.utc).month
             seasonal_factors = item.get('seasonal_factors', {})
             seasonal_multiplier = seasonal_factors.get(str(current_month), 1.0)
             
@@ -1349,8 +1349,8 @@ class ProductionInventoryAgent(AgentBase):
                 'inventory_cost_impact': float(inventory_cost_change),
                 'annual_carrying_cost_impact': float(carrying_cost_change),
                 'estimated_risk_reduction_value': float(risk_reduction_value),
-                'optimization_timestamp': datetime.now().isoformat(),
-                'next_review_date': (datetime.now() + timedelta(days=30)).isoformat()
+                'optimization_timestamp': datetime.now(timezone.utc).isoformat(),
+                'next_review_date': (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
             }
             
         except Exception as e:
@@ -1368,7 +1368,7 @@ class ProductionInventoryAgent(AgentBase):
                 'recommended_reorders': [],
                 'overstock_items': [],
                 'critical_stockouts': [],
-                'analysis_timestamp': datetime.now().isoformat()
+                'analysis_timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             # Get current inventory data from database
@@ -1424,7 +1424,7 @@ class ProductionInventoryAgent(AgentBase):
                         'lead_time_days': lead_time_days,
                         'supplier_id': item.get('supplier_id'),
                         'priority': urgency_level,
-                        'expected_delivery': (datetime.now() + timedelta(days=lead_time_days)).isoformat()
+                        'expected_delivery': (datetime.now(timezone.utc) + timedelta(days=lead_time_days)).isoformat()
                     }
                     
                     if urgency_level == 'URGENT':
@@ -1468,7 +1468,7 @@ class ProductionInventoryAgent(AgentBase):
             
             # Cache results for performance
             if self.redis_cache:
-                cache_key = f"reorder_analysis:{datetime.now().strftime('%Y%m%d_%H')}"
+                cache_key = f"reorder_analysis:{datetime.now(timezone.utc).strftime('%Y%m%d_%H')}"
                 await self.redis_cache.setex(
                     cache_key,
                     1800,  # 30 minutes
@@ -1486,7 +1486,7 @@ class ProductionInventoryAgent(AgentBase):
                 'items_to_reorder': 0,
                 'total_value': 0.0,
                 'error': str(e),
-                'analysis_timestamp': datetime.now().isoformat()
+                'analysis_timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _execute_automated_procurement(self) -> Dict[str, Any]:
@@ -1497,7 +1497,7 @@ class ProductionInventoryAgent(AgentBase):
                     'orders_created': 0,
                     'total_value': 0.0,
                     'message': 'Automated procurement is disabled',
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
             
             # Get reorder requirements
@@ -1510,7 +1510,7 @@ class ProductionInventoryAgent(AgentBase):
                 'failed_orders': [],
                 'pending_approvals': [],
                 'supplier_performance': {},
-                'execution_timestamp': datetime.now().isoformat()
+                'execution_timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             # Process urgent reorders first
@@ -1626,7 +1626,7 @@ class ProductionInventoryAgent(AgentBase):
             
             # Cache results
             if self.redis_cache:
-                cache_key = f"procurement_results:{datetime.now().strftime('%Y%m%d_%H%M')}"
+                cache_key = f"procurement_results:{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M')}"
                 await self.redis_cache.setex(
                     cache_key,
                     7200,  # 2 hours
@@ -1641,7 +1641,7 @@ class ProductionInventoryAgent(AgentBase):
                 'orders_created': 0,
                 'total_value': 0.0,
                 'error': str(e),
-                'execution_timestamp': datetime.now().isoformat()
+                'execution_timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _monitor_supplier_performance(self) -> Dict[str, Any]:
@@ -1654,7 +1654,7 @@ class ProductionInventoryAgent(AgentBase):
                 'underperformers': [],
                 'performance_trends': {},
                 'recommendations': [],
-                'monitoring_timestamp': datetime.now().isoformat()
+                'monitoring_timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             # Get all active suppliers
@@ -1745,7 +1745,7 @@ class ProductionInventoryAgent(AgentBase):
                             'total_value_last_90_days': performance_data.get('order_value', 0.0)
                         },
                         'recommendation': recommendation,
-                        'last_updated': datetime.now().isoformat()
+                        'last_updated': datetime.now(timezone.utc).isoformat()
                     }
                     
                     performance_report['performance_scores'][supplier_id] = supplier_performance
@@ -1786,7 +1786,7 @@ class ProductionInventoryAgent(AgentBase):
             
             # Cache performance report
             if self.redis_cache:
-                cache_key = f"supplier_performance:{datetime.now().strftime('%Y%m%d')}"
+                cache_key = f"supplier_performance:{datetime.now(timezone.utc).strftime('%Y%m%d')}"
                 await self.redis_cache.setex(
                     cache_key,
                     21600,  # 6 hours
@@ -1804,7 +1804,7 @@ class ProductionInventoryAgent(AgentBase):
                 'suppliers_monitored': 0,
                 'performance_scores': {},
                 'error': str(e),
-                'monitoring_timestamp': datetime.now().isoformat()
+                'monitoring_timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _generate_inventory_analytics(self) -> Dict[str, Any]:
@@ -1812,7 +1812,7 @@ class ProductionInventoryAgent(AgentBase):
         try:
             analytics_report = {
                 'analytics_generated': True,
-                'report_timestamp': datetime.now().isoformat(),
+                'report_timestamp': datetime.now(timezone.utc).isoformat(),
                 'inventory_overview': {},
                 'turnover_analysis': {},
                 'abc_analysis': {},
@@ -2052,7 +2052,7 @@ class ProductionInventoryAgent(AgentBase):
             
             # Cache comprehensive analytics
             if self.redis_cache:
-                cache_key = f"inventory_analytics:{datetime.now().strftime('%Y%m%d')}"
+                cache_key = f"inventory_analytics:{datetime.now(timezone.utc).strftime('%Y%m%d')}"
                 await self.redis_cache.setex(
                     cache_key,
                     43200,  # 12 hours
@@ -2071,7 +2071,7 @@ class ProductionInventoryAgent(AgentBase):
             return {
                 'analytics_generated': False,
                 'error': str(e),
-                'report_timestamp': datetime.now().isoformat()
+                'report_timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     # Helper and utility methods
@@ -2119,7 +2119,7 @@ class ProductionInventoryAgent(AgentBase):
     async def _update_performance_metrics(self):
         """Update and store performance metrics."""
         try:
-            self.performance_metrics['last_updated'] = datetime.now().isoformat()
+            self.performance_metrics['last_updated'] = datetime.now(timezone.utc).isoformat()
             
             # Store metrics in cache
             if self.redis_cache:
@@ -2182,7 +2182,7 @@ class ProductionInventoryAgent(AgentBase):
             
             for i, demand in enumerate(base_demand):
                 historical_data.append({
-                    'date': (datetime.now() - timedelta(days=90-i)).isoformat(),
+                    'date': (datetime.now(timezone.utc) - timedelta(days=90-i)).isoformat(),
                     'quantity': max(0, int(demand)),
                     'sku': sku
                 })
@@ -2280,7 +2280,7 @@ class ProductionInventoryAgent(AgentBase):
 
     async def _create_approval_request(self, supplier_id: str, order_items: List[Dict], total_value: float) -> Dict[str, Any]:
         """Create procurement approval request for high-value orders."""
-        approval_id = f"APR-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        approval_id = f"APR-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
         
         return {
             'approval_id': approval_id,
@@ -2288,7 +2288,7 @@ class ProductionInventoryAgent(AgentBase):
             'total_value': total_value,
             'items_count': len(order_items),
             'status': 'PENDING_APPROVAL',
-            'created_date': datetime.now().isoformat(),
+            'created_date': datetime.now(timezone.utc).isoformat(),
             'approval_threshold_exceeded': True,
             'requires_manager_approval': total_value > 10000
         }
@@ -2297,13 +2297,13 @@ class ProductionInventoryAgent(AgentBase):
         """Place order with supplier via API."""
         try:
             # Simulate API call (replace with real supplier API integration)
-            order_id = f"ORD-{supplier_id.upper()}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            order_id = f"ORD-{supplier_id.upper()}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
             
             # Simulate successful order placement
             return {
                 'success': True,
                 'order_id': order_id,
-                'expected_delivery': (datetime.now() + timedelta(days=supplier_config.get('lead_time_days', 7))).isoformat(),
+                'expected_delivery': (datetime.now(timezone.utc) + timedelta(days=supplier_config.get('lead_time_days', 7))).isoformat(),
                 'tracking_number': f"TRK-{order_id}",
                 'status': 'CONFIRMED'
             }
@@ -2329,7 +2329,7 @@ class ProductionInventoryAgent(AgentBase):
             performance_record = {
                 'supplier_id': supplier_id,
                 'event_type': event_type,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'data': data
             }
             logger.info(f"Supplier performance recorded: {performance_record}")

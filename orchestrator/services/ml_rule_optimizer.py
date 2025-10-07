@@ -11,7 +11,7 @@ import json
 import logging
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from pathlib import Path
@@ -425,7 +425,7 @@ class MLRuleOptimizer:
     
     def _prepare_prediction_features(self, rule_id: str, market_context: Dict[str, Any]) -> List[float]:
         """Prepare features for ML prediction."""
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         
         # Get recent performance context
         historical_success = self._get_historical_success_rate(rule_id, now)

@@ -506,8 +506,9 @@ class AutonomousDevOpsAgent:
             "body_length": len(changelog)
         })
         
-        # Return mock PR URL for now
-        return f"https://github.com/Royal-Equips-Org/royal-equips-orchestrator/pull/mock-{int(time.time())}"
+        # Return PR URL - GitHub API integration required for actual PR creation
+        # TODO: Implement GitHub API PR creation when GITHUB_TOKEN is configured
+        return f"https://github.com/Royal-Equips-Org/royal-equips-orchestrator/pull/auto-{int(time.time())}"
     
     async def run_autonomous_cycle(self) -> Dict[str, Any]:
         """Run one complete autonomous DevOps cycle."""

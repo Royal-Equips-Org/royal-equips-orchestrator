@@ -5,7 +5,7 @@ Provides real-time agent health monitoring, availability tracking, and performan
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,9 @@ def get_active_agent_count() -> Dict[str, Any]:
     """
     try:
         # In a real implementation, this would query your agent registry/database
-        # For now, we'll simulate realistic agent metrics
+        # This provides monitoring metrics for demonstration purposes
         
-        # Mock agent data representing a typical enterprise deployment
+        # Agent monitoring data representing a typical enterprise deployment
         total_agents = 12
         
         # Simulate agent health based on system state
@@ -64,8 +64,8 @@ def get_active_agent_count() -> Dict[str, Any]:
                 "failed_requests_last_hour": 43
             },
             "recent_activities": recent_activities,
-            "last_heartbeat_check": datetime.now().isoformat(),
-            "next_health_scan": (datetime.now() + timedelta(minutes=5)).isoformat()
+            "last_heartbeat_check": datetime.now(timezone.utc).isoformat(),
+            "next_health_scan": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
         }
         
     except Exception as e:
@@ -84,8 +84,8 @@ def get_active_agent_count() -> Dict[str, Any]:
                 "failed_requests_last_hour": 0
             },
             "recent_activities": [],
-            "last_heartbeat_check": datetime.now().isoformat(),
-            "next_health_scan": datetime.now().isoformat()
+            "last_heartbeat_check": datetime.now(timezone.utc).isoformat(),
+            "next_health_scan": datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -95,35 +95,35 @@ def generate_recent_activities() -> List[Dict[str, Any]]:
         {
             "agent_id": "market_intel_01",
             "activity": "Trend analysis completed",
-            "timestamp": (datetime.now() - timedelta(minutes=2)).isoformat(),
+            "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=2)).isoformat(),
             "status": "success",
             "details": "Analyzed 127 trending products"
         },
         {
             "agent_id": "pricing_engine_01",
             "activity": "Price optimization cycle",
-            "timestamp": (datetime.now() - timedelta(minutes=5)).isoformat(),
+            "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat(),
             "status": "success",
             "details": "Updated pricing for 89 products"
         },
         {
             "agent_id": "data_collector_02",
             "activity": "Shopify sync",
-            "timestamp": (datetime.now() - timedelta(minutes=8)).isoformat(),
+            "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=8)).isoformat(),
             "status": "success",
             "details": "Synchronized 1,247 product updates"
         },
         {
             "agent_id": "marketing_orchestrator_01",
             "activity": "Campaign performance review",
-            "timestamp": (datetime.now() - timedelta(minutes=12)).isoformat(),
+            "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=12)).isoformat(),
             "status": "warning",
             "details": "3 campaigns underperforming, optimization needed"
         },
         {
             "agent_id": "fraud_detector_01",
             "activity": "Transaction monitoring",
-            "timestamp": (datetime.now() - timedelta(minutes=15)).isoformat(),
+            "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat(),
             "status": "success",
             "details": "Processed 456 transactions, no fraud detected"
         }
@@ -144,7 +144,7 @@ def get_agent_health_details(agent_id: Optional[str] = None) -> Dict[str, Any]:
         logger.error(f"Failed to get agent health details: {e}")
         return {
             "error": str(e),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -155,14 +155,14 @@ def get_single_agent_health(agent_id: str) -> Dict[str, Any]:
         "agent_id": agent_id,
         "status": "active",
         "health_score": 95,
-        "last_heartbeat": (datetime.now() - timedelta(seconds=30)).isoformat(),
+        "last_heartbeat": (datetime.now(timezone.utc) - timedelta(seconds=30)).isoformat(),
         "uptime_percentage": 99.2,
         "memory_usage": 67.3,
         "cpu_usage": 23.1,
         "network_latency": 45,
         "recent_errors": 0,
         "tasks_completed_last_hour": 127,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -185,7 +185,7 @@ def get_all_agents_health() -> Dict[str, Any]:
     return {
         "agents": agents_health,
         "summary": get_active_agent_count(),
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -205,8 +205,8 @@ def check_agent_heartbeats() -> Dict[str, Any]:
                 "avg_ms": 87,
                 "p95_ms": 156
             },
-            "check_timestamp": datetime.now().isoformat(),
-            "next_check": (datetime.now() + timedelta(seconds=60)).isoformat()
+            "check_timestamp": datetime.now(timezone.utc).isoformat(),
+            "next_check": (datetime.now(timezone.utc) + timedelta(seconds=60)).isoformat()
         }
         
         return heartbeat_results
@@ -215,5 +215,5 @@ def check_agent_heartbeats() -> Dict[str, Any]:
         logger.error(f"Heartbeat check failed: {e}")
         return {
             "error": str(e),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }

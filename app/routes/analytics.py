@@ -5,7 +5,7 @@ Integrates with ProductionAnalyticsAgent for enterprise analytics
 """
 
 from flask import Blueprint, request, jsonify, Response, send_file
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import json
 import io
 import base64
@@ -28,7 +28,7 @@ def health():
         return jsonify({
             'status': 'healthy',
             'service': 'analytics',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'health_checks': health_status
         }), 200
         
@@ -36,7 +36,7 @@ def health():
         return jsonify({
             'status': 'unhealthy',
             'error': str(e),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 500
 
 
@@ -59,7 +59,7 @@ def get_business_metrics():
         # Add timestamp
         response_data = {
             'metrics': metrics_data,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'status': 'success'
         }
         
@@ -69,7 +69,7 @@ def get_business_metrics():
         return jsonify({
             'error': str(e),
             'status': 'error',
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 500
 
 
@@ -145,7 +145,7 @@ def get_dashboard_data():
             },
             'alerts': _get_current_alerts(),
             'time_range': time_range,
-            'last_updated': datetime.now().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
         
         return jsonify(dashboard_data), 200
@@ -153,7 +153,7 @@ def get_dashboard_data():
     except Exception as e:
         return jsonify({
             'error': str(e),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 500
 
 
@@ -182,7 +182,7 @@ def list_analytics_queries():
         return jsonify({
             'queries': queries,
             'total_count': len(queries),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 200
         
     except Exception as e:
@@ -224,7 +224,7 @@ def execute_query(query_id: str):
             'rows_returned': 25,
             'cached': use_cache,
             'parameters_used': parameters,
-            'executed_at': datetime.now().isoformat()
+            'executed_at': datetime.now(timezone.utc).isoformat()
         }
         
         return jsonify(result), 200
@@ -233,7 +233,7 @@ def execute_query(query_id: str):
         return jsonify({
             'error': str(e),
             'query_id': query_id,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 500
 
 
@@ -263,7 +263,7 @@ def generate_chart(chart_type: str, query_id: str):
                 'theme': 'dark',
                 'responsive': True
             },
-            'generated_at': datetime.now().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
         if format_type == 'png':
@@ -307,7 +307,7 @@ def list_reports():
         return jsonify({
             'reports': reports,
             'total_count': len(reports),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 200
         
     except Exception as e:
@@ -368,7 +368,7 @@ def generate_report(report_id: str):
                     'insights': _generate_insights_section()
                 }
             ],
-            'generated_at': datetime.now().isoformat(),
+            'generated_at': datetime.now(timezone.utc).isoformat(),
             'generation_time_ms': 245.7
         }
         
@@ -378,7 +378,7 @@ def generate_report(report_id: str):
         return jsonify({
             'error': str(e),
             'report_id': report_id,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 500
 
 
@@ -407,7 +407,7 @@ def get_anomalies():
                 'anomaly_score': -0.85,
                 'severity': 'high',
                 'description': 'Conversion rate dropped significantly below expected range',
-                'detected_at': (datetime.now() - timedelta(hours=2)).isoformat(),
+                'detected_at': (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
                 'status': 'active'
             },
             {
@@ -419,7 +419,7 @@ def get_anomalies():
                 'anomaly_score': 0.65,
                 'severity': 'medium',
                 'description': 'Average order value higher than usual - positive anomaly',
-                'detected_at': (datetime.now() - timedelta(hours=6)).isoformat(),
+                'detected_at': (datetime.now(timezone.utc) - timedelta(hours=6)).isoformat(),
                 'status': 'active'
             }
         ]
@@ -435,7 +435,7 @@ def get_anomalies():
             'anomalies': anomalies,
             'total_count': len(anomalies),
             'severity_filter': severity,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 200
         
     except Exception as e:
@@ -468,7 +468,7 @@ def get_forecasts():
                 'rmse': 1250.0,  # Root Mean Square Error
                 'mae': 950.0  # Mean Absolute Error
             },
-            'generated_at': datetime.now().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
         return jsonify(forecast_data), 200
@@ -509,7 +509,7 @@ def get_performance_stats():
                 'memory_mb': 512.0,
                 'disk_io_mb': 25.6
             },
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         
         return jsonify(performance_data), 200
@@ -525,7 +525,7 @@ def _generate_revenue_trend_data(time_range: str) -> List[Dict[str, Any]]:
     days = 30 if time_range == '30d' else 7
     data = []
     
-    base_date = datetime.now() - timedelta(days=days)
+    base_date = datetime.now(timezone.utc) - timedelta(days=days)
     base_revenue = 1500.0
     
     for i in range(days):
@@ -583,7 +583,7 @@ def _get_current_alerts() -> List[Dict[str, Any]]:
             'title': 'Conversion Rate Below Target',
             'message': 'Current conversion rate (3.2%) is below target (3.5%)',
             'severity': 'medium',
-            'created_at': (datetime.now() - timedelta(hours=2)).isoformat()
+            'created_at': (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
         },
         {
             'id': 'alert_002',
@@ -591,7 +591,7 @@ def _get_current_alerts() -> List[Dict[str, Any]]:
             'title': 'High Demand Product',
             'message': 'Wireless Headphones showing 300% increase in views',
             'severity': 'low',
-            'created_at': (datetime.now() - timedelta(hours=4)).isoformat()
+            'created_at': (datetime.now(timezone.utc) - timedelta(hours=4)).isoformat()
         }
     ]
 
@@ -668,7 +668,7 @@ def _generate_insights_section() -> List[Dict[str, Any]]:
 def _generate_forecast_data(metric: str, horizon_days: int) -> List[Dict[str, Any]]:
     """Generate forecast data for a metric."""
     forecast = []
-    base_date = datetime.now()
+    base_date = datetime.now(timezone.utc)
     
     if metric == 'revenue':
         base_value = 1500.0

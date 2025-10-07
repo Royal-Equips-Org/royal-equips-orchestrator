@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List
 
 from orchestrator.core.agent_base import AgentBase, AgentStatus
@@ -46,7 +46,7 @@ class RoyalOrchestratorAgent(AgentBase):
         self.total_executions = 0
         self.successful_executions = 0
         self.failed_executions = 0
-        self.last_cycle_time = datetime.now()
+        self.last_cycle_time = datetime.now(timezone.utc)
 
         self.status = AgentStatus.ACTIVE if self.enabled else AgentStatus.INACTIVE
         self.autonomous_mode = True
@@ -74,7 +74,7 @@ class RoyalOrchestratorAgent(AgentBase):
 
         try:
             while not self.emergency_stop:
-                cycle_start = datetime.now()
+                cycle_start = datetime.now(timezone.utc)
 
                 # Get all ready agents from registry
                 ready_agents = await self._get_ready_agents()
@@ -99,14 +99,14 @@ class RoyalOrchestratorAgent(AgentBase):
                     logger.debug("No agents ready for execution in this cycle")
 
                 # Update cycle time
-                self.last_cycle_time = datetime.now()
+                self.last_cycle_time = datetime.now(timezone.utc)
                 self.last_execution = self.last_cycle_time
 
                 # Calculate next execution
-                cycle_duration = (datetime.now() - cycle_start).total_seconds()
+                cycle_duration = (datetime.now(timezone.utc) - cycle_start).total_seconds()
                 sleep_time = max(0, self.execution_interval - cycle_duration)
 
-                self.next_scheduled = datetime.now() + timedelta(seconds=sleep_time)
+                self.next_scheduled = datetime.now(timezone.utc) + timedelta(seconds=sleep_time)
 
                 # Sleep until next cycle
                 await asyncio.sleep(sleep_time)
@@ -148,7 +148,7 @@ class RoyalOrchestratorAgent(AgentBase):
                 # Check if agent is in a ready state
                 if agent_metadata.status in [RegistryAgentStatus.READY, RegistryAgentStatus.IDLE]:
                     # Check heartbeat freshness
-                    time_since_heartbeat = (datetime.now() - agent_metadata.last_heartbeat).total_seconds()
+                    time_since_heartbeat = (datetime.now(timezone.utc) - agent_metadata.last_heartbeat).total_seconds()
 
                     if time_since_heartbeat < self.registry.heartbeat_timeout:
                         # Check if agent should execute based on custom logic
@@ -258,14 +258,14 @@ class RoyalOrchestratorAgent(AgentBase):
 
             # Send heartbeat
             await self.registry.agent_heartbeat(agent_id, {
-                "last_execution": datetime.now().isoformat(),
+                "last_execution": datetime.now(timezone.utc).isoformat(),
                 "status": "completed"
             })
 
             return {
                 "agent_id": agent_id,
                 "success": True,
-                "executed_at": datetime.now().isoformat()
+                "executed_at": datetime.now(timezone.utc).isoformat()
             }
 
         except Exception as e:

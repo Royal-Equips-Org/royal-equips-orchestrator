@@ -20,7 +20,7 @@ import asyncio
 import logging
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 import httpx
 
@@ -157,7 +157,7 @@ class MarketingAutomationAgent(AgentBase):
             
             from dateutil import parser
             last_order_date = parser.parse(last_order_at)
-            days = (datetime.now() - last_order_date.replace(tzinfo=None)).days
+            days = (datetime.now(timezone.utc) - last_order_date.replace(tzinfo=None)).days
             return max(0, days)
         except Exception as e:
             self.logger.warning(f"Error calculating days since last order: {e}")
@@ -266,7 +266,7 @@ class MarketingAutomationAgent(AgentBase):
             self.campaign_log.append({
                 'type': 'abandoned_cart',
                 'email': email,
-                'sent_at': datetime.now().isoformat(),
+                'sent_at': datetime.now(timezone.utc).isoformat(),
                 'cart_id': cart.get('id')
             })
             
@@ -366,7 +366,7 @@ class MarketingAutomationAgent(AgentBase):
     async def _execute_scheduled_campaigns(self) -> None:
         """Execute scheduled marketing campaigns."""
         try:
-            current_day = datetime.now().weekday()  # Monday=0
+            current_day = datetime.now(timezone.utc).weekday()  # Monday=0
             
             # Newsletter on Tuesdays (1)  
             if current_day == 1:
@@ -405,7 +405,7 @@ class MarketingAutomationAgent(AgentBase):
                 
             self.campaign_log.append({
                 'type': 'newsletter',
-                'sent_at': datetime.now().isoformat(),
+                'sent_at': datetime.now(timezone.utc).isoformat(),
                 'recipients': len(target_emails),
                 'subject': subject
             })
@@ -439,7 +439,7 @@ class MarketingAutomationAgent(AgentBase):
                 
             self.campaign_log.append({
                 'type': 'promotion',
-                'sent_at': datetime.now().isoformat(),
+                'sent_at': datetime.now(timezone.utc).isoformat(),
                 'recipients': len(unique_customers),
                 'subject': subject
             })
@@ -470,7 +470,7 @@ class MarketingAutomationAgent(AgentBase):
         """Check if campaign was sent in the last 7 days."""
         try:
             sent_at = datetime.fromisoformat(campaign.get('sent_at', ''))
-            return (datetime.now() - sent_at).days <= 7
+            return (datetime.now(timezone.utc) - sent_at).days <= 7
         except Exception:
             return False
 
@@ -486,7 +486,7 @@ class MarketingAutomationAgent(AgentBase):
 
     async def get_daily_discoveries(self) -> int:
         """Get count of campaigns executed today."""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         today_campaigns = [
             c for c in self.campaign_log 
             if datetime.fromisoformat(c.get('sent_at', '')).date() == today

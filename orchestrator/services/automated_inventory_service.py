@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -246,8 +246,8 @@ class AutomatedInventoryService:
             daily_demand,
             lead_time,
             seasonality,
-            datetime.now().month,  # Month for seasonality
-            datetime.now().weekday(),  # Day of week
+            datetime.now(timezone.utc).month,  # Month for seasonality
+            datetime.now(timezone.utc).weekday(),  # Day of week
             product_data.get('price', 100),
             product_data.get('category_demand', 1.0)
         ]])
@@ -291,7 +291,7 @@ class AutomatedInventoryService:
         return StockoutPrediction(
             product_id=product_id,
             current_stock=current_stock,
-            predicted_stockout_date=datetime.now() + timedelta(days=predicted_days),
+            predicted_stockout_date=datetime.now(timezone.utc) + timedelta(days=predicted_days),
             stockout_probability=stockout_probability,
             risk_level=risk_level,
             days_until_stockout=predicted_days,
@@ -386,7 +386,7 @@ class AutomatedInventoryService:
                 delivery_timeframe=f"{supplier.get('lead_time_days', 7)}-{supplier.get('lead_time_days', 7)+3} days",
                 trigger_reason=f"ML predicted stockout in {prediction.days_until_stockout} days (probability: {prediction.stockout_probability:.1%})",
                 ml_confidence=prediction.confidence_score,
-                created_at=datetime.now()
+                created_at=datetime.now(timezone.utc)
             )
             
             triggers.append(trigger)
@@ -542,7 +542,7 @@ class AutomatedInventoryService:
             strengths=strengths or ["Meets basic requirements"],
             weaknesses=weaknesses or ["No major weaknesses identified"],
             recommendation=recommendation,
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         )
     
     def _generate_sample_supplier_data(self, supplier_id: str) -> Dict[str, Any]:
@@ -704,7 +704,7 @@ class AutomatedInventoryService:
                         'switch_reason': f"Score {supplier_score.overall_score:.1f} below threshold {risk_threshold}",
                         'estimated_impact': self._estimate_supplier_switch_impact(supplier_id, best_backup['supplier_id']),
                         'recommended_action': 'switch_to_backup',
-                        'timestamp': datetime.now()
+                        'timestamp': datetime.now(timezone.utc)
                     }
                     
                     routing_decisions.append(routing_decision)
@@ -725,7 +725,7 @@ class AutomatedInventoryService:
                         'switch_reason': f"Score {supplier_score.overall_score:.1f} below threshold {risk_threshold}",
                         'recommended_action': 'find_new_supplier',
                         'urgency': 'high',
-                        'timestamp': datetime.now()
+                        'timestamp': datetime.now(timezone.utc)
                     })
         
         summary = {
@@ -790,7 +790,7 @@ class AutomatedInventoryService:
                 'from_supplier': from_supplier,
                 'to_supplier': to_supplier,
                 'orders_transferred': 3,  # Sample number
-                'effective_date': datetime.now(),
+                'effective_date': datetime.now(timezone.utc),
                 'notification_sent': True,
                 'message': f'Successfully switched from {from_supplier} to {to_supplier}'
             }
@@ -801,7 +801,7 @@ class AutomatedInventoryService:
                 'error': str(e),
                 'from_supplier': from_supplier,
                 'to_supplier': to_supplier,
-                'timestamp': datetime.now()
+                'timestamp': datetime.now(timezone.utc)
             }
     
     def _generate_backup_routing_recommendations(self, routing_decisions: List[Dict]) -> List[str]:
@@ -831,7 +831,7 @@ class AutomatedInventoryService:
         
         # Recent reorder triggers
         recent_triggers = [t for t in self.reorder_history if 
-                         (datetime.now() - t.created_at).days < 1]
+                         (datetime.now(timezone.utc) - t.created_at).days < 1]
         
         for trigger in recent_triggers:
             alert_level = {
@@ -868,8 +868,8 @@ class AutomatedInventoryService:
             'success_rate': successful_triggers / max(1, total_predictions),
             'avg_ml_confidence': sum([t.ml_confidence for t in self.reorder_history]) / max(1, len(self.reorder_history)),
             'reorder_triggers_24h': len([t for t in self.reorder_history if 
-                                       (datetime.now() - t.created_at).days < 1]),
+                                       (datetime.now(timezone.utc) - t.created_at).days < 1]),
             'service_uptime': '99.9%',
             'avg_prediction_time': '0.15s',
-            'last_updated': datetime.now()
+            'last_updated': datetime.now(timezone.utc)
         }

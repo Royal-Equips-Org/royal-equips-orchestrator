@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from decimal import Decimal
 import math
@@ -126,7 +126,7 @@ class InventoryPricingAgent(BaseAgent):
                     "inventory_recommendations": len(inventory_recommendations),
                     "research_opportunities_processed": research_processed,
                     "changes_applied": changes_applied,
-                    "analysis_timestamp": datetime.now().isoformat()
+                    "analysis_timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
             
@@ -225,7 +225,7 @@ class InventoryPricingAgent(BaseAgent):
         try:
             with get_db_session() as session:
                 # Get orders from the last 90 days
-                cutoff_date = datetime.now() - timedelta(days=90)
+                cutoff_date = datetime.now(timezone.utc) - timedelta(days=90)
                 
                 orders = session.query(Order).filter(
                     Order.created_at >= cutoff_date,
@@ -515,7 +515,7 @@ class InventoryPricingAgent(BaseAgent):
             with get_db_session() as session:
                 # Get unprocessed research opportunities
                 recent_research = session.query(ResearchHistory).filter(
-                    ResearchHistory.researched_at >= datetime.now() - timedelta(hours=24),
+                    ResearchHistory.researched_at >= datetime.now(timezone.utc) - timedelta(hours=24),
                     ResearchHistory.priority_score >= 7.0  # High-priority opportunities only
                 ).order_by(ResearchHistory.priority_score.desc()).limit(10).all()
                 
@@ -607,7 +607,7 @@ class InventoryPricingAgent(BaseAgent):
                 # Get recent activity metrics
                 recent_runs = session.query(AgentRun).filter(
                     AgentRun.agent_name == self.config.name,
-                    AgentRun.started_at >= datetime.now() - timedelta(hours=24)
+                    AgentRun.started_at >= datetime.now(timezone.utc) - timedelta(hours=24)
                 ).count()
                 
                 # Get inventory health metrics
@@ -620,7 +620,7 @@ class InventoryPricingAgent(BaseAgent):
                     'total_products_managed': total_products,
                     'pricing_config': self.pricing_config,
                     'inventory_config': self.inventory_config,
-                    'last_check': datetime.now().isoformat()
+                    'last_check': datetime.now(timezone.utc).isoformat()
                 }
         
         except Exception as e:
@@ -628,5 +628,5 @@ class InventoryPricingAgent(BaseAgent):
                 'agent_name': self.config.name,
                 'status': 'error',
                 'error': str(e),
-                'last_check': datetime.now().isoformat()
+                'last_check': datetime.now(timezone.utc).isoformat()
             }

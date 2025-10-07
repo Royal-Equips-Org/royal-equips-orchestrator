@@ -12,7 +12,7 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import timezone, datetime, timedelta
 import aiohttp
 import pandas as pd
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text
@@ -171,7 +171,7 @@ async def root():
         "message": "Royal Equips Empire API - Autonomous E-commerce Management System",
         "version": "3.0.0", 
         "status": "operational",
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "empire_status": await empire_orchestrator.get_empire_status(),
         "active_agents": await empire_orchestrator.get_active_agents_count()
     }
@@ -198,7 +198,7 @@ async def get_empire_status(token: str = Depends(verify_token)):
         
         return {
             "status": "operational",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "empire_metrics": status,
             "agents": agents,
             "financial_overview": financial_data,
@@ -222,7 +222,7 @@ async def get_empire_metrics(token: str = Depends(verify_token)):
         agent_metrics = await empire_orchestrator.get_agent_performance_summary()
         
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "revenue": revenue_data,
             "agents": agent_metrics,
             "opportunities": metrics.get("opportunities", {}),
@@ -246,7 +246,7 @@ async def execute_empire_command(
         
         if command.command == "autopilot_enable":
             background_tasks.add_task(empire_orchestrator.enable_autopilot, command.parameters)
-            return {"status": "success", "message": "Autopilot enabled", "command_id": f"cmd_{datetime.now().timestamp()}"}
+            return {"status": "success", "message": "Autopilot enabled", "command_id": f"cmd_{datetime.now(timezone.utc).timestamp()}"}
             
         elif command.command == "autopilot_disable":
             background_tasks.add_task(empire_orchestrator.disable_autopilot)
@@ -293,7 +293,7 @@ async def get_agents_status(token: str = Depends(verify_token), db: Session = De
             })
         
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "total_agents": len(agents_data),
             "active_agents": len([a for a in agents_data if a["status"] == "active"]),
             "agents": agents_data
@@ -341,7 +341,7 @@ async def get_market_opportunities(
             })
         
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "total_opportunities": len(enhanced_opportunities),
             "opportunities": enhanced_opportunities
         }
@@ -407,7 +407,7 @@ async def approve_product(
         
         # Update status
         opportunity.status = "approved"
-        opportunity.approved_at = datetime.utcnow()
+        opportunity.approved_at = datetime.now(timezone.utc)
         db.commit()
         
         # Execute approved action
@@ -494,7 +494,7 @@ async def get_marketing_campaigns(
             })
         
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "total_campaigns": len(enhanced_campaigns),
             "active_campaigns": len([c for c in enhanced_campaigns if c["status"] == "active"]),
             "campaigns": enhanced_campaigns
@@ -566,7 +566,7 @@ async def generate_marketing_content(
         return {
             "status": "success",
             "content": content_result,
-            "generated_at": datetime.now().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
         
     except Exception as e:
@@ -583,7 +583,7 @@ async def get_market_intelligence(
         intelligence_data = await market_intelligence.get_market_overview(category)
         
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "category": category,
             "market_trends": intelligence_data.get("trends", []),
             "competitor_analysis": intelligence_data.get("competitors", []),
@@ -615,7 +615,7 @@ async def analyze_market_intelligence(
         return {
             "status": "success",
             "message": f"Market intelligence analysis started for {request.product_category}",
-            "analysis_id": f"analysis_{datetime.now().timestamp()}"
+            "analysis_id": f"analysis_{datetime.now(timezone.utc).timestamp()}"
         }
         
     except Exception as e:
@@ -629,7 +629,7 @@ async def get_financial_overview(token: str = Depends(verify_token)):
         financial_data = await financial_controller.get_comprehensive_overview()
         
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "revenue": financial_data.get("revenue", {}),
             "expenses": financial_data.get("expenses", {}),
             "profit_margins": financial_data.get("margins", {}),
@@ -659,7 +659,7 @@ async def health_check():
         
         return {
             "status": "healthy",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "database": "connected",
             "redis": "connected",
             "empire_services": empire_health
@@ -669,7 +669,7 @@ async def health_check():
         logger.error(f"Health check failed: {e}")
         return {
             "status": "unhealthy",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "error": str(e)
         }
 
@@ -701,7 +701,7 @@ async def get_empire_status():
         return {
             "status": "success",
             "data": status,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Failed to get empire status: {e}")
@@ -720,7 +720,7 @@ async def get_agents_status():
                 "performance_score": 94,
                 "discoveries_count": 127,
                 "success_rate": 89,
-                "last_execution": datetime.now().isoformat()
+                "last_execution": datetime.now(timezone.utc).isoformat()
             },
             {
                 "id": "supplier_intelligence_agent", 
@@ -730,7 +730,7 @@ async def get_agents_status():
                 "performance_score": 87,
                 "discoveries_count": 89,
                 "success_rate": 92,
-                "last_execution": datetime.now().isoformat()
+                "last_execution": datetime.now(timezone.utc).isoformat()
             },
             {
                 "id": "master_coordinator_agent",
@@ -740,7 +740,7 @@ async def get_agents_status():
                 "performance_score": 98,
                 "discoveries_count": 45,
                 "success_rate": 96,
-                "last_execution": datetime.now().isoformat()
+                "last_execution": datetime.now(timezone.utc).isoformat()
             },
             {
                 "id": "market_analysis_agent",
@@ -778,7 +778,7 @@ async def get_agents_status():
             "status": "success",
             "data": agents_status,
             "active_count": len([a for a in agents_status if a.get("status") == "active"]),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Failed to get agents status: {e}")
@@ -831,7 +831,7 @@ async def get_product_opportunities():
             "status": "success",
             "data": opportunities,
             "count": len(opportunities),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Failed to get product opportunities: {e}")
@@ -888,7 +888,7 @@ async def get_marketing_campaigns():
             "status": "success",
             "data": campaigns,
             "count": len(campaigns),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Failed to get marketing campaigns: {e}")
@@ -912,7 +912,7 @@ async def execute_empire_command(command: EmpireCommand):
         return {
             "status": "success",
             "data": result,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Failed to execute command {command.command}: {e}")
@@ -926,7 +926,7 @@ async def approve_product(product_id: str):
             "status": "success",
             "message": f"Product {product_id} approved for deployment",
             "product_id": product_id,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Failed to approve product {product_id}: {e}")
@@ -941,7 +941,7 @@ async def reject_product(product_id: str, reason: str = "Manual rejection"):
             "message": f"Product {product_id} rejected",
             "product_id": product_id,
             "reason": reason,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         safe_product_id = product_id.replace('\r', '').replace('\n', '')
@@ -962,7 +962,7 @@ async def health_check():
             "marketing_orchestrator": True,
             "financial_controller": True
         },
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import timezone, datetime
 from typing import Any, Dict, Optional
 
 from flask import Blueprint, current_app, jsonify
@@ -112,7 +112,7 @@ def diagnostics():
         status = "critical"
 
     startup_time = getattr(current_app, "startup_time", None)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if startup_time is not None:
         uptime_seconds = (now - startup_time).total_seconds()
         started_at = startup_time.isoformat()

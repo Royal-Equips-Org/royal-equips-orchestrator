@@ -5,7 +5,7 @@ Manages all autonomous agents and business operations
 import asyncio
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -88,7 +88,7 @@ class EmpireOrchestrator(AgentBase):
             global_regions_active=0,
             suppliers_connected=0,
             customer_satisfaction=0.0,
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         )
         self.is_autopilot = False
         self.emergency_stop = False
@@ -211,7 +211,7 @@ class EmpireOrchestrator(AgentBase):
                 if a.status == AgentStatus.ACTIVE
             ])
             self.metrics.automation_level = self._calculate_automation_level()
-            self.metrics.last_updated = datetime.now()
+            self.metrics.last_updated = datetime.now(timezone.utc)
             
         except Exception as e:
             logger.error(f"❌ Metrics update failed: {e}")
@@ -315,7 +315,7 @@ class EmpireOrchestrator(AgentBase):
             'agent_statuses': agent_statuses,
             'is_autopilot': self.is_autopilot,
             'emergency_stop': self.emergency_stop,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
     
     def _calculate_automation_level(self) -> float:

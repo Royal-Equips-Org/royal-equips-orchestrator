@@ -15,7 +15,7 @@ This module provides a production-ready Flask application with:
 
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -77,8 +77,8 @@ def create_app(config: Optional[str] = None) -> Flask:
         allow_headers=["*"],
     )
 
-    # Store startup time for uptime calculation
-    app.startup_time = datetime.now()
+    # Store startup time for uptime calculation (timezone-aware)
+    app.startup_time = datetime.now(timezone.utc)
 
     # Initialize WebSocket support
     init_socketio(app)

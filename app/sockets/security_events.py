@@ -7,7 +7,7 @@ All events are real production data - no mock implementations.
 
 import asyncio
 import json
-from datetime import datetime
+from datetime import timezone, datetime
 from typing import Dict, List, Any
 import logging
 
@@ -50,7 +50,7 @@ class SecurityEventHandler:
                 emit('security_joined', {
                     'success': True,
                     'room': room,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 })
                 
             except Exception as e:
@@ -74,7 +74,7 @@ class SecurityEventHandler:
                 emit('security_left', {
                     'success': True,
                     'room': room,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 })
                 
             except Exception as e:
@@ -97,7 +97,7 @@ class SecurityEventHandler:
                 emit('fraud_scan_initiated', {
                     'success': True,
                     'message': 'Fraud detection scan initiated',
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 })
                 
             except Exception as e:
@@ -147,7 +147,7 @@ class SecurityEventHandler:
                 'type': 'initial_status',
                 'agent_health': health_status,
                 'recent_alerts': recent_alerts,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=room)
             
         except Exception as e:
@@ -188,7 +188,7 @@ class SecurityEventHandler:
             self.socketio.emit('security_status_update', {
                 'type': 'status_update',
                 'security_metrics': security_metrics,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=room)
             
         except Exception as e:
@@ -212,7 +212,7 @@ class SecurityEventHandler:
             self.socketio.emit('fraud_scan_progress', {
                 'status': 'running',
                 'message': 'Fraud detection scan in progress...',
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=room)
             
             # Run fraud detection
@@ -244,7 +244,7 @@ class SecurityEventHandler:
             
             self.socketio.emit('fraud_scan_completed', {
                 'results': scan_results,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=room)
             
             # If high-risk transactions found, send alert
@@ -254,14 +254,14 @@ class SecurityEventHandler:
                     'severity': 'high' if high_risk_count > 3 else 'medium',
                     'message': f'{high_risk_count} high-risk transactions detected',
                     'details': scan_results,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, room=room)
             
         except Exception as e:
             logger.error(f"Error running fraud scan: {e}")
             self.socketio.emit('fraud_scan_error', {
                 'error': 'Failed to complete fraud scan',
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=f"security_monitoring_{user_id}")
     
     def broadcast_security_alert(self, alert_type: str, severity: str, message: str, details: Dict[str, Any] = None):
@@ -272,7 +272,7 @@ class SecurityEventHandler:
                 'severity': severity,
                 'message': message,
                 'details': details or {},
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             # Send to all active security monitoring rooms
@@ -295,7 +295,7 @@ class SecurityEventHandler:
                 'customer_email': transaction_data.get('customer', {}).get('email'),
                 'amount': transaction_data.get('total_price'),
                 'flags': transaction_data.get('fraud_flags', []),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             # Send to all active security monitoring rooms
@@ -318,7 +318,7 @@ class SecurityEventHandler:
                 'issues_count': compliance_data.get('issues_count', 0),
                 'critical_issues': compliance_data.get('critical_issues', 0),
                 'last_check': compliance_data.get('last_check'),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             # Send to all active security monitoring rooms
@@ -358,7 +358,7 @@ class SecurityEventHandler:
             
             from dateutil.parser import parse
             event_datetime = parse(event_time)
-            current_time = datetime.utcnow()
+            current_time = datetime.now(timezone.utc)
             
             time_diff = current_time - event_datetime.replace(tzinfo=None)
             return time_diff.total_seconds() < (hours * 3600)

@@ -9,7 +9,7 @@ import hashlib
 import json
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -321,7 +321,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
                 'optimization_results': optimization_results,
                 'content_generation': content_generation,
                 'metrics': self.performance_metrics,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             logger.info(f"Marketing automation cycle completed in {execution_time:.2f}s")
@@ -332,7 +332,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
             return {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _analyze_marketing_performance(self) -> Dict[str, Any]:
@@ -518,7 +518,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
                         'access_token': fb_token,
                         'metric': 'page_impressions,page_engaged_users',
                         'period': 'day',
-                        'since': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+                        'since': (datetime.now(timezone.utc) - timedelta(days=30)).strftime('%Y-%m-%d')
                     },
                     timeout=30
                 )
@@ -805,7 +805,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
             return {
                 'type': request['type'],
                 'content': content,
-                'generated_at': datetime.now().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -852,7 +852,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
         """Update and store performance metrics."""
         try:
             self.performance_metrics['api_calls_made'] += 1
-            self.performance_metrics['last_updated'] = datetime.now().isoformat()
+            self.performance_metrics['last_updated'] = datetime.now(timezone.utc).isoformat()
             
             # Store metrics in cache
             if self.redis_cache:
@@ -879,7 +879,7 @@ class ProductionMarketingAutomationAgent(AgentBase):
                 'type': 'email',
                 'name': 'Weekly Newsletter',
                 'audience_size': 2500,
-                'scheduled_time': datetime.now().isoformat()
+                'scheduled_time': datetime.now(timezone.utc).isoformat()
             }
         ]
     

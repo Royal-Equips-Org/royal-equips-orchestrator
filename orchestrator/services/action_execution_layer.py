@@ -5,7 +5,7 @@ Executes approved business actions across all platforms and systems
 import asyncio
 import aiohttp
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 import json
@@ -136,7 +136,7 @@ class ActionExecutionLayer(AgentBase):
         try:
             # Create execution action
             action = ExecutionAction(
-                action_id=f"product_add_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                action_id=f"product_add_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 action_type="product_creation",
                 title=f"Add Product: {opportunity.get('title', 'Unknown')}",
                 description=f"Adding product opportunity to Shopify store",
@@ -147,7 +147,7 @@ class ActionExecutionLayer(AgentBase):
                     'inventory_tracking': True
                 },
                 status="pending",
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
                 started_at=None,
                 completed_at=None,
                 result=None,
@@ -169,14 +169,14 @@ class ActionExecutionLayer(AgentBase):
         """Adjust product pricing across platforms"""
         try:
             action = ExecutionAction(
-                action_id=f"price_adjust_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                action_id=f"price_adjust_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 action_type="price_adjustment",
                 title=f"Price Adjustment: {pricing_data.get('product_title', 'Multiple Products')}",
                 description="Adjusting product pricing based on market intelligence",
                 target_platform="shopify",
                 parameters=pricing_data,
                 status="pending",
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
                 started_at=None,
                 completed_at=None,
                 result=None,
@@ -198,14 +198,14 @@ class ActionExecutionLayer(AgentBase):
         """Execute inventory reorder actions"""
         try:
             action = ExecutionAction(
-                action_id=f"inventory_reorder_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                action_id=f"inventory_reorder_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 action_type="inventory_reorder",
                 title=f"Inventory Reorder: {reorder_data.get('supplier', 'Unknown Supplier')}",
                 description="Executing automated inventory reorder",
                 target_platform="supplier_system",
                 parameters=reorder_data,
                 status="pending",
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
                 started_at=None,
                 completed_at=None,
                 result=None,
@@ -227,14 +227,14 @@ class ActionExecutionLayer(AgentBase):
         """Launch marketing campaign"""
         try:
             action = ExecutionAction(
-                action_id=f"marketing_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                action_id=f"marketing_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 action_type="marketing_campaign",
                 title=f"Marketing Campaign: {campaign_data.get('campaign_name', 'Unknown')}",
                 description="Launching automated marketing campaign",
                 target_platform="marketing_platforms",
                 parameters=campaign_data,
                 status="pending",
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
                 started_at=None,
                 completed_at=None,
                 result=None,
@@ -271,7 +271,7 @@ class ActionExecutionLayer(AgentBase):
         """Execute a single action"""
         try:
             action.status = "executing"
-            action.started_at = datetime.now()
+            action.started_at = datetime.now(timezone.utc)
             
             logger.info(f"⚡ Executing action: {action.title}")
             
@@ -289,7 +289,7 @@ class ActionExecutionLayer(AgentBase):
             
             # Mark as completed
             action.status = "completed"
-            action.completed_at = datetime.now()
+            action.completed_at = datetime.now(timezone.utc)
             action.result = result
             
             # Record in history
@@ -310,7 +310,7 @@ class ActionExecutionLayer(AgentBase):
         except Exception as e:
             action.status = "failed"
             action.error_message = str(e)
-            action.completed_at = datetime.now()
+            action.completed_at = datetime.now(timezone.utc)
             
             logger.error(f"❌ Action execution failed: {action.title} - {e}")
     
@@ -415,7 +415,7 @@ class ActionExecutionLayer(AgentBase):
             if action.retry_count < action.max_retries:
                 delay = self.retry_delays[min(action.retry_count, len(self.retry_delays) - 1)]
                 
-                if action.completed_at and (datetime.now() - action.completed_at).total_seconds() > delay:
+                if action.completed_at and (datetime.now(timezone.utc) - action.completed_at).total_seconds() > delay:
                     action.status = "pending"
                     action.retry_count += 1
                     action.error_message = None
@@ -424,7 +424,7 @@ class ActionExecutionLayer(AgentBase):
     
     async def get_daily_discoveries(self) -> int:
         """Get daily action execution count"""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         return len([a for a in self.execution_history if a['executed_at'].date() == today])
     
     async def _initialize_platform_clients(self):
@@ -438,7 +438,7 @@ class ActionExecutionLayer(AgentBase):
     
     async def _cleanup_completed_actions(self):
         """Clean up old completed actions"""
-        cutoff_date = datetime.now() - timedelta(hours=24)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(hours=24)
         
         # Remove completed actions older than 24 hours
         to_remove = [
@@ -457,4 +457,4 @@ class ActionExecutionLayer(AgentBase):
             self.success_rate = (successful_actions / total_actions) * 100
             self.performance_score = min(self.success_rate, 100)
         
-        self.last_execution = datetime.now()
+        self.last_execution = datetime.now(timezone.utc)
