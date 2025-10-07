@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 command_center_bp = Blueprint("command_center", __name__, url_prefix="/command-center")
 
 # Path to built React app
-STATIC_DIR = Path(__file__).parent.parent / "static"
+STATIC_DIR = Path(__file__).parent.parent.parent / "static"
 ADMIN_BUILD_DIR = Path(__file__).parent.parent.parent / "apps" / "command-center-ui" / "dist"
 
 
