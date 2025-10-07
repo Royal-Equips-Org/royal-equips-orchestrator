@@ -21,7 +21,7 @@ permissions:
 jobs:
   scan-scheduled:
     if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
-    uses: Royal-Equips-Org/royal-equips-orchestrator/.github/workflows/osv-scanner-reusable.yml@master
+    uses: Royal-Equips-Org/royal-equips-orchestrator/.github/workflows/osv-scanner-reusable.yml @master
     with:
       scan-args: |
         -r
@@ -29,7 +29,7 @@ jobs:
         ./
   scan-pr:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
-    uses: Royal-Equips-Org/royal-equips-orchestrator/.github/workflows/osv-scanner-reusable-pr.yml@master
+    uses: Royal-Equips-Org/royal-equips-orchestrator/.github/workflows/osv-scanner-reusable-pr.yml @master
     with:
       scan-args: |
         -r
