@@ -331,7 +331,7 @@ class AutonomousEmpireAgent:
         """Execute a specific autonomous action."""
         logger.debug(f"🔧 Executing action: {action}")
         
-        action_results = {"action": action, "timestamp": datetime.now().isoformat()}
+        action_results = {"action": action, "timestamp": datetime.now(timezone.utc).isoformat()}
         
         try:
             if action == "trigger_emergency_healing":

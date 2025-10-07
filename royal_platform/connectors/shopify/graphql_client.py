@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Union
 from decimal import Decimal
 
@@ -97,7 +97,7 @@ class CircuitBreaker:
             return True
         elif self.state == "OPEN":
             if (self.last_failure_time and 
-                datetime.now() - self.last_failure_time > timedelta(seconds=self.timeout_seconds)):
+                datetime.now(timezone.utc) - self.last_failure_time > timedelta(seconds=self.timeout_seconds)):
                 self.state = "HALF_OPEN"
                 return True
             return False
@@ -112,7 +112,7 @@ class CircuitBreaker:
     def record_failure(self) -> None:
         """Record failed execution."""
         self.failure_count += 1
-        self.last_failure_time = datetime.now()
+        self.last_failure_time = datetime.now(timezone.utc)
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
             logger.warning(f"Circuit breaker opened after {self.failure_count} failures")

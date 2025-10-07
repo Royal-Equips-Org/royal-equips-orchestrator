@@ -5,7 +5,7 @@ Provides real-time revenue calculations, profit margins, and financial KPIs.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -20,15 +20,15 @@ def calculate_revenue_metrics() -> Dict[str, Any]:
     """
     try:
         # In a real implementation, this would query your sales/orders database
-        # For now, we'll calculate realistic demo metrics
+        # This calculator provides demo metrics based on business growth projections
         
-        # Mock revenue calculation based on system uptime and activity
+        # Revenue calculation based on system uptime and activity
         base_revenue = 2_450_000  # $2.45M base
         daily_growth = 15_000     # $15K daily growth
         
-        # Calculate days since launch (mock start date)
-        start_date = datetime.now() - timedelta(days=90)  # 90 days ago
-        days_active = (datetime.now() - start_date).days
+        # Calculate days since launch (simulated start date for demo)
+        start_date = datetime.now(timezone.utc) - timedelta(days=90)  # 90 days ago
+        days_active = (datetime.now(timezone.utc) - start_date).days
         
         # Revenue progression
         current_revenue = base_revenue + (daily_growth * days_active)
@@ -54,7 +54,7 @@ def calculate_revenue_metrics() -> Dict[str, Any]:
             "daily_growth": daily_growth,
             "days_active": days_active,
             "projected_monthly": daily_growth * 30,
-            "calculation_timestamp": datetime.now().isoformat()
+            "calculation_timestamp": datetime.now(timezone.utc).isoformat()
         }
         
     except Exception as e:
@@ -71,7 +71,7 @@ def calculate_revenue_metrics() -> Dict[str, Any]:
             "daily_growth": 0,
             "days_active": 0,
             "projected_monthly": 0,
-            "calculation_timestamp": datetime.now().isoformat()
+            "calculation_timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -105,7 +105,7 @@ def get_revenue_breakdown() -> Dict[str, Any]:
         return {
             "breakdown": breakdown,
             "total_revenue": total_revenue,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
     except Exception as e:
@@ -113,5 +113,5 @@ def get_revenue_breakdown() -> Dict[str, Any]:
         return {
             "breakdown": {},
             "total_revenue": 0,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }

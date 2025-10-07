@@ -8,7 +8,7 @@ and graceful degradation patterns.
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
@@ -189,7 +189,7 @@ class HealthService:
         self._error_budget = {
             "monthly_budget_seconds": 259.2,  # 4.32 min in seconds
             "current_month_errors": 0,
-            "last_reset": datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            "last_reset": datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         }
 
     def get_circuit_breaker_status(self) -> Dict[str, Any]:
@@ -199,7 +199,7 @@ class HealthService:
             status[name] = breaker.get_state_info()
         return {
             "circuit_breakers": status,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "summary": {
                 "total_breakers": len(self.circuit_breakers),
                 "open_breakers": len([b for b in self.circuit_breakers.values() if b.state == CircuitState.OPEN]),
@@ -210,7 +210,7 @@ class HealthService:
 
     def get_error_budget_status(self) -> Dict[str, Any]:
         """Get current error budget consumption."""
-        current_time = datetime.now()
+        current_time = datetime.now(timezone.utc)
         
         # Reset monthly counter if needed
         current_month_start = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -279,7 +279,7 @@ class HealthService:
         return {
             "ready": overall_ready,
             "status": "healthy" if overall_ready else "degraded",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "checks": checks,
         }
 
@@ -295,7 +295,7 @@ class HealthService:
                     "message": "Application startup time not recorded",
                 }
 
-            uptime = (datetime.now() - startup_time).total_seconds()
+            uptime = (datetime.now(timezone.utc) - startup_time).total_seconds()
             return {
                 "name": "core_service",
                 "healthy": True,
@@ -519,7 +519,7 @@ class HealthService:
         return {
             'system_readiness': readiness,
             'github_repository_health': github_health,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'version': '2.0.0',
             'environment': current_app.config.get('FLASK_ENV', 'development')
         }
@@ -553,7 +553,7 @@ def _add_empire_health_methods():
         try:
             from app.services.empire_scanner import get_empire_scanner
             
-            current_time = datetime.now()
+            current_time = datetime.now(timezone.utc)
             
             # Check if we need a new scan
             needs_scan = (
@@ -635,7 +635,7 @@ def _add_empire_health_methods():
             empire_health = self.check_empire_health(force_scan=True)
             
             evolution_status = {
-                "check_timestamp": datetime.now().isoformat(),
+                "check_timestamp": datetime.now(timezone.utc).isoformat(),
                 "empire_health": empire_health,
                 "evolution_recommendations": self.get_empire_recommendations(),
                 "readiness_assessment": {
@@ -663,7 +663,7 @@ def _add_empire_health_methods():
         except Exception as e:
             logger.error(f"Empire evolution check failed: {e}")
             return {
-                "check_timestamp": datetime.now().isoformat(),
+                "check_timestamp": datetime.now(timezone.utc).isoformat(),
                 "error": str(e),
                 "recommended_phase": "ERROR_RECOVERY",
                 "phase_description": "System error - manual intervention required"

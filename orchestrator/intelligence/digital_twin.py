@@ -11,7 +11,7 @@ Creates and maintains digital twins of:
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -158,8 +158,8 @@ class DigitalTwinEngine:
                 current_values={},
                 predicted_values={},
                 confidence_scores={},
-                last_updated=datetime.now(),
-                simulation_time=datetime.now(),
+                last_updated=datetime.now(timezone.utc),
+                simulation_time=datetime.now(timezone.utc),
                 iterations_run=0,
                 accuracy_score=0.0
             )
@@ -242,7 +242,7 @@ class DigitalTwinEngine:
                 'predicted_value': prediction['value'],
                 'confidence': prediction['confidence'],
                 'time_horizon': time_horizon.total_seconds(),
-                'prediction_timestamp': datetime.now().isoformat()
+                'prediction_timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -274,7 +274,7 @@ class DigitalTwinEngine:
             'global_metrics': await self._calculate_global_market_metrics(),
             'risk_assessment': await self._assess_market_risks(),
             'opportunities': await self._identify_market_opportunities(),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
     
     
@@ -327,7 +327,7 @@ class DigitalTwinEngine:
             'performance_metrics': self.metrics,
             'total_twins': len(self.twins),
             'active_simulations': len([s for s in self.simulation_states.values() 
-                                    if s.last_updated > datetime.now() - timedelta(hours=1)])
+                                    if s.last_updated > datetime.now(timezone.utc) - timedelta(hours=1)])
         }
     
     
@@ -412,7 +412,7 @@ class DigitalTwinEngine:
         state = self.simulation_states[twin_id]
         
         # Check if update is needed based on frequency
-        time_since_update = datetime.now() - state.last_updated
+        time_since_update = datetime.now(timezone.utc) - state.last_updated
         if time_since_update < config.update_frequency:
             return
         
@@ -429,7 +429,7 @@ class DigitalTwinEngine:
             await self._simulate_operational_system(twin_id)
         
         # Update state
-        state.last_updated = datetime.now()
+        state.last_updated = datetime.now(timezone.utc)
         state.iterations_run += 1
         self.metrics['total_simulations'] += 1
     
@@ -568,16 +568,16 @@ class DigitalTwinEngine:
                         state.current_values[param] = value
         
         # Run simulation for scenario duration
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         simulation_results = []
         
-        while datetime.now() - start_time < scenario.duration:
+        while datetime.now(timezone.utc) - start_time < scenario.duration:
             for twin_id in scenario.twin_ids:
                 await self._update_twin_simulation(twin_id)
             
             # Collect metrics
             simulation_results.append({
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'states': {
                     twin_id: self.simulation_states[twin_id].current_values.copy()
                     for twin_id in scenario.twin_ids
@@ -594,7 +594,7 @@ class DigitalTwinEngine:
         
         return {
             'scenario_id': scenario.scenario_id,
-            'execution_time': (datetime.now() - start_time).total_seconds(),
+            'execution_time': (datetime.now(timezone.utc) - start_time).total_seconds(),
             'simulation_results': simulation_results,
             'summary_metrics': self._calculate_scenario_summary(simulation_results)
         }

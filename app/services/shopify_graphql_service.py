@@ -8,7 +8,7 @@ import logging
 import asyncio
 from typing import Dict, List, Any, Optional
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 from core.secrets.secret_provider import UnifiedSecretResolver
 
@@ -99,7 +99,7 @@ class ShopifyGraphQLService:
     
     async def get_orders_summary(self, days: int = 30) -> Dict[str, Any]:
         """Get real orders summary for the last N days."""
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         
         query = """

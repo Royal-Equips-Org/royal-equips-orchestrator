@@ -21,7 +21,7 @@ import json
 import numpy as np
 import pandas as pd
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, asdict
 import httpx
 
@@ -175,7 +175,7 @@ class ProductionInventoryAgent(AgentBase):
                 'price_optimizations': self.price_optimizations_today,
                 'potential_revenue_increase': self.potential_revenue_increase,
                 'performance_score': self.performance_score,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -183,7 +183,7 @@ class ProductionInventoryAgent(AgentBase):
             return {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _sync_inventory_from_shopify(self) -> None:
@@ -315,7 +315,7 @@ class ProductionInventoryAgent(AgentBase):
                         supplier_sku=variant['sku'],
                         last_sale_date=None,  # Would query order data
                         last_restock_date=None,
-                        last_updated=datetime.now(),
+                        last_updated=datetime.now(timezone.utc),
                         alerts=[]
                     )
                     
@@ -399,7 +399,7 @@ class ProductionInventoryAgent(AgentBase):
     
     def _calculate_seasonality_factor(self) -> float:
         """Calculate seasonality factor based on current date."""
-        current_date = datetime.now()
+        current_date = datetime.now(timezone.utc)
         month = current_date.month
         
         # Seasonal patterns (would be data-driven in production)
@@ -650,7 +650,7 @@ class ProductionInventoryAgent(AgentBase):
                         'message': f"Stock critically low: {item.current_stock}/{item.reorder_point}",
                         'current_stock': item.current_stock,
                         'reorder_point': item.reorder_point,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
                 
                 # Overstock alert
@@ -665,7 +665,7 @@ class ProductionInventoryAgent(AgentBase):
                         'message': f"Overstock detected: {item.current_stock}/{item.max_stock}",
                         'current_stock': item.current_stock,
                         'max_stock': item.max_stock,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
                 
                 # Slow-moving inventory
@@ -679,7 +679,7 @@ class ProductionInventoryAgent(AgentBase):
                         'level': 'warning',
                         'message': f"Slow sales: {item.velocity_daily:.1f} units/day",
                         'velocity': item.velocity_daily,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
                 
                 # Update item alerts
@@ -724,7 +724,7 @@ class ProductionInventoryAgent(AgentBase):
                                 'new_price': recommendation.recommended_price,
                                 'change_percent': recommendation.price_change_percent,
                                 'reasoning': recommendation.reasoning,
-                                'timestamp': datetime.now().isoformat()
+                                'timestamp': datetime.now(timezone.utc).isoformat()
                             })
                             
                             executed_changes += 1
@@ -876,12 +876,12 @@ class ProductionInventoryAgent(AgentBase):
                     'success_rate': self.success_rate,
                     'potential_revenue_increase': self.potential_revenue_increase
                 },
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
             self.logger.error(f"Error generating dashboard data: {e}")
-            return {'error': str(e), 'timestamp': datetime.now().isoformat()}
+            return {'error': str(e), 'timestamp': datetime.now(timezone.utc).isoformat()}
 
 
 # Backward compatibility

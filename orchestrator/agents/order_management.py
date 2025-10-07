@@ -20,7 +20,7 @@ import asyncio
 import logging
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 import httpx
 from enum import Enum
@@ -81,7 +81,7 @@ class OrderFulfillmentAgent(AgentBase):
                 self.processed_orders.append({
                     'order_id': order.get('id'),
                     'risk_level': risk_level.value,
-                    'processed_at': datetime.now().isoformat(),
+                    'processed_at': datetime.now(timezone.utc).isoformat(),
                     'status': OrderStatus.PROCESSING.value
                 })
                 
@@ -199,7 +199,7 @@ class OrderFulfillmentAgent(AgentBase):
                     'order_id': order.get('id'),
                     'risk_level': risk_level.value,
                     'risk_score': risk_score,
-                    'flagged_at': datetime.now().isoformat()
+                    'flagged_at': datetime.now(timezone.utc).isoformat()
                 })
                 
             self.logger.info(
@@ -390,19 +390,19 @@ class OrderFulfillmentAgent(AgentBase):
                         'orders_processed': 0,
                         'success_rate': 95.0,
                         'avg_processing_time': 24,  # hours
-                        'last_updated': datetime.now().isoformat()
+                        'last_updated': datetime.now(timezone.utc).isoformat()
                     }
                     
                 # Update metrics based on recent performance
                 self.supplier_performance[supplier]['orders_processed'] += 1
-                self.supplier_performance[supplier]['last_updated'] = datetime.now().isoformat()
+                self.supplier_performance[supplier]['last_updated'] = datetime.now(timezone.utc).isoformat()
                 
         except Exception as e:
             self.logger.error(f"Error updating supplier performance: {e}")
 
     async def get_daily_discoveries(self) -> int:
         """Get count of orders processed today."""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         today_orders = [
             o for o in self.processed_orders 
             if datetime.fromisoformat(o.get('processed_at', '')).date() == today

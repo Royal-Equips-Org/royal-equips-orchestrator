@@ -9,7 +9,7 @@ Provides REST endpoints for Shopify operations:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import BadRequest
@@ -77,7 +77,7 @@ def get_shopify_status():
                 "configured": False,
                 "error": "Shopify credentials not configured",
                 "message": "Set SHOPIFY_API_KEY, SHOPIFY_API_SECRET, and SHOP_NAME environment variables",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }), 503
 
         # Get shop info and rate limit status
@@ -90,7 +90,7 @@ def get_shopify_status():
                 "shop_info": shop_info,
                 "rate_limit": rate_limit,
                 "supported_topics": get_shopify_webhook_topics(),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }), 200
 
         except ShopifyAuthError as e:
@@ -98,14 +98,14 @@ def get_shopify_status():
                 "configured": True,
                 "authenticated": False,
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }), 401
 
         except ShopifyAPIError as e:
             return jsonify({
                 "configured": True,
                 "error": f"Shopify API error: {e}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }), 503
 
     except Exception as e:
@@ -113,7 +113,7 @@ def get_shopify_status():
         return jsonify({
             "configured": False,
             "error": "Internal server error",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 500
 
 
@@ -184,7 +184,7 @@ def sync_products():
                     'job_id': job_id,
                     'type': 'sync_products',
                     'limit': limit,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/ws/shopify')
         except Exception as e:
             logger.warning(f"Failed to emit WebSocket event: {e}")
@@ -193,7 +193,7 @@ def sync_products():
             "job_id": job_id,
             "status": "started",
             "message": f"Product synchronization started (limit: {limit})",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 202
 
     except Exception as e:
@@ -247,7 +247,7 @@ def sync_inventory():
                     'job_id': job_id,
                     'type': 'sync_inventory',
                     'location_id': location_id,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/ws/shopify')
         except Exception as e:
             logger.warning(f"Failed to emit WebSocket event: {e}")
@@ -256,7 +256,7 @@ def sync_inventory():
             "job_id": job_id,
             "status": "started",
             "message": "Inventory synchronization started",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 202
 
     except Exception as e:
@@ -322,7 +322,7 @@ def sync_orders():
                     'type': 'sync_orders',
                     'limit': limit,
                     'status': status,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/ws/shopify')
         except Exception as e:
             logger.warning(f"Failed to emit WebSocket event: {e}")
@@ -331,7 +331,7 @@ def sync_orders():
             "job_id": job_id,
             "status": "started",
             "message": f"Order synchronization started (limit: {limit}, status: {status})",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 202
 
     except Exception as e:
@@ -399,7 +399,7 @@ def bulk_operation():
                     'job_id': job_id,
                     'type': f'bulk_{operation}',
                     'operation': operation,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/ws/shopify')
         except Exception as e:
             logger.warning(f"Failed to emit WebSocket event: {e}")
@@ -408,7 +408,7 @@ def bulk_operation():
             "job_id": job_id,
             "status": "started",
             "message": f"Bulk operation '{operation}' started",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 202
 
     except Exception as e:
@@ -444,7 +444,7 @@ def get_jobs():
         return jsonify({
             "jobs": jobs,
             "count": len(jobs),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 200
 
     except Exception as e:
@@ -536,7 +536,7 @@ def get_products():
         if not service.is_configured():
             return jsonify({
                 "products": [],
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "shop": "not_configured",
                 "meta": {
                     "count": 0,
@@ -559,7 +559,7 @@ def get_products():
                 "message": "Limit must be between 1 and 250"
             }), 400
 
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Get products from Shopify
@@ -601,11 +601,11 @@ def get_products():
                 transformed_products.append(transformed_product)
             
             # Calculate metrics
-            fetch_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+            fetch_time_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
             shop_name = f"{service.shop_name}.myshopify.com" if service.shop_name else "unknown"
             
             response_data = {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "shop": shop_name,
                 "products": transformed_products,
                 "meta": {
@@ -623,7 +623,7 @@ def get_products():
             logger.error(f"Shopify authentication error: {e}")
             return jsonify({
                 "products": [],
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "shop": "auth_failed",
                 "meta": {
                     "count": 0,
@@ -639,7 +639,7 @@ def get_products():
             logger.error(f"Shopify API error: {e}")
             return jsonify({
                 "products": [],
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "shop": "api_error",
                 "meta": {
                     "count": 0,
@@ -655,7 +655,7 @@ def get_products():
         logger.error(f"Error getting products: {e}")
         return jsonify({
             "products": [],
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "shop": "error",
             "meta": {
                 "count": 0,
@@ -698,7 +698,7 @@ def get_orders():
         if not service.is_configured():
             return jsonify({
                 "orders": [],
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "error": "Shopify credentials not configured"
             }), 503
 
@@ -737,7 +737,7 @@ def get_orders():
                     "financialStatus": order.get('financial_status', 'pending').upper(),
                     "fulfillmentStatus": (order.get('fulfillment_status') or 'unfulfilled').upper(),
                     "customerEmail": order.get('email', order.get('customer', {}).get('email', '')),
-                    "createdAt": order.get('created_at', datetime.now().isoformat()),
+                    "createdAt": order.get('created_at', datetime.now(timezone.utc).isoformat()),
                     "lineItems": line_items
                 }
                 
@@ -745,7 +745,7 @@ def get_orders():
             
             response_data = {
                 "orders": transformed_orders,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
             return jsonify(response_data), 200
@@ -754,7 +754,7 @@ def get_orders():
             logger.error(f"Shopify authentication error: {e}")
             return jsonify({
                 "orders": [],
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "error": "Authentication failed"
             }), 401
             
@@ -762,7 +762,7 @@ def get_orders():
             logger.error(f"Shopify API error: {e}")
             return jsonify({
                 "orders": [],
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "error": "API error occurred"
             }), 503
 
@@ -770,7 +770,7 @@ def get_orders():
         logger.error(f"Error getting orders: {e}")
         return jsonify({
             "orders": [],
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "error": "Internal server error"
         }), 500
 
@@ -831,7 +831,7 @@ def get_shopify_metrics_old():
                 "topProducts": [],
                 "recentOrders": [],
                 "source": "no_data_available",
-                "lastUpdated": datetime.now().isoformat(),
+                "lastUpdated": datetime.now(timezone.utc).isoformat(),
                 "connected": False
             }), 200
 
@@ -905,7 +905,7 @@ def get_shopify_metrics_old():
                     'orderNumber': order.get('order_number', order.get('name', '')),
                     'customerName': f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip() or 'Guest',
                     'totalPrice': order.get('total_price', '0'),
-                    'createdAt': order.get('created_at', datetime.now().isoformat()),
+                    'createdAt': order.get('created_at', datetime.now(timezone.utc).isoformat()),
                     'fulfillmentStatus': order.get('fulfillment_status', 'unfulfilled')
                 })
             
@@ -935,7 +935,7 @@ def get_shopify_metrics_old():
                 "topProducts": top_products,
                 "recentOrders": recent_orders,
                 "source": "live_shopify",
-                "lastUpdated": datetime.now().isoformat(),
+                "lastUpdated": datetime.now(timezone.utc).isoformat(),
                 "connected": True
             }
             
@@ -954,7 +954,7 @@ def get_shopify_metrics_old():
                 "topProducts": [],
                 "recentOrders": [],
                 "source": "error_occurred",
-                "lastUpdated": datetime.now().isoformat(),
+                "lastUpdated": datetime.now(timezone.utc).isoformat(),
                 "connected": False,
                 "error": "An internal error has occurred."
             }), 200
@@ -964,7 +964,7 @@ def get_shopify_metrics_old():
         return jsonify({
             "error": "Failed to get metrics",
             "message": "An internal error has occurred.",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 500
 
 
@@ -1054,7 +1054,7 @@ def handle_webhook(topic: str):
             'shop_domain': shop_domain,
             'data': webhook_data,
             'headers': dict(request.headers),
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'verified': True
         }
 
@@ -1066,7 +1066,7 @@ def handle_webhook(topic: str):
                     'topic': topic,
                     'shop_domain': shop_domain,
                     'id': webhook_data.get('id') if webhook_data else None,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/ws/shopify')
         except:
             pass
@@ -1080,7 +1080,7 @@ def handle_webhook(topic: str):
             "topic": topic,
             "shop_domain": shop_domain,
             "verified": True,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 202
 
     except Exception as e:
@@ -1201,7 +1201,7 @@ def sync_all_data():
             sync_record = {
                 "sync_type": "comprehensive",
                 "job_ids": [job["job_id"] for job in sync_jobs],
-                "initiated_at": datetime.now().isoformat(),
+                "initiated_at": datetime.now(timezone.utc).isoformat(),
                 "status": "started"
             }
             
@@ -1215,7 +1215,7 @@ def sync_all_data():
             "status": "sync_started",
             "jobs": sync_jobs,
             "message": "Comprehensive data sync initiated",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 202
         
     except Exception as e:

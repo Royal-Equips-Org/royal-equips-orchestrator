@@ -10,7 +10,7 @@ import json
 import logging
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from pathlib import Path
@@ -155,13 +155,13 @@ class PredictiveForecaster:
             market_context: Additional market context data
         """
         observation = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'confidence_score': confidence_score,
             'sentiment_score': sentiment_score,
             'volatility': volatility,
-            'hour_of_day': datetime.now().hour,
-            'day_of_week': datetime.now().weekday(),
-            'month': datetime.now().month,
+            'hour_of_day': datetime.now(timezone.utc).hour,
+            'day_of_week': datetime.now(timezone.utc).weekday(),
+            'month': datetime.now(timezone.utc).month,
             'market_context': market_context or {}
         }
         
@@ -439,7 +439,7 @@ class PredictiveForecaster:
         
         try:
             # Prepare features for prediction
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             features = [
                 confidence, sentiment, volatility,
                 now.hour, now.weekday(), now.month
@@ -498,7 +498,7 @@ class PredictiveForecaster:
                 trend_direction=trend_direction,
                 volatility_forecast=volatility_forecast,
                 risk_level=risk_level,
-                timestamp=datetime.now()
+                timestamp=datetime.now(timezone.utc)
             )
             
         except Exception as e:
@@ -626,12 +626,12 @@ class PredictiveForecaster:
             confidence_reliability=confidence_reliability,
             key_risk_factors=risk_factors or ["No significant risks identified"],
             recommended_actions=recommended_actions or ["Continue current strategy"],
-            forecast_timestamp=datetime.now()
+            forecast_timestamp=datetime.now(timezone.utc)
         )
     
     def _prepare_market_features(self, sentiment: float, volatility: float, confidence: float) -> List[float]:
         """Prepare features for market condition forecasting."""
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         
         # Base features
         features = [
@@ -731,7 +731,7 @@ class PredictiveForecaster:
                         'severity': 'low',
                         'message': 'Confidence scores predicted to rise significantly',
                         'recommended_action': 'Consider opportunities for more aggressive strategies',
-                        'timestamp': datetime.now()
+                        'timestamp': datetime.now(timezone.utc)
                     })
                 elif short_term < current_confidence - 10 and medium_term < current_confidence - 15:
                     alerts.append({
@@ -739,7 +739,7 @@ class PredictiveForecaster:
                         'severity': 'high',
                         'message': 'Confidence scores predicted to decline significantly',
                         'recommended_action': 'Prepare defensive measures and increase oversight',
-                        'timestamp': datetime.now()
+                        'timestamp': datetime.now(timezone.utc)
                     })
             
         except Exception as e:

@@ -19,7 +19,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
@@ -175,7 +175,7 @@ class AgentRegistry:
             return False
 
         self.agents[agent_id].status = status
-        self.agents[agent_id].last_heartbeat = datetime.now()
+        self.agents[agent_id].last_heartbeat = datetime.now(timezone.utc)
         return True
 
     async def agent_heartbeat(self, agent_id: str, metrics: Optional[Dict[str, Any]] = None) -> bool:
@@ -194,7 +194,7 @@ class AgentRegistry:
             return False
 
         agent = self.agents[agent_id]
-        agent.last_heartbeat = datetime.now()
+        agent.last_heartbeat = datetime.now(timezone.utc)
 
         if metrics:
             if 'execution_count' in metrics:
@@ -273,7 +273,7 @@ class AgentRegistry:
 
     async def check_agent_health(self):
         """Check health of all registered agents based on heartbeat timeout."""
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         timeout_threshold = now - timedelta(seconds=self.heartbeat_timeout)
 
         for agent_id, agent in list(self.agents.items()):
@@ -332,7 +332,7 @@ class AgentRegistry:
             'status_breakdown': status_counts,
             'capability_coverage': capability_counts,
             'healthy_agents': len(self.get_healthy_agents()),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
     def to_dict(self) -> Dict[str, Any]:

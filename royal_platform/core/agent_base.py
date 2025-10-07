@@ -5,7 +5,7 @@ import logging
 import time
 import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
@@ -113,7 +113,7 @@ class BaseAgent(ABC):
         
         # Start execution tracking
         self.current_run_id = str(uuid.uuid4())
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(timezone.utc)
         
         run_record = AgentRun(
             id=uuid.UUID(self.current_run_id),
@@ -137,7 +137,7 @@ class BaseAgent(ABC):
             )
             
             # Calculate execution time
-            end_time = datetime.now()
+            end_time = datetime.now(timezone.utc)
             execution_time = (end_time - self.start_time).total_seconds()
             result.execution_time_seconds = execution_time
             
@@ -179,7 +179,7 @@ class BaseAgent(ABC):
                 run_record = session.get(AgentRun, uuid.UUID(self.current_run_id))
                 if run_record:
                     run_record.status = AgentStatus.ERROR
-                    run_record.completed_at = datetime.now()
+                    run_record.completed_at = datetime.now(timezone.utc)
                     run_record.error_details = error_msg
                     session.commit()
             
@@ -194,7 +194,7 @@ class BaseAgent(ABC):
                 run_record = session.get(AgentRun, uuid.UUID(self.current_run_id))
                 if run_record:
                     run_record.status = AgentStatus.ERROR
-                    run_record.completed_at = datetime.now()
+                    run_record.completed_at = datetime.now(timezone.utc)
                     run_record.error_details = str(e)
                     session.commit()
             
@@ -204,7 +204,7 @@ class BaseAgent(ABC):
         """Check if agent can run within rate limits."""
         try:
             with get_db_session() as session:
-                now = datetime.now()
+                now = datetime.now(timezone.utc)
                 
                 # Check hourly limit
                 hourly_runs = session.query(AgentRun).filter(
@@ -308,7 +308,7 @@ class BaseAgent(ABC):
         """Get performance metrics for this agent."""
         try:
             with get_db_session() as session:
-                now = datetime.now()
+                now = datetime.now(timezone.utc)
                 
                 # Last 24 hours metrics
                 recent_runs = session.query(AgentRun).filter(

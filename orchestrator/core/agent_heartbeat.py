@@ -9,7 +9,7 @@ autonomous orchestration loop.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 from orchestrator.core.agent_registry import AgentStatus, get_agent_registry
@@ -38,7 +38,7 @@ def verify_heartbeats(max_age_seconds: int = 120) -> Dict[str, Any]:
     stale_agents = []
     error_agents = []
 
-    current_time = datetime.now()
+    current_time = datetime.now(timezone.utc)
 
     for agent_metadata in all_agents:
         # Calculate time since last heartbeat
@@ -125,7 +125,7 @@ def get_agent_health_summary() -> Dict[str, Any]:
     stats = registry.get_registry_stats()
 
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "registry_stats": stats,
         "heartbeat_check": verify_heartbeats()
     }

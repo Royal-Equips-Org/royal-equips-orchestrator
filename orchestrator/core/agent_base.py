@@ -17,7 +17,7 @@ import abc
 import asyncio
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, Optional
 from enum import Enum
 
@@ -103,7 +103,7 @@ class AgentBase(abc.ABC):
         try:
             self.status = AgentStatus.ACTIVE
             self.current_task = "Executing primary task"
-            self.last_execution = datetime.now()
+            self.last_execution = datetime.now(timezone.utc)
             
             # Run agent-specific logic
             await self._execute_task()
@@ -182,7 +182,7 @@ class AgentBase(abc.ABC):
         """Update performance metrics - override in subclasses for specific logic"""
         # Basic performance calculation
         if self.last_execution:
-            time_since_last = (datetime.now() - self.last_execution).total_seconds()
+            time_since_last = (datetime.now(timezone.utc) - self.last_execution).total_seconds()
             self.performance_score = max(0, 100 - (time_since_last / 3600))  # Decay over time
         
         # Update health indicators

@@ -9,7 +9,7 @@ import hashlib
 import json
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -343,7 +343,7 @@ class ProductionCustomerSupportAgent(AgentBase):
                 'proactive_support': proactive_support_result,
                 'performance_insights': performance_insights,
                 'metrics': self.performance_metrics,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             logger.info(f"Customer support cycle completed in {execution_time:.2f}s")
@@ -354,7 +354,7 @@ class ProductionCustomerSupportAgent(AgentBase):
             return {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _process_new_tickets(self) -> Dict[str, Any]:
@@ -782,7 +782,7 @@ class ProductionCustomerSupportAgent(AgentBase):
         """Update and store performance metrics."""
         try:
             self.performance_metrics['api_calls_made'] += 1
-            self.performance_metrics['last_updated'] = datetime.now().isoformat()
+            self.performance_metrics['last_updated'] = datetime.now(timezone.utc).isoformat()
             
             # Calculate derived metrics
             if self.performance_metrics['tickets_processed'] > 0:

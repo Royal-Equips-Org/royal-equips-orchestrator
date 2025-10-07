@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from decimal import Decimal
 import math
@@ -136,7 +136,7 @@ class ProductResearchAgent(BaseAgent):
                     "opportunities_found": len(scored_opportunities),
                     "high_priority_count": len([o for o in scored_opportunities if o['priority_score'] > 8.0]),
                     "research_sources": ["google_trends", "social_media", "competition_analysis"],
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
             
@@ -581,7 +581,7 @@ class ProductResearchAgent(BaseAgent):
                         'social_media': keyword in social_data,
                         'competition': keyword in competition_data
                     },
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
                 
                 opportunities.append(opportunity)
@@ -612,7 +612,7 @@ class ProductResearchAgent(BaseAgent):
                         profit_potential=Decimal(str(opportunity['profit_potential'])),
                         priority_score=Decimal(str(opportunity['priority_score'])),
                         raw_data=opportunity,
-                        researched_at=datetime.now(),
+                        researched_at=datetime.now(timezone.utc),
                         agent_version='v2.0'
                     )
                     
@@ -674,7 +674,7 @@ class ProductResearchAgent(BaseAgent):
             with get_db_session() as session:
                 # Get recent research activity
                 recent_research = session.query(ResearchHistory).filter(
-                    ResearchHistory.researched_at >= datetime.now() - timedelta(hours=24)
+                    ResearchHistory.researched_at >= datetime.now(timezone.utc) - timedelta(hours=24)
                 ).count()
                 
                 # Check external API connectivity
@@ -690,7 +690,7 @@ class ProductResearchAgent(BaseAgent):
                     'last_24h_research_count': recent_research,
                     'api_health': api_health,
                     'research_keywords_count': len(self.research_keywords),
-                    'last_check': datetime.now().isoformat()
+                    'last_check': datetime.now(timezone.utc).isoformat()
                 }
         
         except Exception as e:
@@ -698,5 +698,5 @@ class ProductResearchAgent(BaseAgent):
                 'agent_name': self.config.name,
                 'status': 'error',
                 'error': str(e),
-                'last_check': datetime.now().isoformat()
+                'last_check': datetime.now(timezone.utc).isoformat()
             }

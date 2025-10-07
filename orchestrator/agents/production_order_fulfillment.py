@@ -19,7 +19,7 @@ import asyncio
 import logging
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 import httpx
 from enum import Enum
@@ -113,7 +113,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
                 'high_risk_orders': len(self.high_risk_orders),
                 'revenue_processed': self.revenue_processed_today,
                 'performance_score': self.performance_score,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -121,7 +121,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
             return {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _fetch_pending_orders(self) -> List[Dict[str, Any]]:
@@ -232,7 +232,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
                     ],
                     'shopify_risk_level': order_node.get('riskLevel', 'LOW'),
                     'processed_at': order_node.get('processedAt'),
-                    'created_at': datetime.now().isoformat()
+                    'created_at': datetime.now(timezone.utc).isoformat()
                 }
                 
                 orders.append(order)
@@ -271,7 +271,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
             await self._send_order_confirmation(order)
             
             # Track processed order
-            order['processed_at'] = datetime.now().isoformat()
+            order['processed_at'] = datetime.now(timezone.utc).isoformat()
             self.processed_orders.append(order)
             
             # Update daily metrics
@@ -340,7 +340,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
                 
             # Velocity Check (simulated - would check recent orders)
             # In production, this would check database for recent orders from same customer/IP
-            current_hour = datetime.now().hour
+            current_hour = datetime.now(timezone.utc).hour
             if current_hour < 6 or current_hour > 23:  # Orders at unusual hours
                 risk_score += 10
                 risk_factors.append("Unusual order time")
@@ -381,7 +381,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
                     'risk_factors': risk_factors,
                     'customer_email': order.get('email'),
                     'order_value': order_value,
-                    'flagged_at': datetime.now().isoformat()
+                    'flagged_at': datetime.now(timezone.utc).isoformat()
                 })
                 
             self.logger.info(
@@ -588,7 +588,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
                 'quantity': item['quantity'],
                 'customer_email': order['email'],
                 'shipping_address': order['shipping_address'],
-                'queued_at': datetime.now().isoformat(),
+                'queued_at': datetime.now(timezone.utc).isoformat(),
                 'priority': 'high' if float(order['total_price']) > 200 else 'normal'
             }
             
@@ -862,7 +862,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
                         'success_rate': 95.0,
                         'avg_processing_time': 24,  # hours
                         'total_revenue': 0.0,
-                        'last_updated': datetime.now().isoformat()
+                        'last_updated': datetime.now(timezone.utc).isoformat()
                     }
                 
                 # In production, this would query the database for actual metrics
@@ -872,7 +872,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
                     o for o in self.processed_orders 
                     if any(r.get('supplier') == supplier for r in o.get('supplier_routing', []))
                 ])
-                performance['last_updated'] = datetime.now().isoformat()
+                performance['last_updated'] = datetime.now(timezone.utc).isoformat()
                 
                 # Calculate success rate (would be based on actual fulfillment data)
                 if supplier == 'printful':
@@ -924,7 +924,7 @@ class ProductionOrderFulfillmentAgent(AgentBase):
             'success_rate': self.success_rate,
             'performance_score': self.performance_score,
             'supplier_performance': self.supplier_performance,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 

@@ -430,7 +430,7 @@ async def assess_transaction_risk():
                 'error': 'Security agent not available'
             }), 503
         
-        # Mock order data for risk assessment
+        # Construct order data for risk assessment from request
         order_data = {
             'id': data.get('order_id'),
             'customer': {'id': data.get('customer_id'), 'email': data.get('email')},

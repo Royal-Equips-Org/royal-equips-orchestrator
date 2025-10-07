@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -65,7 +65,7 @@ class AgentTask:
     
     def __post_init__(self):
         if self.created_at is None:
-            self.created_at = datetime.now()
+            self.created_at = datetime.now(timezone.utc)
 
 
 class AIRAIntegration:
@@ -175,7 +175,7 @@ class AIRAIntegration:
         
         task = self.active_tasks[task_id]
         task.status = TaskStatus.RUNNING
-        task.started_at = datetime.now()
+        task.started_at = datetime.now(timezone.utc)
         
         await self._emit_event('task_started', {
             'task_id': task_id,
@@ -206,7 +206,7 @@ class AIRAIntegration:
             return False
         
         task = self.active_tasks[task_id]
-        task.completed_at = datetime.now()
+        task.completed_at = datetime.now(timezone.utc)
         
         if error:
             task.status = TaskStatus.FAILED
@@ -246,7 +246,7 @@ class AIRAIntegration:
             return False
         
         task.status = TaskStatus.CANCELLED
-        task.completed_at = datetime.now()
+        task.completed_at = datetime.now(timezone.utc)
         self.completed_tasks[task_id] = task
         
         await self._emit_event('task_cancelled', {
@@ -293,7 +293,7 @@ class AIRAIntegration:
         event = {
             'type': event_type,
             'data': data,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         
         for callback in self.event_subscribers:
@@ -344,7 +344,7 @@ class AIRAIntegration:
             'completed_tasks': len(self.completed_tasks),
             'total_agents': len(self.registry.get_all_agents()),
             'healthy_agents': len(self.registry.get_healthy_agents()),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
     
     def to_dict(self) -> Dict[str, Any]:
