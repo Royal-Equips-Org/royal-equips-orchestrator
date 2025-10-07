@@ -17,7 +17,9 @@ export default defineConfig({
     },
   },
   build: { 
-    sourcemap: true
+    sourcemap: true,
+    outDir: '../../static',
+    emptyOutDir: false, // Don't delete static/styles.css
   },
   server: {
     port: 3000,

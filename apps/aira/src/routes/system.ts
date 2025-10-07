@@ -2,55 +2,45 @@ import { FastifyPluginAsync } from 'fastify';
 
 export const systemRoutes: FastifyPluginAsync = async (app) => {
   app.get('/v1/system/status', async () => {
-    // In real implementatie: queries naar DB/services
     const timestamp = new Date().toISOString();
     
-    // Mock data structure - replace with real queries
+    // TODO: Integrate with real agent registry from Flask orchestrator
+    // For now, return basic operational status without mock data
     const agents = {
-      total: 5,
-      active: 4,
-      idle: 1,
+      total: 0,
+      active: 0,
+      idle: 0,
       failed: 0,
-      types: {
-        'data-agent': { count: 2, status: 'active' },
-        'commerce-agent': { count: 1, status: 'active' },  
-        'analytics-agent': { count: 1, status: 'active' },
-        'monitoring-agent': { count: 1, status: 'idle' }
-      }
+      types: {},
+      message: 'Connect to Flask orchestrator /api/agents/status for real agent data'
     };
 
     const opportunities = {
-      total: 127,
-      pending: 15,
-      processing: 8,
-      completed: 98,
-      failed: 6,
-      categories: {
-        'price-optimization': 45,
-        'inventory-sync': 32,
-        'customer-insights': 28,
-        'performance-tuning': 22
-      }
+      total: 0,
+      pending: 0,
+      processing: 0,
+      completed: 0,
+      failed: 0,
+      categories: {},
+      message: 'Connect to Flask orchestrator /api/empire/opportunities for real data'
     };
 
+    // Real system metrics from Node.js process
     const metrics = {
       performance: {
-        cpuUsage: 67.3,
-        memoryUsage: 84.1,
-        diskUsage: 45.2,
-        networkThroughput: 1240000 // bytes/sec
+        cpuUsage: process.cpuUsage ? (process.cpuUsage().user / 1000000).toFixed(2) : 0,
+        memoryUsage: process.memoryUsage ? (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2) : 0,
+        memoryTotal: process.memoryUsage ? (process.memoryUsage().heapTotal / 1024 / 1024).toFixed(2) : 0,
+        uptime: process.uptime ? process.uptime() : 0
       },
       business: {
-        activeUsers: 1247,
-        conversionRate: 3.2,
-        revenue24h: 24800,
-        ordersProcessed: 89
+        message: 'Business metrics available from Flask /api/empire/metrics endpoint'
       },
       system: {
-        uptime: 3600 * 24 * 7, // 7 days in seconds
-        requestCount: 145230,
-        errorRate: 0.02,
-        avgResponseTime: 145 // ms
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        pid: process.pid
       }
     };
 
@@ -70,19 +60,19 @@ export const systemRoutes: FastifyPluginAsync = async (app) => {
       service: {
         name: 'aira',
         version: '1.0.0',
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        note: 'AIRA service running - connect to Flask orchestrator for business data'
       },
       agents,
       opportunities,
       metrics,
       circuitBreaker: circuitBreakerStatus,
-      health: {
-        overall: 'healthy',
-        components: {
-          database: 'healthy',
-          redis: 'healthy', 
-          shopify: 'healthy',
-          workers: 'healthy'
+      integration: {
+        flask_orchestrator: 'http://localhost:10000',
+        endpoints: {
+          agents: '/api/agents/status',
+          opportunities: '/api/empire/opportunities',
+          metrics: '/api/empire/metrics'
         }
       }
     };

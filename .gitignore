@@ -31,6 +31,9 @@ venv/
 # API production build artifacts
 apps/api/dist-web/
 
+# Command Center UI build artifacts (now builds to /static)
+apps/command-center-ui/dist/
+
 reports/junit/
 # Additional build artifacts
 *.egg-info/
