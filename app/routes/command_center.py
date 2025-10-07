@@ -24,6 +24,26 @@ command_center_bp = Blueprint("command_center", __name__, url_prefix="/command-c
 STATIC_DIR = Path(__file__).parent.parent / "static"
 ADMIN_BUILD_DIR = Path(__file__).parent.parent.parent / "apps" / "command-center-ui" / "dist"
 
+@command_center_bp.route("/assets/<path:filename>")
+def serve_assets(filename):
+    """Serve assets from static directory at /command-center/assets/ for SPA."""
+    try:
+        # Try to serve from static directory first
+        assets_dir = STATIC_DIR / "assets"
+        if assets_dir.exists():
+            return send_from_directory(assets_dir, filename)
+        
+        # Fallback to dist directory if available
+        dist_assets = ADMIN_BUILD_DIR / "assets"
+        if dist_assets.exists():
+            return send_from_directory(dist_assets, filename)
+            
+        logger.warning(f"Asset not found: {filename}")
+        return "Asset not found", 404
+    except Exception as e:
+        logger.error(f"Error serving asset {filename}: {e}")
+        return "Error serving asset", 500
+
 @command_center_bp.route("/", defaults={'path': ''})
 @command_center_bp.route("/<path:path>")
 def serve_spa(path):
