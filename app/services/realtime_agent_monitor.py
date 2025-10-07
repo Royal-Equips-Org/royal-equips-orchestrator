@@ -78,6 +78,11 @@ class RealTimeAgentMonitor:
             from app.services.production_agent_executor import get_agent_executor
             agent_executor = await get_agent_executor()
             
+            # Validate executor is available
+            if agent_executor is None:
+                logger.warning("Agent executor not initialized, skipping metrics collection")
+                return
+            
             # Get recent executions for analysis
             recent_executions = await agent_executor.get_agent_executions(limit=1000)
             
@@ -267,6 +272,11 @@ class RealTimeAgentMonitor:
         try:
             from app.services.production_agent_executor import get_agent_executor
             agent_executor = await get_agent_executor()
+            
+            # Validate executor is available
+            if agent_executor is None:
+                logger.warning("Agent executor not initialized, returning empty performance history")
+                return []
             
             # Get executions from the specified time period
             since_time = datetime.now(timezone.utc) - timedelta(hours=hours)
