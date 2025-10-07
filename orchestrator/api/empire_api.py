@@ -12,7 +12,7 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import timezone, datetime, timedelta
 import aiohttp
 import pandas as pd
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text
@@ -407,7 +407,7 @@ async def approve_product(
         
         # Update status
         opportunity.status = "approved"
-        opportunity.approved_at = datetime.utcnow()
+        opportunity.approved_at = datetime.now(timezone.utc)
         db.commit()
         
         # Execute approved action

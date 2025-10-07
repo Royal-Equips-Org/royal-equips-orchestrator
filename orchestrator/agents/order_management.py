@@ -357,7 +357,7 @@ class OrderFulfillmentAgent(AgentBase):
         try:
             order_id = order.get('id')
             
-            # Update order status in Shopify (mock implementation)
+            # Update order status in Shopify using real API
             await self._update_shopify_order_status(order_id, OrderStatus.PROCESSING)
             
             # Send customer notification

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import math
 import time
-from datetime import datetime
+from datetime import timezone, datetime
 from typing import Any, Iterable
 
 from flask import Blueprint, jsonify, request
@@ -183,7 +183,7 @@ def _build_product_analysis(product: dict[str, Any], *, include_benchmarks: bool
 
     analysis: dict[str, Any] = {
         "productId": product["id"],
-        "generatedAt": datetime.utcnow().isoformat(),
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
         "demandScore": round(min(100.0, demand_score), 2),
         "profitability": {
             "grossMargin": round((gross_margin / max(avg_price, 1.0)) * 100, 2),
@@ -228,7 +228,7 @@ def _build_error(message: str, status_code: int):
             {
                 "error": error_codes.get(status_code, "error"),
                 "message": message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         ),
         status_code,
@@ -363,7 +363,7 @@ def _generate_intelligence_report(
 
     return {
         "timeframe": timeframe,
-        "generatedAt": datetime.utcnow().isoformat(),
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
         "kpis": kpis,
         "trendSummary": {
             "growthSignals": growth_signals,
@@ -419,7 +419,7 @@ def list_products_v2():
         "items": normalized,
         "analysis": analyses,
         "count": len(normalized),
-        "generatedAt": datetime.utcnow().isoformat(),
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
         "source": {
             "system": "shopify",
             "mode": source_mode,
@@ -574,7 +574,7 @@ def get_agents_status():
         "agents": agents_status,
         "totalAgents": len(agents_status),
         "activeAgents": len([a for a in agents_status if a["status"] == "active"]),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
 
@@ -640,7 +640,7 @@ def execute_agent(agent_id: str):
             'execution_id': execution_id,
             'agent_id': agent_id,
             'status': 'running',
-            'started_at': datetime.utcnow().isoformat(),
+            'started_at': datetime.now(timezone.utc).isoformat(),
             'parameters': execution_params,
             'progress': 0,
             'result': None
@@ -655,7 +655,7 @@ def execute_agent(agent_id: str):
 
                 # Update execution record with result
                 active_executions[execution_id]['status'] = 'completed'
-                active_executions[execution_id]['completed_at'] = datetime.utcnow().isoformat()
+                active_executions[execution_id]['completed_at'] = datetime.now(timezone.utc).isoformat()
                 active_executions[execution_id]['progress'] = 100
                 active_executions[execution_id]['result'] = {
                     'success': True,
@@ -665,7 +665,7 @@ def execute_agent(agent_id: str):
                 logger.info(f"Agent {agent_id} execution completed: {result}")
             except Exception as exc:
                 active_executions[execution_id]['status'] = 'failed'
-                active_executions[execution_id]['failed_at'] = datetime.utcnow().isoformat()
+                active_executions[execution_id]['failed_at'] = datetime.now(timezone.utc).isoformat()
                 active_executions[execution_id]['error'] = str(exc)
                 active_executions[execution_id]['progress'] = 0
                 logger.error(f"Agent {agent_id} execution failed: {exc}", exc_info=True)
@@ -677,7 +677,7 @@ def execute_agent(agent_id: str):
             "executionId": execution_id,
             "agentId": agent_id,
             "status": "started",
-            "startedAt": datetime.utcnow().isoformat(),
+            "startedAt": datetime.now(timezone.utc).isoformat(),
             "parameters": execution_params,
             "message": f"Agent {agent_id} execution started in background",
         })
@@ -718,7 +718,7 @@ def get_agent_health(agent_id: str):
             "agentId": agent_id,
             "name": getattr(agent, "name", agent_id),
             "status": "active",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         if hasattr(agent, "get_health_status"):
@@ -790,7 +790,7 @@ def get_inventory_status():
                 "outOfStockCount": out_of_stock_count,
             },
             "lowStockItems": low_stock_items[:20],  # Top 20 low stock items
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
 
     except (ShopifyAuthError, ShopifyAPIError, ShopifyRateLimitError) as exc:
@@ -848,7 +848,7 @@ def get_marketing_campaigns():
         "campaigns": campaigns,
         "totalCampaigns": len(campaigns),
         "activeCampaigns": len([c for c in campaigns if c.get("status") == "active"]),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 
 
@@ -948,5 +948,5 @@ def get_system_capabilities():
             "requestsPerMinute": 100,
             "burstLimit": 20,
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })

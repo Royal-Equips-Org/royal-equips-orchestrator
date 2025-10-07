@@ -6,7 +6,7 @@ Replaces mock agent execution with real business logic and database persistence
 import asyncio
 import logging
 import json
-from datetime import datetime, timedelta
+from datetime import timezone, datetime, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -168,7 +168,7 @@ class ProductionAgentExecutor:
         db_session
     ):
         """Execute the actual agent task."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Update status to running
@@ -182,7 +182,7 @@ class ProductionAgentExecutor:
             result_data = await self._route_agent_execution(agent_type, parameters, execution_id)
             
             # Mark as completed
-            completed_time = datetime.utcnow()
+            completed_time = datetime.now(timezone.utc)
             duration = (completed_time - start_time).total_seconds()
             
             await self._update_execution_status(
@@ -202,7 +202,7 @@ class ProductionAgentExecutor:
             await self._update_execution_status(
                 execution_id,
                 ExecutionStatus.FAILED,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 error_message=str(e)
             )
     
@@ -257,7 +257,7 @@ class ProductionAgentExecutor:
             await self._execute_generic_agent(agent_type, parameters, execution_id)
             return {
                 "agent_type": agent_type,
-                "execution_time": datetime.utcnow().isoformat(),
+                "execution_time": datetime.now(timezone.utc).isoformat(),
                 "status": "completed"
             }
     
@@ -345,7 +345,7 @@ class ProductionAgentExecutor:
                 socketio.emit('agent_progress', {
                     'execution_id': execution_id,
                     'progress': progress,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/ws/system')
         except Exception:
             pass  # Non-critical error

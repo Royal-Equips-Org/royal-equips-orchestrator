@@ -9,7 +9,7 @@ import asyncio
 import logging
 import time
 import uuid
-from datetime import datetime
+from datetime import timezone, datetime
 
 from flask import Blueprint, jsonify, request
 from flask_limiter import Limiter
@@ -143,7 +143,7 @@ async def get_security_status():
             'data': {
                 'agent_health': health_status,
                 'security_metrics': security_metrics,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -170,7 +170,7 @@ async def run_fraud_detection():
                 'transactions_analyzed': summary['analyzed'],
                 'high_risk_detected': summary['highRisk'],
                 'alerts_generated': summary['alertsGenerated'],
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'alerts': alerts,
             }
         })
@@ -201,14 +201,14 @@ async def run_fraud_scan_alias():
         return jsonify({
             'error': 'service_unavailable',
             'message': 'Security agent not available',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
         }), 503
     except Exception as exc:  # pragma: no cover - defensive
         logger.error(f"Error running RoyalGPT fraud scan: {exc}")
         return jsonify({
             'error': 'fraud_scan_failed',
             'message': 'Failed to execute fraud scan',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
         }), 500
 
     status = 'completed' if summary['alertsGenerated'] >= 0 else 'partial'
@@ -218,7 +218,7 @@ async def run_fraud_scan_alias():
         'metrics': metrics,
         'alerts': alerts,
         'metadata': metadata,
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
     }
 
     return jsonify(payload)
@@ -268,7 +268,7 @@ async def run_security_scan():
                 'critical_events': critical_events,
                 'access_violations': len(access_violations),
                 'compliance_issues': len(compliance_issues),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -333,7 +333,7 @@ async def get_security_alerts():
                     'type': alert_type,
                     'limit': limit
                 },
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -396,7 +396,7 @@ async def get_compliance_status():
                 'critical_issues': critical_issues,
                 'compliance_summary': compliance_summary,
                 'recent_issues': compliance_issues[-10:],  # Last 10 issues
-                'last_check': datetime.utcnow().isoformat()
+                'last_check': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -470,7 +470,7 @@ async def assess_transaction_risk():
                 'ml_prediction': ml_prediction,
                 'recommendations': recommendations,
                 'requires_review': risk_score >= security_agent.risk_threshold,
-                'assessment_timestamp': datetime.utcnow().isoformat()
+                'assessment_timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -511,7 +511,7 @@ async def get_security_configuration():
             'success': True,
             'data': {
                 'configuration': config,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -562,7 +562,7 @@ async def update_security_configuration():
             'data': {
                 'message': 'Security configuration updated successfully',
                 'new_risk_threshold': security_agent.risk_threshold,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         

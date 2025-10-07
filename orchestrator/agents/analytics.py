@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import timezone, datetime
 from typing import TYPE_CHECKING, Any
 
 from orchestrator.core.agent_base import AgentBase
@@ -55,7 +55,7 @@ class AnalyticsAgent(AgentBase):
         client = bigquery.Client(project=project_id)
         table_ref = client.dataset(dataset_id).table(table_id)
         # Build a row of metrics
-        metrics: dict[str, Any] = {"timestamp": datetime.utcnow().isoformat()}
+        metrics: dict[str, Any] = {"timestamp": datetime.now(timezone.utc).isoformat()}
         # Trending keywords
         prod_agent = self.orchestrator.agents.get("product_research")
         if prod_agent and hasattr(prod_agent, "trending_products"):
