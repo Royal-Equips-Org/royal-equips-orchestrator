@@ -9,7 +9,7 @@
     "build:render": "vite build && npm run copy-to-static",
     "build:cloudflare": "npm install && vite build && npm run copy-to-dist",
     "copy-to-dist": "cp -r functions dist/ 2>/dev/null || true",
-    "copy-to-static": "rm -rf ../../static/assets ../../static/index.html ../../static/functions 2>/dev/null || true && cp -r dist/* ../../static/ 2>/dev/null || true",
+    "copy-to-static": "rm -rf ../../static/assets ../../static/index.html ../../static/functions 2>/dev/null || true && cp -r dist/* ../../static/",
     "build:with-types": "tsc && vite build && npm run copy-to-dist",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
