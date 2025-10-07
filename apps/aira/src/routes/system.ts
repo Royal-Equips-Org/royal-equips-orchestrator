@@ -28,10 +28,10 @@ export const systemRoutes: FastifyPluginAsync = async (app) => {
     // Real system metrics from Node.js process
     const metrics = {
       performance: {
-        cpuUsage: process.cpuUsage ? (process.cpuUsage().user / 1000000).toFixed(2) : 0,
-        memoryUsage: process.memoryUsage ? (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2) : 0,
-        memoryTotal: process.memoryUsage ? (process.memoryUsage().heapTotal / 1024 / 1024).toFixed(2) : 0,
-        uptime: process.uptime ? process.uptime() : 0
+        cpuUsage: (process.cpuUsage().user / 1000000).toFixed(2),
+        memoryUsage: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
+        memoryTotal: (process.memoryUsage().heapTotal / 1024 / 1024).toFixed(2),
+        uptime: process.uptime()
       },
       business: {
         message: 'Business metrics available from Flask /api/empire/metrics endpoint'
