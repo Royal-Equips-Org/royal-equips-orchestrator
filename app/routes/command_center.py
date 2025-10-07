@@ -8,7 +8,7 @@ data for the control center dashboard.
 
 import logging
 from pathlib import Path
-from datetime import timezone, datetime, timezone
+from datetime import timezone, datetime
 import json
 import threading
 from typing import Dict, List, Any, Optional
