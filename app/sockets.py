@@ -906,28 +906,32 @@ async def get_real_empire_status() -> Dict[str, Any]:
         agent_monitor = RealTimeAgentMonitor()
         agent_executor = await get_agent_executor()
         
-        # Try to initialize Shopify (fallback to estimates if unavailable)
+        # Initialize Shopify - no fallback data
+        shopify_available = False
+        orders_summary = None
+        products_summary = None
         try:
             await shopify_service.initialize()
             orders_summary = await shopify_service.get_orders_summary(days=30)
             products_summary = await shopify_service.get_products_summary()
             shopify_available = True
         except Exception as e:
-            logger.warning(f"Shopify unavailable, using fallback data: {e}")
-            orders_summary = {
-                'total_orders': 156,
-                'total_revenue': 23450.67,
-                'avg_order_value': 150.32,
-                'fulfillment_rate': 96.5
+            logger.error(f"Shopify unavailable - empire status incomplete: {e}")
+            # Return early with error status instead of using mock data
+            return {
+                'error': 'Shopify service unavailable',
+                'message': str(e),
+                'system_status': {
+                    'shopify_connected': False,
+                    'agents_monitoring': False,
+                    'last_update': datetime.now(timezone.utc).isoformat()
+                },
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
-            products_summary = {
-                'total_products': 234,
-                'published_products': 198,
-                'low_stock_alerts': 12
-            }
-            shopify_available = False
         
-        # Get agent metrics
+        # Get agent metrics - no fallback data
+        agents_available = False
+        agent_metrics = None
         try:
             await agent_monitor.initialize()
             agent_status_data = await agent_monitor.get_agent_status()
@@ -945,22 +949,27 @@ async def get_real_empire_status() -> Dict[str, Any]:
             }
             agents_available = True
         except Exception as e:
-            logger.warning(f"Agent monitor unavailable: {e}")
+            logger.error(f"Agent monitor unavailable - metrics incomplete: {e}")
+            # No fallback data - use empty metrics
             agent_metrics = {
-                'active_agents': 5,
-                'healthy_agents': 4,
-                'total_executions': 1247,
-                'success_rate': 94.2
+                'active_agents': 0,
+                'healthy_agents': 0,
+                'total_executions': 0,
+                'success_rate': 0
             }
             agents_available = False
         
-        # Calculate revenue metrics
-        today_revenue = orders_summary.get('total_revenue', 0) / 30  # Daily average
-        current_hour_revenue = today_revenue / 24
-        month_revenue = orders_summary.get('total_revenue', 0)
-        
-        # Calculate growth (using basic estimation)
-        growth_rate = 12.3 if shopify_available else 8.5
+        # Calculate revenue metrics only if Shopify data available
+        if shopify_available and orders_summary:
+            today_revenue = orders_summary.get('total_revenue', 0) / 30  # Daily average
+            current_hour_revenue = today_revenue / 24
+            month_revenue = orders_summary.get('total_revenue', 0)
+            growth_rate = 12.3  # Can be calculated from historical data
+        else:
+            today_revenue = 0
+            current_hour_revenue = 0
+            month_revenue = 0
+            growth_rate = 0
         
         # Format currency
         def format_currency(amount):
@@ -976,24 +985,24 @@ async def get_real_empire_status() -> Dict[str, Any]:
                 'current_hour': format_currency(current_hour_revenue),
                 'today': format_currency(today_revenue),
                 'this_month': format_currency(month_revenue),
-                'growth_rate': f"+{growth_rate:.1f}%"
+                'growth_rate': f"+{growth_rate:.1f}%" if growth_rate > 0 else "N/A"
             },
             'operations': {
-                'orders_processed': orders_summary.get('total_orders', 0),
-                'inventory_updates': products_summary.get('total_products', 0),
-                'marketing_campaigns': 3,  # Can be expanded with marketing service
-                'support_tickets': max(0, orders_summary.get('total_orders', 0) - orders_summary.get('fulfilled_orders', 0))
+                'orders_processed': orders_summary.get('total_orders', 0) if orders_summary else 0,
+                'inventory_updates': products_summary.get('total_products', 0) if products_summary else 0,
+                'marketing_campaigns': 0,  # Can be expanded with marketing service
+                'support_tickets': 0 if not orders_summary else max(0, orders_summary.get('total_orders', 0) - orders_summary.get('fulfilled_orders', 0))
             },
             'kpis': {
-                'conversion_rate': '3.2%',  # Can be calculated from Shopify analytics
-                'avg_order_value': f"${orders_summary.get('avg_order_value', 0):.2f}",
-                'customer_satisfaction': f"{orders_summary.get('fulfillment_rate', 95):.1f}%",
-                'fulfillment_speed': '1.2 days'  # Can be calculated from order data
+                'conversion_rate': 'N/A',  # Can be calculated from Shopify analytics when available
+                'avg_order_value': f"${orders_summary.get('avg_order_value', 0):.2f}" if orders_summary else "$0.00",
+                'customer_satisfaction': f"{orders_summary.get('fulfillment_rate', 0):.1f}%" if orders_summary else "N/A",
+                'fulfillment_speed': 'N/A'  # Can be calculated from order data when available
             },
             'agents': {
-                'active_agents': agent_metrics.get('active_agents', 5),
-                'health_score': agent_metrics.get('success_rate', 94.2),
-                'total_executions': agent_metrics.get('total_executions', 1247)
+                'active_agents': agent_metrics.get('active_agents', 0),
+                'health_score': agent_metrics.get('success_rate', 0),
+                'total_executions': agent_metrics.get('total_executions', 0)
             },
             'system_status': {
                 'shopify_connected': shopify_available,
@@ -1006,39 +1015,40 @@ async def get_real_empire_status() -> Dict[str, Any]:
         return empire_data
         
     except Exception as e:
-        logger.error(f"Failed to get real empire status: {e}")
-        # Fallback to basic operational data
+        logger.error(f"Failed to get real empire status: {e}", exc_info=True)
+        # Return error status instead of fake data
         return {
+            'error': 'Empire status unavailable',
+            'message': str(e),
             'revenue': {
-                'current_hour': '$1,250',
-                'today': '$15,670',
-                'this_month': '$456K',
-                'growth_rate': '+8.5%'
+                'current_hour': '$0.00',
+                'today': '$0.00',
+                'this_month': '$0.00',
+                'growth_rate': 'N/A'
             },
             'operations': {
-                'orders_processed': 89,
-                'inventory_updates': 23,
-                'marketing_campaigns': 2,
-                'support_tickets': 5
+                'orders_processed': 0,
+                'inventory_updates': 0,
+                'marketing_campaigns': 0,
+                'support_tickets': 0
             },
             'kpis': {
-                'conversion_rate': '2.8%',
-                'avg_order_value': '$85.40',
-                'customer_satisfaction': '94.2%',
-                'fulfillment_speed': '1.5 days'
+                'conversion_rate': 'N/A',
+                'avg_order_value': '$0.00',
+                'customer_satisfaction': 'N/A',
+                'fulfillment_speed': 'N/A'
             },
             'agents': {
-                'active_agents': 4,
-                'health_score': 89.5,
-                'total_executions': 892
+                'active_agents': 0,
+                'health_score': 0,
+                'total_executions': 0
             },
             'system_status': {
                 'shopify_connected': False,
                 'agents_monitoring': False,
                 'last_update': datetime.now(timezone.utc).isoformat()
             },
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'fallback_mode': True
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 def emit_empire_updates():

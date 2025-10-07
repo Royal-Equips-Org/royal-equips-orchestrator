@@ -18,6 +18,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_from_directory,
     url_for,
 )
 
@@ -75,6 +76,21 @@ def favicon():
     response = make_response("", 204)
     response.headers["Content-Type"] = "image/x-icon"
     return response
+
+
+@main_bp.route("/assets/<path:filename>")
+def serve_assets(filename):
+    """Serve static assets for command center React app."""
+    try:
+        static_dir = Path(__file__).parent.parent.parent / "static"
+        assets_dir = static_dir / "assets"
+        if assets_dir.exists():
+            return send_from_directory(assets_dir, filename)
+        logger.warning(f"Asset not found: {filename}")
+        return "Asset not found", 404
+    except Exception as e:
+        logger.error(f"Error serving asset {filename}: {e}")
+        return "Error serving asset", 500
 
 
 # Removed duplicate /docs route - using Swagger docs instead

@@ -24,6 +24,7 @@ command_center_bp = Blueprint("command_center", __name__, url_prefix="/command-c
 STATIC_DIR = Path(__file__).parent.parent / "static"
 ADMIN_BUILD_DIR = Path(__file__).parent.parent.parent / "apps" / "command-center-ui" / "dist"
 
+
 @command_center_bp.route("/", defaults={'path': ''})
 @command_center_bp.route("/<path:path>")
 def serve_spa(path):
