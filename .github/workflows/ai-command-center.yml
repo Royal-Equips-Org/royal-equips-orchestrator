@@ -83,7 +83,7 @@ jobs:
           HUSKY: 0
 
       - name: ⬆️ Upload Build Artifacts
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ai-build-artifacts
           path: |
@@ -99,7 +99,7 @@ jobs:
 
     steps:
       - name: ⬇️ Download Build Artifacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: ai-build-artifacts
 
@@ -241,7 +241,7 @@ jobs:
 
       - name: ⬆️ Upload Secret Scan Results
         if: always()
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: gitleaks-report
           path: gitleaks-report.json
