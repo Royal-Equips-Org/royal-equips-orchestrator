@@ -186,8 +186,8 @@ def sync_products():
                     'limit': limit,
                     'timestamp': datetime.now().isoformat()
                 }, namespace='/ws/shopify')
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to emit WebSocket event: {e}")
 
         return jsonify({
             "job_id": job_id,
@@ -249,8 +249,8 @@ def sync_inventory():
                     'location_id': location_id,
                     'timestamp': datetime.now().isoformat()
                 }, namespace='/ws/shopify')
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to emit WebSocket event: {e}")
 
         return jsonify({
             "job_id": job_id,
@@ -324,8 +324,8 @@ def sync_orders():
                     'status': status,
                     'timestamp': datetime.now().isoformat()
                 }, namespace='/ws/shopify')
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to emit WebSocket event: {e}")
 
         return jsonify({
             "job_id": job_id,
@@ -401,8 +401,8 @@ def bulk_operation():
                     'operation': operation,
                     'timestamp': datetime.now().isoformat()
                 }, namespace='/ws/shopify')
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to emit WebSocket event: {e}")
 
         return jsonify({
             "job_id": job_id,
@@ -485,7 +485,9 @@ def get_job(job_id: str):
         return jsonify(job_status), 200
 
     except Exception as e:
-        logger.error(f"Error getting job {job_id.replace('\n', '').replace('\r', '')[:50]}: {e}")
+        # Clean job_id for logging (Python 3.8 compatible)
+        clean_job_id = job_id.replace('\n', '').replace('\r', '')[:50]
+        logger.error(f"Error getting job {clean_job_id}: {e}")
         return jsonify({
             "error": "Failed to get job status"
         }), 500
