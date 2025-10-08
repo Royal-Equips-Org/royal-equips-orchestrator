@@ -398,7 +398,7 @@ class ProductionCustomerSupportAgent(AgentBase):
             return {'tickets_processed': 0, 'error': str(e)}
     
     async def _get_new_zendesk_tickets(self) -> List[Dict[str, Any]]:
-        """
+        """Fetch new tickets from Zendesk."""
         try:
             zendesk_domain = await self.secrets.get_secret('ZENDESK_DOMAIN')
             zendesk_token = await self.secrets.get_secret('ZENDESK_API_TOKEN')
@@ -869,7 +869,7 @@ class ProductionCustomerSupportAgent(AgentBase):
         return False
     
     async def _get_customer_support_history(self, customer_id: str) -> Dict[str, Any]:
-        """Get customer's support history."""
+        """Get customer support history."""
         return {'tickets_count': 0, 'avg_rating': 0}
 
 
