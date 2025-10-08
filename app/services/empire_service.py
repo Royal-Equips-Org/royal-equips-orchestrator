@@ -139,15 +139,14 @@ class RealEmpireService:
             
         except Exception as e:
             logger.error(f"❌ Failed to initialize Empire Service: {e}")
-            # Fallback to minimal functionality
-            await self._initialize_fallback()
+            # No fallback - service requires real connections
+            raise RuntimeError(f"Empire Service initialization failed - real integrations required: {e}")
     
     async def _sync_real_agents(self):
         """Sync with real agent execution data from orchestrator."""
         if not self.orchestrator:
-            logger.warning("No orchestrator available, using default agents")
-            self._create_default_agents()
-            return
+            logger.error("No orchestrator available - cannot sync agents")
+            raise RuntimeError("Orchestrator not available - real agent sync required")
             
         try:
             # Get real agent health and performance data
@@ -176,34 +175,15 @@ class RealEmpireService:
                 
         except Exception as e:
             logger.error(f"Failed to sync real agents: {e}")
-            self._create_default_agents()
+            # Re-raise the error - no fallback to mock data
+            raise RuntimeError(f"Agent sync failed - real data required: {e}")
     
     def _create_default_agents(self):
-        """Create default agents for fallback."""
-        default_agents = [
-            ("product_research_001", "Product Research Agent", AgentType.PRODUCT_RESEARCH),
-            ("inventory_forecast_002", "Inventory Forecasting Agent", AgentType.INVENTORY_FORECASTING),
-            ("marketing_auto_003", "Marketing Automation Agent", AgentType.MARKETING_AUTOMATION),
-            ("order_mgmt_004", "Order Management Agent", AgentType.ORDER_MANAGEMENT),
-            ("pricing_opt_005", "Pricing Optimizer Agent", AgentType.PRICING_OPTIMIZER),
-        ]
-        
-        for agent_id, name, agent_type in default_agents:
-            self.agents[agent_id] = RealAgent(
-                id=agent_id,
-                name=name,
-                type=agent_type,
-                status=AgentStatus.ACTIVE,
-                health=85.0 + (hash(agent_id) % 15),  # Realistic variance
-                last_activity=datetime.now(timezone.utc) - timedelta(minutes=hash(agent_id) % 30),
-                total_tasks=1000 + (hash(agent_id) % 5000),
-                completed_tasks=950 + (hash(agent_id) % 4750),
-                error_count=5 + (hash(agent_id) % 50),
-                avg_response_time=120.0 + (hash(agent_id) % 300),
-                success_rate=92.0 + (hash(agent_id) % 8),
-                throughput=25.0 + (hash(agent_id) % 50),
-                capabilities=self._get_agent_capabilities(agent_id)
-            )
+        """REMOVED: No mock/fallback agents - use real data only."""
+        raise NotImplementedError(
+            "Default agents removed - system requires real orchestrator connection. "
+            "Configure DATABASE_URL and ensure orchestrator is running."
+        )
     
     async def _get_recent_executions(self) -> List[Dict[str, Any]]:
         """Get recent agent execution data."""
@@ -343,14 +323,19 @@ class RealEmpireService:
         self.campaigns = {}  # Reset campaigns
     
     async def _initialize_fallback(self):
-        """Initialize with minimal fallback functionality."""
-        self._create_default_agents()
-        logger.warning("Empire Service running in fallback mode")
+        """REMOVED: No fallback mode - real integrations required."""
+        raise NotImplementedError(
+            "Fallback mode removed - system requires real orchestrator and database connections. "
+            "Configure all required environment variables and services."
+        )
     
     # Public API Methods
     
     async def get_empire_metrics(self) -> EmpireMetrics:
-        """Get real-time empire metrics."""
+        """Get real-time empire metrics from actual integrations."""
+        if not self.agents:
+            raise RuntimeError("No agents available - empire service not properly initialized")
+        
         active_agents = len([a for a in self.agents.values() if a.status == AgentStatus.ACTIVE])
         
         # Calculate real metrics from agent performance
@@ -358,21 +343,34 @@ class RealEmpireService:
         completed_tasks = sum(agent.completed_tasks for agent in self.agents.values())
         automation_level = (completed_tasks / max(total_tasks, 1)) * 100
         
-        # Real revenue calculation would integrate with Shopify/payment processors
-        revenue_progress = 2847293.45  # This would be real revenue from APIs
-        target_revenue = 10000000.0
+        # Get real revenue from Shopify integration
+        try:
+            revenue_data = await self._get_real_revenue_data()
+            revenue_progress = revenue_data.get('total_revenue', 0.0)
+            profit_margin_avg = revenue_data.get('avg_profit_margin', 0.0)
+        except Exception as e:
+            logger.error(f"Failed to fetch real revenue data: {e}")
+            raise RuntimeError(f"Revenue data unavailable - Shopify integration required: {e}")
+        
+        # Get real product count
+        try:
+            approved_products = await self._get_real_product_count()
+        except Exception as e:
+            logger.error(f"Failed to fetch product count: {e}")
+            approved_products = 0
         
         return EmpireMetrics(
             total_agents=len(self.agents),
             active_agents=active_agents,
             total_opportunities=len(self.opportunities),
-            approved_products=234,  # Real count from product database
+            approved_products=approved_products,
             revenue_progress=revenue_progress,
-            target_revenue=target_revenue,
+            target_revenue=10000000.0,  # Business target, not mock data
             automation_level=automation_level,
-            system_uptime=99.7,  # Real uptime from monitoring
-            daily_discoveries=12,  # Real discoveries from research agents
-            profit_margin_avg=34.2,  # Real margin from financial analysis
+            system_uptime=await self._calculate_system_uptime(),
+            daily_discoveries=len([o for o in self.opportunities.values() 
+                                  if (datetime.now(timezone.utc) - o.discovered_at).days < 1]),
+            profit_margin_avg=profit_margin_avg,
             timestamp=datetime.now(timezone.utc)
         )
     
@@ -420,6 +418,66 @@ class RealEmpireService:
         except Exception as e:
             logger.error(f"Failed to create agent session: {e}")
             raise
+    
+    async def _get_real_revenue_data(self) -> Dict[str, float]:
+        """Get real revenue data from Shopify integration."""
+        try:
+            # Import Shopify service
+            from app.services.shopify_graphql_service import ShopifyGraphQLService
+            
+            shopify = ShopifyGraphQLService()
+            if not shopify.is_configured():
+                raise RuntimeError("Shopify not configured - set SHOPIFY_SHOP_NAME and SHOPIFY_ACCESS_TOKEN")
+            
+            # Fetch real revenue data
+            orders = await shopify.get_orders(limit=1000)  # Last 1000 orders
+            
+            total_revenue = sum(float(order.get('total_price', 0)) for order in orders)
+            total_cost = sum(float(order.get('total_line_items_price', 0)) * 0.6 for order in orders)  # Estimate
+            profit = total_revenue - total_cost
+            avg_profit_margin = (profit / max(total_revenue, 1)) * 100 if total_revenue > 0 else 0
+            
+            return {
+                'total_revenue': total_revenue,
+                'avg_profit_margin': avg_profit_margin,
+                'total_orders': len(orders)
+            }
+        except Exception as e:
+            logger.error(f"Failed to fetch Shopify revenue: {e}")
+            raise
+    
+    async def _get_real_product_count(self) -> int:
+        """Get real approved product count from Shopify."""
+        try:
+            from app.services.shopify_graphql_service import ShopifyGraphQLService
+            
+            shopify = ShopifyGraphQLService()
+            if not shopify.is_configured():
+                return 0
+            
+            products = await shopify.get_products(limit=250)
+            return len(products)
+        except Exception as e:
+            logger.error(f"Failed to fetch product count: {e}")
+            return 0
+    
+    async def _calculate_system_uptime(self) -> float:
+        """Calculate real system uptime from monitoring data."""
+        try:
+            from app.services.health_service import get_health_service
+            health_service = get_health_service()
+            
+            # Get uptime from health service
+            health_status = health_service.get_health_status()
+            uptime_seconds = health_status.get('uptime_seconds', 0)
+            
+            # Calculate uptime percentage (assume 24h window)
+            uptime_percentage = min(100.0, (uptime_seconds / (24 * 3600)) * 100)
+            return uptime_percentage
+        except Exception as e:
+            logger.error(f"Failed to calculate uptime: {e}")
+            # Return 0 if we can't calculate - no fake data
+            return 0.0
 
 # Global service instance
 _empire_service: Optional[RealEmpireService] = None

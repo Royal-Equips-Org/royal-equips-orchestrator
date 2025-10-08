@@ -277,7 +277,12 @@ class AgentRegistry:
         timeout_threshold = now - timedelta(seconds=self.heartbeat_timeout)
 
         for agent_id, agent in list(self.agents.items()):
-            if agent.last_heartbeat < timeout_threshold:
+            # Ensure timezone awareness for comparison
+            agent_heartbeat = agent.last_heartbeat
+            if agent_heartbeat.tzinfo is None:
+                agent_heartbeat = agent_heartbeat.replace(tzinfo=timezone.utc)
+            
+            if agent_heartbeat < timeout_threshold:
                 if agent.status not in [AgentStatus.STOPPED, AgentStatus.MAINTENANCE]:
                     self.logger.warning(
                         f"Agent {agent.name} ({agent_id}) heartbeat timeout. "
