@@ -89,12 +89,13 @@ class ProductionAgentExecutor:
     async def initialize(self):
         """Initialize database connection and agent registry."""
         try:
-            # Get database URL from secrets
-            database_url = await self.secrets.get_secret('DATABASE_URL')
-            if not database_url:
-                # Fallback to SQLite for development
+            # Get database URL from secrets (optional)
+            try:
+                database_url = await self.secrets.get_secret('DATABASE_URL')
+            except Exception:
+                # Fallback to SQLite for development (not a critical error)
                 database_url = "sqlite:///./royal_equips.db"
-                logger.warning("Using SQLite fallback database")
+                logger.info("DATABASE_URL not configured, using SQLite for local storage")
             
             self.engine = create_engine(database_url)
             self.SessionLocal = sessionmaker(bind=self.engine)

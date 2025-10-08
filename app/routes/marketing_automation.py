@@ -29,15 +29,15 @@ class CampaignCreateSchema(Schema):
     target_audience = fields.Dict(required=True)
     content = fields.Dict(required=True)
     budget = fields.Float(required=True, validate=lambda x: x > 0)
-    schedule = fields.Dict(missing={})
+    schedule = fields.Dict(load_default={})
 
 
 class ContentGenerationSchema(Schema):
     """Schema for content generation requests."""
     content_type = fields.Str(required=True, validate=lambda x: x in ['email_subject', 'social_post', 'product_description', 'blog_post'])
     prompt = fields.Str(required=True, validate=lambda x: len(x) >= 10)
-    tone = fields.Str(missing='professional', validate=lambda x: x in ['professional', 'casual', 'luxury', 'friendly'])
-    max_length = fields.Int(missing=500, validate=lambda x: 10 <= x <= 2000)
+    tone = fields.Str(load_default='professional', validate=lambda x: x in ['professional', 'casual', 'luxury', 'friendly'])
+    max_length = fields.Int(load_default=500, validate=lambda x: 10 <= x <= 2000)
 
 
 @marketing_bp.route('/health', methods=['GET'])

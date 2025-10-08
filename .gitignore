@@ -59,3 +59,15 @@ dist/
 .coverage
 .mypy_cache/
 .ruff_cache/
+
+# React build artifacts
+static/assets/
+static/functions/
+static/index.html
+static/_headers
+static/_redirects
+static/config.json
+static/config.local.json
+static/config.schema.json
+static/health.json
+apps/command-center-ui/dist/
