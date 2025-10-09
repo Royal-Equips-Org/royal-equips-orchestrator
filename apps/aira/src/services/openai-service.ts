@@ -19,11 +19,11 @@ export interface AIRAResponse {
  * Unified OpenAI Secret Resolution
  * This pattern should be used by all agents for consistent API key management
  */
-// Helper: Validate OpenAI API key format (starts with "sk-" and is 51 chars, alphanumeric)
+// Helper: Validate OpenAI API key format (starts with "sk-" or "sk-proj-")
 function isValidOpenAIKey(key: string): boolean {
-  // OpenAI keys start with "sk-" and are typically 51 characters long: "sk-" + 48 alphanumeric chars.
-  // Enforce strict format: starts with "sk-" and is exactly 51 characters, with only alphanumeric chars after "sk-".
-  return typeof key === 'string' && /^sk-[A-Za-z0-9]{48}$/.test(key);
+  // OpenAI keys start with "sk-" (legacy) or "sk-proj-" (project-scoped) and contain alphanumeric characters.
+  // Relaxed validation: Must start with "sk-" and be at least 20 characters long
+  return typeof key === 'string' && key.length >= 20 && /^sk-[A-Za-z0-9_-]+$/.test(key);
 }
 
 // Helper: Redact OpenAI key for logging (show prefix and last 4 chars)
