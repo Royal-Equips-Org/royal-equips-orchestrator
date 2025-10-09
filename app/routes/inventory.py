@@ -575,7 +575,7 @@ def get_inventory_agent_status():
 
 
 @inventory_bp.route('/inventory/dashboard', methods=['GET'])
-def get_inventory_dashboard():
+def get_inventory_ml_dashboard():
     """Get comprehensive inventory dashboard data with ML insights."""
     try:
         agent = asyncio.run(get_inventory_agent())

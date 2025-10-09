@@ -11,9 +11,8 @@ import io
 import base64
 from typing import Dict, List, Any, Optional
 
-from orchestrator.core.orchestrator import get_orchestrator
 from core.health_service import HealthService
-from app.orchestrator_bridge import get_orchestrator as get_bridge_orchestrator
+from app.orchestrator_bridge import get_orchestrator
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 
@@ -44,7 +43,7 @@ def health():
 def get_business_metrics():
     """Get current business metrics and KPIs."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -77,7 +76,7 @@ def get_business_metrics():
 def get_dashboard_data():
     """Get complete dashboard data including metrics, charts, and KPIs."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -161,7 +160,7 @@ def get_dashboard_data():
 def list_analytics_queries():
     """List all available analytics queries."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -193,7 +192,7 @@ def list_analytics_queries():
 def execute_query(query_id: str):
     """Execute a specific analytics query."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -241,7 +240,7 @@ def execute_query(query_id: str):
 def generate_chart(chart_type: str, query_id: str):
     """Generate a chart visualization for query data."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -284,7 +283,7 @@ def generate_chart(chart_type: str, query_id: str):
 def list_reports():
     """List all available analytics reports."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -318,7 +317,7 @@ def list_reports():
 def generate_report(report_id: str):
     """Generate a specific analytics report."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -386,7 +385,7 @@ def generate_report(report_id: str):
 def get_anomalies():
     """Get detected anomalies in business metrics."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -446,7 +445,7 @@ def get_anomalies():
 def get_forecasts():
     """Get ML-powered business forecasts."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
@@ -481,7 +480,7 @@ def get_forecasts():
 def get_performance_stats():
     """Get analytics agent performance statistics."""
     try:
-        orchestrator = get_bridge_orchestrator()
+        orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
         
         if not analytics_agent:
