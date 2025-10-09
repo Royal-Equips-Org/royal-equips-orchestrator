@@ -55,6 +55,26 @@ class SecretResult:
     source: SecretSource
     fetched_at: float
     ttl: Optional[int] = None
+    
+    def __str__(self) -> str:
+        """Return the secret value when converted to string."""
+        return self.value
+    
+    def __repr__(self) -> str:
+        """Return safe representation without exposing the secret value."""
+        return f"SecretResult(key={self.key!r}, value='***', source={self.source!r}, fetched_at={self.fetched_at}, ttl={self.ttl})"
+    
+    def endswith(self, suffix: str) -> bool:
+        """Check if the secret value ends with the given suffix."""
+        return self.value.endswith(suffix)
+    
+    def startswith(self, prefix: str) -> bool:
+        """Check if the secret value starts with the given prefix."""
+        return self.value.startswith(prefix)
+    
+    def replace(self, old: str, new: str) -> str:
+        """Replace occurrences in the secret value."""
+        return self.value.replace(old, new)
 
 
 class SecretProvider(Protocol):
