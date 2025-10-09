@@ -29,8 +29,12 @@ class ShopifyGraphQLService:
     async def initialize(self):
         """Initialize Shopify connection with real credentials."""
         try:
-            self._shop_name = await self.secrets.get_secret('SHOPIFY_SHOP_NAME')
-            self._access_token = await self.secrets.get_secret('SHOPIFY_ACCESS_TOKEN')
+            shop_name_result = await self.secrets.get_secret('SHOPIFY_SHOP_NAME')
+            access_token_result = await self.secrets.get_secret('SHOPIFY_ACCESS_TOKEN')
+            
+            # Extract string values from SecretResult objects
+            self._shop_name = shop_name_result.value if hasattr(shop_name_result, 'value') else str(shop_name_result)
+            self._access_token = access_token_result.value if hasattr(access_token_result, 'value') else str(access_token_result)
             
             if not self._shop_name or not self._access_token:
                 raise ValueError("Shopify credentials not configured")

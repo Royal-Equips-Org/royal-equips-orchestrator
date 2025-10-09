@@ -283,6 +283,41 @@ class TestUnifiedSecretResolver:
         assert cache_latency >= 0
 
 
+class TestSecretResult:
+    """Test SecretResult object behavior."""
+
+    @pytest.mark.asyncio
+    async def test_secret_result_value_extraction(self, resolver):
+        """Test that SecretResult.value can be extracted properly."""
+        result = await resolver.get_secret("TEST_SECRET")
+        
+        # Should have value attribute
+        assert hasattr(result, 'value')
+        assert isinstance(result.value, str)
+        assert result.value == "env-value"
+    
+    @pytest.mark.asyncio
+    async def test_secret_result_string_conversion(self, resolver):
+        """Test that SecretResult converts to string properly."""
+        result = await resolver.get_secret("TEST_SECRET")
+        
+        # __str__ should return the value
+        assert str(result) == "env-value"
+        
+        # But type should still be SecretResult
+        assert type(result).__name__ == "SecretResult"
+    
+    @pytest.mark.asyncio
+    async def test_secret_result_helper_methods(self, resolver):
+        """Test SecretResult helper methods (endswith, startswith, replace)."""
+        result = await resolver.get_secret("TEST_SECRET")
+        
+        # Test helper methods
+        assert result.endswith("value")
+        assert result.startswith("env")
+        assert result.replace("env", "test") == "test-value"
+
+
 class TestSecretProviders:
     """Test individual secret providers."""
 
