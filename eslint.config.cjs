@@ -8,7 +8,7 @@ module.exports = [
 
   // CJS config-bestanden
   {
-    files: ["*.config.cjs", "commitlint.config.cjs"],
+    files: ["*.config.cjs"],
     languageOptions: { sourceType: "commonjs", parser: tsParser, globals: globals.node },
     plugins: { "@typescript-eslint": tsPlugin },
     rules: { "@typescript-eslint/no-require-imports": "off", "no-undef": "off" }
