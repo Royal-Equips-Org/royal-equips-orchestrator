@@ -353,3 +353,113 @@ async def readiness_check():
             'error': str(e),
             'timestamp': datetime.now().isoformat()
         }), 503
+
+@empire_bp.route('/chat', methods=['POST'])
+async def empire_chat():
+    """
+    AIRA chat endpoint for intelligent conversations.
+    Integrates with OpenAI for real AI-powered responses.
+    """
+    try:
+        request_data = request.get_json()
+        if not request_data or 'content' not in request_data:
+            return jsonify({
+                'error': 'Invalid request: "content" field is required',
+                'timestamp': datetime.now().isoformat()
+            }), 400
+        
+        content = request_data['content']
+        if not isinstance(content, str) or not content.strip():
+            return jsonify({
+                'error': 'Invalid request: "content" must be a non-empty string',
+                'timestamp': datetime.now().isoformat()
+            }), 400
+        
+        # Import OpenAI service
+        try:
+            from core.secrets.secret_provider import UnifiedSecretResolver
+            import openai
+            
+            # Get OpenAI API key from secrets
+            secrets = UnifiedSecretResolver()
+            try:
+                openai_key = secrets.get_secret('OPENAI_API_KEY')
+                api_key = openai_key.value if openai_key else None
+            except Exception:
+                api_key = None
+            
+            if not api_key:
+                logger.error("OpenAI API key not configured")
+                return jsonify({
+                    'error': 'AIRA AI service is not configured. Please configure OPENAI_API_KEY environment variable to enable AI-powered responses.',
+                    'content': 'I apologize, but I am currently unable to process your request. The AI service is not configured. Please contact your administrator to set up the OpenAI API key.',
+                    'agent_name': 'AIRA',
+                    'timestamp': datetime.now().isoformat(),
+                    'configured': False
+                }), 503
+            
+            # Initialize OpenAI client
+            client = openai.OpenAI(api_key=api_key)
+            
+            # System prompt for AIRA
+            system_prompt = """You are AIRA (Autonomous Intelligence for Royal Automation), 
+the AI assistant for the Royal Equips e-commerce empire. You have deep knowledge of:
+- E-commerce operations and automation
+- Product research and market trends
+- Inventory management and pricing strategies
+- Marketing campaigns and customer engagement
+- Order fulfillment and logistics
+- Financial metrics and business intelligence
+
+Your role is to provide intelligent, actionable insights and assist with operational decisions.
+Be concise, professional, and data-driven in your responses. When discussing metrics or 
+performance, reference real business KPIs and best practices."""
+            
+            # Make OpenAI API call
+            completion = client.chat.completions.create(
+                model='gpt-4-turbo-preview',
+                messages=[
+                    {'role': 'system', 'content': system_prompt},
+                    {'role': 'user', 'content': content}
+                ],
+                max_tokens=500,
+                temperature=0.7
+            )
+            
+            response_content = completion.choices[0].message.content
+            
+            if not response_content:
+                raise ValueError("Empty response from OpenAI")
+            
+            return jsonify({
+                'content': response_content,
+                'agent_name': 'AIRA',
+                'timestamp': datetime.now().isoformat(),
+                'model': 'gpt-4-turbo-preview',
+                'configured': True
+            })
+            
+        except ImportError as e:
+            logger.error(f"OpenAI library not available: {e}")
+            return jsonify({
+                'error': 'OpenAI library not installed',
+                'content': 'I apologize, but the AI service library is not properly installed. Please install the openai package.',
+                'timestamp': datetime.now().isoformat(),
+                'configured': False
+            }), 503
+            
+        except Exception as e:
+            logger.error(f"OpenAI API error: {e}")
+            return jsonify({
+                'error': f'Failed to generate AI response: {str(e)}',
+                'content': 'I apologize, but I encountered an error processing your request. This could be due to an invalid API key or a temporary service issue. Please try again or contact support.',
+                'timestamp': datetime.now().isoformat(),
+                'configured': False
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Chat endpoint error: {e}")
+        return jsonify({
+            'error': f'Internal server error: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
