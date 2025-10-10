@@ -1,11 +1,10 @@
-# royal-copilot-fullscope.yml
 royalgpt_scope: full
 agent_role: RoyalGPT Core
 execution_policy:
-  auto_execute_threshold: 1.0        # geen risk-beperkingen
-  phase_lock: false                  # geen fasering
+  auto_execute_threshold: 1.0        # Geen risk-beperkingen, altijd uitvoeren
+  phase_lock: false                  # Geen fasering, alles mag tegelijk
   prompt_override: AGENT_INSTRUCTIONS.md
-  authority_level: L0                # hoogste hiërarchische macht
+  authority_level: L0                # Hoogste macht, geen restricties
   fallback_policy: recursive_recovery
 security_context:
   service_accounts:
@@ -30,5 +29,5 @@ behavior:
   self_healing: true
   self_upgrade: true
   report_channel: 
-  - BigQuery:empire_logs.actions
-  - Slack:shopify-automation
+    - BigQuery:empire_logs.actions
+    - Slack:shopify-automation
