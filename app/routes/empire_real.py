@@ -22,7 +22,7 @@ from app.services.empire_service import get_empire_service
 logger = logging.getLogger(__name__)
 
 # Create empire API blueprint
-empire_bp = Blueprint('empire', __name__, url_prefix='/v1')
+empire_bp = Blueprint('empire', __name__, url_prefix='/api/empire')
 
 @empire_bp.route('/agents', methods=['GET'])
 async def get_agents():
