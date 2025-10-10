@@ -10,7 +10,7 @@ import logging
 import time
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -151,7 +151,7 @@ class ProductionAnalyticsAgent(AgentBase):
             'alert_cooldown_minutes': 30,
             'max_data_points': 10000,
             'retry_attempts': 3,
-            'fallback_enabled': True
+            'fallback_enabled': False  # No fallback - production only
         }
         
         # Predefined queries and metrics
@@ -529,7 +529,7 @@ class ProductionAnalyticsAgent(AgentBase):
                 'reports_generated': report_results,
                 'ml_updates': ml_results,
                 'performance_metrics': self.performance_metrics,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             logger.info(f"Analytics cycle completed in {execution_time:.2f}s")
@@ -540,7 +540,7 @@ class ProductionAnalyticsAgent(AgentBase):
             return {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _execute_core_queries(self) -> Dict[str, Any]:
@@ -630,7 +630,7 @@ class ProductionAnalyticsAgent(AgentBase):
                         'target': metric.target_value,
                         'status': status,
                         'unit': metric.unit,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     }
             
             return metrics_results
@@ -688,7 +688,7 @@ class ProductionAnalyticsAgent(AgentBase):
                     visualization_results[query.id] = {
                         'chart_type': query.visualization_type.value,
                         'chart_data': chart,
-                        'generated_at': datetime.now().isoformat()
+                        'generated_at': datetime.now(timezone.utc).isoformat()
                     }
                     
                     self.performance_metrics['charts_generated'] += 1
@@ -860,7 +860,7 @@ class ProductionAnalyticsAgent(AgentBase):
                         'current_value': recent_values[-1],
                         'anomaly_score': anomaly_scores[-1],
                         'severity': 'high' if anomaly_scores[-1] < -0.5 else 'medium',
-                        'detected_at': datetime.now().isoformat()
+                        'detected_at': datetime.now(timezone.utc).isoformat()
                     })
             
             self.performance_metrics['anomalies_detected'] += len(anomalies_detected)
@@ -891,7 +891,7 @@ class ProductionAnalyticsAgent(AgentBase):
                 if report_data:
                     report_results[report.id] = {
                         'title': report.title,
-                        'generated_at': datetime.now().isoformat(),
+                        'generated_at': datetime.now(timezone.utc).isoformat(),
                         'format': 'json',
                         'size_kb': len(json.dumps(report_data)) / 1024
                     }
@@ -1007,7 +1007,7 @@ class ProductionAnalyticsAgent(AgentBase):
         """Update and store performance metrics."""
         try:
             self.performance_metrics['api_calls_made'] += 1
-            self.performance_metrics['last_updated'] = datetime.now().isoformat()
+            self.performance_metrics['last_updated'] = datetime.now(timezone.utc).isoformat()
             
             # Calculate cache hit rate
             total_requests = self.performance_metrics.get('total_requests', 0)

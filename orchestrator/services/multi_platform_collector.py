@@ -5,7 +5,7 @@ Collects data from Shopify, competitors, suppliers, and market sources
 import asyncio
 import aiohttp
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 import json
@@ -180,7 +180,7 @@ class MultiPlatformCollector(AgentBase):
                             inventory_level=inventory_data.get('available', 0),
                             source_platform='shopify_own',
                             competitor_url=None,
-                            scraped_at=datetime.now()
+                            scraped_at=datetime.now(timezone.utc)
                         )
                         products.append(product_data)
                 
@@ -233,7 +233,7 @@ class MultiPlatformCollector(AgentBase):
                         inventory_level=-1,  # Unknown
                         source_platform='amazon',
                         competitor_url=item.get('DetailPageURL', ''),
-                        scraped_at=datetime.now()
+                        scraped_at=datetime.now(timezone.utc)
                     )
                     products.append(product)
                     
@@ -281,7 +281,7 @@ class MultiPlatformCollector(AgentBase):
                     seasonal_patterns=trend_data.get('seasonal_data', {}),
                     price_range=trend_data.get('price_insights', {}),
                     source='google_trends',
-                    collected_at=datetime.now()
+                    collected_at=datetime.now(timezone.utc)
                 )
                 trends.append(trend)
                 
@@ -307,7 +307,7 @@ class MultiPlatformCollector(AgentBase):
                 'alibaba': alibaba_suppliers,
                 'dhgate': dhgate_suppliers,
                 'global_sources': global_sources,
-                'last_updated': datetime.now()
+                'last_updated': datetime.now(timezone.utc)
             }
             
             logger.info("✅ Supplier data collection completed")
@@ -362,14 +362,14 @@ class MultiPlatformCollector(AgentBase):
             score += 10  # Low competition
         
         # Recency bonus
-        if product.scraped_at > datetime.now() - timedelta(days=7):
+        if product.scraped_at > datetime.now(timezone.utc) - timedelta(days=7):
             score += 5
         
         return min(score, 100.0)
     
     async def get_daily_discoveries(self) -> int:
         """Get count of daily discoveries"""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         daily_count = len([
             p for p in self.product_database 
             if p.scraped_at.date() == today

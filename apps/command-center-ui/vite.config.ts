@@ -17,12 +17,40 @@ export default defineConfig({
     },
   },
   build: { 
-    sourcemap: true
+    sourcemap: true,
+    outDir: 'dist',
+    emptyOutDir: true,
   },
   server: {
     port: 3000,
     proxy: {
+      // Proxy API routes
       '/v1': {
+        target: 'http://localhost:10000',
+        changeOrigin: true
+      },
+      '/api': {
+        target: 'http://localhost:10000',
+        changeOrigin: true
+      },
+      // Proxy health endpoints to backend
+      '/health': {
+        target: 'http://localhost:10000',
+        changeOrigin: true
+      },
+      '/healthz': {
+        target: 'http://localhost:10000',
+        changeOrigin: true
+      },
+      '/readyz': {
+        target: 'http://localhost:10000',
+        changeOrigin: true
+      },
+      '/liveness': {
+        target: 'http://localhost:10000',
+        changeOrigin: true
+      },
+      '/readiness': {
         target: 'http://localhost:10000',
         changeOrigin: true
       }

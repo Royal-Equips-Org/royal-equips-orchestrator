@@ -7,7 +7,7 @@ and intelligent system healing based on alert conditions and performance metrics
 
 import logging
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -65,7 +65,7 @@ class SelfHealingService:
         self.healing_policies: List[HealingPolicy] = []
         self.execution_history: List[HealingExecution] = []
         self.action_counters: Dict[str, int] = {}  # Track actions per hour
-        self.last_reset: datetime = datetime.now()
+        self.last_reset: datetime = datetime.now(timezone.utc)
         self.healing_enabled = True
         
         # Setup default healing policies
@@ -239,11 +239,11 @@ class SelfHealingService:
         last_execution = self._get_last_execution_time(policy.name)
         if last_execution:
             cooldown_end = last_execution + timedelta(minutes=policy.cooldown_minutes)
-            if datetime.now() < cooldown_end:
+            if datetime.now(timezone.utc) < cooldown_end:
                 return False
         
         # Check hourly rate limit
-        current_hour = datetime.now().hour
+        current_hour = datetime.now(timezone.utc).hour
         counter_key = f"{policy.name}_{current_hour}"
         if self.action_counters.get(counter_key, 0) >= policy.max_attempts_per_hour:
             return False
@@ -296,7 +296,7 @@ class SelfHealingService:
     
     async def _execute_healing_action(self, policy: HealingPolicy, metrics: Dict[str, Any]) -> Optional[HealingExecution]:
         """Execute a specific healing action."""
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         
         # Extract trigger metric value
         trigger_metric = self._extract_trigger_metric(policy.trigger_condition)
@@ -313,7 +313,7 @@ class SelfHealingService:
                 executed_at=start_time,
                 success=success,
                 result_message=f"Healing action {'succeeded' if success else 'failed'}",
-                recovery_time_seconds=(datetime.now() - start_time).total_seconds()
+                recovery_time_seconds=(datetime.now(timezone.utc) - start_time).total_seconds()
             )
             
             return execution
@@ -327,7 +327,7 @@ class SelfHealingService:
                 executed_at=start_time,
                 success=False,
                 result_message=f"Execution failed: {str(e)}",
-                recovery_time_seconds=(datetime.now() - start_time).total_seconds()
+                recovery_time_seconds=(datetime.now(timezone.utc) - start_time).total_seconds()
             )
     
     async def _perform_action(self, action: HealingAction, metrics: Dict[str, Any]) -> bool:
@@ -432,7 +432,7 @@ class SelfHealingService:
     
     def _reset_hourly_counters(self):
         """Reset action counters every hour."""
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if now.hour != self.last_reset.hour:
             # Clear counters for the previous hour
             previous_hour = (now - timedelta(hours=1)).hour
@@ -446,7 +446,7 @@ class SelfHealingService:
         """Get comprehensive self-healing status."""
         recent_executions = [
             execution for execution in self.execution_history
-            if execution.executed_at > datetime.now() - timedelta(hours=24)
+            if execution.executed_at > datetime.now(timezone.utc) - timedelta(hours=24)
         ]
         
         successful_actions = len([e for e in recent_executions if e.success])
@@ -461,10 +461,10 @@ class SelfHealingService:
             "success_rate_24h": successful_actions / len(recent_executions) * 100 if recent_executions else 0,
             "current_hour_actions": sum(
                 count for key, count in self.action_counters.items()
-                if key.endswith(f"_{datetime.now().hour}")
+                if key.endswith(f"_{datetime.now(timezone.utc).hour}")
             ),
             "last_healing_action": recent_executions[-1].executed_at.isoformat() if recent_executions else None,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def enable_healing(self):
@@ -479,7 +479,7 @@ class SelfHealingService:
     
     def get_recent_actions(self, hours: int = 24) -> List[Dict[str, Any]]:
         """Get recent healing actions."""
-        cutoff_time = datetime.now() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         recent_actions = [
             {
                 "policy_name": execution.policy_name,

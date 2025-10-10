@@ -1,1164 +1,889 @@
-# ROYAL EQUIPS ORCHESTRATOR — AI DEVELOPMENT GUIDE
+# ROYAL EQUIPS ORCHESTRATOR — AI Development Guide
+
+**Last Updated:** 2025-01-02  
+**System Version:** 2.x  
+**Maintainer:** @Skidaw23
 
 ## 🏰 System Overview
 
-This is the **Royal Equips Empire**: an autonomous e-commerce platform with intelligent agents managing product research, inventory, marketing, and fulfillment. The system is **production-ready** and **revenue-generating** - not a prototype.
+Production e-commerce platform with autonomous AI agents managing product research, inventory, marketing, and fulfillment. **No placeholders or mock data in production code** — all live integrations must remain real.
 
-### Architecture at a Glance
-- **Monorepo** (pnpm workspaces) with TypeScript + Python
-- **Flask** main orchestrator + multiple **FastAPI** services  
-- **React + Vite** command center UI with lazy-loaded modules
-- **Multi-agent system** with real API integrations (Shopify, AutoDS, Spocket)
-- **Cross-platform deployment** (Render, Cloudflare Workers, Docker)
+### Architecture
+- **Hybrid monorepo**: Python (Flask orchestrator) + TypeScript (React UI, limited packages via pnpm)
+- **Flask** (`/app/`, `/wsgi.py`) - main orchestrator API, agent coordination, health monitoring (port 10000)
+- **FastAPI services** - `/apps/aira/`, `/apps/api/`, `/apps/orchestrator-api/` (ports 3000-3003)
+- **React UI** - `/apps/command-center-ui/` with Vite + lazy loading (port 5173)
+- **Agent system** - `/orchestrator/core/` (orchestrator.py, agent_base.py) + `/orchestrator/agents/` (implementations)
+- **Shared utilities** - `/core/` (secrets, health, logging, security)
 
-## 🚨 CRITICAL ENTERPRISE RULES
+### Service Responsibilities
+- **Flask (port 10000)** - Main orchestrator, agent coordination, health monitoring, WebSocket support
+- **FastAPI services (3000-3003)** - Specialized microservices (AIRA AI assistant, API gateways, orchestrator API)
+- **React UI (5173)** - Command center dashboard, served by Vite in dev, built static assets served by Flask in production
 
-### NEVER USE PLACEHOLDERS OR MOCK DATA
-This system generates real revenue. Every component must connect to actual APIs and data:
-- ✅ **Real integrations**: Shopify, AutoDS, Spocket, GitHub, Cloudflare
-- ✅ **Live data flows**: Orders, products, campaigns, metrics
-- ✅ **Production services**: AIRA AI backend, health monitoring, secret management
-- ❌ **Forbidden**: Mock APIs, placeholder components, fake data, "coming soon" messages
+## ⚡ Quick Start Checklist for New AI Agents/Developers
 
-### Key Real Systems to Connect To
-- **AIRA Service**: `/apps/aira/src/index.ts` (AI orchestrator backend)
-- **Flask Orchestrator**: `/app/routes/*.py` (agent management, metrics)
-- **Command Center UI**: `/apps/command-center-ui/src` (React dashboard)
-- **Secret System**: `/core/secrets/` (multi-provider resolution)
-- **Agent Executors**: `/apps/agent-executors/` (business logic agents)
+### Discovery First
+- [ ] Review `reports/STACK_REPORT.md` for a living snapshot of active providers, services, ports, health endpoints, CI/CD gates, and known gaps across the orchestrator. This establishes the current production shape before any local changes.
+- [ ] Read `docs/RUNBOOK.md` for end-to-end operational procedures covering environment bootstrapping, deployment and rollback workflows, required secrets, and on-call escalation paths. Use this as the canonical run sequence.
 
----
+### First 15 Minutes
+- [ ] Clone repository: `git clone https://github.com/Royal-Equips-Org/royal-equips-orchestrator.git`
+- [ ] Copy environment template: `cp .env.example .env`
+- [ ] Set up Python environment: `make setup` (creates virtualenv, installs dependencies)
+- [ ] Start Flask server: `python wsgi.py` (should start on port 10000)
+- [ ] Verify health: `curl http://localhost:10000/healthz` (should return "ok")
 
-## 🔧 MONOREPO STRUCTURE (CRITICAL TO UNDERSTAND)
+### Next 30 Minutes
+- [ ] Read this guide completely (you're doing it! 📖)
+- [ ] Explore agent base class: `view /orchestrator/core/agent_base.py`
+- [ ] Check existing agent example: `view /orchestrator/agents/product_research.py`
+- [ ] Review Flask app structure: `view /app/__init__.py`
+- [ ] Understand secret management: `view /core/secrets/secret_provider.py`
 
-### Root-Level Services
+### Development Workflow (Day 1)
+- [ ] Create feature branch: `git checkout -b feature/your-feature`
+- [ ] Make minimal changes following patterns in existing code
+- [ ] Run tests: `make test`
+- [ ] Run linter: `make lint`
+- [ ] Commit with conventional commits: `git commit -S -m "feat: description"`
+  > 🔐 **Policy:** Unsigned commits are rejected—always include the `-S` flag for a signed commit. For setup, see [GitHub's guide on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
+- [ ] Open PR to `develop` branch
+- [ ] Before requesting deploy, review deployment/rollback steps against `docs/RUNBOOK.md` and `reports/STACK_REPORT.md`.
+
+### Creating Your First Agent
+- [ ] Copy agent template from existing agent (e.g., `product_research.py`)
+- [ ] Implement `_agent_initialize()` for setup
+- [ ] Implement `_execute_task()` with main logic
+- [ ] Add agent to registry in `/app/__init__.py:init_autonomous_empire()`
+- [ ] Test agent locally: `python wsgi.py` and check logs
+- [ ] Add tests in `/tests/test_agents.py`
+
+### Production Readiness Checklist
+- [ ] Agent has proper error handling (try/except blocks)
+- [ ] Secrets loaded via `UnifiedSecretResolver`
+- [ ] Retry logic added for external API calls (tenacity)
+- [ ] Health check implemented
+- [ ] Logging added at key points
+- [ ] Tests written (unit + integration)
+- [ ] Documentation updated (docstrings + README if needed)
+- [ ] Deployment + rollback steps verified against `docs/RUNBOOK.md` and cross-checked with live service inventory in `reports/STACK_REPORT.md`
+
+## 🚨 Critical Rules
+1. **No mock data or placeholders in production code** — system generates real revenue. Use actual API integrations (Shopify, AutoDS, Spocket). Automated tests may use controlled mocks only as documented in [🧪 Testing Strategy](#-testing-strategy).
+2. **Agent pattern** - All agents inherit from `orchestrator.core.agent_base.AgentBase`, implement `async def _execute_task()`.
+3. **Multi-service coordination** - Flask main API delegates to `/orchestrator/core/orchestrator.py` for agent management.
+4. **Secret management** - Use `/core/secrets/secret_provider.py` (UnifiedSecretResolver) - cascades ENV → GitHub → Cloudflare → cache.
+5. **Health monitoring** - All services expose `/healthz` (liveness), `/readyz` (readiness), `/metrics` endpoints.
+
+## 🏗️ Project Structure (Key Paths)
+
 ```
-/app/                    # Flask orchestrator (main API, agents, health)
-/wsgi.py                 # WSGI production entry point  
-/orchestrator/           # Core agent system + business logic
-/core/                   # Shared utilities (secrets, health, security)
-/royal_platform/         # E-commerce platform integrations
-/royal_mcp/              # Model Context Protocol server
+/app/                           # Flask application
+  ├── routes/                   # Blueprints: agents.py, empire.py, command_center.py, health.py
+  ├── services/                 # Business logic: health_service.py, empire_service.py
+  └── __init__.py               # App factory with config
+/wsgi.py                        # Production WSGI entry point (Gunicorn)
+/orchestrator/
+  ├── core/                     # orchestrator.py (registers/schedules agents), agent_base.py
+  └── agents/                   # product_research.py, inventory_pricing.py, marketing_automation.py, etc.
+/core/                          # Shared utilities
+  ├── secrets/                  # secret_provider.py (multi-provider resolution)
+  ├── health_service.py         # Circuit breakers, dependency monitoring
+  └── security/                 # Auth, encryption, HMAC validation
+/apps/command-center-ui/        # React+Vite dashboard (separate pnpm workspace)
+  └── src/modules/              # Lazy-loaded: aira/, agents/, analytics/, dashboard/
+/royal_platform/                # E-commerce integrations (Shopify, suppliers)
+/royal_mcp/                     # Model Context Protocol server
 ```
 
-### Apps (pnpm workspaces)
-```
-/apps/command-center-ui/ # React+Vite dashboard (port 5173)
-/apps/aira/             # FastAPI AI orchestrator (port 3001) 
-/apps/api/              # FastAPI general API (port 3000)
-/apps/orchestrator-api/ # FastAPI orchestrator API (port 3002)
-/apps/agent-executors/  # Agent execution service (port 3003)
-```
+## 🔧 Development Workflows
 
-### Packages (shared libs)
-```  
-/packages/shared-types/ # TypeScript type definitions
-/packages/agents-core/  # Agent base classes & utilities
-/packages/connectors/   # External API integrations
-/packages/obs/          # Observability utilities  
-/packages/shopify-client/ # Shopify API client
-```
-
-## 🚀 DEVELOPMENT WORKFLOWS
-
-### Essential Commands (Use These!)
+### Setup and Running
+➡️ **Reference:** `docs/RUNBOOK.md` includes detailed environment bootstrap, secret provisioning, and multi-service startup coordination steps aligned with the architecture captured in `reports/STACK_REPORT.md`.
 ```bash
-# Install dependencies for entire monorepo
-pnpm install
+# Python setup (virtualenv recommended)
+make setup              # Creates .venv, installs requirements.txt
+python wsgi.py          # Start Flask (dev mode with auto-reload)
+gunicorn -w 2 -b 0.0.0.0:10000 wsgi:app  # Production mode
 
-# Start all services in development
-pnpm dev
+# Frontend (React UI)
+cd apps/command-center-ui && pnpm install && pnpm dev  # Port 5173
 
-# Start specific apps
-pnpm dev:orchestrator-api  # FastAPI orchestrator
-pnpm dev:aira             # AIRA AI service  
-pnpm start                # Flask main app (production mode)
-
-# Build all packages and apps
-pnpm build
-
-# Type checking across all TypeScript projects  
-pnpm typecheck
-
-# Lint all code
-pnpm lint
-
-# Run tests
-pnpm test
+# Combined (if using top-level package.json)
+pnpm install            # Installs UI workspace dependencies
+pnpm dev                # Runs Flask + React concurrently
 ```
 
-### Python Services
+### Testing and Quality
 ```bash
-# Flask orchestrator (main service)
-python wsgi.py
-# Or with Gunicorn (production)
-gunicorn -w 2 -b 0.0.0.0:10000 wsgi:app
+# Python (see Makefile, pyproject.toml)
+make test               # pytest tests/ -v
+make coverage           # pytest with coverage report
+make lint               # ruff check .
+make typecheck          # mypy royal_mcp/ (limited scope)
+make ci                 # Complete pipeline: lint + typecheck + test + scan
 
-# Makefile shortcuts
-make setup     # Development environment setup
-make run       # Run orchestrator API
-make dashboard # Start holographic control center
-make ci        # Complete CI pipeline locally
+# TypeScript (React UI)
+cd apps/command-center-ui && pnpm typecheck && pnpm lint && pnpm test
 ```
 
-## 🎯 CURRENT IMPLEMENTATION STATUS
+### Key Configuration Files
+- `pyproject.toml` - Python project config, ruff/black/pytest settings
+- `Makefile` - Common development tasks (setup, test, lint, ci)
+- `.env.example` - Required environment variables template
+- `pnpm-workspace.yaml` - Workspace definition (only includes command-center-ui, shared-types)
 
-### Flask Orchestrator (`/app/routes/`)
-- ✅ **Health & Metrics**: `/healthz`, `/readyz`, `/metrics` (core/health_service.py)
-- ✅ **Agent System**: Agent sessions, messaging, streaming (agents.py)  
-- ✅ **Command Center**: SPA serving, empire status (command_center.py)
-- ✅ **Empire Management**: Campaign execution, product research (empire.py)
-- ✅ **WebSocket Streams**: Real-time data (sockets.py, SocketIO)
+⚠️ **TypeScript workspace is limited** - Only `/apps/command-center-ui/` and `/packages/shared-types/` use pnpm workspace. FastAPI services in `/apps/aira/`, `/apps/api/` are Python-only and not part of the workspace.
 
-### React Command Center (`/apps/command-center-ui/src/`)
-- ✅ **Module System**: Lazy loading with Suspense boundaries implemented
-- ✅ **Store Management**: Zustand stores (empire, navigation, performance)
-- ✅ **Real Modules**: AIRA, Analytics, Agents, Dashboard, Revenue, Inventory, Marketing
-- ✅ **Mobile Responsive**: Layout shells, navigation, module scroller
-- ✅ **Performance**: Metrics tracking, optimization hooks, bundle splitting
+## 🎯 Operational Agents (Implemented)
 
-### FastAPI Services (All Operational)
-- ✅ **AIRA** (`/apps/aira/`): AI orchestration, system routes, metrics
-- ✅ **API** (`/apps/api/`): General API with agents, health, auth routes
-- ✅ **Orchestrator API** (`/apps/orchestrator-api/`): Agent management API
-- ✅ **Agent Executors** (`/apps/agent-executors/`): Business logic execution
+Located in `/orchestrator/agents/`:
+- **ProductResearchAgent** - AutoDS/Spocket integration, trend scoring, product discovery
+- **InventoryPricingAgent** - Demand forecasting, dynamic pricing, multi-channel sync
+- **MarketingAutomationAgent** - Email campaigns, segmentation, abandon cart recovery
+- **OrderFulfillmentAgent** - Risk assessment, supplier routing, tracking
+- **AnalyticsAgent** - BigQuery integration, metrics aggregation
+- **CustomerSupportAgent** - AI classification, sentiment analysis
+- **SecurityAgent** - Fraud detection, vulnerability scanning
 
-### Core Systems (Production Ready)  
-- ✅ **Secret Resolution** (`/core/secrets/`): Multi-provider with encryption + caching
-- ✅ **Health Monitoring** (`/core/health_service.py`): Circuit breakers, dependencies
-- ✅ **Agent Framework** (`/orchestrator/core/`): Base classes, orchestration, monitoring
-- ✅ **E-commerce Integration** (`/royal_platform/`): Shopify, AutoDS, Spocket connectors
-
-## 🏗️ ARCHITECTURE PATTERNS & INTEGRATIONS
-
-### Multi-Service Coordination
-```typescript
-// Service discovery pattern used throughout
-const endpoints = {
-  flask: process.env.FLASK_API_URL || 'http://localhost:10000',
-  aira: process.env.AIRA_API_URL || 'http://localhost:3001', 
-  orchestrator: process.env.ORCHESTRATOR_API_URL || 'http://localhost:3002',
-  agents: process.env.AGENTS_API_URL || 'http://localhost:3003'
-};
-
-// Cross-service health checks (see /core/health_service.py)
-const healthCheck = async (service: string) => {
-  return fetch(`${endpoints[service]}/healthz`);
-};
-```
-
-### Agent System Integration
+All agents follow the production base class in `/royal_platform/core/agent_base.py`:
 ```python
-# Flask routes delegate to orchestrator core
-from orchestrator.core.orchestrator import Orchestrator
-from app.orchestrator_bridge import get_orchestrator
+class BaseAgent(ABC):
+    def __init__(self, config: AgentConfig):
+        self.config = config
+        self.logger = logging.getLogger(f"agent.{config.name}")
+        self.current_run_id: Optional[str] = None
+        self.start_time: Optional[datetime] = None
 
-# Real agent execution (not mock)
-@agents_bp.route("/status")  
-def get_agents_status():
-    orchestrator = get_orchestrator()
-    return orchestrator.get_all_agents_health()
+    @abstractmethod
+    async def execute(self) -> AgentResult:
+        """Agents implement their production business logic here."""
+
+    async def run(self) -> AgentResult:
+        if not self.config.enabled:
+            return AgentResult(success=False, errors=["Agent is disabled"])
+        if not await self._check_rate_limits():
+            return AgentResult(success=False, errors=["Rate limit exceeded"])
+
+        self.current_run_id = str(uuid.uuid4())
+        self.start_time = datetime.now()
+        run_record = AgentRun(
+            id=uuid.UUID(self.current_run_id),
+            agent_name=self.config.name,
+            status=AgentStatus.ACTIVE,
+            started_at=self.start_time,
+            metadata={"priority": self.config.priority.value},
+        )
+        with get_db_session() as session:
+            session.add(run_record)
+            session.commit()
+
+        self.logger.info(
+            f"Starting agent {self.config.name} execution (run_id: {self.current_run_id})"
+        )
+        try:
+            result = await asyncio.wait_for(
+                self.execute(),
+                timeout=self.config.max_execution_time,
+            )
+            result.execution_time_seconds = (
+                datetime.now() - self.start_time
+            ).total_seconds()
+            return result
+        except asyncio.TimeoutError as exc:
+            self.logger.error(
+                f"Agent {self.config.name} timed out after {self.config.max_execution_time}s"
+            )
+            return AgentResult(success=False, errors=[str(exc)])
 ```
 
-### Secret Resolution (Already Implemented)
+## 🏗️ Key Architecture Patterns
+
+### Agent Registration & Execution
 ```python
-# /core/secrets/secret_provider.py - Production ready
+# /orchestrator/core/agent_initialization.py
+async def initialize_all_agents() -> dict[str, Any]:
+    registry = get_agent_registry()
+    integration = get_aira_integration()
+    successful: list[str] = []
+    failed: list[str] = []
+
+    for config in AGENT_CONFIGURATIONS:
+        try:
+            success = await registry.register_agent(
+                agent_id=config["agent_id"],
+                name=config["name"],
+                agent_type=config["type"],
+                capabilities=config["capabilities"],
+                max_concurrent_tasks=config.get("max_concurrent_tasks", 10),
+                tags=config.get("tags", set()),
+                metadata={"auto_registered": True, "config_version": "1.0"},
+            )
+            (successful if success else failed).append(config["agent_id"])
+        except Exception as exc:
+            failed.append(config["agent_id"])
+            logger.error(f"✗ Error registering {config['agent_id']}: {exc}", exc_info=True)
+
+    await registry.start_monitoring()
+    await integration.start_task_processing()
+    return {
+        "total_agents": len(AGENT_CONFIGURATIONS),
+        "successful": len(successful),
+        "failed": len(failed),
+        "successful_agents": successful,
+        "failed_agents": failed,
+        "registry_stats": registry.get_registry_stats(),
+        "status": "success" if not failed else "partial",
+    }
+```
+
+### Agent Registration Location
+Agents are registered in **two locations** depending on the pattern used:
+
+1. **Modern pattern (AgentRegistry)**: `/app/__init__.py:init_autonomous_empire()`
+   - Called during Flask app initialization
+   - Uses `AgentRegistry` from `/orchestrator/core/agent_registry.py`
+   - Imports from `/orchestrator/core/agent_bootstrap.py:initialize_all_agents()`
+   - Background thread initializes agents asynchronously
+
+2. **Legacy pattern (direct orchestrator)**: `/wsgi.py` or startup script
+   - Direct orchestrator instantiation
+   - Useful for standalone agent testing
+
+**Recommended**: Use modern AgentRegistry pattern. See existing agents in `/orchestrator/agents/` for examples.
+
+```python
+# /royal_platform/agents/product_research_agent.py
+class ProductResearchAgent(BaseAgent):
+    """Production agent that runs the full product discovery pipeline."""
+
+    def __init__(self) -> None:
+        config = AgentConfig(
+            name="product_research_agent",
+            priority=AgentPriority.HIGH,
+            max_execution_time=1800,
+            retry_count=3,
+            max_runs_per_hour=4,
+            max_runs_per_day=50,
+        )
+        super().__init__(config)
+
+        self.trends_client = TrendReq(hl="en-US", tz=360)
+        self.http_client = httpx.AsyncClient(
+            timeout=30.0,
+            headers={
+                "User-Agent": "ProductResearchAgent/1.0 (+https://yourdomain.com/contact)",
+            },
+        )
+        self.research_keywords = [
+            "smart home gadgets",
+            "fitness accessories",
+            "car accessories",
+            "tiktok gadgets",
+            "eco friendly",
+        ]
+        self.scoring_weights = {
+            "trend_score": 0.35,
+            "interest_7d": 0.25,
+            "volatility_index": 0.15,
+            "cross_source_consistency": 0.25,
+        }
+
+    async def execute(self) -> AgentResult:
+        self.logger.info("Starting product research cycle with real data sources")
+
+        trends_data = await self._analyze_google_trends()
+        social_data = await self._analyze_social_trends()
+        competition_data = await self._analyze_competition()
+        scored_opportunities = await self._score_opportunities(
+            trends_data, social_data, competition_data
+        )
+        stored_count = await self._store_research_results(scored_opportunities)
+        alerts_sent = await self._send_priority_alerts(scored_opportunities)
+
+        return AgentResult(
+            success=True,
+            actions_taken=5 + alerts_sent,
+            items_processed=len(scored_opportunities),
+            metadata={
+                "opportunities_found": len(scored_opportunities),
+                "high_priority_count": len(
+                    [o for o in scored_opportunities if o["priority_score"] > 8.0]
+                ),
+                "research_sources": [
+                    "google_trends",
+                    "social_media",
+                    "competition_analysis",
+                ],
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
+```
+
+### Secret Resolution (Multi-Provider Cascade)
+```python
+# /core/secrets/secret_provider.py - Cascades through providers until found
 from core.secrets.secret_provider import UnifiedSecretResolver
 
 secrets = UnifiedSecretResolver()
 api_key = await secrets.get_secret('SHOPIFY_API_KEY')
-# Cascades: ENV → GitHub → Cloudflare → External → Cache
+# Order: ENV vars → GitHub Actions secrets → Cloudflare bindings → AWS SSM → encrypted cache
 ```
 
-### React Module Architecture (Current Pattern)
+### Health Monitoring with Circuit Breakers
+```python
+# /core/health_service.py - Prevents cascade failures
+from core.health_service import HealthService
 
+health = HealthService()
+status = health.check_readiness()  # Tests optional dependencies (Shopify, BigQuery, GitHub)
+# Circuit states: CLOSED (ok) → OPEN (failing, requests blocked) → HALF_OPEN (testing recovery)
+```
+
+### React Lazy Module Loading
 ```typescript
-// /apps/command-center-ui/src/App.tsx - Lazy loading pattern
+// /apps/command-center-ui/src/App.tsx - Code splitting by module
 const AiraModule = lazy(() => import('./modules/aira/AiraModule'));
-const AgentsModule = lazy(() => import('./modules/agents/AgentsModule'));
-
-// Module registration with real routing
-const renderCurrentModule = () => {
-  switch (state.currentModule) {
-    case 'aira':
-      return <Suspense fallback={<Loading />}><AiraModule /></Suspense>;
-    case 'agents': 
-      return <Suspense fallback={<Loading />}><AgentsModule /></Suspense>;
-  }
-};
+<Suspense fallback={<LoadingSpinner />}>
+  <AiraModule />
+</Suspense>
+// Zustand stores: /stores/empireStore.ts, /stores/navigationStore.ts
 ```
 
-### Database & Persistence Patterns
+### Flask Blueprint Organization
 ```python
-# /royal_platform/database/ - SQLAlchemy models
-from royal_platform.database.models import Agent, Campaign, ProductOpportunity
+# /app/routes/ - Modular route blueprints
+from flask import Blueprint
+agents_bp = Blueprint('agents', __name__, url_prefix='/agents')
 
-# /app/services/ - Business logic services  
-from app.services.health_service import HealthService
-from app.services.agent_monitor import AgentMonitor
+@agents_bp.route('/status')
+def get_agents_status():
+    # All blueprints registered in /app/__init__.py
 ```
 
-### WebSocket Real-Time Updates
+## 🔌 Integration Patterns
+
+### E-commerce Platform Integrations
+- **Shopify** - `/royal_platform/` with GraphQL client (`/app/services/shopify_graphql_service.py`)
+- **AutoDS** - Dropshipping automation, product sourcing
+- **Spocket** - EU supplier integration for faster shipping
+- **BigQuery** - Analytics data warehouse (optional dependency, implemented)
+
+### External Service Communication
 ```python
-# /app/sockets.py - SocketIO integration with Flask
-from flask_socketio import SocketIO, emit
+# /orchestrator/integrations/ - API client wrappers
+# Real API calls with retry logic (tenacity), no mocks
+from tenacity import retry, stop_after_attempt, wait_exponential
 
-@socketio.on('agent_status_request')
-def handle_agent_status():
-    status = get_orchestrator().get_real_time_status()
-    emit('agent_status_update', status)
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+async def fetch_products():
+    # Real implementation with error handling
 ```
 
----
+## 🚀 Deployment & Production
 
-## 🔐 SECRET RESOLUTION SYSTEM (ALREADY IMPLEMENTED)
+### Docker Deployment
+- `Dockerfile` - Multi-stage build with Python 3.11, Gunicorn WSGI server
+- `docker-compose.yml` - Full stack (Flask, Redis, PostgreSQL, RabbitMQ)
+- Health checks integrated: `HEALTHCHECK CMD curl -f http://localhost:10000/healthz || exit 1`
 
-The project includes a sophisticated multi-provider secret resolution system in `/core/secrets/`:
+### Environment Configuration
+Required variables (see `.env.example`):
+```bash
+# Flask
+FLASK_ENV=production
+SECRET_KEY=<generated-secret>
+PORT=10000
 
-### Resolution Order
-1. **ENV** → Environment variables
-2. **GITHUB** → GitHub Actions secrets  
-3. **CLOUDFLARE** → Workers/Pages bindings
-4. **EXTERNAL** → AWS SSM/Vault (pluggable)
-5. **CACHE** → Encrypted in-memory cache
+# E-commerce
+SHOPIFY_STORE=your-store.myshopify.com
+SHOPIFY_ACCESS_TOKEN=<token>
+AUTO_DS_API_KEY=<key>
 
-### Usage Pattern
+# Optional
+BIGQUERY_PROJECT_ID=<project>
+SUPABASE_URL=<url>
+SUPABASE_ANON_KEY=<key>
+```
+
+### CI/CD (GitHub Actions)
+- `.github/workflows/` - Automated testing, building, security scans
+- CodeQL scanning for vulnerabilities
+- Automated Docker image builds on push to main
+
+## 💡 Project-Specific Conventions
+
+1. **Agent naming** - Use descriptive names like `ProductResearchAgent`, suffix with `Agent`
+2. **Async by default** - All agent methods are async (`async def _execute_task()`)
+3. **Error handling** - Raise exceptions in agents; orchestrator logs and continues
+4. **Health endpoints** - Plain text "ok" for `/healthz`, JSON with dependency status for `/readyz`
+5. **Blueprint prefixes** - All Flask routes use blueprints with URL prefixes (e.g., `/agents`, `/empire`)
+6. **Type hints encouraged** - Python 3.10+ type hints, but not strictly enforced (mypy runs on `royal_mcp/` only)
+7. **Testing markers** - Recommended: use pytest markers such as `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow` (adopt when adding or updating tests)
+
+### Testing Marker Examples
 ```python
-from core.secrets.secret_provider import UnifiedSecretResolver
+# tests/test_agents.py
+@pytest.mark.asyncio
+async def test_research_agent_initialization(self, research_agent):
+    assert research_agent.config.name == "product_research_agent"
+    assert research_agent.config.priority == AgentPriority.HIGH
+    assert len(research_agent.research_keywords) > 0
+    assert research_agent.trends_client is not None
 
-secrets = UnifiedSecretResolver()
-api_key = await secrets.get_secret('STRIPE_API_KEY')
-# Automatically handles fallbacks, caching, and encryption
+@pytest.mark.asyncio
+async def test_opportunity_scoring(self, research_agent):
+    mock_trends_data = {"smart home gadgets": {"interest_7d": 70, "trend_strength": 15, "volatility": 5}}
+    mock_social_data = {"smart home gadgets": {"social_score": 6, "mentions": 3}}
+    mock_competition_data = {"smart home gadgets": {"competition_score": 4, "avg_market_price": 50.0}}
+
+    opportunities = await research_agent._score_opportunities(
+        mock_trends_data, mock_social_data, mock_competition_data
+    )
+
+    assert isinstance(opportunities, list)
+    if opportunities:
+        assert "priority_score" in opportunities[0]
+        assert isinstance(opportunities[0]["profit_potential"], (int, float))
+
+def test_margin_calculation(self, pricing_agent):
+    selling_price = Decimal("100.00")
+    cost_price = Decimal("60.00")
+    margin = pricing_agent._calculate_margin_percent(selling_price, cost_price)
+    assert margin == 40.0
 ```
 
-### Security Features
-- **AES-256-GCM encryption** for cached secrets
-- **TTL expiration** for cache entries
-- **Metrics tracking** (resolution time, cache hits, fallback depth)
-- **Never logs secret values** - only hashed keys for debugging
+## 📚 Key Documentation Files
 
----
+- `docs/architecture.md` - Detailed system architecture, component interactions
+- `README.md` - Project overview, agent status, quick start
+- `AGENT_INSTRUCTIONS.md` - Comprehensive agent development blueprint (for reference)
+- `docs/copilot_prompt.md` - Original AI coding instructions (historical)
+- `Makefile` - All common development commands documented with `make help`
 
-## 🚀 ENTERPRISE AUTOSCALING & PERFORMANCE
+## 🔍 Debugging Tips
 
-### Production Scaling Patterns
-```python
-# /core/scaling/autoscaler.py - Production autoscaling logic
-from dataclasses import dataclass
-from typing import Dict, List
-import asyncio
+1. **Agent not running?** Check orchestrator logs in Flask console, verify agent registered in startup
+2. **Secret not found?** Verify cascading order: ENV > GitHub > Cloudflare. Check `/core/secrets/secret_provider.py` logs
+3. **Health endpoint failing?** Check circuit breaker states in `/core/health_service.py`, optional dependencies may be unavailable
+4. **React UI not loading?** Ensure Flask serves static files from `/app/static/`, check CORS settings in `/app/__init__.py`
+5. **Tests failing?** Run `make test` to see detailed output. Use `-v --tb=short` for pytest verbosity
 
-@dataclass
-class ScalingMetrics:
-    cpu_usage: float
-    memory_usage: float
-    request_queue_depth: int
-    response_latency_p95: float
-    active_connections: int
+### Agent-Specific Troubleshooting
+- **Agent stuck in loop?** Check `_execute_task()` returns within timeout (default 300s). Add logging to identify bottlenecks
+- **Memory leaks?** Verify async cleanup in `_agent_initialize()` counterpart. Close connections in `finally` blocks
+- **Rate limits hit?** Review retry logic and exponential backoff config in agent code. Adjust `tenacity` decorator parameters
+- **Agent status shows ERROR?** Check agent logs for exceptions. Orchestrator catches errors and continues with other agents
+- **Orchestrator not starting agents?** Verify agent registration in `/app/__init__.py:init_autonomous_empire()`. Check for import errors
 
-class AutoScaler:
-    def __init__(self, min_instances=2, max_instances=50):
-        self.min_instances = min_instances
-        self.max_instances = max_instances
-        self.current_instances = min_instances
-        
-    async def evaluate_scaling(self, metrics: ScalingMetrics) -> Dict[str, any]:
-        """Enterprise-grade scaling decisions based on real metrics."""
-        scale_up_conditions = (
-            metrics.cpu_usage > 0.75 or 
-            metrics.memory_usage > 0.8 or
-            metrics.request_queue_depth > 100 or
-            metrics.response_latency_p95 > 2000  # 2s
-        )
-        
-        scale_down_conditions = (
-            metrics.cpu_usage < 0.3 and 
-            metrics.memory_usage < 0.5 and
-            metrics.request_queue_depth < 10 and
-            metrics.response_latency_p95 < 500  # 500ms
-        )
-        
-        if scale_up_conditions and self.current_instances < self.max_instances:
-            new_count = min(self.current_instances * 2, self.max_instances)
-            return {"action": "scale_up", "target_instances": new_count}
-        elif scale_down_conditions and self.current_instances > self.min_instances:
-            new_count = max(self.current_instances // 2, self.min_instances)
-            return {"action": "scale_down", "target_instances": new_count}
-            
-        return {"action": "no_change", "target_instances": self.current_instances}
+## ⚠️ Common Pitfalls
+
+- **Don't import from `/apps/` in Python code** - TypeScript apps are separate, not Python modules
+- **Don't use `from app import app`** - Use app factory pattern, import from `app/__init__.py:create_app()`
+- **Don't skip agent initialization** - Always call `await agent.initialize()` before first run
+- **Don't hardcode secrets** - Always use `UnifiedSecretResolver` or environment variables
+- **Don't block event loop** - Use `asyncio.sleep()` not `time.sleep()` in async functions
+
+## 🗄️ Database Migrations
+
+The system uses **Alembic** for database schema migrations. While currently optional, the infrastructure is in place.
+
+### Migration Strategy
+- **Location**: `/alembic_migrations/` with `alembic.ini` configuration
+- **Template**: `/alembic_migrations/script.py.mako` for generating migration files
+- **Current State**: Alembic configured but migrations are optional (system primarily uses Supabase/external DBs)
+- **When to use**: If adding local PostgreSQL models or changing schema
+
+### Common Migration Commands
+```bash
+# Generate new migration
+alembic revision --autogenerate -m "Add new table"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback one migration
+alembic downgrade -1
+
+# View migration history
+alembic history
 ```
 
-### Circuit Breaker Implementation
-```python
-# /core/resilience/circuit_breaker.py - Production circuit breaker
-import time
-from enum import Enum
-from typing import Callable, Any
+**Note**: Most data storage uses external services (Supabase, BigQuery), so migrations are primarily for local/dev databases.
 
-class CircuitState(Enum):
-    CLOSED = "closed"
-    OPEN = "open" 
-    HALF_OPEN = "half_open"
+## 🔐 Local Development Secrets
 
-class CircuitBreaker:
-    def __init__(self, failure_threshold=5, recovery_timeout=60, expected_exception=Exception):
-        self.failure_threshold = failure_threshold
-        self.recovery_timeout = recovery_timeout
-        self.expected_exception = expected_exception
-        self.failure_count = 0
-        self.last_failure_time = None
-        self.state = CircuitState.CLOSED
-        
-    async def call(self, func: Callable, *args, **kwargs) -> Any:
-        if self.state == CircuitState.OPEN:
-            if time.time() - self.last_failure_time > self.recovery_timeout:
-                self.state = CircuitState.HALF_OPEN
-            else:
-                raise Exception("Circuit breaker is OPEN")
-                
-        try:
-            result = await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
-            self._on_success()
-            return result
-        except self.expected_exception as e:
-            self._on_failure()
-            raise e
-            
-    def _on_success(self):
-        self.failure_count = 0
-        self.state = CircuitState.CLOSED
-        
-    def _on_failure(self):
-        self.failure_count += 1
-        self.last_failure_time = time.time()
-        if self.failure_count >= self.failure_threshold:
-            self.state = CircuitState.OPEN
+### Bootstrapping Secrets Locally
+
+1. **Copy template**: `cp .env.example .env`
+2. **Add minimum required secrets**:
+   ```bash
+   # Minimal for local development
+   SECRET_KEY=dev-secret-key-$(openssl rand -hex 32)
+   FLASK_ENV=development
+   PORT=10000
+   
+   # Optional: Add e-commerce keys for full functionality
+   SHOPIFY_API_KEY=your-key
+   SHOPIFY_ACCESS_TOKEN=your-token
+   ```
+
+3. **React UI secrets**: Create `apps/command-center-ui/.env.local`:
+   ```bash
+   VITE_API_BASE_URL=http://localhost:10000
+   VITE_API_URL=http://localhost:10000
+   ```
+
+4. **Secret resolution order**: The system will cascade through:
+   - Environment variables (`.env` file)
+   - GitHub Actions secrets (CI/CD only)
+   - Cloudflare Workers bindings (production)
+   - Encrypted cache (fallback)
+
+### Development Without Secrets
+The system is designed to run with minimal secrets. Optional integrations gracefully degrade:
+- **Shopify**: Agent operations limited, but system starts
+- **OpenAI**: Customer support agent disabled
+- **BigQuery**: Analytics export disabled
+- **Sentry**: Error monitoring disabled (logged warnings only)
+
+## 🚀 React UI Build Process
+
+### Development Mode
+```bash
+cd apps/command-center-ui
+pnpm install
+pnpm run dev  # Vite dev server on port 5173
 ```
 
-### Performance Monitoring
-```typescript
-// /packages/obs/performance.ts - Production performance tracking
-interface PerformanceMetrics {
-  endpoint: string;
-  method: string;
-  statusCode: number;
-  duration: number;
-  timestamp: number;
-  userId?: string;
-  traceId: string;
-}
-
-class PerformanceMonitor {
-  private metrics: PerformanceMetrics[] = [];
-  private flushInterval = 30000; // 30s
-  
-  constructor(private metricsEndpoint: string) {
-    setInterval(() => this.flushMetrics(), this.flushInterval);
-  }
-  
-  trackRequest(req: any, res: any, duration: number): void {
-    const metric: PerformanceMetrics = {
-      endpoint: req.route?.path || req.url,
-      method: req.method,
-      statusCode: res.statusCode,
-      duration,
-      timestamp: Date.now(),
-      userId: req.user?.id,
-      traceId: req.headers['x-trace-id'] || crypto.randomUUID()
-    };
-    
-    this.metrics.push(metric);
-    
-    // Alert on performance degradation
-    if (duration > 5000) { // 5s threshold
-      this.sendAlert(`High latency detected: ${duration}ms for ${req.url}`);
-    }
-  }
-  
-  private async flushMetrics(): Promise<void> {
-    if (this.metrics.length === 0) return;
-    
-    try {
-      await fetch(this.metricsEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ metrics: this.metrics })
-      });
-      this.metrics = [];
-    } catch (error) {
-      console.error('Failed to flush metrics:', error);
-    }
-  }
-  
-  private sendAlert(message: string): void {
-    // Integration with PagerDuty, Slack, etc.
-    fetch('/api/alerts', {
-      method: 'POST',
-      body: JSON.stringify({ level: 'warning', message, timestamp: Date.now() })
-    });
-  }
-}
+### Production Build
+```bash
+cd apps/command-center-ui
+pnpm run build  # Outputs to dist/
 ```
 
----
+### Serving in Production
+- **Development**: Vite dev server (port 5173), separate from Flask
+- **Production**: Flask serves static files from `/app/static/` (built React assets copied here)
+- **Cloudflare Pages**: Can deploy React UI separately, pointing API_BASE_URL to Flask backend
 
-## DESIGN TOKENS (IMPLEMENTED)
+### Build Integration
+The React UI and Flask backend are **independent in development** but **integrated in production**:
+- Flask serves the built React app from static files
+- CORS configured in `/app/__init__.py` for cross-origin dev mode
+- WebSocket support via SocketIO for real-time updates
 
+## 🧪 Testing Strategy
+
+> ℹ️ **Mocking policy:** Critical Rule #1 still applies — production code must never rely on mock data. Automated test suites may introduce tightly scoped mocks or fixtures solely to isolate behavior while preserving real-data contracts.
+
+### Test Organization
 ```
-:root {
-  --color-bg: #020409;
-  --color-bg-alt: #070c14;
-  --color-surface: #0e1824;
-  --color-accent-cyan: #05f4ff;
-  --color-accent-magenta: #ff1fbf;
-  --color-accent-green: #21ff7a;
-  --color-text-primary: #d6ecff;
-  --color-text-dim: #7ba0b8;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-pill: 999px;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --transition-fast: 120ms cubic-bezier(.4,.0,.2,1);
-  --transition-med: 240ms cubic-bezier(.4,.0,.2,1);
-}
+tests/
+├── unit/           # Fast, isolated tests (mock external dependencies)
+├── integration/    # Tests with real API calls (optional dependencies)
+├── e2e/            # End-to-end browser tests
+└── python/         # Python-specific tests
 ```
 
----
+### Testing with External APIs
+- **No VCR.py currently**: Tests use real API calls or tightly controlled mocks via `unittest.mock`
+- **Integration tests**: Marked with `@pytest.mark.integration`, require real API keys
+- **CI/CD**: Integration tests skipped in CI unless secrets available
+- **Recommendation**: Add VCR.py/pytest-vcr for recording HTTP interactions in future
 
-## 📋 AGENT ECOSYSTEM (PRODUCTION READY)
+### Running Tests
+```bash
+# All tests
+make test
 
-The system includes multiple operational agents:
+# Unit tests only
+pytest tests/unit -v
 
-### Core Agents (`/orchestrator/agents/`)
-- **ProductResearchAgent**: News scraping, trend discovery (AutoDS, Spocket)
-- **InventoryForecastingAgent**: Demand prediction with Prophet + Shopify
-- **PricingOptimizerAgent**: Competitor analysis, dynamic pricing
-- **MarketingAutomationAgent**: Email campaigns, content generation
-- **OrderFulfillmentAgent**: Risk assessment, supplier routing
+# Integration tests (requires API keys)
+pytest tests/integration -v -m integration
 
-### Agent Architecture
-```python
-# Base pattern used throughout (see /orchestrator/core/agent_base.py)
-from orchestrator.core.agent_base import AgentBase
+# Skip slow tests
+pytest -v -m "not slow"
 
-class MyAgent(AgentBase):
-    async def run(self) -> Dict[str, Any]:
-        # Real business logic here
-        pass
+# With coverage
+make coverage
 ```
+
+## 📊 Monitoring & Observability
+
+### Sentry Error Tracking
+- **Backend DSN**: Configured via `SENTRY_DSN` environment variable
+- **Frontend DSN**: `VITE_SENTRY_DSN` in React UI
+- **Setup Guide**: See `SENTRY_INTEGRATION.md` for complete instructions
+- **Features**: Error tracking, performance monitoring, user session replay
 
 ### Health Monitoring
-All agents report health via `/api/agents/status` with:
-- Success rates, error counts, last execution time
-- Circuit breaker status for external APIs
-- Performance metrics and resource usage
+- **Endpoints**: `/healthz` (liveness), `/readyz` (readiness), `/metrics` (Prometheus)
+- **Circuit Breakers**: Automatic failure detection and recovery
+- **Dashboard**: Recommend Datadog, Grafana, or Sentry for production monitoring
 
----
+### Logging
+- **Level**: Controlled via `LOG_LEVEL` environment variable (default: INFO)
+- **Format**: Structured JSON logs in production
+- **Locations**: Console output (dev), file logs (production)
 
-## 🔧 DETAILED SECRET SYSTEM REFERENCE
+### Production Monitoring Checklist
+- [ ] Sentry configured for error tracking
+- [ ] Health endpoints monitored (uptime checks)
+- [ ] Log aggregation (CloudWatch, Datadog, or ELK stack)
+- [ ] Metrics dashboard (Prometheus + Grafana recommended)
+- [ ] Alert rules configured (PagerDuty, Slack integration)
 
-### TypeScript Implementation (For Future TS Services)
-import crypto from 'crypto';
+## 📖 Common Agent Recipes
 
-export type SecretKey = string;
+### Recipe 1: Creating a New Agent
+```python
+# /royal_platform/agents/inventory_pricing_agent.py
+class InventoryPricingAgent(BaseAgent):
+    def __init__(self) -> None:
+        config = AgentConfig(
+            name="inventory_pricing_agent",
+            priority=AgentPriority.HIGH,
+            max_execution_time=2400,
+            retry_count=3,
+            max_runs_per_hour=6,
+            max_runs_per_day=100,
+        )
+        super().__init__(config)
 
-export interface SecretResult {
-  key: SecretKey;
-  value: string;
-  source: SecretSource;
-  fetchedAt: number;
-  ttl?: number;
-}
-
-export enum SecretSource {
-  ENV = 'env',
-  GITHUB = 'github-actions-env',
-  CLOUDFLARE = 'cloudflare',
-  EXTERNAL = 'external-vault',
-  CACHE = 'cache'
-}
-
-export class SecretNotFoundError extends Error {
-  constructor(public key: string) {
-    super(`Secret '${key}' not found in any provider`);
-    this.name = 'SecretNotFoundError';
-  }
-}
-
-interface SecretProvider {
-  get(key: SecretKey): Promise<SecretResult | null>;
-  name: string;
-}
-
-class EnvProvider implements SecretProvider {
-  name = 'EnvProvider';
-  async get(key: string): Promise<SecretResult | null> {
-    const v = process.env[key];
-    if (!v) return null;
-    return { key, value: v, source: SecretSource.ENV, fetchedAt: Date.now() };
-  }
-}
-
-// Production Cloudflare Workers/Pages provider
-class CloudflareProvider implements SecretProvider {
-  name = 'CloudflareProvider';
-  constructor(private bindings?: Record<string, string>) {}
-  async get(key: string): Promise<SecretResult | null> {
-    const v = this.bindings?.[key] || globalThis.ENV?.[key];
-    if (!v) return null;
-    return { key, value: v, source: SecretSource.CLOUDFLARE, fetchedAt: Date.now() };
-  }
-}
-
-// Enterprise vault integration - AWS SSM Parameter Store
-class ExternalVaultProvider implements SecretProvider {
-  name = 'ExternalVaultProvider';
-  private ssmClient?: any;
-  
-  constructor() {
-    // Only initialize AWS SDK if credentials are available
-    if (process.env.AWS_REGION && process.env.AWS_ACCESS_KEY_ID) {
-      try {
-        const { SSMClient } = require('@aws-sdk/client-ssm');
-        this.ssmClient = new SSMClient({ region: process.env.AWS_REGION });
-      } catch (e) {
-        // AWS SDK not available in this environment
-      }
-    }
-  }
-  
-  async get(key: string): Promise<SecretResult | null> {
-    if (!this.ssmClient) return null;
-    
-    try {
-      const { GetParameterCommand } = require('@aws-sdk/client-ssm');
-      const command = new GetParameterCommand({
-        Name: `/royal-equips/${key}`,
-        WithDecryption: true
-      });
-      const result = await this.ssmClient.send(command);
-      
-      if (result.Parameter?.Value) {
-        return {
-          key,
-          value: result.Parameter.Value,
-          source: SecretSource.EXTERNAL,
-          fetchedAt: Date.now()
-        };
-      }
-    } catch (error) {
-      // Parameter not found or access denied
-    }
-    
-    return null;
-  }
-}
-
-interface CacheEntry {
-  cipher: string;
-  iv: string;
-  source: SecretSource;
-  ts: number;
-  ttl?: number;
-}
-
-export interface UnifiedSecretOptions {
-  cacheTTLms?: number;
-  encryptionKey?: string; // 32 bytes base64
-  metrics?: {
-    onResolve?(key: string, source: SecretSource, depth: number, ms: number): void;
-    onMiss?(key: string): void;
-  };
-}
-
-export class UnifiedSecretResolver {
-  private providers: SecretProvider[] = [];
-  private cache = new Map<string, CacheEntry>();
-  private encKey: Buffer;
-  constructor(private opts: UnifiedSecretOptions = {}) {
-    this.encKey = Buffer.from(
-      opts.encryptionKey ??
-        crypto.createHash('sha256').update('royal-equips-secret-key').digest('hex').slice(0, 32),
-      'utf-8'
-    );
-    this.providers = [
-      new EnvProvider(),
-      new CloudflareProvider(globalThis.ENV),
-      new ExternalVaultProvider()
-    ];
-  }
-
-  registerProvider(provider: SecretProvider, priority = this.providers.length) {
-    this.providers.splice(priority, 0, provider);
-  }
-
-  private encrypt(plain: string): { cipher: string; iv: string } {
-    const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv('aes-256-gcm', this.encKey, iv);
-    const enc = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
-    const tag = cipher.getAuthTag();
-    return { cipher: Buffer.concat([enc, tag]).toString('base64'), iv: iv.toString('base64') };
-  }
-
-  private decrypt(entry: CacheEntry): string {
-    const raw = Buffer.from(entry.cipher, 'base64');
-    const tag = raw.slice(raw.length - 16);
-    const data = raw.slice(0, raw.length - 16);
-    const decipher = crypto.createDecipheriv(
-      'aes-256-gcm',
-      this.encKey,
-      Buffer.from(entry.iv, 'base64')
-    );
-    decipher.setAuthTag(tag);
-    const dec = Buffer.concat([decipher.update(data), decipher.final()]);
-    return dec.toString('utf8');
-  }
-
-  private isExpired(entry: CacheEntry): boolean {
-    if (!entry.ttl) return false;
-    return Date.now() - entry.ts > entry.ttl;
-  }
-
-  async getSecret(key: SecretKey, explicitTTLms?: number): Promise<SecretResult> {
-    const cached = this.cache.get(key);
-    if (cached && !this.isExpired(cached)) {
-      const start = performance.now();
-      const value = this.decrypt(cached);
-      this.opts.metrics?.onResolve?.(key, SecretSource.CACHE, 0, performance.now() - start);
-      return {
-        key,
-        value,
-        source: SecretSource.CACHE,
-        fetchedAt: cached.ts,
-        ttl: cached.ttl
-      };
-    }
-
-    const start = performance.now();
-    for (let i = 0; i < this.providers.length; i++) {
-      const provider = this.providers[i];
-      const res = await provider.get(key);
-      if (res) {
-        const ttl = explicitTTLms ?? this.opts.cacheTTLms ?? 5 * 60_000;
-        const { cipher, iv } = this.encrypt(res.value);
-        this.cache.set(key, {
-          cipher,
-            iv,
-            source: res.source,
-            ts: Date.now(),
-            ttl
-        });
-        this.opts.metrics?.onResolve?.(key, res.source, i + 1, performance.now() - start);
-        return { ...res, ttl };
-      }
-    }
-
-    this.opts.metrics?.onMiss?.(key);
-    throw new SecretNotFoundError(key);
-  }
-}
-```
-
-### Python Variant
-
-```python name=core/secrets/secret_provider.py
-from __future__ import annotations
-import os, time, base64, secrets
-from typing import Optional, Dict, List, Protocol
-from dataclasses import dataclass
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # Ensure dependency audit
-
-class SecretNotFoundError(Exception):
-    pass
-
-@dataclass
-class SecretResult:
-    key: str
-    value: str
-    source: str
-    fetched_at: float
-    ttl: Optional[int] = None
-
-class SecretProvider(Protocol):
-    name: str
-    async def get(self, key: str) -> Optional[SecretResult]:
-        ...
-
-class EnvProvider:
-    name = "EnvProvider"
-    async def get(self, key: str) -> Optional[SecretResult]:
-        v = os.getenv(key)
-        if not v:
-            return None
-        return SecretResult(key=key, value=v, source="env", fetched_at=time.time())
-
-class CloudflareProvider:
-    name = "CloudflareProvider"
-    def __init__(self, bindings: Optional[Dict[str, str]] = None):
-        self.bindings = bindings or {}
-    async def get(self, key: str) -> Optional[SecretResult]:
-        v = self.bindings.get(key)
-        if not v:
-            return None
-        return SecretResult(key=key, value=v, source="cloudflare", fetched_at=time.time())
-
-class ExternalVaultProvider:
-    name = "ExternalVaultProvider"
-    
-    def __init__(self):
-        self.ssm_client = None
-        if os.getenv("AWS_REGION") and os.getenv("AWS_ACCESS_KEY_ID"):
-            try:
-                import boto3
-                self.ssm_client = boto3.client('ssm', region_name=os.getenv("AWS_REGION"))
-            except ImportError:
-                pass  # AWS SDK not available
-    
-    async def get(self, key: str) -> Optional[SecretResult]:
-        if not self.ssm_client:
-            return None
-        
-        try:
-            response = self.ssm_client.get_parameter(
-                Name=f"/royal-equips/{key}",
-                WithDecryption=True
-            )
-            return SecretResult(
-                key=key,
-                value=response['Parameter']['Value'],
-                source="external",
-                fetched_at=time.time()
-            )
-        except Exception:
-            # Parameter not found or access denied
-            return None
-
-class UnifiedSecretResolver:
-    def __init__(
-        self,
-        providers: Optional[List[SecretProvider]] = None,
-        cache_ttl: int = 300,
-        encryption_key: Optional[bytes] = None,
-        metrics=None
-    ):
-        self.providers = providers or [
-            EnvProvider(),
-            CloudflareProvider(),
-            ExternalVaultProvider()
-        ]
-        self.cache_ttl = cache_ttl
-        self.metrics = metrics
-        self.cache: Dict[str, Dict] = {}
-        self.key = encryption_key or self._derive_key()
-
-    def _derive_key(self) -> bytes:
-        seed = os.getenv("SECRET_ENCRYPTION_KEY") or "royal_equips_default_key"
-        # Derive 32 bytes deterministically (NOT cryptographically ideal—replace with HKDF in prod)
-        h = seed.encode("utf-8")[:32].ljust(32, b"0")
-        return h
-
-    def _encrypt(self, plaintext: str) -> Dict[str, str]:
-        aes = AESGCM(self.key)
-        nonce = secrets.token_bytes(12)
-        ct = aes.encrypt(nonce, plaintext.encode(), None)
-        return {
-            "nonce": base64.b64encode(nonce).decode(),
-            "cipher": base64.b64encode(ct).decode()
+        self.pricing_config = {
+            "min_margin_percent": 25,
+            "target_margin_percent": 40,
+            "max_price_increase_percent": 15,
+            "max_price_decrease_percent": 20,
+            "low_stock_threshold": 10,
+            "overstock_threshold": 100,
+            "price_elasticity_factor": 0.3,
+        }
+        self.inventory_config = {
+            "reorder_point_days": 14,
+            "safety_stock_days": 7,
+            "max_stock_days": 90,
+            "lead_time_days": 21,
+            "seasonal_factor": 1.2,
         }
 
-    def _decrypt(self, enc: Dict[str, str]) -> str:
-        aes = AESGCM(self.key)
-        nonce = base64.b64decode(enc["nonce"])
-        ct = base64.b64decode(enc["cipher"])
-        pt = aes.decrypt(nonce, ct, None)
-        return pt.decode()
+    async def execute(self) -> AgentResult:
+        self.logger.info("Starting inventory and pricing optimization cycle")
 
-    def _expired(self, entry: Dict) -> bool:
-        ttl = entry.get("ttl")
-        if ttl is None:
-            return False
-        return (time.time() - entry["ts"]) > ttl
+        shopify_client = ShopifyClient()
+        inventory_analysis = await self._analyze_inventory_levels(shopify_client)
+        demand_patterns = await self._calculate_demand_patterns()
+        pricing_updates = await self._optimize_pricing(
+            shopify_client, inventory_analysis, demand_patterns
+        )
+        inventory_recommendations = await self._generate_inventory_recommendations(
+            inventory_analysis, demand_patterns
+        )
+        research_processed = await self._process_research_opportunities(shopify_client)
+        changes_applied = await self._apply_changes(shopify_client, pricing_updates)
+        await shopify_client.close()
 
-    async def get_secret(self, key: str, ttl: Optional[int] = None) -> SecretResult:
-        cached = self.cache.get(key)
-        if cached and not self._expired(cached):
-            if self.metrics:
-                self.metrics.on_resolve(key, "cache")
-            value = self._decrypt(cached["data"])
-            return SecretResult(
-                key=key,
-                value=value,
-                source="cache",
-                fetched_at=cached["ts"],
-                ttl=cached["ttl"]
-            )
-
-        start = time.time()
-        for depth, provider in enumerate(self.providers, start=1):
-            res = await provider.get(key)
-            if res:
-                effective_ttl = ttl or self.cache_ttl
-                enc = self._encrypt(res.value)
-                self.cache[key] = {
-                    "data": enc,
-                    "ttl": effective_ttl,
-                    "source": res.source,
-                    "ts": time.time()
-                }
-                if self.metrics:
-                    self.metrics.on_resolve(key, res.source, depth=depth, duration=time.time() - start)
-                return res
-        if self.metrics:
-            self.metrics.on_miss(key)
-        raise SecretNotFoundError(f"Secret {key} not found")
-```
-
-### Usage Pattern
-
-```typescript
-const secrets = new UnifiedSecretResolver({
-  cacheTTLms: 180000,
-  metrics: {
-    onResolve: (k, src, depth, ms) =>
-      console.log(JSON.stringify({ level: 'info', event: 'secret_resolve', key: k, source: src, depth, ms })),
-    onMiss: (k) =>
-      console.warn(JSON.stringify({ level: 'warn', event: 'secret_miss', key: k }))
-  }
-});
-const stripeKey = await secrets.getSecret('STRIPE_API_KEY');
-```
-
-
-
----
-
-## DESIGN TOKENS (IMPLEMENTED)
-
-```
-:root {
-  --color-bg: #020409;
-  --color-bg-alt: #070c14;
-  --color-surface: #0e1824;
-  --color-accent-cyan: #05f4ff;
-  --color-accent-magenta: #ff1fbf;
-  --color-accent-green: #21ff7a;
-  --color-text-primary: #d6ecff;
-  --color-text-dim: #7ba0b8;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-pill: 999px;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --transition-fast: 120ms cubic-bezier(.4,.0,.2,1);
-  --transition-med: 240ms cubic-bezier(.4,.0,.2,1);
-}
-```
-
----
-
-## 💡 ENTERPRISE DEVELOPMENT PATTERNS
-
-### Production File Organization
-- **TypeScript**: Strict mode, ESLint enterprise rules, path mapping via tsconfig
-- **Python**: Type hints mandatory, black formatting, ruff linting
-- **Shared Types**: `/packages/shared-types/` - versioned, exported via package.json
-- **API Routes**: Blueprint/router pattern with middleware chains
-
-### Database Connection Pooling
-```python
-# /core/database/pool.py - Production connection management
-from sqlalchemy.pool import QueuePool
-from sqlalchemy import create_engine
-
-class DatabasePool:
-    def __init__(self, database_url: str, max_connections: int = 20):
-        self.engine = create_engine(
-            database_url,
-            poolclass=QueuePool,
-            pool_size=10,
-            max_overflow=max_connections - 10,
-            pool_pre_ping=True,  # Validates connections
-            pool_recycle=3600,   # 1 hour connection lifetime
-            echo=False           # No SQL logging in production
+        return AgentResult(
+            success=True,
+            actions_taken=5 + changes_applied,
+            items_processed=len(pricing_updates) + research_processed,
+            metadata={
+                "pricing_updates": len(pricing_updates),
+                "inventory_recommendations": len(inventory_recommendations),
+                "research_opportunities_processed": research_processed,
+                "changes_applied": changes_applied,
+                "analysis_timestamp": datetime.now().isoformat(),
+            },
         )
 ```
 
-### Rate Limiting Implementation
-```typescript
-// /packages/security/rate-limiter.ts - Production rate limiting
-import Redis from 'ioredis';
-
-interface RateLimitConfig {
-  windowMs: number;
-  maxRequests: number;
-  keyGenerator: (req: any) => string;
-}
-
-class RateLimiter {
-  constructor(private redis: Redis, private config: RateLimitConfig) {}
-  
-  async checkLimit(req: any): Promise<{ allowed: boolean; resetTime: number }> {
-    const key = this.config.keyGenerator(req);
-    const window = Math.floor(Date.now() / this.config.windowMs);
-    const redisKey = `rate_limit:${key}:${window}`;
-    
-    const current = await this.redis.incr(redisKey);
-    await this.redis.expire(redisKey, Math.ceil(this.config.windowMs / 1000));
-    
-    return {
-      allowed: current <= this.config.maxRequests,
-      resetTime: (window + 1) * this.config.windowMs
-    };
-  }
-}
+### Recipe 2: Adding External API Integration
+```python
+# /royal_platform/agents/product_research_agent.py
+async def _scrape_tiktok_trends(self) -> list[str]:
+    trends: list[str] = []
+    try:
+        response = await self.http_client.get(
+            "https://www.tiktok.com/trending",
+            follow_redirects=True,
+        )
+        if response.status_code == 200:
+            content = response.text
+            hashtag_pattern = r'#(\w+)'
+            hashtags = re.findall(hashtag_pattern, content, re.IGNORECASE)
+            product_keywords = ["gadget", "product", "tool", "device", "accessory", "musthave", "amazonfinds"]
+            relevant_hashtags = [
+                hashtag
+                for hashtag in hashtags[:50]
+                if any(keyword in hashtag.lower() for keyword in product_keywords)
+            ]
+            trends.extend(relevant_hashtags[:10])
+        await asyncio.sleep(3)  # Respect rate limits
+    except Exception as exc:
+        self.logger.warning(f"TikTok trends scraping failed: {exc}")
+    return trends
 ```
 
-### Cache Strategy
+### Recipe 3: Scheduled Agent Task
 ```python
-# /core/cache/redis_cache.py - Production caching layer
-import redis.asyncio as redis
-import pickle
-from typing import Any, Optional
-import logging
+# /royal_platform/core/agent_base.py
+async def _check_rate_limits(self) -> bool:
+    try:
+        with get_db_session() as session:
+            now = datetime.now()
+            hourly_runs = session.query(AgentRun).filter(
+                AgentRun.agent_name == self.config.name,
+                AgentRun.started_at >= now - timedelta(hours=1),
+            ).count()
+            if hourly_runs >= self.config.max_runs_per_hour:
+                self.logger.warning(
+                    f"Agent {self.config.name} exceeded hourly rate limit"
+                )
+                return False
 
-class RedisCache:
-    def __init__(self, redis_url: str):
-        self.redis = redis.from_url(redis_url, decode_responses=False)
-        self.logger = logging.getLogger(__name__)
-    
-    async def get(self, key: str) -> Optional[Any]:
-        try:
-            data = await self.redis.get(f"cache:{key}")
-            return pickle.loads(data) if data else None
-        except Exception as e:
-            self.logger.error(f"Cache get failed for {key}: {e}")
-            return None
-    
-    async def set(self, key: str, value: Any, ttl: int = 300) -> bool:
-        try:
-            data = pickle.dumps(value)
-            await self.redis.setex(f"cache:{key}", ttl, data)
+            daily_runs = session.query(AgentRun).filter(
+                AgentRun.agent_name == self.config.name,
+                AgentRun.started_at >= now - timedelta(days=1),
+            ).count()
+            if daily_runs >= self.config.max_runs_per_day:
+                self.logger.warning(
+                    f"Agent {self.config.name} exceeded daily rate limit"
+                )
+                return False
+
             return True
-        except Exception as e:
-            self.logger.error(f"Cache set failed for {key}: {e}")
-            return False
-    
-    async def invalidate_pattern(self, pattern: str) -> int:
-        """Invalidate all keys matching pattern for cache busting."""
-        keys = await self.redis.keys(f"cache:{pattern}")
-        return await self.redis.delete(*keys) if keys else 0
+    except Exception as exc:
+        self.logger.error(f"Error checking rate limits: {exc}")
+        return True  # Fail open to avoid blocking critical agents
 ```
 
-## 🔍 PRODUCTION OBSERVABILITY & DEBUGGING
-
-### Distributed Tracing
+### Recipe 4: Agent with Health Check
 ```python
-# /core/tracing/opentelemetry.py - Production tracing
-from opentelemetry import trace
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-def setup_tracing():
-    trace.set_tracer_provider(TracerProvider())
-    tracer = trace.get_tracer(__name__)
-    
-    jaeger_exporter = JaegerExporter(
-        agent_host_name="localhost",
-        agent_port=6831,
-    )
-    
-    span_processor = BatchSpanProcessor(jaeger_exporter)
-    trace.get_tracer_provider().add_span_processor(span_processor)
-    return tracer
-
-# Usage in business logic
-@trace_calls
-async def process_order(order_id: str):
-    with tracer.start_as_current_span("process_order") as span:
-        span.set_attribute("order.id", order_id)
-        # Business logic here
+# /royal_platform/agents/product_research_agent.py
+def get_health_status(self) -> dict[str, Any]:
+    try:
+        with get_db_session() as session:
+            recent_research = (
+                session.query(ResearchHistory)
+                .filter(ResearchHistory.researched_at >= datetime.now() - timedelta(hours=24))
+                .count()
+            )
+            api_health = {
+                "google_trends": True,
+                "http_client": self.http_client is not None,
+                "database": recent_research is not None,
+            }
+            return {
+                "agent_name": self.config.name,
+                "status": "healthy" if all(api_health.values()) else "degraded",
+                "last_24h_research_count": recent_research,
+                "api_health": api_health,
+                "research_keywords_count": len(self.research_keywords),
+                "last_check": datetime.now().isoformat(),
+            }
+    except Exception as exc:
+        return {
+            "agent_name": self.config.name,
+            "status": "error",
+            "error": str(exc),
+            "last_check": datetime.now().isoformat(),
+        }
 ```
 
-### Health Check Matrix
-```bash
-# Production health verification commands
-curl -f http://localhost:10000/healthz || exit 1    # Flask liveness
-curl -f http://localhost:3001/readyz || exit 1      # AIRA readiness  
-curl -f http://localhost:3002/metrics || exit 1     # Metrics endpoint
+## ⚡ Performance Tuning
 
-# Database connectivity validation
-python -c "from app import db; db.engine.connect()" || exit 1
+### Agent Performance
+- **Async operations**: Always use `async/await` for I/O operations
+- **Connection pooling**: Reuse HTTP clients (initialize in `_agent_initialize()`)
+- **Batch operations**: Process items in batches rather than one-by-one
+- **Caching**: Use Redis for frequently accessed data (see agents with `redis_cache`)
 
-# Redis connectivity check
-redis-cli ping | grep PONG || exit 1
-```
-
-### Log Aggregation
+### Example: Optimized Data Processing
 ```python
-# /core/logging/structured.py - Enterprise logging
-import structlog
-import logging.config
+# /royal_platform/agents/inventory_pricing_agent.py
+for item in inventory_analysis["overstock_items"]:
+    variant_id = item["variant_id"]
+    current_price = Decimal(str(item["price"]))
+    demand_pattern = demand_patterns.get(variant_id)
+    if not demand_pattern:
+        continue
 
-def setup_logging():
-    structlog.configure(
-        processors=[
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer()
-        ],
-        context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
-
-# Usage
-logger = structlog.get_logger()
-logger.info("Order processed", order_id="12345", amount=99.99, user_id="user_123")
+    avg_daily_demand = demand_pattern["avg_daily_demand"]
+    stock_level = item["stock_level"]
+    if avg_daily_demand > 0:
+        days_remaining = stock_level / avg_daily_demand
+        if days_remaining > self.inventory_config["max_stock_days"]:
+            overstock_factor = min(
+                (days_remaining - self.inventory_config["max_stock_days"])
+                / self.inventory_config["max_stock_days"],
+                1.0,
+            )
+            price_decrease_percent = min(
+                overstock_factor * self.pricing_config["max_price_decrease_percent"],
+                self.pricing_config["max_price_decrease_percent"],
+            )
+            new_price = current_price * (1 - price_decrease_percent / 100)
+            if self._calculate_margin_percent(
+                new_price, current_price * Decimal("0.6")
+            ) >= self.pricing_config["min_margin_percent"]:
+                pricing_updates.append(
+                    {
+                        "product_id": item["product_id"],
+                        "variant_id": variant_id,
+                        "sku": item["sku"],
+                        "title": item["title"],
+                        "current_price": float(current_price),
+                        "new_price": float(new_price),
+                        "price_change_percent": -price_decrease_percent,
+                        "reason": "overstock_slow_demand",
+                        "stock_level": stock_level,
+                        "days_remaining": days_remaining,
+                        "approved": True,
+                    }
+                )
 ```
 
-## 🚀 PRODUCTION DEPLOYMENT STANDARDS
+### Flask Performance
+- **Production server**: Use Gunicorn with multiple workers (`gunicorn -w 4`)
+- **Worker count**: `2-4 × CPU_cores` for I/O-bound workloads
+- **Timeouts**: Set appropriate timeouts for long-running operations
+- **Static files**: Use CDN (Cloudflare) for static assets in production
 
-### Container Orchestration
-```dockerfile
-# /Dockerfile - Production container definition
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+### React UI Performance
+- **Code splitting**: Already implemented via lazy module loading
+- **Bundle size**: Monitor with `pnpm run build` (target <1.5MB compressed)
+- **Lazy loading**: Load components on-demand (see `App.tsx`)
+- **Caching**: API responses cached in Zustand stores
 
-FROM python:3.11-slim AS runtime
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
-    && rm -rf /var/lib/apt/lists/*
+### Database Performance
+- **Connection pooling**: SQLAlchemy pooling enabled by default
+- **Indexes**: Add indexes for frequently queried columns
+- **Query optimization**: Use `select` over `query().all()` for large datasets
+- **BigQuery**: Partition tables by date for analytics queries
 
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+### Monitoring Performance
+- **Sentry traces**: Sample rate controlled by `SENTRY_TRACES_SAMPLE_RATE`
+- **Health metrics**: `/metrics` endpoint exposes Prometheus metrics
+- **Agent metrics**: Performance tracking built into `AgentBase`
 
-COPY . .
-COPY --from=builder /app/node_modules ./node_modules
+## 🎯 Where to Start as an AI Agent
 
-EXPOSE 10000
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:10000/healthz || exit 1
+**Follow the Quick Start Checklist above** for a structured onboarding. For quick reference:
 
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:10000", "--access-logfile", "-", "wsgi:app"]
-```
+1. **Understand agent pattern**: Read `/orchestrator/core/agent_base.py` and one example in `/orchestrator/agents/`
+2. **Set up environment**: Run `make setup` then `python wsgi.py` to verify Flask starts
+3. **Explore Flask routes**: Check `/app/routes/` to see API endpoints, understand blueprint pattern
+4. **Review health system**: Look at `/core/health_service.py` to understand circuit breakers
+5. **Check existing agents**: See `/orchestrator/agents/product_research.py` for real integration example
+6. **Review common recipes**: See "Common Agent Recipes" section above for practical patterns
 
-### Infrastructure as Code
-```yaml
-# /infra/k8s/deployment.yaml - Kubernetes production deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: royal-equips-orchestrator
-  labels:
-    app: royal-equips
-    tier: orchestrator
-spec:
-  replicas: 3
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 2
-  selector:
-    matchLabels:
-      app: royal-equips
-  template:
-    spec:
-      containers:
-      - name: orchestrator
-        image: royal-equips/orchestrator:latest
-        ports:
-        - containerPort: 10000
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 10000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 10000
-          initialDelaySeconds: 15
-          periodSeconds: 5
-```
+### Additional Learning Resources
+- **Agent development blueprint**: `AGENT_INSTRUCTIONS.md` - comprehensive guide to agent architecture
+- **System architecture**: `docs/architecture.md` - detailed component interactions
+- **API documentation**: Start Flask server and visit `/docs` for Swagger UI
+- **Sentry monitoring**: `SENTRY_INTEGRATION.md` - error tracking setup
 
-## 🎯 WHEN TO USE WHICH SERVICE
-
-### Flask Orchestrator (`/app/`) - Use For:
-- Agent coordination and health monitoring
-- WebSocket real-time updates  
-- Command center SPA serving
-- Core business logic integration
-
-### AIRA Service (`/apps/aira/`) - Use For:  
-- AI agent coordination
-- Natural language processing
-- Complex decision making
-- Cross-domain orchestration
-
-### FastAPI Services (`/apps/api/`, `/apps/orchestrator-api/`) - Use For:
-- High-performance API endpoints
-- OpenAPI/Swagger documentation  
-- Async request handling
-- External integrations
-
-### React UI (`/apps/command-center-ui/`) - Use For:
-- Dashboard and visualization
-- Real-time monitoring interfaces  
-- Mobile-responsive admin panels
-- Progressive web app features
-
-Remember: This is a **production revenue-generating system** - treat every change as if it impacts real business operations.
-
----
-
-## 🏆 ENTERPRISE EXECUTION PRINCIPLES
-
-### Code Quality Standards
-- **Zero Placeholders**: All implementations must use real business logic and data
-- **Type Safety**: TypeScript strict mode, Python type hints mandatory
-- **Performance**: Sub-2s load times, autoscaling based on real metrics
-- **Security**: Secret management, circuit breakers, rate limiting
-- **Observability**: Structured logging, distributed tracing, health monitoring
-
-### Production Readiness Checklist
-- ✅ Health endpoints (`/healthz`, `/readyz`, `/metrics`)
-- ✅ Circuit breaker patterns for external APIs
-- ✅ Secret resolution with encryption and caching
-- ✅ Horizontal pod autoscaling configuration
-- ✅ Database connection pooling
-- ✅ Redis caching layer
-- ✅ Performance monitoring and alerting
-- ✅ Structured logging with correlation IDs
-
-### Development Workflow
-1. **Understand**: Review this guide and actual codebase structure
-2. **Implement**: Use real APIs, real data, real business logic  
-3. **Validate**: Type checking, linting, testing, security scans
-4. **Deploy**: Production-ready containers with health checks
-5. **Monitor**: Metrics, logs, alerts, performance tracking
-
-**NEVER** implement theoretical or placeholder code. This system generates real revenue and serves real customers.
+Remember: This is a **production system generating real revenue**. All changes must use real APIs, no mock data.

@@ -696,7 +696,7 @@ class EmpireAutoHealer:
             'vulnerability': vulnerability,
             'success': False,
             'fix_applied': None,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         
         try:

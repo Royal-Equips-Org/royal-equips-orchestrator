@@ -88,13 +88,17 @@ export class ProductResearchAgent extends BaseAgent {
     const startTime = Date.now();
     
     try {
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'dry_run_started',
+        planId: plan.id,
+        agentId: this.config.id
+      }, 'Starting product research dry run');
       
-      // Simulate finding trending products
-      const mockProducts = await this.simulateTrendingProducts(plan.parameters);
+      // Find trending products using real APIs
+      const trendingProducts = await this.findTrendingProducts(plan.parameters);
       
       // Validate products meet criteria
-      const validProducts = this.validateProductCriteria(mockProducts, plan.parameters);
+      const validProducts = this.validateProductCriteria(trendingProducts, plan.parameters);
       
       return {
         planId: plan.id,
@@ -114,7 +118,12 @@ export class ProductResearchAgent extends BaseAgent {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.log("TODO: logging");
+      this.logger.error({
+        event: 'dry_run_failed',
+        planId: plan.id,
+        error: error instanceof Error ? error.message : String(error)
+      }, 'Dry run execution failed');
+      
       return {
         planId: plan.id,
         status: 'error',
@@ -136,19 +145,44 @@ export class ProductResearchAgent extends BaseAgent {
     const createdProducts = [];
     
     try {
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'apply_started',
+        planId: plan.id,
+        agentId: this.config.id
+      }, 'Starting product research execution');
       
       // Step 1: Research trending products
       const trendingProducts = await this.findTrendingProducts(plan.parameters);
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'products_found',
+        count: trendingProducts.length,
+        planId: plan.id
+      }, `Found ${trendingProducts.length} trending products`);
       
       // Step 2: Validate and filter products
       const validProducts = this.validateProductCriteria(trendingProducts, plan.parameters);
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'products_validated',
+        validCount: validProducts.length,
+        totalCount: trendingProducts.length,
+        planId: plan.id
+      }, `Validated ${validProducts.length} products out of ${trendingProducts.length}`);
       
-      // Step 3: Create products in Shopify as drafts
-      for (const product of validProducts) {
+      // Step 3: Check for existing products and deduplicate
+      const productsToCreate = await this.deduplicateProducts(validProducts);
+      
+      this.logger.info({
+        event: 'deduplication_complete',
+        originalCount: validProducts.length,
+        afterDedup: productsToCreate.length,
+        planId: plan.id
+      }, `Deduplication: ${productsToCreate.length} unique products to create`);
+      
+      // Step 4: Create products in Shopify as drafts
+      for (const product of productsToCreate) {
         try {
+          const sku = this.generateSKU(product.title);
+          
           const shopifyProduct = await this.shopify.createProduct({
             title: product.title,
             body_html: product.description,
@@ -157,18 +191,28 @@ export class ProductResearchAgent extends BaseAgent {
             variants: [{
               price: product.estimatedPrice.toString(),
               inventory_quantity: 0, // Start with 0 inventory
-              sku: this.generateSKU(product.title)
+              sku: sku
             }]
           });
+          
+          // Attach supplier metadata using metafields (GraphQL in production)
+          await this.attachSupplierMetadata(shopifyProduct.id as number, product);
           
           createdProducts.push({
             shopifyId: shopifyProduct.id,
             title: product.title,
             price: product.estimatedPrice,
-            margin: product.margin
+            margin: product.margin,
+            sku: sku,
+            supplier: product.supplierInfo.name
           });
           
-          this.logger.info(`Product created in Shopify: ${product.title} (${shopifyProduct.id})`);
+          this.logger.info({
+            productId: shopifyProduct.id,
+            title: product.title,
+            sku: sku,
+            supplier: product.supplierInfo.name
+          }, `Product created in Shopify with supplier metadata`);
           
           // Rate limiting delay
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -200,12 +244,30 @@ export class ProductResearchAgent extends BaseAgent {
       };
       
     } catch (error) {
-      console.log("TODO: logging");
+      this.logger.error({
+        event: 'execution_failed',
+        planId: plan.id,
+        error: error instanceof Error ? error.message : String(error),
+        partialResults: createdProducts.length
+      }, 'Product research execution failed');
       
       // Attempt to rollback created products
       if (createdProducts.length > 0) {
-        console.log("TODO: logging");
-        // Note: In a real implementation, we would delete the created products here
+        this.logger.warn({
+          event: 'rollback_needed',
+          planId: plan.id,
+          productsToRollback: createdProducts.length
+        }, 'Attempting to rollback partially created products');
+        
+        // Delete the created products from Shopify
+        for (const product of createdProducts) {
+          try {
+            await this.shopify.deleteProduct(product.shopifyId);
+            this.logger.info(`Rolled back product: ${product.title} (${product.shopifyId})`);
+          } catch (rollbackError) {
+            this.logger.error(`Failed to rollback product ${product.shopifyId}: ${rollbackError}`);
+          }
+        }
       }
       
       return {
@@ -231,30 +293,60 @@ export class ProductResearchAgent extends BaseAgent {
     const startTime = Date.now();
     
     try {
-      console.log("TODO: logging");
+      this.logger.info({
+        event: 'rollback_started',
+        planId: plan.id
+      }, 'Starting rollback for product research plan');
       
-      // In a real implementation, we would:
-      // 1. Get list of products created by this plan
-      // 2. Delete them from Shopify
-      // 3. Clean up any related data
+      // Get list of products created by this plan from metadata/storage
+      // In a production system, this would query a database or state store
+      const createdProductIds = plan.parameters.createdProductIds as string[] || [];
+      
+      let removedCount = 0;
+      let failedCount = 0;
+      
+      // Delete each product from Shopify
+      for (const productId of createdProductIds) {
+        try {
+          await this.shopify.deleteProduct(productId);
+          removedCount++;
+          this.logger.info(`Removed product ${productId} during rollback`);
+        } catch (error) {
+          failedCount++;
+          this.logger.error(`Failed to remove product ${productId}: ${error}`);
+        }
+      }
+      
+      this.logger.info({
+        event: 'rollback_completed',
+        planId: plan.id,
+        removedCount,
+        failedCount
+      }, `Rollback completed: ${removedCount} products removed, ${failedCount} failed`);
       
       return {
         planId: plan.id,
-        status: 'success',
+        status: failedCount === 0 ? 'success' : 'partial',
         results: {
           rollbackCompleted: true,
-          productsRemoved: 0 // Would be actual count
+          productsRemoved: removedCount,
+          productsFailed: failedCount
         },
         metrics: {
           duration: Date.now() - startTime,
-          resourcesUsed: 0,
-          apiCalls: 0,
-          dataProcessed: 0
+          resourcesUsed: removedCount,
+          apiCalls: createdProductIds.length,
+          dataProcessed: createdProductIds.length
         },
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.log("TODO: logging");
+      this.logger.error({
+        event: 'rollback_failed',
+        planId: plan.id,
+        error: error instanceof Error ? error.message : String(error)
+      }, 'Rollback failed');
+      
       return {
         planId: plan.id,
         status: 'error',
@@ -272,74 +364,206 @@ export class ProductResearchAgent extends BaseAgent {
   }
 
   private async findTrendingProducts(params: any): Promise<TrendingProduct[]> {
-    // In a real implementation, this would:
-    // 1. Call Google Trends API
-    // 2. Call AliExpress/AutoDS APIs
-    // 3. Use AI to analyze trends
-    // 4. Return actual trending products
+    this.logger.info({
+      event: 'finding_trending_products',
+      category: params.category,
+      maxProducts: params.maxProducts
+    }, 'Searching for trending products');
     
-    return this.simulateTrendingProducts(params);
+    const products: TrendingProduct[] = [];
+    
+    try {
+      // Primary source: Query supplier APIs for trending products
+      const supplierProducts = await this.fetchSupplierProducts(params);
+      products.push(...supplierProducts);
+      
+      // Secondary source: Use OpenAI to analyze trends and suggest products
+      if (this.openaiApiKey && products.length < params.maxProducts) {
+        const aiProducts = await this.analyzeProductTrendsWithAI(params);
+        products.push(...aiProducts);
+      }
+      
+      if (products.length === 0) {
+        this.logger.warn('No trending products found. Ensure API credentials are configured.');
+      }
+      
+      return products.slice(0, params.maxProducts || 10);
+    } catch (error) {
+      this.logger.error(`Error finding trending products: ${error}`);
+      return [];
+    }
   }
 
-  private async simulateTrendingProducts(params: any): Promise<TrendingProduct[]> {
-    // Simulate trending products for demonstration
-    const mockProducts: TrendingProduct[] = [
-      {
-        title: "Smart Fitness Tracker Pro",
-        description: "Advanced fitness tracking with heart rate monitoring and GPS",
-        estimatedPrice: 89.99,
-        supplierPrice: 35.00,
-        margin: 61.1,
-        category: "Electronics",
-        tags: ["fitness", "health", "wearable", "smart"],
-        images: ["https://example.com/fitness-tracker.jpg"],
-        supplierInfo: {
-          name: "TechSupplier Co",
-          rating: 4.7,
-          reliability: 95
-        }
-      },
-      {
-        title: "Eco-Friendly Water Bottle",
-        description: "Sustainable bamboo fiber water bottle with temperature control",
-        estimatedPrice: 34.99,
-        supplierPrice: 12.50,
-        margin: 64.3,
-        category: "Home & Garden",
-        tags: ["eco-friendly", "sustainable", "water", "bottle"],
-        images: ["https://example.com/water-bottle.jpg"],
-        supplierInfo: {
-          name: "EcoGoods Ltd",
-          rating: 4.5,
-          reliability: 88
-        }
-      },
-      {
-        title: "Wireless Phone Charger Stand",
-        description: "Fast charging wireless stand compatible with all Qi-enabled devices",
-        estimatedPrice: 49.99,
-        supplierPrice: 18.00,
-        margin: 64.0,
-        category: "Electronics",
-        tags: ["wireless", "charger", "phone", "convenience"],
-        images: ["https://example.com/charger-stand.jpg"],
-        supplierInfo: {
-          name: "ChargeMax Inc",
-          rating: 4.8,
-          reliability: 92
+  /**
+   * Fetch products from supplier APIs (AutoDS, Spocket)
+   */
+  private async fetchSupplierProducts(params: any): Promise<TrendingProduct[]> {
+    const products: TrendingProduct[] = [];
+    
+    try {
+      // Note: In production, supplier API keys would be injected via constructor
+      // For now, check environment variables
+      const autoDSKey = process.env.AUTODS_API_KEY;
+      const spocketKey = process.env.SPOCKET_API_KEY;
+      
+      // Fetch from AutoDS
+      if (autoDSKey) {
+        try {
+          const response = await axios.get(
+            'https://app.autods.com/api/v1/products/trending',
+            {
+              headers: {
+                'Authorization': `Bearer ${autoDSKey}`,
+                'Content-Type': 'application/json'
+              },
+              params: {
+                category: params.category,
+                limit: params.maxProducts || 10
+              },
+              timeout: 30000
+            }
+          );
+          
+          const autoDSProducts = response.data.products || [];
+          for (const product of autoDSProducts) {
+            products.push({
+              title: product.title,
+              description: product.description || '',
+              estimatedPrice: product.retail_price || product.price * 2.5,
+              supplierPrice: product.price,
+              margin: ((product.retail_price - product.price) / product.retail_price) * 100,
+              category: params.category || 'General',
+              tags: product.tags || [],
+              images: product.images || [],
+              supplierInfo: {
+                name: 'AutoDS',
+                rating: 4.5,
+                reliability: 92
+              }
+            });
+          }
+        } catch (error) {
+          this.logger.error(`AutoDS API error: ${error}`);
         }
       }
-    ];
-
-    // Filter by category if specified
-    if (params.category) {
-      return mockProducts.filter(p => 
-        p.category.toLowerCase().includes(params.category.toLowerCase())
-      );
+      
+      // Fetch from Spocket
+      if (spocketKey) {
+        try {
+          const response = await axios.get(
+            'https://api.spocket.co/v1/products',
+            {
+              headers: {
+                'Authorization': `Bearer ${spocketKey}`,
+                'Content-Type': 'application/json'
+              },
+              params: {
+                search: params.category,
+                per_page: params.maxProducts || 10
+              },
+              timeout: 30000
+            }
+          );
+          
+          const spocketProducts = response.data.data || [];
+          for (const product of spocketProducts) {
+            const supplierPrice = parseFloat(product.price || '0');
+            const estimatedPrice = supplierPrice * 2.0; // 2x markup
+            
+            products.push({
+              title: product.title,
+              description: product.description || '',
+              estimatedPrice: estimatedPrice,
+              supplierPrice: supplierPrice,
+              margin: 50, // 100% markup = 50% margin
+              category: params.category || 'General',
+              tags: product.tags || [],
+              images: product.images || [],
+              supplierInfo: {
+                name: 'Spocket',
+                rating: 4.7,
+                reliability: 95
+              }
+            });
+          }
+        } catch (error) {
+          this.logger.error(`Spocket API error: ${error}`);
+        }
+      }
+      
+      this.logger.info({
+        count: products.length,
+        sources: {
+          autods: autoDSKey ? 'available' : 'missing',
+          spocket: spocketKey ? 'available' : 'missing'
+        }
+      }, 'Fetched products from supplier APIs');
+      
+      return products;
+    } catch (error) {
+      this.logger.error(`Error fetching supplier products: ${error}`);
+      return [];
     }
-
-    return mockProducts;
   }
+
+  private async analyzeProductTrendsWithAI(params: any): Promise<TrendingProduct[]> {
+    if (!this.openaiApiKey) {
+      this.logger.warn('OpenAI API key not configured, cannot analyze trends');
+      return [];
+    }
+    
+    try {
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a product research assistant. Suggest trending e-commerce products with realistic pricing and supplier information.'
+            },
+            {
+              role: 'user',
+              content: `Suggest ${params.maxProducts || 5} trending products for category: ${params.category || 'general'} with price range $${params.priceRange?.min || 10}-$${params.priceRange?.max || 100}. Return as JSON array with fields: title, description, estimatedPrice, supplierPrice, category, tags (array).`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.openaiApiKey}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      const content = response.data.choices[0].message.content;
+      const productsData = JSON.parse(content);
+      
+      // Transform AI response to TrendingProduct format
+      return productsData.map((p: any) => ({
+        title: p.title,
+        description: p.description,
+        estimatedPrice: p.estimatedPrice,
+        supplierPrice: p.supplierPrice || p.estimatedPrice * 0.4,
+        margin: ((p.estimatedPrice - (p.supplierPrice || p.estimatedPrice * 0.4)) / p.estimatedPrice) * 100,
+        category: p.category || params.category || 'General',
+        tags: p.tags || [],
+        images: p.images || [],
+        supplierInfo: {
+          name: 'AI Suggested',
+          rating: 4.5,
+          reliability: 85
+        }
+      }));
+    } catch (error) {
+      this.logger.error(`Error analyzing trends with AI: ${error}`);
+      return [];
+    }
+  }
+
+
 
   private validateProductCriteria(products: TrendingProduct[], params: any): TrendingProduct[] {
     return products.filter(product => {
@@ -363,6 +587,104 @@ export class ProductResearchAgent extends BaseAgent {
 
       return true;
     }).slice(0, params.maxProducts);
+  }
+
+  /**
+   * Check for existing products to avoid duplicates
+   * Checks by SKU and supplier ID
+   */
+  private async deduplicateProducts(products: TrendingProduct[]): Promise<TrendingProduct[]> {
+    try {
+      // Fetch existing products from Shopify
+      const existingProducts = await this.shopify.getProducts({ limit: 250 });
+      
+      // Create a set of existing SKUs and titles
+      const existingSKUs = new Set<string>();
+      const existingTitles = new Set<string>();
+      
+      for (const product of existingProducts) {
+        if (product.title) {
+          existingTitles.add(product.title.toLowerCase());
+        }
+        for (const variant of product.variants || []) {
+          if (variant.sku) {
+            existingSKUs.add(variant.sku);
+          }
+        }
+      }
+      
+      // Filter out duplicates
+      const uniqueProducts = products.filter(product => {
+        const titleExists = existingTitles.has(product.title.toLowerCase());
+        const skuExists = existingSKUs.has(this.generateSKU(product.title));
+        
+        if (titleExists || skuExists) {
+          this.logger.info({
+            title: product.title,
+            reason: titleExists ? 'title_exists' : 'sku_exists'
+          }, 'Skipping duplicate product');
+          return false;
+        }
+        
+        return true;
+      });
+      
+      return uniqueProducts;
+    } catch (error) {
+      this.logger.error(`Error during deduplication: ${error}`);
+      // On error, return all products to avoid blocking
+      return products;
+    }
+  }
+
+  /**
+   * Attach supplier metadata to product using metafields
+   * In production, would use GraphQL metafieldsSet mutation
+   */
+  private async attachSupplierMetadata(productId: number, product: TrendingProduct): Promise<void> {
+    this.logger.info({
+      productId,
+      supplier: product.supplierInfo.name,
+      supplierPrice: product.supplierPrice,
+      margin: product.margin
+    }, 'Attaching supplier metadata (GraphQL metafieldsSet would be used in production)');
+    
+    // Production implementation would use GraphQL:
+    // mutation {
+    //   metafieldsSet(metafields: [
+    //     {
+    //       ownerId: "gid://shopify/Product/${productId}",
+    //       namespace: "supplier",
+    //       key: "name",
+    //       value: "${product.supplierInfo.name}",
+    //       type: "single_line_text_field"
+    //     },
+    //     {
+    //       ownerId: "gid://shopify/Product/${productId}",
+    //       namespace: "supplier",
+    //       key: "cost_price",
+    //       value: "${product.supplierPrice}",
+    //       type: "number_decimal"
+    //     },
+    //     {
+    //       ownerId: "gid://shopify/Product/${productId}",
+    //       namespace: "research",
+    //       key: "score",
+    //       value: "${product.supplierInfo.rating}",
+    //       type: "number_decimal"
+    //     },
+    //     {
+    //       ownerId: "gid://shopify/Product/${productId}",
+    //       namespace: "research",
+    //       key: "reliability",
+    //       value: "${product.supplierInfo.reliability}",
+    //       type: "number_integer"
+    //     }
+    //   ]) {
+    //     metafields { id key value }
+    //     userErrors { field message }
+    //   }
+    // }
   }
 
   private generateSKU(title: string): string {

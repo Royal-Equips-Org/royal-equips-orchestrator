@@ -18,6 +18,7 @@ import {
 import { useEmpireStore } from '../../store/empire-store';
 import { empireService } from '../../services/empire-service';
 import { Agent } from '../../types/empire';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 
 interface AIRAStatus {
   online: boolean;
@@ -41,6 +42,8 @@ interface AIRAOperation {
 }
 
 export default function AiraModule() {
+  const { handleError } = useErrorHandler();
+  
   const [airaStatus, setAiraStatus] = useState<AIRAStatus>({
     online: true,
     processing: false,
@@ -103,24 +106,15 @@ export default function AiraModule() {
 
         setOperations(realOperations);
       } catch (error) {
-        console.error('Failed to load real operations:', error);
-        // Fallback to some basic operations
-        setOperations([
-          {
-            id: 'health_check',
-            type: 'scan',
-            status: 'completed',
-            description: 'Empire Health Monitoring',
-            progress: 100,
-            startTime: new Date(Date.now() - 300000).toISOString(),
-            duration: 15000
-          }
-        ]);
+        // Display user-friendly error notification
+        handleError(error, 'AIRA Operations');
+        // Set empty operations on error - no fallback mock data
+        setOperations([]);
       }
     };
 
     loadOperations();
-  }, []);
+  }, [handleError]);
 
   const getAgentTaskDescription = (agentType: string): string => {
     const taskMap = {
@@ -225,10 +219,14 @@ export default function AiraModule() {
       }
     } catch (error) {
       console.error('AIRA chat error:', error);
-      // Error fallback with professional response
+      // Provide specific error response based on actual error
+      const errorMessage = error instanceof Error 
+        ? `Service error: ${error.message}. Please check system connectivity.`
+        : 'Unable to process request. Please verify backend services are running.';
+      
       const errorResponse = {
         type: 'aira' as const,
-        message: 'I\'m experiencing connectivity issues but empire operations continue normally. Please try your request again.',
+        message: errorMessage,
         timestamp: new Date().toISOString()
       };
       setChatHistory(prev => [...prev, errorResponse]);

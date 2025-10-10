@@ -11,7 +11,7 @@ Creates and maintains digital twins of:
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -158,8 +158,8 @@ class DigitalTwinEngine:
                 current_values={},
                 predicted_values={},
                 confidence_scores={},
-                last_updated=datetime.now(),
-                simulation_time=datetime.now(),
+                last_updated=datetime.now(timezone.utc),
+                simulation_time=datetime.now(timezone.utc),
                 iterations_run=0,
                 accuracy_score=0.0
             )
@@ -242,7 +242,7 @@ class DigitalTwinEngine:
                 'predicted_value': prediction['value'],
                 'confidence': prediction['confidence'],
                 'time_horizon': time_horizon.total_seconds(),
-                'prediction_timestamp': datetime.now().isoformat()
+                'prediction_timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -274,7 +274,7 @@ class DigitalTwinEngine:
             'global_metrics': await self._calculate_global_market_metrics(),
             'risk_assessment': await self._assess_market_risks(),
             'opportunities': await self._identify_market_opportunities(),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
     
     
@@ -327,7 +327,7 @@ class DigitalTwinEngine:
             'performance_metrics': self.metrics,
             'total_twins': len(self.twins),
             'active_simulations': len([s for s in self.simulation_states.values() 
-                                    if s.last_updated > datetime.now() - timedelta(hours=1)])
+                                    if s.last_updated > datetime.now(timezone.utc) - timedelta(hours=1)])
         }
     
     
@@ -412,7 +412,7 @@ class DigitalTwinEngine:
         state = self.simulation_states[twin_id]
         
         # Check if update is needed based on frequency
-        time_since_update = datetime.now() - state.last_updated
+        time_since_update = datetime.now(timezone.utc) - state.last_updated
         if time_since_update < config.update_frequency:
             return
         
@@ -429,108 +429,99 @@ class DigitalTwinEngine:
             await self._simulate_operational_system(twin_id)
         
         # Update state
-        state.last_updated = datetime.now()
+        state.last_updated = datetime.now(timezone.utc)
         state.iterations_run += 1
         self.metrics['total_simulations'] += 1
     
     
     async def _simulate_business_process(self, twin_id: str):
-        """Simulate business process twin"""
+        """Simulate business process twin using real data"""
         state = self.simulation_states[twin_id]
+        config = self.twins[twin_id]
         
-        # Simulate process metrics (mock implementation)
-        process_efficiency = state.current_values.get('efficiency', 0.8)
-        process_efficiency += np.random.normal(0, 0.05)  # Add noise
-        process_efficiency = max(0.0, min(1.0, process_efficiency))
+        # Load real metrics from configured data sources
+        # This should pull actual business process data from systems like:
+        # - Order management systems
+        # - Fulfillment systems
+        # - Quality control databases
         
-        throughput = state.current_values.get('throughput', 100.0)
-        throughput *= (0.95 + process_efficiency * 0.1)
-        
-        state.current_values.update({
-            'efficiency': process_efficiency,
-            'throughput': throughput,
-            'quality_score': np.random.uniform(0.85, 0.98),
-            'cost_per_unit': np.random.uniform(5.0, 15.0)
-        })
+        raise NotImplementedError(
+            f"Business process simulation for {twin_id} requires real data integration. "
+            f"Please configure data sources: {', '.join(config.data_sources)}. "
+            f"Real business process metrics must be loaded from production systems."
+        )
     
     
     async def _simulate_customer_behavior(self, twin_id: str):
-        """Simulate customer behavior twin"""
+        """Simulate customer behavior twin using real customer data"""
         state = self.simulation_states[twin_id]
+        config = self.twins[twin_id]
         
-        # Customer behavior metrics simulation
-        satisfaction = state.current_values.get('satisfaction', 0.75)
-        satisfaction += np.random.normal(0, 0.02)
-        satisfaction = max(0.0, min(1.0, satisfaction))
+        # Load real customer metrics from:
+        # - Shopify customer database
+        # - Analytics platforms (Google Analytics, Mixpanel)
+        # - Customer support systems
+        # - Email marketing platforms
         
-        purchase_frequency = state.current_values.get('purchase_frequency', 2.5)
-        purchase_frequency *= (0.9 + satisfaction * 0.2)
-        
-        state.current_values.update({
-            'satisfaction': satisfaction,
-            'purchase_frequency': purchase_frequency,
-            'churn_risk': np.random.uniform(0.05, 0.25),
-            'lifetime_value': np.random.uniform(500, 2000)
-        })
+        raise NotImplementedError(
+            f"Customer behavior simulation for {twin_id} requires real customer data. "
+            f"Please integrate with data sources: {', '.join(config.data_sources)}. "
+            f"Customer behavior analysis must use actual customer interaction data from Shopify or CRM systems."
+        )
     
     
     async def _simulate_market_dynamics(self, twin_id: str):
-        """Simulate market dynamics twin"""
+        """Simulate market dynamics using real market data"""
         state = self.simulation_states[twin_id]
+        config = self.twins[twin_id]
         
-        # Market simulation
-        market_sentiment = state.current_values.get('sentiment', 0.6)
-        market_sentiment += np.random.normal(0, 0.1)
-        market_sentiment = max(0.0, min(1.0, market_sentiment))
+        # Load real market data from:
+        # - Google Trends API
+        # - Social media analytics (Twitter, TikTok APIs)
+        # - Competitor pricing APIs
+        # - Market research databases
         
-        demand_level = state.current_values.get('demand', 0.7)
-        demand_level *= (0.9 + market_sentiment * 0.2)
-        
-        state.current_values.update({
-            'sentiment': market_sentiment,
-            'demand': demand_level,
-            'competition_intensity': np.random.uniform(0.4, 0.8),
-            'price_elasticity': np.random.uniform(-2.0, -0.5)
-        })
+        raise NotImplementedError(
+            f"Market dynamics simulation for {twin_id} requires real market data feeds. "
+            f"Please configure market data sources: {', '.join(config.data_sources)}. "
+            f"Market analysis must use actual trend data from Google Trends, social media, and competitor intelligence."
+        )
     
     
     async def _simulate_financial_model(self, twin_id: str):
-        """Simulate financial model twin"""
+        """Simulate financial model using real financial data"""
         state = self.simulation_states[twin_id]
+        config = self.twins[twin_id]
         
-        # Financial metrics simulation
-        revenue = state.current_values.get('revenue', 10000.0)
-        revenue *= np.random.uniform(0.98, 1.05)  # Revenue variation
+        # Load real financial data from:
+        # - Shopify revenue and orders API
+        # - Stripe/payment processor APIs
+        # - Accounting software (QuickBooks, Xero)
+        # - Bank account integrations
         
-        profit_margin = state.current_values.get('profit_margin', 0.15)
-        profit_margin += np.random.normal(0, 0.01)
-        profit_margin = max(0.0, min(0.5, profit_margin))
-        
-        state.current_values.update({
-            'revenue': revenue,
-            'profit_margin': profit_margin,
-            'cash_flow': revenue * profit_margin,
-            'roi': np.random.uniform(0.1, 0.3)
-        })
+        raise NotImplementedError(
+            f"Financial model simulation for {twin_id} requires real financial data integration. "
+            f"Please connect to financial data sources: {', '.join(config.data_sources)}. "
+            f"Financial models must use actual revenue, expense, and transaction data from Shopify and payment systems."
+        )
     
     
     async def _simulate_operational_system(self, twin_id: str):
-        """Simulate operational system twin"""
+        """Simulate operational system using real infrastructure metrics"""
         state = self.simulation_states[twin_id]
+        config = self.twins[twin_id]
         
-        # Operational metrics simulation
-        uptime = state.current_values.get('uptime', 0.99)
-        uptime = max(0.95, min(1.0, uptime + np.random.normal(0, 0.005)))
+        # Load real operational metrics from:
+        # - Application performance monitoring (New Relic, Datadog, Sentry)
+        # - Server monitoring (CloudWatch, Prometheus)
+        # - Database performance metrics
+        # - CDN and hosting provider APIs
         
-        response_time = state.current_values.get('response_time', 200.0)
-        response_time *= np.random.uniform(0.9, 1.1)
-        
-        state.current_values.update({
-            'uptime': uptime,
-            'response_time': response_time,
-            'error_rate': np.random.uniform(0.001, 0.01),
-            'resource_utilization': np.random.uniform(0.4, 0.8)
-        })
+        raise NotImplementedError(
+            f"Operational system simulation for {twin_id} requires real monitoring data. "
+            f"Please integrate monitoring systems: {', '.join(config.data_sources)}. "
+            f"Operational metrics must come from actual APM tools like Sentry, New Relic, or Datadog."
+        )
     
     
     async def _generate_prediction(
@@ -577,16 +568,16 @@ class DigitalTwinEngine:
                         state.current_values[param] = value
         
         # Run simulation for scenario duration
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         simulation_results = []
         
-        while datetime.now() - start_time < scenario.duration:
+        while datetime.now(timezone.utc) - start_time < scenario.duration:
             for twin_id in scenario.twin_ids:
                 await self._update_twin_simulation(twin_id)
             
             # Collect metrics
             simulation_results.append({
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'states': {
                     twin_id: self.simulation_states[twin_id].current_values.copy()
                     for twin_id in scenario.twin_ids
@@ -603,7 +594,7 @@ class DigitalTwinEngine:
         
         return {
             'scenario_id': scenario.scenario_id,
-            'execution_time': (datetime.now() - start_time).total_seconds(),
+            'execution_time': (datetime.now(timezone.utc) - start_time).total_seconds(),
             'simulation_results': simulation_results,
             'summary_metrics': self._calculate_scenario_summary(simulation_results)
         }
@@ -611,21 +602,27 @@ class DigitalTwinEngine:
     
     async def _load_data_from_source(self, source: str, twin_type: TwinType) -> Dict[str, Any]:
         """Load data from a configured source"""
-        # Mock data loading - in production, connect to real data sources
-        if twin_type == TwinType.BUSINESS_PROCESS:
-            return {
-                'efficiency': np.random.uniform(0.7, 0.9),
-                'throughput': np.random.uniform(80, 120),
-                'quality_score': np.random.uniform(0.85, 0.95)
-            }
-        elif twin_type == TwinType.CUSTOMER_BEHAVIOR:
-            return {
-                'satisfaction': np.random.uniform(0.6, 0.8),
-                'purchase_frequency': np.random.uniform(1.5, 3.5),
-                'churn_risk': np.random.uniform(0.1, 0.3)
-            }
-        else:
-            return {'value': np.random.uniform(0.5, 1.0)}
+        # Real data loading - connect to configured data sources
+        # Raise error if data source is not properly configured
+        if not source or source == 'mock':
+            raise ValueError(
+                f"Digital Twin data source not configured for {twin_type.value}. "
+                f"Please configure a real data source (Shopify API, BigQuery, Database) "
+                f"in the twin configuration. Digital twins require real data to function properly."
+            )
+        
+        # TODO: Implement real data source integrations
+        # Examples:
+        # - Shopify API for customer behavior and sales data
+        # - BigQuery for analytics and market data
+        # - PostgreSQL for business process metrics
+        # - External APIs for market dynamics
+        
+        raise NotImplementedError(
+            f"Data source '{source}' integration not yet implemented for {twin_type.value}. "
+            f"Please implement the data connector for this source or use a supported data source. "
+            f"Supported sources will be: shopify_api, bigquery, postgres, redis_cache."
+        )
     
     
     def _calculate_scenario_summary(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:

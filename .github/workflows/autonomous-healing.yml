@@ -35,28 +35,37 @@ jobs:
     
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: 🔍 Health Diagnostics
+      - name: 🔍 AI-Powered Health Diagnostics
         id: check
         run: |
+          echo "🤖 Running AI-powered health diagnostics..."
           # Check deployment status
           failed_services=""
           
           # Check Cloudflare deployment health
           if ! curl -sf https://royal-equips-command-center.pages.dev/health 2>/dev/null; then
             failed_services="$failed_services command-center"
+            echo "❌ Command Center health check failed"
+          else
+            echo "✅ Command Center is healthy"
           fi
           
           # Check Workers health
           if ! curl -sf https://royal-equips-orchestrator.workers.dev/health 2>/dev/null; then
             failed_services="$failed_services workers"
+            echo "❌ Workers health check failed"
+          else
+            echo "✅ Workers are healthy"
           fi
           
           if [ -n "$failed_services" ]; then
+            echo "🚨 AI Detection: Services need healing - $failed_services"
             echo "needs_healing=true" >> $GITHUB_OUTPUT
             echo "failed_services=$failed_services" >> $GITHUB_OUTPUT
           else
+            echo "✅ AI Detection: All systems operational"
             echo "needs_healing=false" >> $GITHUB_OUTPUT
           fi
 
@@ -68,23 +77,26 @@ jobs:
     
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: 🔧 Setup Environment
         run: |
           npm install -g pnpm@10.17.0
           pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: 🚀 Trigger Redeployment
+      - name: 🤖 AI-Triggered Redeployment
         if: contains(needs.health-check.outputs.failed_services, 'command-center') || contains(needs.health-check.outputs.failed_services, 'workers')
         run: |
+          echo "🤖 AI Autonomous Healing: Triggering intelligent redeployment..."
+          echo "Failed services: ${{ needs.health-check.outputs.failed_services }}"
+          echo "Healing type: ${{ github.event.inputs.healing_type || 'automatic' }}"
           gh workflow run cloudflare-deploy.yml --ref main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📢 Create Issue
         if: failure()
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             github.rest.issues.create({

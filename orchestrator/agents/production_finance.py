@@ -10,7 +10,7 @@ import logging
 import time
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -374,7 +374,7 @@ class ProductionFinanceAgent(AgentBase):
                 'forecasts_generated': forecast_results,
                 'account_reconciliation': reconciliation_results,
                 'performance_metrics': self.performance_metrics,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             logger.info(f"Finance automation completed in {execution_time:.2f}s")
@@ -385,7 +385,7 @@ class ProductionFinanceAgent(AgentBase):
             return {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _process_transactions(self) -> Dict[str, Any]:
@@ -436,7 +436,7 @@ class ProductionFinanceAgent(AgentBase):
             
             # Get charges from last 24 hours
             charges = stripe.Charge.list(
-                created={'gte': int((datetime.now() - timedelta(days=1)).timestamp())},
+                created={'gte': int((datetime.now(timezone.utc) - timedelta(days=1)).timestamp())},
                 limit=100
             )
             
@@ -487,7 +487,7 @@ class ProductionFinanceAgent(AgentBase):
                 access_token = token_response.json()['access_token']
                 
                 # Get transactions
-                end_time = datetime.now()
+                end_time = datetime.now(timezone.utc)
                 start_time = end_time - timedelta(days=1)
                 
                 transactions_response = await client.get(
@@ -543,7 +543,7 @@ class ProductionFinanceAgent(AgentBase):
         """Calculate key financial metrics and KPIs."""
         try:
             metrics = {}
-            current_date = datetime.now()
+            current_date = datetime.now(timezone.utc)
             
             # Calculate daily revenue
             daily_revenue = await self._calculate_revenue_for_period(
@@ -619,7 +619,7 @@ class ProductionFinanceAgent(AgentBase):
     async def _generate_revenue_reports(self) -> Dict[str, Any]:
         """Generate comprehensive revenue analysis reports."""
         try:
-            current_date = datetime.now()
+            current_date = datetime.now(timezone.utc)
             
             # Generate monthly revenue report
             month_start = current_date.replace(day=1, hour=0, minute=0, second=0)
@@ -694,7 +694,7 @@ class ProductionFinanceAgent(AgentBase):
     async def _analyze_cash_flow(self) -> Dict[str, Any]:
         """Analyze cash flow and generate projections."""
         try:
-            current_date = datetime.now()
+            current_date = datetime.now(timezone.utc)
             
             # Get last 30 days of transactions for analysis
             analysis_start = current_date - timedelta(days=30)
@@ -912,7 +912,7 @@ class ProductionFinanceAgent(AgentBase):
                     'r_squared': float(model.score(X, y)),
                     'mean_squared_error': float(mse)
                 },
-                'generated_at': datetime.now().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -953,7 +953,7 @@ class ProductionFinanceAgent(AgentBase):
                 'total_discrepancy_amount': total_discrepancy_amount,
                 'results_by_account': reconciliation_results,
                 'reconciliation_status': 'completed',
-                'reconciled_at': datetime.now().isoformat()
+                'reconciled_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1062,7 +1062,7 @@ class ProductionFinanceAgent(AgentBase):
     
     async def _get_revenue_history(self, days: int) -> Dict[datetime, Decimal]:
         """Get historical daily revenue data."""
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         
         # Get transactions for the period
@@ -1103,7 +1103,7 @@ class ProductionFinanceAgent(AgentBase):
                 'recent_payouts_count': len(payouts.data),
                 'discrepancies_count': 0,  # Would implement actual reconciliation logic
                 'total_discrepancy_amount': 0.0,
-                'last_reconciled': datetime.now().isoformat()
+                'last_reconciled': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1119,7 +1119,7 @@ class ProductionFinanceAgent(AgentBase):
                 'pending_balance': 0.0,
                 'discrepancies_count': 0,
                 'total_discrepancy_amount': 0.0,
-                'last_reconciled': datetime.now().isoformat()
+                'last_reconciled': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1130,7 +1130,7 @@ class ProductionFinanceAgent(AgentBase):
         """Update performance tracking metrics."""
         try:
             self.performance_metrics['api_calls_made'] += 1
-            self.performance_metrics['last_updated'] = datetime.now().isoformat()
+            self.performance_metrics['last_updated'] = datetime.now(timezone.utc).isoformat()
             
             # Store metrics in cache
             if self.redis_cache:

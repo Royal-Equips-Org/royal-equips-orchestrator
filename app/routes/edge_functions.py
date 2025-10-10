@@ -10,7 +10,7 @@ import json
 import logging
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import timezone, datetime, timedelta
 from typing import Dict, List, Any, Optional
 
 # Safe import of aiohttp with auto-fixing capabilities
@@ -118,7 +118,7 @@ def get_edge_functions_status():
             'last_health_check': last_health_check,
             'total_functions': len(EDGE_FUNCTIONS),
             'healthy_functions': len([f for f in last_health_check.values() if f.get('status') == 'healthy']),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
         logger.error(f"Edge functions status error: {e}")
@@ -136,7 +136,7 @@ async def trigger_health_check():
             if socketio:
                 socketio.emit('edge_functions_health', {
                     'results': results,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/edge-functions')
         except ImportError:
             logger.debug("SocketIO not available for health check updates")
@@ -144,7 +144,7 @@ async def trigger_health_check():
         return jsonify({
             'success': True,
             'results': results,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
         logger.error(f"Health check error: {e}")
@@ -163,7 +163,7 @@ def get_edge_functions_metrics():
                 'uptime_percentage': 0
             },
             'categories': {},
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         
         # Calculate metrics for each function
@@ -229,7 +229,7 @@ def deploy_edge_function():
                     'function': func_name,
                     'environment': environment,
                     'result': deployment_result,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/edge-functions')
         except ImportError:
             logger.debug("SocketIO not available for deployment updates")
@@ -263,7 +263,7 @@ def get_edge_function_logs():
             'function': func_name,
             'logs': logs,
             'count': len(logs),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
         logger.error(f"Edge function logs error: {e}")
@@ -295,7 +295,7 @@ async def check_all_edge_functions_health():
                     results[func_name] = {
                         'status': 'error',
                         'error': str(result),
-                        'timestamp': datetime.utcnow().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     }
                 else:
                     results[func_name] = result
@@ -315,7 +315,7 @@ def check_all_edge_functions_health_sync():
     
     for func_name, func_config in EDGE_FUNCTIONS.items():
         try:
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             
             # Use requests for synchronous health check
             response = requests.get(
@@ -323,7 +323,7 @@ def check_all_edge_functions_health_sync():
                 timeout=10
             )
             
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             response_time = (end_time - start_time).total_seconds() * 1000
             
             if response.status_code == 200:
@@ -350,7 +350,7 @@ def check_all_edge_functions_health_sync():
             results[func_name] = {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     # Update global state
@@ -365,14 +365,14 @@ async def check_single_function_health(session, func_name, func_config):
         return {'status': 'error', 'error': 'aiohttp not available'}
     
     try:
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         # Make health check request
         async with session.get(
             f"{func_config['url']}/health",
             timeout=aiohttp.ClientTimeout(total=10)
         ) as response:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             response_time = (end_time - start_time).total_seconds() * 1000
             
             if response.status == 200:
@@ -394,13 +394,13 @@ async def check_single_function_health(session, func_name, func_config):
     except asyncio.TimeoutError:
         return {
             'status': 'timeout',
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         return {
             'status': 'error',
             'error': str(e),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 def trigger_edge_function_deployment(func_name, environment):
@@ -408,14 +408,14 @@ def trigger_edge_function_deployment(func_name, environment):
     try:
         # This would integrate with Wrangler CLI or Cloudflare API
         # For now, return a mock response
-        deployment_id = f"deploy_{func_name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        deployment_id = f"deploy_{func_name}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
         
         return {
             'deployment_id': deployment_id,
             'status': 'queued',
             'function': func_name,
             'environment': environment,
-            'triggered_at': datetime.utcnow().isoformat()
+            'triggered_at': datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Deployment trigger error: {e}")
@@ -425,26 +425,43 @@ def trigger_edge_function_deployment(func_name, environment):
         }
 
 def fetch_edge_function_logs(func_name, limit, since):
-    """Fetch logs for edge function."""
+    """Fetch logs for edge function from Cloudflare - PRODUCTION ONLY."""
     try:
-        # This would integrate with Cloudflare Logs API
-        # For now, return mock logs
-        mock_logs = []
+        # Requires Cloudflare API credentials
+        import os
+        cf_api_token = os.getenv('CLOUDFLARE_API_TOKEN')
+        cf_account_id = os.getenv('CLOUDFLARE_ACCOUNT_ID')
         
-        for i in range(min(limit, 20)):  # Generate some mock logs
-            timestamp = datetime.utcnow() - timedelta(minutes=i * 5)
-            mock_logs.append({
-                'timestamp': timestamp.isoformat(),
-                'level': 'info' if i % 10 != 0 else 'error',
-                'message': f"Function {func_name} executed successfully" if i % 10 != 0 else f"Error in {func_name}",
-                'request_id': f"req_{timestamp.strftime('%Y%m%d_%H%M%S')}_{i}",
-                'duration': 120 + (i * 10)
-            })
+        if not cf_api_token or not cf_account_id:
+            error_msg = "Cloudflare credentials required (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID). No mock data in production."
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
-        return mock_logs
+        # Integrate with Cloudflare Logs API
+        headers = {
+            'Authorization': f'Bearer {cf_api_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(
+            f'https://api.cloudflare.com/client/v4/accounts/{cf_account_id}/logs/received',
+            headers=headers,
+            params={
+                'start': (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(),
+                'end': datetime.now(timezone.utc).isoformat(),
+                'limit': limit
+            },
+            timeout=30
+        )
+        
+        if response.status_code != 200:
+            raise RuntimeError(f"Cloudflare API returned status {response.status_code}")
+        
+        return response.json().get('result', [])
+        
     except Exception as e:
         logger.error(f"Log fetch error: {e}")
-        return []
+        raise
 
 # Real-time monitoring task
 def start_edge_functions_monitoring():
@@ -462,7 +479,7 @@ def start_edge_functions_monitoring():
                         socketio.emit('edge_functions_update', {
                             'stats': edge_function_stats,
                             'health': last_health_check,
-                            'timestamp': datetime.utcnow().isoformat()
+                            'timestamp': datetime.now(timezone.utc).isoformat()
                         }, namespace='/edge-functions')
                 except ImportError:
                     logger.debug("SocketIO not available for edge functions updates")
@@ -496,7 +513,7 @@ def register_edge_functions_websocket_handlers():
         emit('connected', {
             'message': 'Connected to edge functions monitoring',
             'functions': EDGE_FUNCTIONS,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
 
     @socketio.on('request_status', namespace='/edge-functions')
@@ -505,7 +522,7 @@ def register_edge_functions_websocket_handlers():
         emit('status_update', {
             'stats': edge_function_stats,
             'health': last_health_check,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
 
     @socketio.on('trigger_health_check', namespace='/edge-functions')
@@ -514,7 +531,7 @@ def register_edge_functions_websocket_handlers():
         threading.Thread(target=check_all_edge_functions_health, daemon=True).start()
         emit('health_check_triggered', {
             'message': 'Health check initiated',
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
 
 # Initialize monitoring when module loads

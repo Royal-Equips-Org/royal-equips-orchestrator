@@ -148,26 +148,14 @@ pnpm run build
 
 #### Full Development Setup
 ```bash
-# Terminal 1: Backend
+# Terminal 1: Backend (Flask API on port 10000)
 python3 wsgi.py
 
-# Terminal 2: Frontend  
+# Terminal 2: Frontend (React UI on port 5173)
 cd apps/command-center-ui && pnpm run dev
 ```
 
-#### Mock API Server (Development)
-For development when the Flask orchestrator is not available:
-```bash
-# Terminal 1: Mock API Server
-cd dev-tools/mock-server
-npm install
-npm start
-
-# Terminal 2: Frontend
-cd apps/command-center-ui && pnpm run dev
-```
-
-The mock server provides realistic API endpoints on http://localhost:10000 for testing the Command Center UI.
+The Flask backend provides real API endpoints on http://localhost:10000 for the Command Center UI.
 
 ## 📊 Performance Metrics
 
@@ -178,6 +166,49 @@ The system tracks comprehensive performance metrics for each agent:
 - **Performance Score**: Overall efficiency rating (0-100)
 - **Empire Score**: Product quality rating using 5-factor model
 - **Risk Assessment**: Order fraud detection and classification
+
+## 🏥 Health Monitoring
+
+The platform provides comprehensive health check endpoints for monitoring and orchestration:
+
+### Health Endpoints
+- **`/health`** - Detailed health diagnostics with service information
+- **`/healthz`** - Kubernetes-style liveness probe
+- **`/readyz`** - Readiness probe with dependency checks
+- **`/liveness`** - Alternative liveness endpoint
+- **`/readiness`** - Simplified readiness check
+
+All endpoints return JSON responses with proper status codes. See [Health Endpoints Documentation](docs/HEALTH_ENDPOINTS.md) for complete details.
+
+### Quick Health Check
+```bash
+# Check if service is running
+curl http://localhost:10000/healthz
+
+# Check if service is ready to accept traffic
+curl http://localhost:10000/readyz
+
+# Get detailed health information
+curl http://localhost:10000/health | jq
+```
+
+### Kubernetes/Docker Integration
+```yaml
+# Kubernetes example
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 10000
+  initialDelaySeconds: 10
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 10000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+```
 
 ## 🔐 Security & Compliance
 
@@ -212,7 +243,7 @@ The platform is designed for exponential growth:
 
 ## 🚀 Development Workflow
 
-### Quick Development (No Checks)
+### Quick Development (Default - No Checks)
 ```bash
 # Load helpful git aliases (optional)
 source scripts/git-aliases.sh
@@ -221,25 +252,30 @@ source scripts/git-aliases.sh
 SKIP_LINT=1 git commit -m "quick fix"
 # Or use alias: gc-fast -m "quick fix"
 
-# Quick push without type/test checks  
-SKIP_CHECKS=1 git push
+# Normal push (TypeScript checks and tests are disabled by default)
+git push
 # Or use alias: gp-fast
 
 # Super quick commit + push
-SKIP_LINT=1 git commit -am "quick fix" && SKIP_CHECKS=1 git push
+SKIP_LINT=1 git commit -am "quick fix" && git push
 # Or use alias: gcp-fast
 ```
 
-### Normal Development (With Checks)
+### Quality-Focused Development (With Checks)
 ```bash
-# Normal development workflow with quality checks
+# Development workflow with quality checks enabled
+SKIP_LINT=0 git commit -m "Add feature"  # Run lint checks
+RUN_CHECKS=1 git push                     # Run typecheck and tests
+
+# Or manually run checks before commit/push
+pnpm lint --fix && pnpm typecheck && pnpm test
 git commit -m "Add feature"
 git push
 ```
 
-### Available Skip Flags
+### Available Control Flags
 - `SKIP_LINT=1` - Skip eslint in pre-commit hook
-- `SKIP_CHECKS=1` - Skip typecheck and tests in pre-push hook  
+- `RUN_CHECKS=1` - Enable typecheck and tests in pre-push hook (disabled by default)
 - `SKIP_HUSKY=1` - Skip all husky hooks
 - `CI=1` - Skip hooks (automatically set in CI)
 
@@ -262,6 +298,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Agent Instructions](AGENT_INSTRUCTIONS.md)
 - [Empire Prompt](EMPIRE_PROMPT.md)
 - [Security Guidelines](SECURITY.md)
+- [Health Endpoints Documentation](docs/HEALTH_ENDPOINTS.md)
+- [API Specification](docs/openapi/royalgpt-command-api.yaml)
 
 ---
 

@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 import smtplib
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Dict, List, Optional, Callable, Any
@@ -179,14 +179,14 @@ class PriceAlertSystem:
                 current_price=current_price,
                 previous_price=previous_price,
                 change_percentage=change_percentage,
-                timestamp=datetime.now(),
+                timestamp=datetime.now(timezone.utc),
                 severity=severity
             )
             
             alerts.append(alert)
             
             # Update cooldown tracking
-            self.recent_alerts[alert_key] = datetime.now()
+            self.recent_alerts[alert_key] = datetime.now(timezone.utc)
             
             self.logger.info(f"Price alert triggered: {product_id} - {competitor} changed {change_percentage:.1f}%")
         
@@ -200,7 +200,7 @@ class PriceAlertSystem:
         last_alert_time = self.recent_alerts[alert_key]
         cooldown_period = timedelta(minutes=cooldown_minutes)
         
-        return (datetime.now() - last_alert_time) < cooldown_period
+        return (datetime.now(timezone.utc) - last_alert_time) < cooldown_period
     
     def _calculate_alert_severity(self, change_percentage: float, threshold: float) -> str:
         """Calculate alert severity based on change magnitude."""
@@ -358,7 +358,7 @@ class PriceAlertSystem:
     
     def get_alert_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get summary of recent alerts."""
-        cutoff_time = datetime.now() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         # This would typically query from a database
         # For now, return a simple summary structure

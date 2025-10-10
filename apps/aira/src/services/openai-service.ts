@@ -19,11 +19,11 @@ export interface AIRAResponse {
  * Unified OpenAI Secret Resolution
  * This pattern should be used by all agents for consistent API key management
  */
-// Helper: Validate OpenAI API key format (starts with "sk-" and is 51 chars, alphanumeric)
+// Helper: Validate OpenAI API key format (starts with "sk-" or "sk-proj-")
 function isValidOpenAIKey(key: string): boolean {
-  // OpenAI keys start with "sk-" and are typically 51 characters long: "sk-" + 48 alphanumeric chars.
-  // Enforce strict format: starts with "sk-" and is exactly 51 characters, with only alphanumeric chars after "sk-".
-  return typeof key === 'string' && /^sk-[A-Za-z0-9]{48}$/.test(key);
+  // OpenAI keys start with "sk-" (legacy) or "sk-proj-" (project-scoped) and contain alphanumeric characters.
+  // Relaxed validation: Must start with "sk-" and be at least 20 characters long
+  return typeof key === 'string' && key.length >= 20 && /^sk-[A-Za-z0-9_-]+$/.test(key);
 }
 
 // Helper: Redact OpenAI key for logging (show prefix and last 4 chars)
@@ -107,7 +107,10 @@ export class OpenAIService {
     await this.ensureInitialized();
     
     if (!this.isConfigured || !this.openai) {
-      return this.getFallbackResponse(userMessage);
+      throw new Error(
+        'AIRA AI service is not configured. Please configure OPENAI_API_KEY environment variable to enable AI-powered responses. ' +
+        'Without this configuration, AIRA cannot process your requests.'
+      );
     }
 
     try {
@@ -130,7 +133,9 @@ export class OpenAIService {
       const content = completion.choices[0]?.message?.content;
       
       if (!content) {
-        return this.getFallbackResponse(userMessage);
+        throw new Error(
+          'OpenAI API returned an empty response. This may be a temporary issue with the AI service. Please try again in a moment.'
+        );
       }
 
       return {
@@ -143,30 +148,37 @@ export class OpenAIService {
 
     } catch (error) {
       console.error('OpenAI API error', error);
-      return this.getFallbackResponse(userMessage);
+      if (error instanceof Error) {
+        // Enhance error message with specific guidance
+        if (error.message.includes('401') || error.message.includes('authentication')) {
+          throw new Error(
+            'OpenAI API authentication failed. Please verify your OPENAI_API_KEY is valid and has not expired. ' +
+            'Visit https://platform.openai.com/api-keys to check your API key status.'
+          );
+        }
+        if (error.message.includes('429') || error.message.includes('rate limit')) {
+          throw new Error(
+            'OpenAI API rate limit exceeded. Your account has reached its usage quota. ' +
+            'Please wait a moment before trying again or upgrade your OpenAI plan at https://platform.openai.com/account/billing.'
+          );
+        }
+        if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
+          throw new Error(
+            'OpenAI API request timed out. The AI service is taking longer than expected to respond. ' +
+            'Please try again with a shorter message or check your network connection.'
+          );
+        }
+        // Re-throw with original message if it's already descriptive
+        throw error;
+      }
+      throw new Error(
+        'Failed to communicate with OpenAI API. Please check your internet connection and try again. ' +
+        'If the problem persists, the OpenAI service may be experiencing issues.'
+      );
     }
   }
 
-  private getFallbackResponse(userMessage: string): AIRAResponse {
-    const lowerMessage = userMessage.toLowerCase();
-    let response = '';
-    
-    if (lowerMessage.includes('shopify') || lowerMessage.includes('product')) {
-      response = '🛍️ I\'m analyzing your Shopify integration. Let me check your product catalog and sync status. The empire\'s e-commerce operations are monitoring all store metrics.';
-    } else if (lowerMessage.includes('agent') || lowerMessage.includes('execute')) {
-      response = '🤖 Empire agents are standing by. I can deploy Product Research, Marketing, and Inventory agents to execute your business objectives with full autonomous capabilities.';
-    } else if (lowerMessage.includes('revenue') || lowerMessage.includes('profit') || lowerMessage.includes('money')) {
-      response = '💰 Analyzing revenue streams and profit optimization strategies. The empire\'s financial intelligence is processing market opportunities across all channels.';
-    } else {
-      response = `🧠 AIRA processing your request: "${userMessage}". As your Main Empire Agent, I have access to all business domains and can orchestrate comprehensive solutions. How can I assist with your empire operations?`;
-    }
 
-    return {
-      content: response,
-      agent_name: 'AIRA',
-      timestamp: new Date().toISOString()
-    };
-  }
 
   private getSystemPrompt(): string {
     return `You are AIRA (AI Royal Intelligence Agent), the Main Empire Agent for Royal Equips - a sophisticated e-commerce and business automation platform.

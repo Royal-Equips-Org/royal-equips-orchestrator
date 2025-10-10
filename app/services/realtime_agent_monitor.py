@@ -7,7 +7,7 @@ import asyncio
 import logging
 import psutil
 import time
-from datetime import datetime, timedelta
+from datetime import timezone, datetime, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 import json
@@ -78,6 +78,11 @@ class RealTimeAgentMonitor:
             from app.services.production_agent_executor import get_agent_executor
             agent_executor = await get_agent_executor()
             
+            # Validate executor is available
+            if agent_executor is None:
+                logger.warning("Agent executor not initialized, skipping metrics collection")
+                return
+            
             # Get recent executions for analysis
             recent_executions = await agent_executor.get_agent_executions(limit=1000)
             
@@ -125,16 +130,16 @@ class RealTimeAgentMonitor:
         # Throughput calculation (executions per hour in last 24 hours)
         recent_executions = [
             e for e in executions 
-            if datetime.fromisoformat(e['queued_at'].replace('Z', '+00:00')) > datetime.utcnow() - timedelta(hours=24)
+            if datetime.fromisoformat(e['queued_at'].replace('Z', '+00:00')) > datetime.now(timezone.utc) - timedelta(hours=24)
         ]
         throughput_per_hour = len(recent_executions) / 24 if recent_executions else 0
         
         # Determine status
         if error_rate > 50:
             status = "error"
-        elif last_execution and datetime.utcnow() - last_execution < timedelta(hours=1):
+        elif last_execution and datetime.now(timezone.utc) - last_execution < timedelta(hours=1):
             status = "active"
-        elif last_execution and datetime.utcnow() - last_execution < timedelta(hours=24):
+        elif last_execution and datetime.now(timezone.utc) - last_execution < timedelta(hours=24):
             status = "idle"
         else:
             status = "inactive"
@@ -201,7 +206,7 @@ class RealTimeAgentMonitor:
                 "system_disk_usage_percent": disk.percent,
                 "network_bytes_sent": network.bytes_sent,
                 "network_bytes_received": network.bytes_recv,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
             # Store system metrics for API access
@@ -249,7 +254,7 @@ class RealTimeAgentMonitor:
                 "avg_health_score": int(avg_health),
                 "overall_success_rate": round(overall_success_rate, 2),
                 "system_metrics": getattr(self, 'system_metrics', {}),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
             return system_health
@@ -259,7 +264,7 @@ class RealTimeAgentMonitor:
             return {
                 "status": "unknown",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
     
     async def get_performance_history(self, agent_type: str = None, hours: int = 24) -> List[Dict[str, Any]]:
@@ -268,8 +273,13 @@ class RealTimeAgentMonitor:
             from app.services.production_agent_executor import get_agent_executor
             agent_executor = await get_agent_executor()
             
+            # Validate executor is available
+            if agent_executor is None:
+                logger.warning("Agent executor not initialized, returning empty performance history")
+                return []
+            
             # Get executions from the specified time period
-            since_time = datetime.utcnow() - timedelta(hours=hours)
+            since_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             all_executions = await agent_executor.get_agent_executions(limit=5000)
             
             # Filter by time and agent type

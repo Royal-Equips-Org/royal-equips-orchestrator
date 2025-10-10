@@ -5,22 +5,33 @@ No mock data - complete production-ready inventory operations
 """
 
 import asyncio
-import json
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from flask import Blueprint, request, jsonify, current_app
 from functools import wraps
 
-from orchestrator.core.orchestrator import Orchestrator
-from app.orchestrator_bridge import get_orchestrator
-from core.secrets.secret_provider import UnifiedSecretResolver
+from flask import Blueprint, current_app, jsonify, request
 
+from app.orchestrator_bridge import get_orchestrator
+from app.services.shopify_service import (
+    ShopifyAPIError,
+    ShopifyAuthError,
+    ShopifyService,
+)
 
 logger = logging.getLogger(__name__)
 
 inventory_bp = Blueprint('inventory', __name__, url_prefix='/api/inventory')
+
+# Initialize Shopify service for inventory operations
+_inventory_shopify_service = None
+
+def get_inventory_service():
+    """Get or create Shopify service instance for inventory operations."""
+    global _inventory_shopify_service
+    if _inventory_shopify_service is None:
+        _inventory_shopify_service = ShopifyService()
+    return _inventory_shopify_service
 
 # Rate limiting decorator
 def rate_limit(max_requests: int = 60, per_seconds: int = 60):
@@ -32,23 +43,23 @@ def rate_limit(max_requests: int = 60, per_seconds: int = 60):
             client_id = request.remote_addr
             current_time = int(time.time())
             window_start = current_time - (current_time % per_seconds)
-            
+
             if not hasattr(current_app, 'rate_limit_data'):
                 current_app.rate_limit_data = {}
-            
+
             key = f"{f.__name__}:{client_id}:{window_start}"
             current_requests = current_app.rate_limit_data.get(key, 0)
-            
+
             if current_requests >= max_requests:
                 return jsonify({
                     'error': 'Rate limit exceeded',
                     'max_requests': max_requests,
                     'window_seconds': per_seconds
                 }), 429
-            
+
             current_app.rate_limit_data[key] = current_requests + 1
             return f(*args, **kwargs)
-        
+
         return decorated_function
     return decorator
 
@@ -59,7 +70,7 @@ def get_inventory_status():
     """Get comprehensive inventory system status and health metrics."""
     try:
         orchestrator = get_orchestrator()
-        
+
         # Get inventory agent
         inventory_agent = orchestrator.get_agent('production-inventory')
         if not inventory_agent:
@@ -67,7 +78,7 @@ def get_inventory_status():
                 'error': 'Inventory agent not available',
                 'status': 'offline'
             }), 503
-        
+
         # Run status check asynchronously
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -75,13 +86,13 @@ def get_inventory_status():
             status = loop.run_until_complete(inventory_agent.get_status())
         finally:
             loop.close()
-        
+
         return jsonify({
             'success': True,
             'data': status,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         logger.error(f"Inventory status check failed: {e}")
         return jsonify({
@@ -97,10 +108,10 @@ def get_inventory_dashboard():
     try:
         orchestrator = get_orchestrator()
         inventory_agent = orchestrator.get_agent('production-inventory')
-        
+
         if not inventory_agent:
             return jsonify({'error': 'Inventory agent not available'}), 503
-        
+
         # Get dashboard data
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -112,14 +123,14 @@ def get_inventory_dashboard():
                 inventory_agent._generate_inventory_analytics(),
                 inventory_agent._monitor_supplier_performance()
             ]
-            
+
             inventory_data, reorder_analysis, analytics, supplier_performance = loop.run_until_complete(
                 asyncio.gather(*tasks)
             )
-            
+
         finally:
             loop.close()
-        
+
         # Compile dashboard response
         dashboard_data = {
             'inventory_overview': {
@@ -147,13 +158,13 @@ def get_inventory_dashboard():
                 'last_analytics_update': analytics.get('report_timestamp')
             }
         }
-        
+
         return jsonify({
             'success': True,
             'data': dashboard_data,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         logger.error(f"Inventory dashboard data failed: {e}")
         return jsonify({'error': str(e)}), 500
@@ -165,7 +176,7 @@ def health_check():
     try:
         orchestrator = get_orchestrator()
         inventory_agent = orchestrator.get_agent('production-inventory')
-        
+
         health_status = {
             'service': 'inventory_api',
             'status': 'healthy' if inventory_agent else 'degraded',
@@ -173,11 +184,11 @@ def health_check():
             'timestamp': datetime.now().isoformat(),
             'version': '1.0.0'
         }
-        
+
         status_code = 200 if inventory_agent else 503
-        
+
         return jsonify(health_status), status_code
-        
+
     except Exception as e:
         return jsonify({
             'service': 'inventory_api',
@@ -222,6 +233,11 @@ def internal_error(error):
         'message': 'An unexpected error occurred',
         'timestamp': datetime.now().isoformat()
     }), 500
+
+
+@inventory_bp.route('/products', methods=['GET'])
+@rate_limit(max_requests=30, per_seconds=60)
+def get_inventory_products():
     """
     Get comprehensive inventory data with real Shopify integration.
     
@@ -283,14 +299,14 @@ def internal_error(error):
         description: Service unavailable
     """
     start_time = time.time()
-    
+
     try:
         service = get_inventory_service()
-        
+
         # Get query parameters
         limit = request.args.get('limit', 100, type=int)
         force_refresh = request.args.get('force') == '1'
-        
+
         # Validate parameters
         if limit < 1 or limit > 250:
             return jsonify({
@@ -298,29 +314,43 @@ def internal_error(error):
                 "message": "Limit must be between 1 and 250",
                 "timestamp": datetime.now().isoformat()
             }), 400
-        
-        # Check if service is configured
+
+        # Check if service is configured - REQUIRE real Shopify credentials
         if not service.is_configured():
-            logger.info("Shopify service not configured - returning mock data for development")
-            return _get_mock_inventory_response(limit, start_time)
-        
+            logger.error("Shopify service not configured - credentials required for production system")
+            return jsonify({
+                "error": "Service Not Configured",
+                "message": "Shopify API credentials are required. This is a production system - no mock data allowed.",
+                "required_env_vars": ["SHOPIFY_API_KEY", "SHOPIFY_API_SECRET", "SHOP_NAME"],
+                "timestamp": datetime.now().isoformat(),
+                "shop": "not_configured",
+                "products": [],
+                "meta": {
+                    "count": 0,
+                    "lowStock": 0,
+                    "fetchedMs": int((time.time() - start_time) * 1000),
+                    "cache": "NONE",
+                    "apiCalls": 0
+                }
+            }), 503
+
         try:
             # Fetch real data from Shopify
             products_data, _ = service.list_products(limit=limit)
-            
+
             # Transform to normalized format
             transformed_products = []
             low_stock_count = 0
-            
+
             for product in products_data:
                 # Calculate inventory metrics
                 total_inventory = 0
                 variants = []
-                
+
                 for variant in product.get('variants', []):
                     inventory_qty = variant.get('inventory_quantity', 0)
                     total_inventory += inventory_qty
-                    
+
                     variants.append({
                         "id": f"gid://shopify/ProductVariant/{variant.get('id')}",
                         "sku": variant.get('sku', ''),
@@ -328,11 +358,11 @@ def internal_error(error):
                         "inventoryQuantity": inventory_qty,
                         "tracked": variant.get('inventory_management') == 'shopify'
                     })
-                
+
                 # Track low stock items (threshold: 5 units)
                 if 0 < total_inventory <= 5:
                     low_stock_count += 1
-                
+
                 transformed_product = {
                     "id": f"gid://shopify/Product/{product.get('id')}",
                     "title": product.get('title', 'Untitled Product'),
@@ -340,13 +370,13 @@ def internal_error(error):
                     "totalInventory": total_inventory,
                     "variants": variants
                 }
-                
+
                 transformed_products.append(transformed_product)
-            
+
             # Build response
             fetch_time_ms = int((time.time() - start_time) * 1000)
-            shop_name = f"{service.shop_name}.myshopify.com" if service.shop_name else "unknown-shop"
-            
+            shop_name = f"{service.shop_name}.myshopify.com" if service.shop_name else "ge1vev-8k.myshopify.com"
+
             response = {
                 "timestamp": datetime.now().isoformat(),
                 "shop": shop_name,
@@ -359,10 +389,10 @@ def internal_error(error):
                     "apiCalls": 1
                 }
             }
-            
+
             logger.info(f"Inventory request successful: {len(transformed_products)} products, {fetch_time_ms}ms")
             return jsonify(response), 200
-            
+
         except ShopifyAuthError as e:
             logger.error(f"Shopify authentication failed: {e}")
             return jsonify({
@@ -379,11 +409,11 @@ def internal_error(error):
                     "apiCalls": 0
                 }
             }), 401
-            
+
         except ShopifyAPIError as e:
             logger.error(f"Shopify API error: {e}")
             return jsonify({
-                "error": "API Error", 
+                "error": "API Error",
                 "message": "Shopify API request failed",
                 "timestamp": datetime.now().isoformat(),
                 "shop": "api_error",
@@ -396,14 +426,14 @@ def internal_error(error):
                     "apiCalls": 0
                 }
             }), 503
-            
+
     except Exception as e:
         logger.error(f"Inventory endpoint error: {e}", exc_info=True)
         return jsonify({
             "error": "Internal Server Error",
             "message": "An unexpected error occurred",
             "timestamp": datetime.now().isoformat(),
-            "shop": "error", 
+            "shop": "error",
             "products": [],
             "meta": {
                 "count": 0,
@@ -415,91 +445,10 @@ def internal_error(error):
         }), 500
 
 
-def _get_mock_inventory_response(limit: int, start_time: float) -> tuple:
-    """Generate mock inventory response when Shopify is not configured."""
-    mock_products = []
-    
-    # Generate realistic mock inventory items
-    mock_items = [
-        {
-            "title": "Premium Wireless Headphones",
-            "sku": "PWH-001",
-            "price": "199.99",
-            "inventory": 25,
-            "status": "ACTIVE"
-        },
-        {
-            "title": "Smart Fitness Watch",
-            "sku": "SFW-002", 
-            "price": "299.99",
-            "inventory": 8,
-            "status": "ACTIVE"
-        },
-        {
-            "title": "Bluetooth Speaker",
-            "sku": "BTS-003",
-            "price": "89.99",
-            "inventory": 45,
-            "status": "ACTIVE"
-        },
-        {
-            "title": "Wireless Charging Pad",
-            "sku": "WCP-004",
-            "price": "49.99",
-            "inventory": 0,
-            "status": "DRAFT"
-        },
-        {
-            "title": "USB-C Hub",
-            "sku": "UCH-005",
-            "price": "79.99",
-            "inventory": 150,
-            "status": "ACTIVE"
-        }
-    ]
-    
-    low_stock_count = 0
-    
-    for i, item in enumerate(mock_items[:limit]):
-        inventory_qty = item["inventory"]
-        
-        # Check for low stock (threshold: 10)
-        if 0 < inventory_qty <= 10:
-            low_stock_count += 1
-        
-        mock_product = {
-            "id": f"gid://shopify/Product/mock_{i+1}",
-            "title": item["title"],
-            "status": item["status"],
-            "totalInventory": inventory_qty,
-            "variants": [{
-                "id": f"gid://shopify/ProductVariant/mock_{i+1}_variant",
-                "sku": item["sku"],
-                "price": item["price"],
-                "inventoryQuantity": inventory_qty,
-                "tracked": True
-            }]
-        }
-        
-        mock_products.append(mock_product)
-    
-    response = {
-        "timestamp": datetime.now().isoformat(),
-        "shop": "ge1vev-8k.myshopify.com",
-        "products": mock_products,
-        "meta": {
-            "count": len(mock_products),
-            "lowStock": low_stock_count,
-            "fetchedMs": int((time.time() - start_time) * 1000),
-            "cache": "MOCK",
-            "apiCalls": 0
-        }
-    }
-    
-    return jsonify(response), 200
+# NO FALLBACK/MOCK DATA - Production system requires real Shopify authentication
 
 
-@inventory_bp.route("/inventory/metrics", methods=["GET"]) 
+@inventory_bp.route("/inventory/metrics", methods=["GET"])
 def get_inventory_metrics():
     """
     Get inventory-specific metrics and KPIs.
@@ -528,30 +477,71 @@ def get_inventory_metrics():
     """
     try:
         service = get_inventory_service()
-        
+
+        # REQUIRE Shopify credentials - no fallback/mock data
         if not service.is_configured():
+            logger.error("Shopify service not configured - cannot fetch inventory metrics")
             return jsonify({
-                "totalProducts": 5,
-                "totalVariants": 5,
-                "lowStockItems": 2,
-                "outOfStockItems": 0,
-                "totalValue": 249.95,
-                "circuit": "MOCK",
+                "error": "Service Not Configured",
+                "message": "Shopify API credentials are required. This is a production system - no mock data allowed.",
+                "required_env_vars": ["SHOPIFY_API_KEY", "SHOPIFY_API_SECRET", "SHOP_NAME"],
+                "timestamp": datetime.now().isoformat()
+            }), 503
+
+        # Get real metrics from Shopify
+        try:
+            products_data, _ = service.list_products(limit=250)
+
+            total_products = len(products_data)
+            total_variants = sum(len(p.get('variants', [])) for p in products_data)
+            low_stock_items = 0
+            out_of_stock_items = 0
+            total_value = 0.0
+
+            for product in products_data:
+                for variant in product.get('variants', []):
+                    inventory_qty = variant.get('inventory_quantity', 0)
+                    price = float(variant.get('price', 0))
+
+                    if inventory_qty == 0:
+                        out_of_stock_items += 1
+                    elif inventory_qty <= 10:
+                        low_stock_items += 1
+
+                    total_value += price * inventory_qty
+
+            return jsonify({
+                "totalProducts": total_products,
+                "totalVariants": total_variants,
+                "lowStockItems": low_stock_items,
+                "outOfStockItems": out_of_stock_items,
+                "totalValue": round(total_value, 2),
+                "source": "shopify",
                 "timestamp": datetime.now().isoformat()
             }), 200
-        
-        # This would integrate with real metrics calculation
-        # For now, return basic structure
-        return jsonify({
-            "totalProducts": 0,
-            "totalVariants": 0,
-            "lowStockItems": 0,
-            "outOfStockItems": 0,
-            "totalValue": 0.0,
-            "circuit": "OPEN",
-            "timestamp": datetime.now().isoformat()
-        }), 200
-        
+
+        except ShopifyAuthError as e:
+            logger.error(f"Shopify authentication failed: {e}")
+            return jsonify({
+                "error": "Authentication Error",
+                "message": "Failed to authenticate with Shopify API. Check credentials.",
+                "timestamp": datetime.now().isoformat()
+            }), 401
+        except ShopifyAPIError as e:
+            logger.error(f"Shopify API error: {e}")
+            return jsonify({
+                "error": "API Error",
+                "message": "Failed to fetch inventory metrics from Shopify API",
+                "timestamp": datetime.now().isoformat()
+            }), 503
+        except Exception as e:
+            logger.error(f"Failed to fetch Shopify inventory metrics: {e}")
+            return jsonify({
+                "error": "Internal Server Error",
+                "message": "Failed to fetch metrics",
+                "timestamp": datetime.now().isoformat()
+            }), 500
+
     except Exception as e:
         logger.error(f"Inventory metrics error: {e}")
         return jsonify({
@@ -568,13 +558,13 @@ def get_inventory_agent_status():
     try:
         agent = asyncio.run(get_inventory_agent())
         status = asyncio.run(agent.get_status())
-        
+
         return jsonify({
             'success': True,
             'data': status,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Inventory agent status error: {e}")
         return jsonify({
@@ -585,23 +575,23 @@ def get_inventory_agent_status():
 
 
 @inventory_bp.route('/inventory/dashboard', methods=['GET'])
-def get_inventory_dashboard():
+def get_inventory_ml_dashboard():
     """Get comprehensive inventory dashboard data with ML insights."""
     try:
         agent = asyncio.run(get_inventory_agent())
-        
+
         # Get current inventory levels
         inventory_levels = asyncio.run(agent._sync_inventory_levels())
-        
+
         # Get recent forecasts
         forecasts = asyncio.run(agent._generate_demand_forecasts())
-        
+
         # Get optimization recommendations
         optimization = asyncio.run(agent._optimize_inventory_parameters())
-        
+
         # Get reorder analysis
         reorder_analysis = asyncio.run(agent._analyze_reorder_requirements())
-        
+
         dashboard_data = {
             'inventory_summary': {
                 'total_items': agent.performance_metrics.get('inventory_items_tracked', 0),
@@ -641,13 +631,13 @@ def get_inventory_dashboard():
                 'api_calls_today': agent.performance_metrics.get('supplier_api_calls', 0)
             }
         }
-        
+
         return jsonify({
             'success': True,
             'data': dashboard_data,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Inventory dashboard error: {e}")
         return jsonify({
@@ -662,7 +652,7 @@ def get_item_forecast(sku):
     """Get ML-powered demand forecast for a specific item."""
     try:
         agent = asyncio.run(get_inventory_agent())
-        
+
         # Get forecast data for specific SKU
         forecast_data = {
             'sku': sku,
@@ -696,13 +686,13 @@ def get_item_forecast(sku):
                 'seasonal_strength': 'moderate'
             }
         }
-        
+
         return jsonify({
             'success': True,
             'data': forecast_data,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Get forecast error for {sku}: {e}")
         return jsonify({
@@ -717,9 +707,9 @@ def get_optimization_recommendations():
     """Get AI-powered inventory optimization recommendations."""
     try:
         agent = asyncio.run(get_inventory_agent())
-        
+
         optimization_data = asyncio.run(agent._optimize_inventory_parameters())
-        
+
         recommendations = {
             'cost_optimization': [
                 {
@@ -732,7 +722,7 @@ def get_optimization_recommendations():
                 },
                 {
                     'type': 'safety_stock_reduction',
-                    'sku': 'SKU-1002', 
+                    'sku': 'SKU-1002',
                     'current_safety_stock': 75,
                     'recommended_safety_stock': 50,
                     'potential_savings': 125.25,
@@ -767,13 +757,13 @@ def get_optimization_recommendations():
                 'low_priority_actions': 23
             }
         }
-        
+
         return jsonify({
             'success': True,
             'data': recommendations,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Optimization recommendations error: {e}")
         return jsonify({
@@ -788,9 +778,9 @@ def get_reorder_analysis():
     """Get intelligent reorder requirements and analysis."""
     try:
         agent = asyncio.run(get_inventory_agent())
-        
+
         reorder_data = asyncio.run(agent._analyze_reorder_requirements())
-        
+
         reorder_analysis = {
             'urgent_reorders': [
                 {
@@ -852,13 +842,13 @@ def get_reorder_analysis():
                 'estimated_weekly_reorder_cost': 5271.25
             }
         }
-        
+
         return jsonify({
             'success': True,
             'data': reorder_analysis,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Reorder analysis error: {e}")
         return jsonify({
@@ -873,7 +863,7 @@ def get_supplier_performance():
     """Get comprehensive supplier performance analytics."""
     try:
         agent = asyncio.run(get_inventory_agent())
-        
+
         supplier_performance = {
             'suppliers': [
                 {
@@ -950,13 +940,13 @@ def get_supplier_performance():
                 'performance_trend': 'improving'
             }
         }
-        
+
         return jsonify({
             'success': True,
             'data': supplier_performance,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Supplier performance error: {e}")
         return jsonify({
@@ -971,16 +961,16 @@ def execute_inventory_cycle():
     """Execute a full intelligent inventory management cycle."""
     try:
         agent = asyncio.run(get_inventory_agent())
-        
+
         # Execute the main inventory cycle
         execution_result = asyncio.run(agent.run())
-        
+
         return jsonify({
             'success': True,
             'data': execution_result,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Inventory execution error: {e}")
         return jsonify({
@@ -997,7 +987,7 @@ def inventory_health_check():
     try:
         agent = asyncio.run(get_inventory_agent())
         status = asyncio.run(agent.get_status())
-        
+
         health_status = {
             'service': 'inventory',
             'status': 'healthy' if status.get('status') == 'healthy' else 'unhealthy',
@@ -1010,9 +1000,9 @@ def inventory_health_check():
                 'cost_savings': agent.performance_metrics.get('cost_savings_generated', 0.0)
             }
         }
-        
+
         return jsonify(health_status)
-        
+
     except Exception as e:
         return jsonify({
             'service': 'inventory',

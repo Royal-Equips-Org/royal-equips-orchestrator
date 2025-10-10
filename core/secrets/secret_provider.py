@@ -25,6 +25,9 @@ except ImportError:
     AESGCM = None
     warnings.warn("cryptography package not available - encryption disabled")
 
+# Module-level flag to prevent duplicate warnings
+_default_key_warning_shown = False
+
 
 class SecretSource(Enum):
     ENV = "env"
@@ -55,6 +58,26 @@ class SecretResult:
     source: SecretSource
     fetched_at: float
     ttl: Optional[int] = None
+    
+    def __str__(self) -> str:
+        """Return the secret value when converted to string."""
+        return self.value
+    
+    def __repr__(self) -> str:
+        """Return safe representation without exposing the secret value."""
+        return f"SecretResult(key={self.key!r}, value='***', source={self.source!r}, fetched_at={self.fetched_at}, ttl={self.ttl})"
+    
+    def endswith(self, suffix: str) -> bool:
+        """Check if the secret value ends with the given suffix."""
+        return self.value.endswith(suffix)
+    
+    def startswith(self, prefix: str) -> bool:
+        """Check if the secret value starts with the given prefix."""
+        return self.value.startswith(prefix)
+    
+    def replace(self, old: str, new: str) -> str:
+        """Replace occurrences in the secret value."""
+        return self.value.replace(old, new)
 
 
 class SecretProvider(Protocol):
@@ -168,14 +191,16 @@ class UnifiedSecretResolver:
 
     def _derive_key(self) -> bytes:
         """Derive encryption key from environment or use default."""
+        global _default_key_warning_shown
         seed = os.getenv("SECRET_ENCRYPTION_KEY") or "royal-equips-default-dev-key-change-in-prod"
         
-        if seed == "royal-equips-default-dev-key-change-in-prod":
+        if seed == "royal-equips-default-dev-key-change-in-prod" and not _default_key_warning_shown:
             print(json.dumps({
                 "level": "warn",
                 "event": "secret_encryption_key_default",
                 "message": "Using default encryption key - set SECRET_ENCRYPTION_KEY in production"
             }))
+            _default_key_warning_shown = True
         
         # Use SHA-256 to derive 32-byte key
         return hashlib.sha256(seed.encode()).digest()

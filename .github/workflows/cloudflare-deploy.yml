@@ -3,16 +3,13 @@ name: ☁️ Cloudflare Deploy
 on:
   push:
     branches: [main, master]
+    # Only trigger when these folders change (cannot combine with paths-ignore)
     paths:
       - 'apps/**'
       - 'packages/**'
       - 'workers/**'
       - 'edge-functions/**'
-    paths-ignore:
-      - '**.md'
-      - '**.txt'
-      - '**/test/**'
-      - '**/tests/**'
+    # NOTE: Cannot use paths-ignore here due to GitHub Actions limitation.
   workflow_dispatch:
     inputs:
       environment:
@@ -39,7 +36,7 @@ jobs:
     
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
@@ -54,7 +51,9 @@ jobs:
       - name: 🏗️ Install & Build
         run: |
           pnpm install --frozen-lockfile --ignore-scripts
-          pnpm --filter "@royal-equips/*" build
+          pnpm --filter "@royal-equips/command-center-ui" build
+          # Verify functions are included in build
+          ls -la apps/command-center-ui/dist/functions/api/webhooks/
         env:
           HUSKY: 0
 
@@ -68,7 +67,7 @@ jobs:
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: ⚡ Deploy Workers
-        uses: cloudflare/wrangler-action@9681c2997648301493e78cacbfb790a9f19c833f # v3.9.0
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -82,3 +81,5 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+# --- END ---

@@ -14,7 +14,7 @@ import json
 import logging
 import os
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -357,7 +357,7 @@ class AdvancedCompetitorIntelligence:
                 description=f"{competitor.get('name', competitor_id)} {change_type}d prices by {magnitude:.1%}",
                 confidence_score=random.uniform(0.7, 0.95),
                 impact_assessment=self._assess_price_change_impact(magnitude),
-                detected_at=datetime.now(),
+                detected_at=datetime.now(timezone.utc),
                 data_sources=['web_scraping', 'price_api'],
                 affected_products=self._get_competitor_products(competitor_id)[:3],
                 market_implications=[f"Market pressure for price {change_type}s", "Potential margin impact"]
@@ -370,7 +370,7 @@ class AdvancedCompetitorIntelligence:
                 self.price_history[competitor_id] = []
             
             self.price_history[competitor_id].append({
-                'date': datetime.now(),
+                'date': datetime.now(timezone.utc),
                 'change_type': change_type,
                 'magnitude': magnitude,
                 'confidence': action.confidence_score
@@ -416,7 +416,7 @@ class AdvancedCompetitorIntelligence:
                 description=f"{competitor.get('name', competitor_id)} launched new product in {random.choice(['electronics', 'home', 'fashion'])} category",
                 confidence_score=random.uniform(0.8, 0.95),
                 impact_assessment="medium",
-                detected_at=datetime.now(),
+                detected_at=datetime.now(timezone.utc),
                 data_sources=['product_feeds', 'social_media'],
                 affected_products=[],
                 market_implications=["Increased competition", "Market category expansion"]
@@ -445,7 +445,7 @@ class AdvancedCompetitorIntelligence:
                 description=f"{competitor.get('name', competitor_id)} launched {activity_type.replace('_', ' ')}",
                 confidence_score=random.uniform(0.6, 0.9),
                 impact_assessment=random.choice(['low', 'medium']),
-                detected_at=datetime.now(),
+                detected_at=datetime.now(timezone.utc),
                 data_sources=['social_media', 'advertising_networks'],
                 affected_products=self._get_competitor_products(competitor_id)[:2],
                 market_implications=["Increased marketing pressure", "Customer attention shift"]
@@ -472,7 +472,7 @@ class AdvancedCompetitorIntelligence:
                 description=f"{competitor.get('name', competitor_id)} announced strategic partnership",
                 confidence_score=random.uniform(0.7, 0.9),
                 impact_assessment="medium",
-                detected_at=datetime.now(),
+                detected_at=datetime.now(timezone.utc),
                 data_sources=['press_releases', 'news_feeds'],
                 affected_products=[],
                 market_implications=["Market consolidation", "Increased competitive capability"]
@@ -563,12 +563,12 @@ class AdvancedCompetitorIntelligence:
             competitor.get('market_share', 0.1),
             competitor.get('growth_rate', 0.05),
             len(historical_actions),  # Activity level
-            len([a for a in historical_actions if (datetime.now() - a.detected_at).days < 30]),  # Recent activity
+            len([a for a in historical_actions if (datetime.now(timezone.utc) - a.detected_at).days < 30]),  # Recent activity
             {'aggressive': 0.8, 'premium': 0.3, 'cost_leader': 0.9}.get(competitor.get('pricing_strategy'), 0.5),
             {'excellent': 1.0, 'strong': 0.8, 'stable': 0.6, 'weak': 0.3}.get(competitor.get('financial_health'), 0.5),
             len(competitor.get('primary_categories', [])),
-            datetime.now().month / 12.0,  # Seasonality
-            datetime.now().weekday() / 7.0,  # Day of week
+            datetime.now(timezone.utc).month / 12.0,  # Seasonality
+            datetime.now(timezone.utc).weekday() / 7.0,  # Day of week
             len([a for a in historical_actions if a.action_type == CompetitorActionType.PRICE_DECREASE]) / max(1, len(historical_actions)),
             len([a for a in historical_actions if a.action_type == CompetitorActionType.NEW_PRODUCT]) / max(1, len(historical_actions)),
             np.random.random()  # Market volatility placeholder
@@ -593,7 +593,7 @@ class AdvancedCompetitorIntelligence:
                 reasoning.append("Limited category presence indicates expansion opportunity")
                 
         elif action_type == CompetitorActionType.MARKETING_CAMPAIGN:
-            if datetime.now().month in [11, 12, 1]:  # Holiday season
+            if datetime.now(timezone.utc).month in [11, 12, 1]:  # Holiday season
                 reasoning.append("Seasonal marketing opportunity")
             if len([a for a in history if a.action_type == CompetitorActionType.MARKETING_CAMPAIGN]) < 2:
                 reasoning.append("Low recent marketing activity")
@@ -633,7 +633,7 @@ class AdvancedCompetitorIntelligence:
             indicators['market_opportunity'] = 0.6
             
         elif action_type == CompetitorActionType.MARKETING_CAMPAIGN:
-            indicators['seasonal_opportunity'] = 0.8 if datetime.now().month in [11, 12, 3, 6] else 0.4
+            indicators['seasonal_opportunity'] = 0.8 if datetime.now(timezone.utc).month in [11, 12, 3, 6] else 0.4
             indicators['competitive_pressure'] = 0.6
         
         return indicators
@@ -678,7 +678,7 @@ class AdvancedCompetitorIntelligence:
         
         # Simulate historical prices
         for i in range(30, 0, -1):
-            date = datetime.now() - timedelta(days=i)
+            date = datetime.now(timezone.utc) - timedelta(days=i)
             # Add trend and noise
             trend_factor = 1 + (np.random.random() - 0.5) * 0.02  # ±1% daily trend
             price = current_price * (trend_factor ** i)
@@ -691,7 +691,7 @@ class AdvancedCompetitorIntelligence:
             len(price_history),
             np.std([p[1] for p in price_history]) / current_price,  # Price volatility
             forecast_days / 30.0,  # Forecast horizon normalized
-            datetime.now().month / 12.0,  # Seasonality
+            datetime.now(timezone.utc).month / 12.0,  # Seasonality
             competitor.get('growth_rate', 0.05),
             {'excellent': 0.9, 'strong': 0.7, 'stable': 0.5}.get(competitor.get('financial_health'), 0.5)
         ]
@@ -720,7 +720,7 @@ class AdvancedCompetitorIntelligence:
             market_factors.append("Aggressive pricing strategy")
         if competitor.get('market_share', 0) < 0.15:
             market_factors.append("Market share pressure")
-        if datetime.now().month in [11, 12]:
+        if datetime.now(timezone.utc).month in [11, 12]:
             market_factors.append("Holiday season demand")
         
         return PriceTrendPrediction(
@@ -963,7 +963,7 @@ class AdvancedCompetitorIntelligence:
         # Recent activity level
         recent_actions = [a for a in self.action_history 
                          if a.competitor_id in segment_competitors and 
-                         (datetime.now() - a.detected_at).days < 30]
+                         (datetime.now(timezone.utc) - a.detected_at).days < 30]
         activity_level = len(recent_actions) / max(1, len(segment_competitors))
         
         # Prepare features for prediction
@@ -974,7 +974,7 @@ class AdvancedCompetitorIntelligence:
             len(segment_competitors),
             len([a for a in recent_actions if a.action_type == CompetitorActionType.NEW_PRODUCT]),
             len([a for a in recent_actions if a.action_type == CompetitorActionType.PRICE_DECREASE]),
-            datetime.now().month / 12.0,  # Seasonality
+            datetime.now(timezone.utc).month / 12.0,  # Seasonality
             {'short_term': 0.3, 'medium_term': 0.6, 'long_term': 0.9}.get(time_horizon, 0.6),
             np.random.random(),  # Market volatility placeholder
             np.random.random()   # Economic indicator placeholder
@@ -1037,7 +1037,7 @@ class AdvancedCompetitorIntelligence:
         
         # Recent high-impact actions
         recent_actions = [a for a in self.action_history 
-                         if (datetime.now() - a.detected_at).hours < 24]
+                         if (datetime.now(timezone.utc) - a.detected_at).hours < 24]
         
         for action in recent_actions:
             action_severity = severity_levels.get(action.impact_assessment, 1)
@@ -1056,7 +1056,7 @@ class AdvancedCompetitorIntelligence:
         # Price change alerts
         for competitor_id, price_changes in self.price_history.items():
             recent_changes = [p for p in price_changes 
-                            if (datetime.now() - p['date']).hours < 24]
+                            if (datetime.now(timezone.utc) - p['date']).hours < 24]
             
             for change in recent_changes:
                 if change['magnitude'] > 0.05:  # 5% threshold
@@ -1082,7 +1082,7 @@ class AdvancedCompetitorIntelligence:
         total_competitors = len(self.competitor_data)
         total_actions = len(self.action_history)
         recent_actions = len([a for a in self.action_history 
-                            if (datetime.now() - a.detected_at).days < 7])
+                            if (datetime.now(timezone.utc) - a.detected_at).days < 7])
         
         avg_confidence = np.mean([a.confidence_score for a in self.action_history]) if self.action_history else 0
         
@@ -1094,6 +1094,6 @@ class AdvancedCompetitorIntelligence:
             'data_sources_active': sum(1 for source in self.data_sources.values() if source.get('enabled', False)),
             'price_changes_tracked': sum(len(changes) for changes in self.price_history.values()),
             'ml_model_accuracy': '87.3%',  # Estimated
-            'last_updated': datetime.now(),
+            'last_updated': datetime.now(timezone.utc),
             'service_uptime': '99.8%'
         }

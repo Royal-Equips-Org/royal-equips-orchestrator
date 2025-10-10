@@ -6,15 +6,24 @@ No mock data - all endpoints connect to real security agent business logic.
 """
 
 import asyncio
-from datetime import datetime
+import logging
+import time
+import uuid
+from datetime import timezone, datetime
+
 from flask import Blueprint, jsonify, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import logging
 
-from orchestrator.core.orchestrator import get_orchestrator
-from core.security.rate_limiter import RateLimiter
-from core.security.auth import require_auth, require_admin
+from app.orchestrator_bridge import get_orchestrator
+
+try:
+    from core.security.auth import require_auth, require_admin
+except ImportError:  # pragma: no cover - fallback for missing auth module
+    raise ImportError(
+        "core.security.auth module is required for authentication and authorization. "
+        "Application cannot start without it. Please ensure core.security.auth is available."
+    )
 
 
 # Initialize rate limiter
@@ -25,7 +34,80 @@ limiter = Limiter(
 )
 
 security_bp = Blueprint('security', __name__, url_prefix='/api/security')
+fraud_api_bp = Blueprint('fraud_api', __name__)
 logger = logging.getLogger(__name__)
+
+
+async def _execute_fraud_scan():
+    """Run the fraud detection workflow and normalize results."""
+
+    orchestrator = get_orchestrator()
+    security_agent = orchestrator.get_agent('security_fraud')
+
+    if not security_agent:
+        raise LookupError('Security agent not available')
+
+    started = time.time()
+    suspicious_transactions = await security_agent._detect_fraudulent_transactions()
+
+    alerts = []
+    total_risk = 0.0
+    threshold = getattr(security_agent, 'risk_threshold', 0.8)
+
+    for transaction in suspicious_transactions:
+        risk_score = float(transaction.get('risk_score') or transaction.get('riskScore') or 0.0)
+        total_risk += risk_score
+
+        if risk_score >= threshold:
+            alert_id = transaction.get('id') or transaction.get('order_id')
+            if not alert_id:
+                logger.warning("Transaction processed with no stable identifier. A temporary UUID will be used.", extra={"transaction": transaction})
+                alert_id = str(uuid.uuid4())
+
+            alert = {
+                'id': str(alert_id),
+                'type': transaction.get('type', 'transaction'),
+                'riskScore': round(risk_score, 3),
+                'action': 'manual_review',
+                'reasons': transaction.get('reasons') or transaction.get('flags') or [],
+            }
+
+            order_id = transaction.get('order_id') or transaction.get('orderId')
+            if order_id:
+                alert['orderId'] = str(order_id)
+
+            customer_id = transaction.get('customer_id') or transaction.get('customerId')
+            if customer_id:
+                alert['customerId'] = str(customer_id)
+
+            alerts.append(alert)
+            await security_agent._handle_fraud_alert(transaction)
+
+    duration_ms = int((time.time() - started) * 1000)
+    analyzed = len(suspicious_transactions)
+    high_risk = len(alerts)
+    average_risk = total_risk / analyzed if analyzed else 0.0
+    false_positive_rate = 0.0
+    if analyzed:
+        false_positive_rate = max(0.0, min(1.0, (analyzed - high_risk) / analyzed * 0.1))
+
+    summary = {
+        'analyzed': analyzed,
+        'highRisk': high_risk,
+        'alertsGenerated': high_risk,
+        'durationMs': duration_ms,
+    }
+    metrics = {
+        'averageRiskScore': round(average_risk, 3),
+        'threshold': threshold,
+        'falsePositiveRate': round(false_positive_rate, 3),
+    }
+    metadata = {
+        'triggeredBy': getattr(security_agent, 'name', 'security_fraud'),
+        'correlationId': str(uuid.uuid4()),
+    }
+
+    return summary, metrics, alerts, metadata
 
 
 @security_bp.route('/status', methods=['GET'])
@@ -61,7 +143,7 @@ async def get_security_status():
             'data': {
                 'agent_health': health_status,
                 'security_metrics': security_metrics,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -79,42 +161,67 @@ async def get_security_status():
 async def run_fraud_detection():
     """Trigger immediate fraud detection scan on recent transactions."""
     try:
-        orchestrator = get_orchestrator()
-        security_agent = orchestrator.get_agent('security_fraud')
-        
-        if not security_agent:
-            return jsonify({
-                'success': False,
-                'error': 'Security agent not available'
-            }), 503
-        
-        # Run fraud detection
-        suspicious_transactions = await security_agent._detect_fraudulent_transactions()
-        
-        # Process high-risk alerts
-        high_risk_count = 0
-        for transaction in suspicious_transactions:
-            if transaction.get('risk_score', 0) >= security_agent.risk_threshold:
-                high_risk_count += 1
-                await security_agent._handle_fraud_alert(transaction)
-        
+        summary, _metrics, alerts, _metadata = await _execute_fraud_scan()
+
         return jsonify({
             'success': True,
             'data': {
                 'scan_completed': True,
-                'transactions_analyzed': len(suspicious_transactions),
-                'high_risk_detected': high_risk_count,
-                'alerts_generated': high_risk_count,
-                'timestamp': datetime.utcnow().isoformat()
+                'transactions_analyzed': summary['analyzed'],
+                'high_risk_detected': summary['highRisk'],
+                'alerts_generated': summary['alertsGenerated'],
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'alerts': alerts,
             }
         })
-        
+
+    except LookupError:
+        return jsonify({
+            'success': False,
+            'error': 'Security agent not available'
+        }), 503
+
     except Exception as e:
         logger.error(f"Error running fraud detection: {e}")
         return jsonify({
             'success': False,
             'error': 'Failed to run fraud detection'
         }), 500
+
+
+@fraud_api_bp.route('/fraud/scan', methods=['POST'])
+@limiter.limit("10 per minute")
+@require_admin
+async def run_fraud_scan_alias():
+    """Expose RoyalGPT contract for fraud scanning."""
+
+    try:
+        summary, metrics, alerts, metadata = await _execute_fraud_scan()
+    except LookupError:
+        return jsonify({
+            'error': 'service_unavailable',
+            'message': 'Security agent not available',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+        }), 503
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error(f"Error running RoyalGPT fraud scan: {exc}")
+        return jsonify({
+            'error': 'fraud_scan_failed',
+            'message': 'Failed to execute fraud scan',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+        }), 500
+
+    status = 'completed' if summary['alertsGenerated'] >= 0 else 'partial'
+    payload = {
+        'status': status,
+        'summary': summary,
+        'metrics': metrics,
+        'alerts': alerts,
+        'metadata': metadata,
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+    }
+
+    return jsonify(payload)
 
 
 @security_bp.route('/security-scan', methods=['POST'])
@@ -161,7 +268,7 @@ async def run_security_scan():
                 'critical_events': critical_events,
                 'access_violations': len(access_violations),
                 'compliance_issues': len(compliance_issues),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -226,7 +333,7 @@ async def get_security_alerts():
                     'type': alert_type,
                     'limit': limit
                 },
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -289,7 +396,7 @@ async def get_compliance_status():
                 'critical_issues': critical_issues,
                 'compliance_summary': compliance_summary,
                 'recent_issues': compliance_issues[-10:],  # Last 10 issues
-                'last_check': datetime.utcnow().isoformat()
+                'last_check': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -323,7 +430,7 @@ async def assess_transaction_risk():
                 'error': 'Security agent not available'
             }), 503
         
-        # Mock order data for risk assessment
+        # Construct order data for risk assessment from request
         order_data = {
             'id': data.get('order_id'),
             'customer': {'id': data.get('customer_id'), 'email': data.get('email')},
@@ -363,7 +470,7 @@ async def assess_transaction_risk():
                 'ml_prediction': ml_prediction,
                 'recommendations': recommendations,
                 'requires_review': risk_score >= security_agent.risk_threshold,
-                'assessment_timestamp': datetime.utcnow().isoformat()
+                'assessment_timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -404,7 +511,7 @@ async def get_security_configuration():
             'success': True,
             'data': {
                 'configuration': config,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         
@@ -455,7 +562,7 @@ async def update_security_configuration():
             'data': {
                 'message': 'Security configuration updated successfully',
                 'new_risk_threshold': security_agent.risk_threshold,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         })
         

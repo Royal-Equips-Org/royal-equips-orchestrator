@@ -7,7 +7,7 @@ import asyncio
 import aiohttp
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import openai
@@ -162,7 +162,7 @@ class MarketingOrchestrator(AgentBase):
                     "call_to_action": self.extract_section(ai_content, "call-to-action"),
                     "hashtags": self.extract_section(ai_content, "hashtags"),
                     "keywords": self.extract_section(ai_content, "keywords"),
-                    "generated_at": datetime.now().isoformat()
+                    "generated_at": datetime.now(timezone.utc).isoformat()
                 }
                 
                 logger.info(f"AI content generated for {product_data.get('title')}")
@@ -219,7 +219,7 @@ class MarketingOrchestrator(AgentBase):
             
             # Create campaign object
             campaign = Campaign(
-                id=f"camp_{int(datetime.now().timestamp())}",
+                id=f"camp_{int(datetime.now(timezone.utc).timestamp())}",
                 product_id=product_data.get('id', 'unknown'),
                 product_title=product_data.get('title', 'Unknown Product'),
                 platform=platform,
@@ -235,8 +235,8 @@ class MarketingOrchestrator(AgentBase):
                     'cost_per_click': 0,
                     'roas': 0
                 },
-                created_at=datetime.now(),
-                updated_at=datetime.now()
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
             )
             
             # Store campaign
@@ -313,7 +313,7 @@ class MarketingOrchestrator(AgentBase):
             # fb_campaign_id = await self.facebook_api.create_campaign(campaign_data)
             
             # Mock response for demonstration
-            fb_campaign_id = f"fb_camp_{int(datetime.now().timestamp())}"
+            fb_campaign_id = f"fb_camp_{int(datetime.now(timezone.utc).timestamp())}"
             
             logger.info(f"Facebook campaign created: {fb_campaign_id}")
             return fb_campaign_id
@@ -337,7 +337,7 @@ class MarketingOrchestrator(AgentBase):
             }
             
             # Mock response for demonstration  
-            google_campaign_id = f"google_camp_{int(datetime.now().timestamp())}"
+            google_campaign_id = f"google_camp_{int(datetime.now(timezone.utc).timestamp())}"
             
             logger.info(f"Google campaign created: {google_campaign_id}")
             return google_campaign_id
@@ -396,9 +396,9 @@ class MarketingOrchestrator(AgentBase):
             # Mock metrics for demonstration
             # In real implementation, this would fetch from platform APIs
             metrics = {
-                'impressions': 15420 + int(datetime.now().timestamp() % 5000),
-                'clicks': 823 + int(datetime.now().timestamp() % 100),
-                'conversions': 47 + int(datetime.now().timestamp() % 10),
+                'impressions': 15420 + int(datetime.now(timezone.utc).timestamp() % 5000),
+                'clicks': 823 + int(datetime.now(timezone.utc).timestamp() % 100),
+                'conversions': 47 + int(datetime.now(timezone.utc).timestamp() % 10),
                 'cost': 234.56,
                 'revenue': 1504.32,
                 'ctr': 5.34,
@@ -444,7 +444,7 @@ class MarketingOrchestrator(AgentBase):
             if campaign.status == 'active':
                 metrics = await self.get_campaign_metrics(campaign.id)
                 campaign.metrics.update(metrics)
-                campaign.updated_at = datetime.now()
+                campaign.updated_at = datetime.now(timezone.utc)
     
     def get_campaign_stats(self) -> Dict[str, Any]:
         """Get overall marketing statistics"""

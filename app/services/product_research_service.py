@@ -13,7 +13,7 @@ import logging
 import json
 import hashlib
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
@@ -121,7 +121,7 @@ class ProductResearchService:
                 data = json.load(f)
                 
             cached_time = datetime.fromisoformat(data['timestamp'])
-            if datetime.now() - cached_time > self.cache_duration:
+            if datetime.now(timezone.utc) - cached_time > self.cache_duration:
                 return None
                 
             opportunities = []
@@ -141,7 +141,7 @@ class ProductResearchService:
         
         try:
             data = {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'opportunities': []
             }
             
@@ -472,7 +472,7 @@ class ProductResearchService:
                 confidence_score=confidence_score,
                 profit_margin=profit_data['profit_margin'],
                 monthly_searches=trend_data['search_volume'],
-                discovered_at=datetime.now(),
+                discovered_at=datetime.now(timezone.utc),
                 data_sources=trend_data['data_sources'] + competition_data['data_sources'],
                 risk_factors=risk_factors,
                 growth_indicators=growth_indicators

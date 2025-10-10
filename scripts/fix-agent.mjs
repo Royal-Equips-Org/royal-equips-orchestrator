@@ -252,6 +252,7 @@ export async function ${fn}(..._args){
 `;
         changed = true;
       }
+    }
     if (changed) {
       await writeWithApproval(r(f), s, options);
       total++;
@@ -340,7 +341,7 @@ async function main() {
   watcher.on("all", () => {
     clearTimeout(timer);
     timer = setTimeout(async () => {
-      console.log("\n— change detected, running Fix-Agent —");
+      console.log("\n-- change detected, running Fix-Agent --");
       await oneRun();
     }, 500);
   });

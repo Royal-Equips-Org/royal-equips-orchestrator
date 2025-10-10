@@ -17,6 +17,8 @@ import {
   Plus
 } from 'lucide-react';
 import { useEmpireStore } from '../../store/empire-store';
+import { ensureArray } from '../../utils/array-utils';
+import { logger } from '../../services/log';
 
 interface Agent {
   id: string;
@@ -50,104 +52,316 @@ export default function AgentsModule() {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const { isConnected } = useEmpireStore();
 
+  // Business logic validation for agents data
+  const normalizeAgentPayload = (rawData: unknown): Record<string, unknown>[] => {
+    const collections: unknown[] = [];
+
+    const agentLike = (candidate: unknown): candidate is Record<string, unknown> => {
+      if (!candidate || typeof candidate !== 'object') {
+        return false;
+      }
+
+      const record = candidate as Record<string, unknown>;
+      const identifier = record.id ?? record.agent_id ?? record.uuid ?? record.slug;
+      const status = record.status ?? record.agent_status;
+      const agentType = record.type ?? record.agent_type;
+
+      if (typeof identifier !== 'string' || identifier.length === 0) {
+        return false;
+      }
+
+      if (
+        typeof status !== 'string' &&
+        typeof agentType !== 'string' &&
+        typeof record.name !== 'string'
+      ) {
+        return false;
+      }
+
+      return true;
+    };
+
+    // Handle plain array response (e.g., [agent1, agent2])
+    if (Array.isArray(rawData)) {
+      collections.push(...rawData);
+    } else if (rawData && typeof rawData === 'object') {
+      const payload = rawData as Record<string, unknown>;
+
+      if (Array.isArray(payload.agents)) {
+        collections.push(...payload.agents);
+      }
+
+      if (Array.isArray(payload.data)) {
+        collections.push(...payload.data);
+      }
+
+      if (typeof payload.data === 'object' && payload.data !== null) {
+        const nested = payload.data as Record<string, unknown>;
+        if (Array.isArray(nested.agents)) {
+          collections.push(...nested.agents);
+        }
+        if (Array.isArray(nested.results)) {
+          collections.push(...nested.results);
+        }
+      }
+
+      if (Array.isArray(payload.results)) {
+        collections.push(...payload.results);
+      }
+
+      // If no arrays found but the payload itself looks like an agent, use it
+      if (collections.length === 0 && agentLike(payload)) {
+        collections.push(payload);
+      }
+    }
+
+    return collections.filter((candidate): candidate is Record<string, unknown> => agentLike(candidate));
+  };
+
+  const validateAndProcessAgentsData = (rawData: unknown): Record<string, unknown>[] => {
+    if (!rawData || typeof rawData !== 'object') {
+      logger.warn('Agents data invalid type, triggering fallback', {
+        event: 'AGENTS_DATA_INVALID',
+        rawData: typeof rawData,
+        context: 'AgentsModule.validateAndProcessAgentsData'
+      });
+      return [];
+    }
+
+    const agentsArray = normalizeAgentPayload(rawData);
+
+    if (agentsArray.length === 0) {
+      logger.warn('No agents data available, triggering empty state recovery', {
+        event: 'AGENTS_DATA_EMPTY',
+        rawData,
+        context: 'AgentsModule.validateAndProcessAgentsData'
+      });
+      return [];
+    }
+
+    logger.info('Successfully processed agents data', {
+      event: 'AGENTS_DATA_PROCESSED',
+      count: agentsArray.length,
+      context: 'AgentsModule.validateAndProcessAgentsData'
+    });
+
+    return agentsArray;
+  };
+
+  // Autonomous self-healing service layer for agent data fetching
+  const fetchAgentDataWithRecovery = async (retryCount = 0): Promise<void> => {
+    const maxRetries = 3;
+    const retryDelay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+    
+    try {
+      logger.info('Starting agent data fetch', { 
+        event: 'AGENTS_FETCH_START', 
+        attempt: retryCount + 1,
+        maxRetries: maxRetries + 1,
+        context: 'AgentsModule.fetchAgentDataWithRecovery' 
+      });
+
+      // Fetch from real agents endpoint with timeout
+      const agentsResponse = await Promise.race([
+        fetch('/v1/agents'),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Fetch timeout')), 10000)
+        )
+      ]);
+      
+      let agentsData = [];
+      
+      if (agentsResponse.ok) {
+        const rawResponse = await agentsResponse.json();
+        agentsData = validateAndProcessAgentsData(rawResponse);
+      } else {
+        throw new Error(`HTTP ${agentsResponse.status}: ${agentsResponse.statusText}`);
+      }
+
+      // Validate and process the data through business logic layer
+      const processedAgents = processAgentsBusinessLogic(agentsData);
+
+      if (processedAgents.length === 0) {
+        logger.info('No agent records available after processing, skipping auxiliary fetches', {
+          event: 'AGENTS_EMPTY_DATASET',
+          context: 'AgentsModule.fetchAgentDataWithRecovery'
+        });
+
+        setAgents([]);
+        setSessions([]);
+        setError(null);
+        return;
+      }
+
+      // Fetch additional data if primary agents exist
+      const sessionsData = await fetchSessionsData(processedAgents);
+      const metricsData = await fetchMetricsData();
+      
+      // Enhance agents with system metrics
+      const enhancedAgents = enhanceAgentsWithMetrics(processedAgents, metricsData);
+      
+      setAgents(enhancedAgents);
+      setSessions(sessionsData);
+      setError(null);
+      
+      logger.info('Agent data fetch completed successfully', { 
+        event: 'AGENTS_FETCH_SUCCESS', 
+        agentCount: enhancedAgents.length,
+        sessionCount: sessionsData.length,
+        context: 'AgentsModule.fetchAgentDataWithRecovery' 
+      });
+      
+    } catch (err) {
+      logger.error('Agent data fetch failed', { 
+        event: 'AGENTS_FETCH_ERROR', 
+        attempt: retryCount + 1,
+        maxRetries: maxRetries + 1,
+        error: String(err),
+        context: 'AgentsModule.fetchAgentDataWithRecovery' 
+      });
+
+      // Autonomous recovery: retry with exponential backoff
+      if (retryCount < maxRetries) {
+        logger.info('Triggering automatic retry with exponential backoff', { 
+          event: 'AGENTS_FETCH_RETRY', 
+          retryCount: retryCount + 1,
+          retryDelay,
+          context: 'AgentsModule.fetchAgentDataWithRecovery' 
+        });
+        
+        setTimeout(() => {
+          fetchAgentDataWithRecovery(retryCount + 1);
+        }, retryDelay);
+        return;
+      }
+
+      // Final fallback: provide empty state with error
+      logger.error('All retry attempts exhausted, entering error state', { 
+        event: 'AGENTS_FETCH_FINAL_FAILURE', 
+        totalAttempts: maxRetries + 1,
+        context: 'AgentsModule.fetchAgentDataWithRecovery' 
+      });
+      
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      setAgents([]); // Business logic: return empty array, not undefined
+      setSessions([]);
+    }
+  };
+
+  // Business logic layer: process raw agent data into structured format
+  const processAgentsBusinessLogic = (agentsData: any[]): Agent[] => {
+    return agentsData.map((agent: any, index: number) => {
+      // Calculate real performance metrics from agent data
+      const totalExecutions = agent.total_executions || 0;
+      const successfulExecutions = agent.successful_executions || 0;
+      const failedExecutions = agent.failed_executions || 0;
+      const avgExecutionTime = agent.avg_execution_time || 0;
+      
+      // Real success rate calculation
+      const successRate = totalExecutions > 0 ? (successfulExecutions / totalExecutions) * 100 : 0;
+      
+      // Real health calculation based on error rate and performance
+      const errorRate = totalExecutions > 0 ? (failedExecutions / totalExecutions) * 100 : 0;
+      const health = Math.max(0, Math.min(100, 100 - errorRate));
+      
+      return {
+        id: agent.id || `agent_${index}`,
+        name: agent.name || `Agent ${index + 1}`,
+        type: agent.type || agent.agent_type || 'Unknown',
+        status: (agent.status as 'active' | 'idle' | 'error' | 'stopped') || 'idle',
+        health: Math.floor(health),
+        lastActivity: agent.last_execution || agent.updated_at || new Date().toISOString(),
+        totalTasks: totalExecutions,
+        completedTasks: successfulExecutions,
+        errorCount: failedExecutions,
+        performance: {
+          avgResponseTime: Math.floor(avgExecutionTime * 1000), // Convert to ms
+          successRate: Math.floor(successRate * 10) / 10, // Round to 1 decimal
+          throughput: agent.throughput_per_hour || 0
+        },
+        capabilities: agent.capabilities || getAgentCapabilities(agent.type || agent.agent_type || 'unknown')
+      };
+    });
+  };
+
+  // Business logic: fetch sessions data with fallback
+  const fetchSessionsData = async (agents: Agent[]): Promise<AgentSession[]> => {
+    if (agents.length === 0) {
+      return [];
+    }
+
+    try {
+      const agentId = agents[0].id;
+      const sessionsResponse = await fetch(`/v1/agents/${agentId}/logs`);
+      if (sessionsResponse.ok) {
+        const rawSessions = await sessionsResponse.json();
+        return ensureArray(rawSessions);
+      }
+    } catch (err) {
+      logger.warn('Failed to fetch sessions, using empty array fallback', { 
+        event: 'SESSIONS_FETCH_ERROR', 
+        error: String(err),
+        context: 'AgentsModule.fetchSessionsData' 
+      });
+    }
+    
+    return [];
+  };
+
+  // Business logic: fetch metrics data with fallback
+  const fetchMetricsData = async (): Promise<any> => {
+    try {
+      const metricsResponse = await fetch('/v1/metrics');
+      if (metricsResponse.ok) {
+        return await metricsResponse.json();
+      }
+    } catch (err) {
+      logger.warn('Failed to fetch metrics, using null fallback', { 
+        event: 'METRICS_FETCH_ERROR', 
+        error: String(err),
+        context: 'AgentsModule.fetchMetricsData' 
+      });
+    }
+    
+    return null;
+  };
+
+  // Business logic: enhance agents with system metrics
+  const enhanceAgentsWithMetrics = (agents: Agent[], metricsData: any): Agent[] => {
+    const enhancedAgents = [...agents];
+    
+    // Add system-level agents based on metrics
+    if (metricsData?.active_sessions > 0) {
+      enhancedAgents.push({
+        id: 'system_orchestrator',
+        name: 'System Orchestrator',
+        type: 'Core System',
+        status: 'active',
+        health: metricsData.ok ? 95 : 60,
+        lastActivity: new Date().toISOString(),
+        totalTasks: metricsData.total_requests || 0,
+        completedTasks: Math.floor((metricsData.total_requests || 0) * 0.95),
+        errorCount: metricsData.total_errors || 0,
+        performance: {
+          avgResponseTime: 120,
+          successRate: (((metricsData.total_requests || 0) - (metricsData.total_errors || 0)) / Math.max(metricsData.total_requests || 1, 1)) * 100,
+          throughput: metricsData.active_sessions || 0
+        },
+        capabilities: ['Request Orchestration', 'Session Management', 'Error Handling']
+      });
+    }
+    
+    return enhancedAgents;
+  };
+
   // Fetch real agent data from backend
   const fetchAgentData = async () => {
     setLoading(true);
     setError(null);
     
-    try {
-      // Fetch from real agents endpoint
-      const agentsResponse = await fetch('/v1/agents');
-      let agentsData = [];
-      
-      if (agentsResponse.ok) {
-        agentsData = await agentsResponse.json();
-      }
-
-      // Fetch recent logs as sessions preview from backend
-      let sessionsData = [];
-      const agentId = (agentsData as any)?.agents?.[0]?.id;
-      if (agentId) {
-        const sessionsResponse = await fetch(`/v1/agents/${agentId}/logs`);
-        if (sessionsResponse.ok) {
-          sessionsData = await sessionsResponse.json();
-        }
-      } else {
-        setError('No agents available to fetch sessions.');
-      }
-
-      // Fetch metrics to get agent performance data
-      const metricsResponse = await fetch('/v1/metrics');
-      let metricsData = null;
-      
-      if (metricsResponse.ok) {
-        metricsData = await metricsResponse.json();
-      }
-
-      // Process empire agents data with real business metrics
-      const processedAgents: Agent[] = agentsData.map((agent: any, index: number) => {
-        // Calculate real performance metrics from agent data
-        const totalExecutions = agent.total_executions || 0;
-        const successfulExecutions = agent.successful_executions || 0;
-        const failedExecutions = agent.failed_executions || 0;
-        const avgExecutionTime = agent.avg_execution_time || 0;
-        
-        // Real success rate calculation
-        const successRate = totalExecutions > 0 ? (successfulExecutions / totalExecutions) * 100 : 0;
-        
-        // Real health calculation based on error rate and performance
-        const errorRate = totalExecutions > 0 ? (failedExecutions / totalExecutions) * 100 : 0;
-        const health = Math.max(0, Math.min(100, 100 - errorRate));
-        
-        return {
-          id: agent.id,
-          name: agent.name,
-          type: agent.type || agent.agent_type,
-          status: agent.status as 'active' | 'idle' | 'error' | 'stopped',
-          health: Math.floor(health),
-          lastActivity: agent.last_execution || agent.updated_at || new Date().toISOString(),
-          totalTasks: totalExecutions,
-          completedTasks: successfulExecutions,
-          errorCount: failedExecutions,
-          performance: {
-            avgResponseTime: Math.floor(avgExecutionTime * 1000), // Convert to ms
-            successRate: Math.floor(successRate * 10) / 10, // Round to 1 decimal
-            throughput: agent.throughput_per_hour || 0
-          },
-          capabilities: agent.capabilities || getAgentCapabilities(agent.type || agent.agent_type)
-        };
-      });
-
-      // Add system-level agents based on metrics
-      if (metricsData?.active_sessions > 0) {
-        processedAgents.push({
-          id: 'system_orchestrator',
-          name: 'System Orchestrator',
-          type: 'Core System',
-          status: 'active',
-          health: metricsData.ok ? 95 : 60,
-          lastActivity: new Date().toISOString(),
-          totalTasks: metricsData.total_requests || 0,
-          completedTasks: Math.floor((metricsData.total_requests || 0) * 0.95),
-          errorCount: metricsData.total_errors || 0,
-          performance: {
-            avgResponseTime: 120,
-            successRate: (((metricsData.total_requests || 0) - (metricsData.total_errors || 0)) / Math.max(metricsData.total_requests || 1, 1)) * 100,
-            throughput: metricsData.active_sessions || 0
-          },
-          capabilities: ['Request Orchestration', 'Session Management', 'Error Handling']
-        });
-      }
-
-      setAgents(processedAgents);
-      setSessions(sessionsData);
-      
-    } catch (err) {
-      console.error('Failed to fetch agent data:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
+    await fetchAgentDataWithRecovery();
+    
+    setLoading(false);
   };
 
   // Agent management actions
@@ -216,7 +430,9 @@ export default function AgentsModule() {
     };
     
     return capabilityMap[agentType] || ['Task Processing', 'Data Analysis', 'Automation'];
-  };  useEffect(() => {
+  };
+
+  useEffect(() => {
     fetchAgentData();
     
     // Set up real-time updates

@@ -6,7 +6,7 @@ import asyncio
 import aiohttp
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 import json
@@ -165,7 +165,7 @@ class MarketIntelligenceHub(AgentBase):
                 self.market_trends.append(trend)
             
             # Remove old trends (keep last 30 days)
-            cutoff_date = datetime.now() - timedelta(days=30)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
             self.market_trends = [t for t in self.market_trends if t.predicted_peak > cutoff_date]
             
             logger.info(f"📈 Market trends analysis completed - {len(self.market_trends)} trends tracked")
@@ -244,7 +244,7 @@ class MarketIntelligenceHub(AgentBase):
                 'review_sentiment': review_sentiment,
                 'search_behavior': search_behavior,
                 'confidence_index': confidence_data,
-                'last_updated': datetime.now()
+                'last_updated': datetime.now(timezone.utc)
             }
             
             logger.info("😊 Consumer sentiment tracking completed")
@@ -292,7 +292,7 @@ class MarketIntelligenceHub(AgentBase):
         
         # Competitor activities
         for competitor, profile in self.competitor_profiles.items():
-            if profile.last_analyzed > datetime.now() - timedelta(days=7):
+            if profile.last_analyzed > datetime.now(timezone.utc) - timedelta(days=7):
                 current_trends['competitor_activities'].append({
                     'competitor': competitor,
                     'threat_level': profile.threat_level,
@@ -329,7 +329,7 @@ class MarketIntelligenceHub(AgentBase):
                 'estimated_revenue_potential': product['market_size'] * 0.001,  # 0.1% market share estimate
                 'recommended_action': 'immediate_research',
                 'time_sensitivity': 'high',
-                'detected_at': datetime.now()
+                'detected_at': datetime.now(timezone.utc)
             }
             opportunities.append(opportunity)
         
@@ -348,7 +348,7 @@ class MarketIntelligenceHub(AgentBase):
                 'estimated_profit_impact': abs(pricing_opp['optimal_price'] - pricing_opp['current_avg']) * 100,
                 'recommended_action': 'price_adjustment',
                 'time_sensitivity': 'medium',
-                'detected_at': datetime.now()
+                'detected_at': datetime.now(timezone.utc)
             }
             opportunities.append(opportunity)
         
@@ -426,7 +426,7 @@ class MarketIntelligenceHub(AgentBase):
     
     async def get_daily_discoveries(self) -> int:
         """Get daily discoveries count"""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         return len([t for t in self.market_trends if t.predicted_peak.date() == today])
     
     async def _update_performance_metrics(self):
@@ -438,4 +438,4 @@ class MarketIntelligenceHub(AgentBase):
         successful_analyses = total_analyses  # Simplified - in real implementation, track failures
         self.success_rate = (successful_analyses / max(total_analyses, 1)) * 100
         
-        self.last_execution = datetime.now()
+        self.last_execution = datetime.now(timezone.utc)

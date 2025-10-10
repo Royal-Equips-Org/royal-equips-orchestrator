@@ -5,7 +5,7 @@ Provides live inventory data, forecasting updates, and optimization alerts.
 import asyncio
 import json
 import logging
-from datetime import datetime
+from datetime import timezone, datetime
 from typing import Dict, Any, Optional
 
 from flask import request
@@ -51,9 +51,9 @@ class InventoryNamespace(Namespace):
         """Handle client connection to inventory namespace."""
         client_id = request.sid
         self.active_sessions[client_id] = {
-            'connected_at': datetime.utcnow(),
+            'connected_at': datetime.now(timezone.utc),
             'subscriptions': set(),
-            'last_heartbeat': datetime.utcnow()
+            'last_heartbeat': datetime.now(timezone.utc)
         }
         
         logger.info(f"Inventory client connected: {client_id}")
@@ -62,7 +62,7 @@ class InventoryNamespace(Namespace):
         emit('connection_status', {
             'status': 'connected',
             'namespace': 'inventory',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'client_id': client_id
         })
 
@@ -72,7 +72,7 @@ class InventoryNamespace(Namespace):
         if client_id in self.active_sessions:
             session_info = self.active_sessions.pop(client_id)
             logger.info(f"Inventory client disconnected: {client_id}, "
-                       f"session duration: {datetime.utcnow() - session_info['connected_at']}")
+                       f"session duration: {datetime.now(timezone.utc) - session_info['connected_at']}")
 
     def on_subscribe_dashboard(self, data: Dict[str, Any]):
         """Subscribe to real-time dashboard updates."""
@@ -135,10 +135,10 @@ class InventoryNamespace(Namespace):
         """Handle client heartbeat."""
         client_id = request.sid
         if client_id in self.active_sessions:
-            self.active_sessions[client_id]['last_heartbeat'] = datetime.utcnow()
+            self.active_sessions[client_id]['last_heartbeat'] = datetime.now(timezone.utc)
             
         emit('heartbeat_ack', {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'active_sessions': len(self.active_sessions)
         })
 
@@ -165,7 +165,7 @@ class InventoryNamespace(Namespace):
             if not agent:
                 emit('error', {
                     'message': 'Inventory agent not available',
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, room=client_id)
                 return
 
@@ -174,7 +174,7 @@ class InventoryNamespace(Namespace):
             
             emit('dashboard_update', {
                 'data': dashboard_data,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
             
             logger.debug(f"Sent dashboard data to client {client_id}")
@@ -183,7 +183,7 @@ class InventoryNamespace(Namespace):
             logger.error(f"Failed to send dashboard data to {client_id}: {e}")
             emit('error', {
                 'message': f'Failed to load dashboard data: {str(e)}',
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
 
     async def _send_agent_status(self, client_id: str):
@@ -218,7 +218,7 @@ class InventoryNamespace(Namespace):
                 return
 
             emit('cycle_started', {
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'message': 'Starting inventory management cycle...'
             }, room=client_id)
 
@@ -227,7 +227,7 @@ class InventoryNamespace(Namespace):
             
             emit('cycle_completed', {
                 'result': result,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
             
             # Broadcast updated dashboard data to all dashboard subscribers
@@ -237,7 +237,7 @@ class InventoryNamespace(Namespace):
             logger.error(f"Failed to execute inventory cycle: {e}")
             emit('cycle_error', {
                 'message': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
 
     async def _generate_forecast(self, client_id: str, data: Dict[str, Any]):
@@ -251,7 +251,7 @@ class InventoryNamespace(Namespace):
                 return
 
             emit('forecast_started', {
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
 
             # Generate forecast data
@@ -262,20 +262,20 @@ class InventoryNamespace(Namespace):
             
             emit('forecast_completed', {
                 'data': forecast_data,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
             
             # Broadcast to forecasting subscribers
             self.server.emit('forecast_update', {
                 'data': forecast_data,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace=self.namespace, room='forecasting')
             
         except Exception as e:
             logger.error(f"Failed to generate forecast: {e}")
             emit('forecast_error', {
                 'message': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
 
     async def _run_optimization(self, client_id: str, data: Dict[str, Any]):
@@ -289,7 +289,7 @@ class InventoryNamespace(Namespace):
                 return
 
             emit('optimization_started', {
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
 
             # Run optimization
@@ -297,20 +297,20 @@ class InventoryNamespace(Namespace):
             
             emit('optimization_completed', {
                 'data': optimization_data,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
             
             # Broadcast to optimization subscribers
             self.server.emit('optimization_update', {
                 'data': optimization_data,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace=self.namespace, room='optimization')
             
         except Exception as e:
             logger.error(f"Failed to run optimization: {e}")
             emit('optimization_error', {
                 'message': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, room=client_id)
 
     async def broadcast_dashboard_update(self):
@@ -324,7 +324,7 @@ class InventoryNamespace(Namespace):
             
             self.server.emit('dashboard_update', {
                 'data': dashboard_data,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace=self.namespace, room='dashboard')
             
             logger.debug("Broadcasted dashboard update to all subscribers")
@@ -337,7 +337,7 @@ class InventoryNamespace(Namespace):
         alert_data = {
             'type': 'low_stock_alert',
             'product': product_data,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'severity': 'warning'
         }
         
@@ -349,7 +349,7 @@ class InventoryNamespace(Namespace):
         alert_data = {
             'type': 'out_of_stock_alert',
             'product': product_data,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'severity': 'critical'
         }
         
@@ -360,7 +360,7 @@ class InventoryNamespace(Namespace):
         """Broadcast reorder recommendation to optimization subscribers."""
         self.server.emit('reorder_recommendation', {
             'data': recommendation_data,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }, namespace=self.namespace, room='optimization')
         
         logger.info(f"Broadcasted reorder recommendation for {recommendation_data.get('product_count', 0)} products")
@@ -369,7 +369,7 @@ class InventoryNamespace(Namespace):
         """Broadcast supplier performance update."""
         self.server.emit('supplier_performance_update', {
             'data': supplier_data,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }, namespace=self.namespace, room='suppliers')
         
         logger.info(f"Broadcasted supplier performance update for {len(supplier_data.get('suppliers', []))} suppliers")

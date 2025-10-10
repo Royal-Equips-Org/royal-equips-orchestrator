@@ -8,7 +8,7 @@ data for the control center dashboard.
 
 import logging
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import timezone, datetime
 import json
 import threading
 from typing import Dict, List, Any, Optional
@@ -21,8 +21,9 @@ logger = logging.getLogger(__name__)
 command_center_bp = Blueprint("command_center", __name__, url_prefix="/command-center")
 
 # Path to built React app
-STATIC_DIR = Path(__file__).parent.parent / "static"
-ADMIN_BUILD_DIR = Path(__file__).parent.parent.parent / "apps" / "control-center" / "dist"
+STATIC_DIR = Path(__file__).parent.parent.parent / "static"
+ADMIN_BUILD_DIR = Path(__file__).parent.parent.parent / "apps" / "command-center-ui" / "dist"
+
 
 @command_center_bp.route("/", defaults={'path': ''})
 @command_center_bp.route("/<path:path>")
@@ -719,7 +720,7 @@ def stream_metrics():
         while True:
             try:
                 data = {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "metrics": enhanced_controller.metrics_cache,
                     "health_score": enhanced_controller.metrics_cache["empire_status"].get("health_score", 0)
                 }

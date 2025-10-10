@@ -7,7 +7,7 @@ and existing AIRA capabilities into a unified AI-native command nexus.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 import json
@@ -102,7 +102,7 @@ class EnhancedAIRAAgent(AgentBase):
     async def run(self):
         """Main AIRA intelligence processing loop"""
         try:
-            self.last_execution = datetime.now()
+            self.last_execution = datetime.now(timezone.utc)
             
             # Perform intelligent analysis
             await self._perform_intelligence_analysis()
@@ -120,7 +120,7 @@ class EnhancedAIRAAgent(AgentBase):
             # Update performance metrics
             await self._update_intelligence_metrics()
             
-            self._last_run = datetime.now().timestamp()
+            self._last_run = datetime.now(timezone.utc).timestamp()
             
         except Exception as e:
             self.logger.error(f"AIRA intelligence run failed: {e}")
@@ -201,7 +201,7 @@ class EnhancedAIRAAgent(AgentBase):
         """Get comprehensive market intelligence analysis"""
         try:
             intelligence = {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'consciousness_insights': {},
                 'digital_twin_data': {},
                 'market_predictions': self.market_predictions.copy(),
@@ -295,7 +295,7 @@ class EnhancedAIRAAgent(AgentBase):
                 'optimizations': optimizations,
                 'implementation_roadmap': self._create_implementation_roadmap(optimizations),
                 'roi_projections': self._calculate_roi_projections(optimizations),
-                'generated_at': datetime.now().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -613,7 +613,9 @@ class EnhancedAIRAAgent(AgentBase):
     
     def _calculate_adaptation_rate(self) -> float:
         """Calculate how quickly the system adapts"""
-        return 0.7  # Mock calculation
+        # TODO: Calculate based on learning metrics and decision velocity
+        # For now, returns baseline adaptation rate for AIRA intelligence
+        return 0.7
     
     
     def _calculate_autonomous_efficiency(self) -> float:
@@ -625,7 +627,9 @@ class EnhancedAIRAAgent(AgentBase):
     
     def _calculate_adaptation_success_rate(self) -> float:
         """Calculate adaptation success rate"""
-        return 0.8  # Mock calculation
+        # TODO: Track actual adaptation outcomes and success metrics
+        # For now, returns baseline success rate for AIRA intelligence
+        return 0.8
     
     
     async def shutdown(self):

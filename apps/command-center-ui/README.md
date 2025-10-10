@@ -223,6 +223,19 @@ pnpm run lint
 
 ## Production Deployment
 
+### Render (Flask Integrated) Setup
+For deployment where Flask serves the React UI:
+1. Build and copy to Flask static folder:
+   ```bash
+   pnpm run build:render
+   ```
+   This builds the React app and copies all files to `/static/` at the repository root.
+2. Flask will serve the UI from the static folder on port 10000
+3. Ensure environment variables are set in Render:
+   ```bash
+   VITE_API_BASE_URL=https://your-backend.com
+   ```
+
 ### Cloudflare Pages Setup
 1. Connect GitHub repository
 2. Set build command: `pnpm run build`  

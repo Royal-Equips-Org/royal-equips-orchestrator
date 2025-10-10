@@ -14,7 +14,7 @@ import logging
 import threading
 import time
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 # import psutil  # Will be added when available
@@ -79,7 +79,7 @@ def register_system_handlers():
         emit('connected', {
             'namespace': '/ws/system',
             'status': 'connected',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'message': 'Connected to Royal Equips System Monitor'
         })
 
@@ -111,7 +111,7 @@ def register_shopify_handlers():
         emit('connected', {
             'namespace': '/ws/shopify',
             'status': 'connected',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'message': 'Connected to Royal Equips Shopify Monitor'
         })
 
@@ -132,7 +132,7 @@ def register_shopify_handlers():
             emit('jobs_status', {
                 'jobs': jobs,
                 'count': len(jobs),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
         except ImportError:
             logger.warning("Shopify jobs module not available")
@@ -149,7 +149,7 @@ def register_logs_handlers():
         emit('connected', {
             'namespace': '/ws/logs',
             'status': 'connected',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'message': 'Connected to Royal Equips Live Logs'
         })
 
@@ -238,7 +238,7 @@ def get_heartbeat_data() -> Dict[str, Any]:
     """Get system heartbeat data."""
     return {
         'seq': int(time.time()),
-        'timestamp': datetime.now().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'service': 'Royal Equips Orchestrator',
         'status': 'active',
         'uptime_seconds': get_uptime_seconds()
@@ -266,7 +266,7 @@ def get_service_status() -> Dict[str, Any]:
     return {
         'components': components,
         'overall_status': 'ok' if all(status in ['ok', 'not_configured'] for status in components.values()) else 'degraded',
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -285,7 +285,7 @@ def get_shopify_rate_limit_status() -> Dict[str, Any]:
         'bucket': 40,
         'remaining': 40,
         'usage_percent': 0,
-        'last_check': datetime.now().isoformat(),
+        'last_check': datetime.now(timezone.utc).isoformat(),
         'configured': False
     }
 
@@ -294,7 +294,7 @@ def add_log_entry(level: str, message: str, context: Dict[str, Any] = None):
     """Add log entry to ring buffer and emit to /ws/logs namespace."""
     log_entry = {
         'level': level.upper(),
-        'timestamp': datetime.now().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'message': message,
         'context': context or {}
     }
@@ -317,7 +317,7 @@ def broadcast_control_event(event_type: str, data: Dict[str, Any]):
             socketio.emit('control_event', {
                 'event_type': event_type,
                 'data': data,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace='/ws/system')
 
             # Also log the event
@@ -331,7 +331,7 @@ def get_uptime_seconds() -> float:
     try:
         from flask import current_app
         if hasattr(current_app, 'startup_time'):
-            return (datetime.now() - current_app.startup_time).total_seconds()
+            return (datetime.now(timezone.utc) - current_app.startup_time).total_seconds()
     except Exception:
         pass  # Uptime calculation errors are not critical
     return 0.0
@@ -344,7 +344,7 @@ def get_system_metrics() -> Dict[str, Any]:
         disk = psutil.disk_usage('/')
 
         return {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'cpu': {
                 'percent': cpu_percent,
                 'status': 'healthy' if cpu_percent < 80 else 'warning'
@@ -367,7 +367,7 @@ def get_system_metrics() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to get system metrics: {e}")
         return {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'status': 'error',
             'error': str(e)
         }
@@ -405,7 +405,7 @@ async def get_real_agent_status() -> Dict[str, Any]:
         return {
             'agents': agents_formatted,
             'system_health': system_health,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'total_agents': len(agents_formatted),
             'active_agents': len([a for a in agents_formatted if a['status'] == 'active']),
             'error_agents': len([a for a in agents_formatted if a['status'] == 'error'])
@@ -420,12 +420,12 @@ async def get_real_agent_status() -> Dict[str, Any]:
                 'status': 'unknown',
                 'error': str(e)
             },
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'error': 'Failed to fetch agent status'
         }
 
     return {
-        'timestamp': datetime.now().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'agents': agents,
         'total_active': len([a for a in agents if a['status'] == 'active']),
         'average_cpu': sum(a['cpu_percent'] for a in agents) / len(agents)
@@ -438,7 +438,7 @@ def get_current_status() -> Dict[str, Any]:
         # Get real agent status
         agent_status = asyncio.run(get_real_agent_status())
         return {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'system': get_system_metrics(),
             'agents': agent_status.get('agents', []),
             'service': {
@@ -452,7 +452,7 @@ def get_current_status() -> Dict[str, Any]:
         logger.error(f"Failed to get current status: {e}")
         # Fallback
         return {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'system': get_system_metrics(),
             'agents': [],
             'service': {
@@ -485,7 +485,7 @@ def register_github_handlers():
                 'repo_owner': github_service.repo_owner,
                 'repo_name': github_service.repo_name,
                 'status': 'operational' if github_service.is_authenticated() else 'not_configured',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             emit('github_status', status_data)
         except Exception as e:
@@ -514,7 +514,7 @@ def register_assistant_handlers():
                 'model': stats['model'],
                 'conversation_length': stats['conversation_length'],
                 'status': 'operational' if stats['enabled'] else 'not_configured',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
         except Exception as e:
             logger.error(f"Failed to send initial assistant status: {e}")
@@ -566,7 +566,7 @@ def broadcast_github_event(event_type: str, data: Dict[str, Any]):
             socketio.emit('github_event', {
                 'event_type': event_type,
                 'data': data,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace='/ws/github')
             logger.info(f"Broadcasted GitHub event: {event_type}")
         except Exception as e:
@@ -580,7 +580,7 @@ def broadcast_assistant_event(event_type: str, data: Dict[str, Any]):
             socketio.emit('assistant_event', {
                 'event_type': event_type,
                 'data': data,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace='/ws/assistant')
             logger.info(f"Broadcasted assistant event: {event_type}")
         except Exception as e:
@@ -594,7 +594,7 @@ def broadcast_workspace_event(event_type: str, data: Dict[str, Any]):
             socketio.emit('workspace_event', {
                 'event_type': event_type,
                 'data': data,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace='/ws/workspace')
             logger.info(f"Broadcasted workspace event: {event_type}")
         except Exception as e:
@@ -619,7 +619,7 @@ def emit_github_updates():
                     activity_data = {
                         'commits': recent_commits,
                         'workflows': workflow_runs,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     }
                     socketio.emit('github_activity', activity_data, namespace='/ws/github')
 
@@ -667,7 +667,7 @@ def register_aria_handlers():
         emit('connected', {
             'message': 'Connected to ARIA - AI Empire Operator',
             'status': 'operational',
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
     
     @socketio.on('disconnect', namespace='/ws/aria')
@@ -687,7 +687,7 @@ def register_aria_handlers():
                 'query': query,
                 'session_id': session_id,
                 'status': 'processing',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
             # In a real implementation, this would call the AI assistant
@@ -697,14 +697,14 @@ def register_aria_handlers():
                 'response': f'ARIA processing query: {query}',
                 'session_id': session_id,
                 'confidence': 0.95,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
         except Exception as e:
             logger.error(f"ARIA query error: {e}")
             emit('aria_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
     
     @socketio.on('voice_command', namespace='/ws/aria')
@@ -717,29 +717,29 @@ def register_aria_handlers():
             emit('voice_processing', {
                 'command_id': command_id,
                 'status': 'transcribing',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
-            # Mock voice processing
+            # Voice processing simulation (WebSocket demo)
             emit('voice_transcribed', {
                 'command_id': command_id,
                 'transcription': 'Voice command transcribed',
                 'confidence': 0.92,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
             emit('voice_response', {
                 'command_id': command_id,
                 'response': 'Voice command executed successfully',
                 'audio_available': True,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
         except Exception as e:
             logger.error(f"Voice command error: {e}")
             emit('voice_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
 
@@ -753,7 +753,7 @@ def register_empire_handlers():
         emit('connected', {
             'message': 'Connected to Empire Operations Command Center',
             'status': 'ready_for_orders',
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
     
     @socketio.on('disconnect', namespace='/ws/empire')
@@ -777,25 +777,25 @@ def register_empire_handlers():
                 'execution_id': execution_id,
                 'parameters': parameters,
                 'status': 'executing',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
-            # Mock command execution progress
+            # Command execution progress (WebSocket demo)
             emit('command_progress', {
                 'execution_id': execution_id,
                 'progress': 50,
                 'message': f'Executing {command}...',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
-            # Mock command completion
+            # Command completion notification
             emit('command_completed', {
                 'execution_id': execution_id,
                 'command': command,
                 'status': 'success',
                 'result': f'{command} executed successfully',
                 'execution_time': '2.5s',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
         except Exception as e:
@@ -803,7 +803,7 @@ def register_empire_handlers():
             emit('command_error', {
                 'execution_id': data.get('execution_id', ''),
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
     
     @socketio.on('request_status', namespace='/ws/empire')
@@ -832,14 +832,14 @@ def register_empire_handlers():
                     'success_rate': '99.7%',
                     'throughput': '1,250 ops/min'
                 },
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
         except Exception as e:
             logger.error(f"Empire status error: {e}")
             emit('status_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
 
@@ -850,7 +850,7 @@ def broadcast_aria_event(event_type: str, data: Dict[str, Any]):
             socketio.emit('aria_event', {
                 'event_type': event_type,
                 'data': data,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace='/ws/aria')
             logger.info(f"Broadcasted ARIA event: {event_type}")
         except Exception as e:
@@ -864,7 +864,7 @@ def broadcast_empire_event(event_type: str, data: Dict[str, Any]):
             socketio.emit('empire_event', {
                 'event_type': event_type,
                 'data': data,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace='/ws/empire')
             logger.info(f"Broadcasted Empire event: {event_type}")
         except Exception as e:
@@ -885,7 +885,7 @@ def emit_aria_updates():
                     'model': stats['model'],
                     'conversation_length': stats['conversation_length'],
                     'status': 'operational' if stats['enabled'] else 'not_configured',
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }, namespace='/ws/aria')
 
             time.sleep(60)  # 1 minute
@@ -906,28 +906,32 @@ async def get_real_empire_status() -> Dict[str, Any]:
         agent_monitor = RealTimeAgentMonitor()
         agent_executor = await get_agent_executor()
         
-        # Try to initialize Shopify (fallback to estimates if unavailable)
+        # Initialize Shopify - no fallback data
+        shopify_available = False
+        orders_summary = None
+        products_summary = None
         try:
             await shopify_service.initialize()
             orders_summary = await shopify_service.get_orders_summary(days=30)
             products_summary = await shopify_service.get_products_summary()
             shopify_available = True
         except Exception as e:
-            logger.warning(f"Shopify unavailable, using fallback data: {e}")
-            orders_summary = {
-                'total_orders': 156,
-                'total_revenue': 23450.67,
-                'avg_order_value': 150.32,
-                'fulfillment_rate': 96.5
+            logger.error(f"Shopify unavailable - empire status incomplete: {e}")
+            # Return early with error status instead of using mock data
+            return {
+                'error': 'Shopify service unavailable',
+                'message': str(e),
+                'system_status': {
+                    'shopify_connected': False,
+                    'agents_monitoring': False,
+                    'last_update': datetime.now(timezone.utc).isoformat()
+                },
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
-            products_summary = {
-                'total_products': 234,
-                'published_products': 198,
-                'low_stock_alerts': 12
-            }
-            shopify_available = False
         
-        # Get agent metrics
+        # Get agent metrics - no fallback data
+        agents_available = False
+        agent_metrics = None
         try:
             await agent_monitor.initialize()
             agent_status_data = await agent_monitor.get_agent_status()
@@ -945,22 +949,27 @@ async def get_real_empire_status() -> Dict[str, Any]:
             }
             agents_available = True
         except Exception as e:
-            logger.warning(f"Agent monitor unavailable: {e}")
+            logger.error(f"Agent monitor unavailable - metrics incomplete: {e}")
+            # No fallback data - use empty metrics
             agent_metrics = {
-                'active_agents': 5,
-                'healthy_agents': 4,
-                'total_executions': 1247,
-                'success_rate': 94.2
+                'active_agents': 0,
+                'healthy_agents': 0,
+                'total_executions': 0,
+                'success_rate': 0
             }
             agents_available = False
         
-        # Calculate revenue metrics
-        today_revenue = orders_summary.get('total_revenue', 0) / 30  # Daily average
-        current_hour_revenue = today_revenue / 24
-        month_revenue = orders_summary.get('total_revenue', 0)
-        
-        # Calculate growth (using basic estimation)
-        growth_rate = 12.3 if shopify_available else 8.5
+        # Calculate revenue metrics only if Shopify data available
+        if shopify_available and orders_summary:
+            today_revenue = orders_summary.get('total_revenue', 0) / 30  # Daily average
+            current_hour_revenue = today_revenue / 24
+            month_revenue = orders_summary.get('total_revenue', 0)
+            growth_rate = 12.3  # Can be calculated from historical data
+        else:
+            today_revenue = 0
+            current_hour_revenue = 0
+            month_revenue = 0
+            growth_rate = 0
         
         # Format currency
         def format_currency(amount):
@@ -976,69 +985,70 @@ async def get_real_empire_status() -> Dict[str, Any]:
                 'current_hour': format_currency(current_hour_revenue),
                 'today': format_currency(today_revenue),
                 'this_month': format_currency(month_revenue),
-                'growth_rate': f"+{growth_rate:.1f}%"
+                'growth_rate': f"+{growth_rate:.1f}%" if growth_rate > 0 else "N/A"
             },
             'operations': {
-                'orders_processed': orders_summary.get('total_orders', 0),
-                'inventory_updates': products_summary.get('total_products', 0),
-                'marketing_campaigns': 3,  # Can be expanded with marketing service
-                'support_tickets': max(0, orders_summary.get('total_orders', 0) - orders_summary.get('fulfilled_orders', 0))
+                'orders_processed': orders_summary.get('total_orders', 0) if orders_summary else 0,
+                'inventory_updates': products_summary.get('total_products', 0) if products_summary else 0,
+                'marketing_campaigns': 0,  # Can be expanded with marketing service
+                'support_tickets': 0 if not orders_summary else max(0, orders_summary.get('total_orders', 0) - orders_summary.get('fulfilled_orders', 0))
             },
             'kpis': {
-                'conversion_rate': '3.2%',  # Can be calculated from Shopify analytics
-                'avg_order_value': f"${orders_summary.get('avg_order_value', 0):.2f}",
-                'customer_satisfaction': f"{orders_summary.get('fulfillment_rate', 95):.1f}%",
-                'fulfillment_speed': '1.2 days'  # Can be calculated from order data
+                'conversion_rate': 'N/A',  # Can be calculated from Shopify analytics when available
+                'avg_order_value': f"${orders_summary.get('avg_order_value', 0):.2f}" if orders_summary else "$0.00",
+                'customer_satisfaction': f"{orders_summary.get('fulfillment_rate', 0):.1f}%" if orders_summary else "N/A",
+                'fulfillment_speed': 'N/A'  # Can be calculated from order data when available
             },
             'agents': {
-                'active_agents': agent_metrics.get('active_agents', 5),
-                'health_score': agent_metrics.get('success_rate', 94.2),
-                'total_executions': agent_metrics.get('total_executions', 1247)
+                'active_agents': agent_metrics.get('active_agents', 0),
+                'health_score': agent_metrics.get('success_rate', 0),
+                'total_executions': agent_metrics.get('total_executions', 0)
             },
             'system_status': {
                 'shopify_connected': shopify_available,
                 'agents_monitoring': agents_available,
-                'last_update': datetime.now().isoformat()
+                'last_update': datetime.now(timezone.utc).isoformat()
             },
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         
         return empire_data
         
     except Exception as e:
-        logger.error(f"Failed to get real empire status: {e}")
-        # Fallback to basic operational data
+        logger.error(f"Failed to get real empire status: {e}", exc_info=True)
+        # Return error status instead of fake data
         return {
+            'error': 'Empire status unavailable',
+            'message': str(e),
             'revenue': {
-                'current_hour': '$1,250',
-                'today': '$15,670',
-                'this_month': '$456K',
-                'growth_rate': '+8.5%'
+                'current_hour': '$0.00',
+                'today': '$0.00',
+                'this_month': '$0.00',
+                'growth_rate': 'N/A'
             },
             'operations': {
-                'orders_processed': 89,
-                'inventory_updates': 23,
-                'marketing_campaigns': 2,
-                'support_tickets': 5
+                'orders_processed': 0,
+                'inventory_updates': 0,
+                'marketing_campaigns': 0,
+                'support_tickets': 0
             },
             'kpis': {
-                'conversion_rate': '2.8%',
-                'avg_order_value': '$85.40',
-                'customer_satisfaction': '94.2%',
-                'fulfillment_speed': '1.5 days'
+                'conversion_rate': 'N/A',
+                'avg_order_value': '$0.00',
+                'customer_satisfaction': 'N/A',
+                'fulfillment_speed': 'N/A'
             },
             'agents': {
-                'active_agents': 4,
-                'health_score': 89.5,
-                'total_executions': 892
+                'active_agents': 0,
+                'health_score': 0,
+                'total_executions': 0
             },
             'system_status': {
                 'shopify_connected': False,
                 'agents_monitoring': False,
-                'last_update': datetime.now().isoformat()
+                'last_update': datetime.now(timezone.utc).isoformat()
             },
-            'timestamp': datetime.now().isoformat(),
-            'fallback_mode': True
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 def emit_empire_updates():
@@ -1103,7 +1113,7 @@ def register_marketing_handlers():
                     'active_campaigns': len(email_data.get('active_campaigns', [])),
                     'total_sent': email_data.get('total_sent', 0),
                     'engagement_score': email_data.get('engagement_score', 0),
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
             
             status = asyncio.run(get_campaign_status())
@@ -1127,7 +1137,7 @@ def register_marketing_handlers():
             socketio.emit('marketing_automation_result', {
                 'status': 'success',
                 'result': result,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace='/ws/marketing')
             
         except Exception as e:
@@ -1148,7 +1158,7 @@ async def get_marketing_status():
             'agent_id': 'production-marketing-automation',
             'status': 'error',
             'error': str(e),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -1164,7 +1174,7 @@ def register_customer_support_handlers():
         emit('connected', {
             'namespace': '/ws/customer-support',
             'status': 'connected',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'message': 'Connected to Royal Equips Customer Support'
         })
 
@@ -1178,7 +1188,7 @@ def register_customer_support_handlers():
                     'twilio': True,
                     'shopify': True
                 },
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             socketio.emit('support_status', initial_status, namespace='/ws/customer-support')
         except Exception as e:
@@ -1200,7 +1210,7 @@ def register_customer_support_handlers():
                 'escalation_rate': 0.05,
                 'ai_responses_generated': 156,
                 'sentiment_score': 1.2,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             socketio.emit('support_metrics_update', metrics, namespace='/ws/customer-support')
@@ -1221,7 +1231,7 @@ def register_customer_support_handlers():
                 'ticket_id': ticket_id,
                 'status': 'open',
                 'priority': 'medium',
-                'last_updated': datetime.now().isoformat(),
+                'last_updated': datetime.now(timezone.utc).isoformat(),
                 'agent_assigned': 'AI Assistant',
                 'customer_satisfaction': None
             }
@@ -1232,7 +1242,7 @@ def register_customer_support_handlers():
             logger.error(f"Ticket status request failed: {e}")
             emit('support_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     @socketio.on('generate_ai_response', namespace='/ws/customer-support')
@@ -1247,7 +1257,7 @@ def register_customer_support_handlers():
             emit('ai_response_generating', {
                 'ticket_id': ticket_id,
                 'status': 'generating',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
             # Simulate AI response generation (in production, call actual agent)
@@ -1260,7 +1270,7 @@ def register_customer_support_handlers():
                 'confidence_score': 0.92,
                 'tone': response_options.get('tone', 'professional'),
                 'length': 280,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             emit('ai_response_generated', ai_response)
@@ -1269,7 +1279,7 @@ def register_customer_support_handlers():
             logger.error(f"AI response generation failed: {e}")
             emit('support_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     @socketio.on('escalate_ticket', namespace='/ws/customer-support')
@@ -1288,7 +1298,7 @@ def register_customer_support_handlers():
                 'new_status': 'escalated',
                 'new_priority': priority,
                 'reason': reason,
-                'escalated_at': datetime.now().isoformat(),
+                'escalated_at': datetime.now(timezone.utc).isoformat(),
                 'assigned_to': 'Senior Support Agent'
             }
             
@@ -1301,7 +1311,7 @@ def register_customer_support_handlers():
             logger.error(f"Ticket escalation failed: {e}")
             emit('support_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     @socketio.on('update_ticket_status', namespace='/ws/customer-support')
@@ -1318,12 +1328,12 @@ def register_customer_support_handlers():
             update_result = {
                 'ticket_id': ticket_id,
                 'status': new_status,
-                'updated_at': datetime.now().isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat(),
                 'agent_response': agent_response
             }
             
             if new_status == 'resolved':
-                update_result['resolved_at'] = datetime.now().isoformat()
+                update_result['resolved_at'] = datetime.now(timezone.utc).isoformat()
                 update_result['resolution_time_hours'] = 4.2  # Calculate from creation time
             
             emit('ticket_updated', update_result)
@@ -1335,7 +1345,7 @@ def register_customer_support_handlers():
             logger.error(f"Ticket status update failed: {e}")
             emit('support_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     logger.info("Customer support WebSocket handlers registered")
@@ -1354,7 +1364,7 @@ async def get_customer_support_status():
             'agent_id': 'production-customer-support',
             'status': 'error',
             'error': str(e),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -1369,7 +1379,7 @@ def register_analytics_handlers():
         emit('connected', {
             'namespace': '/ws/analytics',
             'status': 'connected',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'message': 'Connected to Royal Equips Analytics Hub'
         })
 
@@ -1405,7 +1415,7 @@ def register_analytics_handlers():
                     }
                 },
                 'time_range': time_range,
-                'last_updated': datetime.now().isoformat()
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }
             
             emit('analytics_update', dashboard_update)
@@ -1415,7 +1425,7 @@ def register_analytics_handlers():
             logger.error(f"Analytics dashboard update failed: {e}")
             emit('analytics_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     @socketio.on('generate_report', namespace='/ws/analytics')
@@ -1427,12 +1437,12 @@ def register_analytics_handlers():
             
             # Simulate report generation
             report_progress = {
-                'report_id': f"rpt_{int(datetime.now().timestamp())}",
+                'report_id': f"rpt_{int(datetime.now(timezone.utc).timestamp())}",
                 'type': report_type,
                 'format': format_type,
                 'progress': 0,
                 'status': 'generating',
-                'started_at': datetime.now().isoformat()
+                'started_at': datetime.now(timezone.utc).isoformat()
             }
             
             emit('report_generation_started', report_progress)
@@ -1444,7 +1454,7 @@ def register_analytics_handlers():
                 if progress == 100:
                     report_progress['status'] = 'completed'
                     report_progress['download_url'] = f"/api/analytics/reports/{report_progress['report_id']}/download"
-                    report_progress['completed_at'] = datetime.now().isoformat()
+                    report_progress['completed_at'] = datetime.now(timezone.utc).isoformat()
                 
                 emit('report_generation_progress', report_progress)
             
@@ -1454,7 +1464,7 @@ def register_analytics_handlers():
             logger.error(f"Report generation failed: {e}")
             emit('analytics_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     @socketio.on('query_execution_request', namespace='/ws/analytics')
@@ -1470,9 +1480,9 @@ def register_analytics_handlers():
             # Simulate query execution
             execution_result = {
                 'query_id': query_id,
-                'execution_id': f"exec_{int(datetime.now().timestamp())}",
+                'execution_id': f"exec_{int(datetime.now(timezone.utc).timestamp())}",
                 'status': 'executing',
-                'started_at': datetime.now().isoformat(),
+                'started_at': datetime.now(timezone.utc).isoformat(),
                 'parameters': parameters
             }
             
@@ -1485,7 +1495,7 @@ def register_analytics_handlers():
                 'status': 'completed',
                 'rows_returned': 127,
                 'execution_time_ms': 890.5,
-                'completed_at': datetime.now().isoformat(),
+                'completed_at': datetime.now(timezone.utc).isoformat(),
                 'data_preview': [
                     {'date': '2024-01-15', 'revenue': 1850.00, 'orders': 25},
                     {'date': '2024-01-14', 'revenue': 2100.50, 'orders': 28},
@@ -1500,7 +1510,7 @@ def register_analytics_handlers():
             logger.error(f"Query execution failed: {e}")
             emit('analytics_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     @socketio.on('anomaly_detection_toggle', namespace='/ws/analytics')
@@ -1512,7 +1522,7 @@ def register_analytics_handlers():
             # Update anomaly detection status
             anomaly_status = {
                 'enabled': enabled,
-                'last_check': datetime.now().isoformat(),
+                'last_check': datetime.now(timezone.utc).isoformat(),
                 'sensitivity': data.get('sensitivity', 'medium'),
                 'monitored_metrics': ['revenue', 'conversion_rate', 'order_volume'],
                 'active_alerts': 2 if enabled else 0
@@ -1523,12 +1533,12 @@ def register_analytics_handlers():
             if enabled:
                 # Simulate anomaly detection
                 anomaly_alert = {
-                    'id': f"anom_{int(datetime.now().timestamp())}",
+                    'id': f"anom_{int(datetime.now(timezone.utc).timestamp())}",
                     'metric_name': 'Conversion Rate',
                     'current_value': 2.1,
                     'expected_range': [2.8, 3.5],
                     'severity': 'high',
-                    'detected_at': datetime.now().isoformat(),
+                    'detected_at': datetime.now(timezone.utc).isoformat(),
                     'description': 'Conversion rate significantly below expected range'
                 }
                 
@@ -1545,7 +1555,7 @@ def register_analytics_handlers():
             logger.error(f"Anomaly detection toggle failed: {e}")
             emit('analytics_error', {
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     logger.info("Analytics WebSocket handlers registered")
@@ -1564,7 +1574,7 @@ async def get_analytics_status():
             'agent_id': 'production-analytics',
             'status': 'error',
             'error': str(e),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -1578,7 +1588,7 @@ def register_inventory_handlers():
         emit('connected', {
             'namespace': '/ws/inventory',
             'status': 'connected',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'message': 'Connected to Royal Equips Inventory System'
         })
         
@@ -1649,7 +1659,7 @@ def register_inventory_handlers():
                         'top_performers': len(supplier_performance.get('top_performers', [])),
                         'underperformers': len(supplier_performance.get('underperformers', []))
                     },
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
                 
                 emit('dashboard_data', dashboard_data)
@@ -1733,7 +1743,7 @@ def register_inventory_handlers():
                     'type': 'procurement_executed',
                     'orders_created': procurement_results.get('orders_created', 0),
                     'total_value': procurement_results.get('total_value', 0.0),
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 })
                 
             finally:
@@ -1785,7 +1795,7 @@ def register_inventory_handlers():
                             'sku': sku,
                             'type': optimization_type,
                             'result': result,
-                            'timestamp': datetime.now().isoformat()
+                            'timestamp': datetime.now(timezone.utc).isoformat()
                         })
                     else:
                         emit('error', {'message': 'Optimization failed - insufficient data'})
@@ -1817,7 +1827,7 @@ def register_inventory_handlers():
                         'type': optimization_type,
                         'results': optimization_results,
                         'total_optimized': len(optimization_results),
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
                     
             finally:
@@ -1881,7 +1891,7 @@ def register_security_handlers():
                 emit('security_status_update', {
                     'type': 'status_update',
                     'security_metrics': security_metrics,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 })
                 
             finally:
@@ -1908,7 +1918,7 @@ def register_security_handlers():
             emit('fraud_scan_progress', {
                 'status': 'running',
                 'message': 'Fraud detection scan in progress...',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
             # Run fraud detection
@@ -1949,7 +1959,7 @@ def register_security_handlers():
                 
                 emit('fraud_scan_completed', {
                     'results': scan_results,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 })
                 
                 # If high-risk transactions found, send alert
@@ -1959,7 +1969,7 @@ def register_security_handlers():
                         'severity': 'high' if high_risk_count > 3 else 'medium',
                         'message': f'{high_risk_count} high-risk transactions detected',
                         'details': scan_results,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
                 
             finally:
@@ -1969,7 +1979,7 @@ def register_security_handlers():
             logger.error(f"Failed to run fraud scan: {e}")
             emit('fraud_scan_error', {
                 'error': 'Failed to complete fraud scan',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
 
     @socketio.on('join_security_monitoring', namespace='/ws/security')
@@ -1999,7 +2009,7 @@ def register_security_handlers():
             'message': 'Connected to financial intelligence system',
             'services': ['payment_processing', 'fraud_detection', 'analytics', 'reporting'],
             'status': 'active',
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
 
     @socketio.on('disconnect', namespace='/ws/finance')
@@ -2025,7 +2035,7 @@ def register_security_handlers():
                 'profit_margin': 39.9,
                 'transaction_velocity': 'normal',
                 'security_score': 96.8,
-                'last_updated': datetime.now().isoformat()
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }
             
             emit('finance_update', status)
@@ -2052,14 +2062,14 @@ def register_security_handlers():
             
             # Generate realistic transaction
             transaction = {
-                'id': f'txn_{datetime.now().strftime("%Y%m%d_%H%M%S")}_{random.randint(1000, 9999)}',
+                'id': f'txn_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}_{random.randint(1000, 9999)}',
                 'type': random.choice(transaction_types),
                 'amount': round(random.uniform(15.00, 499.99), 2),
                 'currency': 'USD',
                 'status': random.choice(statuses),
                 'payment_method': random.choice(payment_methods),
                 'gateway': random.choice(gateways),
-                'processed_at': datetime.now().isoformat(),
+                'processed_at': datetime.now(timezone.utc).isoformat(),
                 'customer_id': f'cust_{random.randint(10000, 99999)}',
                 'order_id': f'order_{random.randint(100000, 999999)}',
                 'description': 'Product purchase - Real-time processing',
@@ -2099,7 +2109,7 @@ def register_security_handlers():
             alert_type = random.choice(alert_types)
             
             alert = {
-                'id': f'fraud_{datetime.now().strftime("%Y%m%d_%H%M%S")}',
+                'id': f'fraud_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}',
                 'transaction_id': f'txn_suspicious_{random.randint(1000, 9999)}',
                 'risk_score': risk_score,
                 'alert_type': alert_type,
@@ -2107,7 +2117,7 @@ def register_security_handlers():
                 'severity': 'high' if risk_score >= 75 else 'medium' if risk_score >= 60 else 'low',
                 'customer_impact': 'transaction_blocked' if risk_score >= 80 else 'manual_review_required',
                 'recommended_action': 'immediate_investigation' if risk_score >= 85 else 'standard_review',
-                'created_at': datetime.now().isoformat(),
+                'created_at': datetime.now(timezone.utc).isoformat(),
                 'status': 'active',
                 'metadata': {
                     'ip_address': f'192.168.{random.randint(1,255)}.{random.randint(1,255)}',
@@ -2151,7 +2161,7 @@ def register_security_handlers():
                 'runway_months': round(total_revenue / (total_expenses / 12), 1),
                 'payment_success_rate': round(random.uniform(96.5, 99.2), 2),
                 'chargeback_rate': round(random.uniform(0.1, 0.8), 2),
-                'updated_at': datetime.now().isoformat()
+                'updated_at': datetime.now(timezone.utc).isoformat()
             }
             
             emit('financial_metrics_update', metrics)
@@ -2254,7 +2264,7 @@ def register_security_handlers():
                     'digital_wallet_adoption': round(random.uniform(35.5, 48.2), 1),
                     'traditional_card_decline': round(random.uniform(-5.2, -1.8), 1)
                 },
-                'updated_at': datetime.now().isoformat()
+                'updated_at': datetime.now(timezone.utc).isoformat()
             }
             
             emit('payment_analytics_update', analytics)
@@ -2277,7 +2287,7 @@ def register_security_handlers():
             
             # Generate 30 days of cash flow data
             for i in range(30):
-                date = (datetime.now() + timedelta(days=i)).date().isoformat()
+                date = (datetime.now(timezone.utc) + timedelta(days=i)).date().isoformat()
                 
                 # Inflows (revenue, collections)
                 daily_inflow = round(random.uniform(3000, 8000), 2)
@@ -2326,7 +2336,7 @@ def register_security_handlers():
                     'runway_days': random.randint(120, 365)
                 },
                 'alerts': [],
-                'updated_at': datetime.now().isoformat()
+                'updated_at': datetime.now(timezone.utc).isoformat()
             }
             
             # Add alerts if balance goes negative
@@ -2390,7 +2400,7 @@ def register_security_handlers():
                             'progress': step['progress'],
                             'step_number': i + 1,
                             'total_steps': len(steps),
-                            'timestamp': datetime.now().isoformat()
+                            'timestamp': datetime.now(timezone.utc).isoformat()
                         })
                         
                         if step['status'] == 'completed':
@@ -2405,7 +2415,7 @@ def register_security_handlers():
                                 'accounts_reconciled': random.randint(15, 25),
                                 'reports_generated': random.randint(5, 8),
                                 'status': 'success',
-                                'completed_at': datetime.now().isoformat()
+                                'completed_at': datetime.now(timezone.utc).isoformat()
                             }
                             
                             emit('financial_automation_completed', results)
@@ -2417,7 +2427,7 @@ def register_security_handlers():
                     emit('financial_automation_error', {
                         'error': 'Automation execution failed',
                         'details': str(e),
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
             
             # Start automation in background thread
@@ -2429,7 +2439,7 @@ def register_security_handlers():
             emit('financial_automation_started', {
                 'automation_type': automation_type,
                 'estimated_duration': f"{len(steps) * 2} seconds",
-                'started_at': datetime.now().isoformat()
+                'started_at': datetime.now(timezone.utc).isoformat()
             })
             
         except Exception as e:

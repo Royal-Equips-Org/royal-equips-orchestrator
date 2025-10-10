@@ -21,7 +21,7 @@ import json
 import numpy as np
 import pandas as pd
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, asdict
 import httpx
 
@@ -175,7 +175,7 @@ class ProductionInventoryAgent(AgentBase):
                 'price_optimizations': self.price_optimizations_today,
                 'potential_revenue_increase': self.potential_revenue_increase,
                 'performance_score': self.performance_score,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -183,16 +183,26 @@ class ProductionInventoryAgent(AgentBase):
             return {
                 'status': 'error',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     async def _sync_inventory_from_shopify(self) -> None:
-        """Sync inventory data from Shopify using GraphQL."""
+        """
+        Synchronize inventory data from Shopify using the GraphQL API.
+
+        This method retrieves all products and their variants from the connected Shopify store,
+        including product metadata (ID, title, handle, type, inventory totals, creation/update timestamps)
+        and variant-level details (ID, title, SKU, price, compare-at price, inventory quantity, cost, inventory policy, and tracking status).
+        Handles pagination to ensure all products are fetched.
+
+        Updates the agent's internal inventory state with the latest data from Shopify.
+        This method requires valid production Shopify credentials and does not use any mock data.
+        """
         try:
             if not self.shopify_service:
-                self.logger.warning("Shopify service unavailable, using fallback data")
-                await self._load_fallback_inventory()
-                return
+                error_msg = "Shopify service unavailable. Real credentials required. No mock data in production."
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
                 
             query = '''
             query($first: Int!, $after: String) {
@@ -305,7 +315,7 @@ class ProductionInventoryAgent(AgentBase):
                         supplier_sku=variant['sku'],
                         last_sale_date=None,  # Would query order data
                         last_restock_date=None,
-                        last_updated=datetime.now(),
+                        last_updated=datetime.now(timezone.utc),
                         alerts=[]
                     )
                     
@@ -316,75 +326,9 @@ class ProductionInventoryAgent(AgentBase):
             
         except Exception as e:
             self.logger.error(f"Error syncing inventory from Shopify: {e}")
-            await self._load_fallback_inventory()
+            raise
     
-    async def _load_fallback_inventory(self) -> None:
-        """Load fallback inventory data when Shopify unavailable."""
-        fallback_items = [
-            {
-                'sku': 'PWCC-001',
-                'name': 'Premium Wireless Car Charger',
-                'current_stock': 47,
-                'cost_price': 22.50,
-                'sell_price': 59.99,
-                'velocity_daily': 3.2
-            },
-            {
-                'sku': 'BTWH-002', 
-                'name': 'Bluetooth Wireless Headphones',
-                'current_stock': 23,
-                'cost_price': 18.75,
-                'sell_price': 49.99,
-                'velocity_daily': 2.8
-            },
-            {
-                'sku': 'SMPH-003',
-                'name': 'Smartphone Camera Lens Kit',
-                'current_stock': 89,
-                'cost_price': 12.40,
-                'sell_price': 34.99,
-                'velocity_daily': 4.1
-            }
-        ]
-        
-        for item_data in fallback_items:
-            margin_percent = ((item_data['sell_price'] - item_data['cost_price']) / item_data['sell_price'] * 100)
-            
-            inventory_item = ProductionInventoryItem(
-                sku=item_data['sku'],
-                name=item_data['name'],
-                shopify_product_id='fallback',
-                shopify_variant_id='fallback',
-                current_stock=item_data['current_stock'],
-                reserved_stock=0,
-                available_stock=item_data['current_stock'],
-                reorder_point=max(5, int(item_data['velocity_daily'] * 7)),
-                max_stock=int(item_data['velocity_daily'] * 30),
-                cost_price=item_data['cost_price'],
-                sell_price=item_data['sell_price'],
-                competitor_prices=[],
-                avg_competitor_price=None,
-                demand_forecast_7d=item_data['velocity_daily'] * 7,
-                demand_forecast_30d=item_data['velocity_daily'] * 30,
-                velocity_daily=item_data['velocity_daily'],
-                velocity_weekly=item_data['velocity_daily'] * 7,
-                margin_percent=margin_percent,
-                profit_margin=item_data['sell_price'] - item_data['cost_price'],
-                recommended_price=None,
-                price_elasticity=1.0,
-                seasonality_factor=1.0,
-                supplier="fallback",
-                supplier_sku=item_data['sku'],
-                last_sale_date=None,
-                last_restock_date=None,
-                last_updated=datetime.now(),
-                alerts=['fallback_mode']
-            )
-            
-            self.inventory_items[item_data['sku']] = inventory_item
-            
-        self.total_products_managed = len(self.inventory_items)
-        self.logger.info(f"Loaded {self.total_products_managed} fallback inventory items")
+    # NO FALLBACK INVENTORY - Production requires real Shopify data
     
     async def _calculate_product_velocity(self, sku: str) -> float:
         """Calculate product velocity from historical sales data."""
@@ -455,7 +399,7 @@ class ProductionInventoryAgent(AgentBase):
     
     def _calculate_seasonality_factor(self) -> float:
         """Calculate seasonality factor based on current date."""
-        current_date = datetime.now()
+        current_date = datetime.now(timezone.utc)
         month = current_date.month
         
         # Seasonal patterns (would be data-driven in production)
@@ -706,7 +650,7 @@ class ProductionInventoryAgent(AgentBase):
                         'message': f"Stock critically low: {item.current_stock}/{item.reorder_point}",
                         'current_stock': item.current_stock,
                         'reorder_point': item.reorder_point,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
                 
                 # Overstock alert
@@ -721,7 +665,7 @@ class ProductionInventoryAgent(AgentBase):
                         'message': f"Overstock detected: {item.current_stock}/{item.max_stock}",
                         'current_stock': item.current_stock,
                         'max_stock': item.max_stock,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
                 
                 # Slow-moving inventory
@@ -735,7 +679,7 @@ class ProductionInventoryAgent(AgentBase):
                         'level': 'warning',
                         'message': f"Slow sales: {item.velocity_daily:.1f} units/day",
                         'velocity': item.velocity_daily,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     })
                 
                 # Update item alerts
@@ -780,7 +724,7 @@ class ProductionInventoryAgent(AgentBase):
                                 'new_price': recommendation.recommended_price,
                                 'change_percent': recommendation.price_change_percent,
                                 'reasoning': recommendation.reasoning,
-                                'timestamp': datetime.now().isoformat()
+                                'timestamp': datetime.now(timezone.utc).isoformat()
                             })
                             
                             executed_changes += 1
@@ -932,12 +876,12 @@ class ProductionInventoryAgent(AgentBase):
                     'success_rate': self.success_rate,
                     'potential_revenue_increase': self.potential_revenue_increase
                 },
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
             self.logger.error(f"Error generating dashboard data: {e}")
-            return {'error': str(e), 'timestamp': datetime.now().isoformat()}
+            return {'error': str(e), 'timestamp': datetime.now(timezone.utc).isoformat()}
 
 
 # Backward compatibility

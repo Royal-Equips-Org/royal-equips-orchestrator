@@ -20,7 +20,7 @@ import asyncio
 import logging
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 import httpx
 
@@ -121,8 +121,8 @@ class MarketingAutomationAgent(AgentBase):
             shop_domain = os.getenv('SHOPIFY_STORE')
             
             if not shopify_token or not shop_domain:
-                self.logger.warning("Shopify credentials not found, using mock data")
-                return await self._get_mock_customers()
+                self.logger.error("Shopify credentials not configured. Set SHOPIFY_ACCESS_TOKEN and SHOPIFY_STORE environment variables.")
+                return []
             
             async with httpx.AsyncClient() as client:
                 headers = {
@@ -141,40 +141,26 @@ class MarketingAutomationAgent(AgentBase):
                     data = response.json()
                     return data.get('customers', [])
                 else:
-                    self.logger.error(f"Shopify API error: {response.status_code}")
-                    return await self._get_mock_customers()
+                    self.logger.error(f"Shopify API error: {response.status_code} - {response.text}")
+                    return []
                     
         except Exception as e:
-            self.logger.error(f"Error fetching Shopify customers: {e}")
-            return await self._get_mock_customers()
-
-    async def _get_mock_customers(self) -> List[Dict[str, Any]]:
-        """Return mock customer data for testing."""
-        return [
-            {
-                'id': '1001',
-                'email': 'customer1@example.com',
-                'total_spent': '750.00',
-                'orders_count': 5,
-                'last_order_name': '#1001',
-                'created_at': '2023-01-15T10:00:00Z'
-            },
-            {
-                'id': '1002', 
-                'email': 'customer2@example.com',
-                'total_spent': '250.00',
-                'orders_count': 2,
-                'last_order_name': '#1002',
-                'created_at': '2024-01-01T10:00:00Z'
-            }
-        ]
+            self.logger.error(f"Error fetching Shopify customers: {e}", exc_info=True)
+            return []
 
     def _days_since_last_order(self, customer: Dict[str, Any]) -> int:
         """Calculate days since customer's last order."""
         try:
-            # This would need proper implementation with order data
-            return 30  # Mock value
-        except Exception:
+            last_order_at = customer.get('last_order_date')
+            if not last_order_at:
+                return 999  # No order data available
+            
+            from dateutil import parser
+            last_order_date = parser.parse(last_order_at)
+            days = (datetime.now(timezone.utc) - last_order_date.replace(tzinfo=None)).days
+            return max(0, days)
+        except Exception as e:
+            self.logger.warning(f"Error calculating days since last order: {e}")
             return 999  # Default to high value if error
 
     async def _check_triggered_campaigns(self) -> None:
@@ -212,17 +198,49 @@ class MarketingAutomationAgent(AgentBase):
 
     async def _fetch_abandoned_carts(self) -> List[Dict[str, Any]]:
         """Fetch abandoned carts from Shopify."""
-        # Mock implementation - replace with real Shopify API call
-        return [
-            {
-                'id': 'cart_001',
-                'email': 'customer@example.com',
-                'line_items': [
-                    {'title': 'Wireless Car Charger', 'price': '24.99'}
-                ],
-                'updated_at': datetime.now().isoformat()
-            }
-        ]
+        try:
+            shopify_token = os.getenv('SHOPIFY_ACCESS_TOKEN')
+            shop_domain = os.getenv('SHOPIFY_STORE')
+            
+            if not shopify_token or not shop_domain:
+                self.logger.error("Shopify credentials not configured for abandoned cart retrieval")
+                return []
+            
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    'X-Shopify-Access-Token': shopify_token,
+                    'Content-Type': 'application/json'
+                }
+                
+                # Fetch checkouts (abandoned carts)
+                response = await client.get(
+                    f'https://{shop_domain}/admin/api/2023-10/checkouts.json',
+                    headers=headers,
+                    params={
+                        'status': 'open',
+                        'limit': 50
+                    },
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    carts = data.get('checkouts', [])
+                    
+                    # Filter for abandoned carts (no completed orders)
+                    abandoned = [
+                        cart for cart in carts
+                        if cart.get('email') and not cart.get('completed_at')
+                    ]
+                    
+                    return abandoned
+                else:
+                    self.logger.error(f"Shopify API error fetching checkouts: {response.status_code}")
+                    return []
+                    
+        except Exception as e:
+            self.logger.error(f"Error fetching abandoned carts: {e}", exc_info=True)
+            return []
 
     async def _send_abandoned_cart_email(self, email: str, cart: Dict[str, Any]) -> None:
         """Send abandoned cart recovery email."""
@@ -234,13 +252,21 @@ class MarketingAutomationAgent(AgentBase):
             if klaviyo_key:
                 await self._send_klaviyo_email(email, subject, self._build_abandoned_cart_content(cart))
             else:
-                await self._send_mock_email(email, subject, 'abandoned_cart')
+                # Send real email via Klaviyo or fallback provider
+                success = await self._send_klaviyo_email(
+                    email=email,
+                    subject=subject,
+                    content=self._build_abandoned_cart_content(cart)
+                )
+                
+                if not success:
+                    self.logger.warning(f"Failed to send abandoned cart email to {email}")
                 
             # Log campaign
             self.campaign_log.append({
                 'type': 'abandoned_cart',
                 'email': email,
-                'sent_at': datetime.now().isoformat(),
+                'sent_at': datetime.now(timezone.utc).isoformat(),
                 'cart_id': cart.get('id')
             })
             
@@ -287,10 +313,7 @@ class MarketingAutomationAgent(AgentBase):
             self.logger.error(f"Error sending Klaviyo email: {e}")
             return False
 
-    async def _send_mock_email(self, email: str, subject: str, campaign_type: str) -> None:
-        """Mock email sending for testing."""
-        await asyncio.sleep(0.1)  # Simulate sending delay
-        self.logger.info(f"Mock email sent: {campaign_type} to {email} - '{subject}'")
+
 
     def _build_abandoned_cart_content(self, cart: Dict[str, Any]) -> str:
         """Build abandoned cart email content."""
@@ -308,10 +331,42 @@ class MarketingAutomationAgent(AgentBase):
         [Complete Purchase Button]
         """
 
+    def _build_newsletter_content(self) -> str:
+        """Build newsletter email content."""
+        return """
+        Weekly Deals & New Arrivals
+        
+        Check out our latest products and exclusive deals this week!
+        
+        • New arrivals in Electronics & Gadgets
+        • Special discounts on trending items
+        • Free shipping on orders over $50
+        
+        [Shop Now Button]
+        
+        Don't miss out on these limited-time offers!
+        """
+
+    def _build_promotion_content(self) -> str:
+        """Build promotion email content."""
+        return """
+        Special Weekend Sale - Up to 40% Off!
+        
+        This weekend only - huge discounts on popular items!
+        
+        • Flash deals on electronics
+        • Buy 2 Get 1 Free on selected items
+        • Extra 10% off with code WEEKEND10
+        
+        [Shop Sale Button]
+        
+        Sale ends Sunday at midnight!
+        """
+
     async def _execute_scheduled_campaigns(self) -> None:
         """Execute scheduled marketing campaigns."""
         try:
-            current_day = datetime.now().weekday()  # Monday=0
+            current_day = datetime.now(timezone.utc).weekday()  # Monday=0
             
             # Newsletter on Tuesdays (1)  
             if current_day == 1:
@@ -336,12 +391,21 @@ class MarketingAutomationAgent(AgentBase):
             if 'repeat_customers' in self.customer_segments:
                 target_emails.extend(self.customer_segments['repeat_customers'])
             
-            for email in target_emails[:100]:  # Limit to 100 emails
-                await self._send_mock_email(email, subject, 'newsletter')
+            # Send to target segment (batch processing with rate limiting)
+            sent_count = 0
+            for email in target_emails[:100]:  # Limit to 100 emails per batch
+                success = await self._send_klaviyo_email(
+                    email=email,
+                    subject=subject,
+                    content=self._build_newsletter_content()
+                )
+                if success:
+                    sent_count += 1
+                await asyncio.sleep(0.1)  # Rate limiting between sends
                 
             self.campaign_log.append({
                 'type': 'newsletter',
-                'sent_at': datetime.now().isoformat(),
+                'sent_at': datetime.now(timezone.utc).isoformat(),
                 'recipients': len(target_emails),
                 'subject': subject
             })
@@ -361,12 +425,21 @@ class MarketingAutomationAgent(AgentBase):
             
             unique_customers = list(set(all_segments))
             
-            for email in unique_customers[:200]:  # Limit to 200 emails
-                await self._send_mock_email(email, subject, 'promotion')
+            # Send to target segment (batch processing with rate limiting)
+            sent_count = 0
+            for email in unique_customers[:200]:  # Limit to 200 emails per batch
+                success = await self._send_klaviyo_email(
+                    email=email,
+                    subject=subject,
+                    content=self._build_promotion_content()
+                )
+                if success:
+                    sent_count += 1
+                await asyncio.sleep(0.1)  # Rate limiting between sends
                 
             self.campaign_log.append({
                 'type': 'promotion',
-                'sent_at': datetime.now().isoformat(),
+                'sent_at': datetime.now(timezone.utc).isoformat(),
                 'recipients': len(unique_customers),
                 'subject': subject
             })
@@ -397,7 +470,7 @@ class MarketingAutomationAgent(AgentBase):
         """Check if campaign was sent in the last 7 days."""
         try:
             sent_at = datetime.fromisoformat(campaign.get('sent_at', ''))
-            return (datetime.now() - sent_at).days <= 7
+            return (datetime.now(timezone.utc) - sent_at).days <= 7
         except Exception:
             return False
 
@@ -413,7 +486,7 @@ class MarketingAutomationAgent(AgentBase):
 
     async def get_daily_discoveries(self) -> int:
         """Get count of campaigns executed today."""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         today_campaigns = [
             c for c in self.campaign_log 
             if datetime.fromisoformat(c.get('sent_at', '')).date() == today

@@ -331,7 +331,7 @@ class AutonomousEmpireAgent:
         """Execute a specific autonomous action."""
         logger.debug(f"🔧 Executing action: {action}")
         
-        action_results = {"action": action, "timestamp": datetime.now().isoformat()}
+        action_results = {"action": action, "timestamp": datetime.now(timezone.utc).isoformat()}
         
         try:
             if action == "trigger_emergency_healing":
@@ -355,13 +355,28 @@ class AutonomousEmpireAgent:
                 healing_results = self.auto_healer.improve_code_quality()
                 action_results["code_improvement"] = healing_results
                 
+            elif action == "refactor_legacy_code":
+                # Refactor legacy code patterns
+                healing_results = self.auto_healer.improve_code_quality()
+                action_results["refactor"] = "legacy_code_refactor_triggered"
+                action_results["healing_results"] = healing_results
+                
             elif action == "optimize_performance":
                 # Performance optimization
                 action_results["optimization"] = "performance_optimization_triggered"
                 
+            elif action == "analyze_bottlenecks":
+                # Analyze performance bottlenecks
+                action_results["analysis"] = "bottleneck_analysis_triggered"
+                action_results["status"] = "analysis_initiated"
+                
             elif action == "expand_capabilities":
                 # System expansion for stable systems
                 action_results["expansion"] = "capability_expansion_initiated"
+                
+            elif action == "explore_optimizations":
+                # Explore optimization opportunities
+                action_results["exploration"] = "optimization_exploration_initiated"
                 
             else:
                 action_results["status"] = "unknown_action"

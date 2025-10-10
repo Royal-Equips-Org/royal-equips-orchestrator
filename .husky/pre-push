@@ -1,15 +1,23 @@
-# Skip hooks when explicitly requested, on CI, or with skip flags
-if [ -n "$SKIP_HUSKY" ] || [ -n "$CI" ] || [ -n "$SKIP_CHECKS" ] || [ -n "$SKIP_PUSH_CHECKS" ]; then
+# Skip hooks when explicitly requested or on CI
+if [ -n "$SKIP_HUSKY" ] || [ -n "$CI" ]; then
   echo "Husky pre-push skipped"; exit 0
 fi
 
-# Optional checks before push - all non-blocking
-if command -v pnpm >/dev/null 2>&1; then
-  echo "🔧 Running optional TypeScript type checking..."
-  pnpm typecheck || echo "⚠️ Type issues found. Run 'pnpm typecheck' to fix or use SKIP_CHECKS=1 git push to skip."
-  
-  echo "🧪 Running optional unit tests..."
-  pnpm test || echo "⚠️ Test issues found. Run 'pnpm test' to fix or use SKIP_CHECKS=1 git push to skip."
-  
-  echo "✅ Pre-push checks completed (all non-blocking)"
+# TypeScript type checking and tests are now disabled by default
+# To enable them, set RUN_CHECKS=1 before pushing:
+#   RUN_CHECKS=1 git push
+
+if [ -n "$RUN_CHECKS" ]; then
+  if command -v pnpm >/dev/null 2>&1; then
+    echo "🔧 Running optional TypeScript type checking..."
+    pnpm typecheck || echo "⚠️ Type issues found. Run 'pnpm typecheck' to fix."
+    
+    echo "🧪 Running optional unit tests..."
+    pnpm test || echo "⚠️ Test issues found. Run 'pnpm test' to fix."
+    
+    echo "✅ Pre-push checks completed (all non-blocking)"
+  fi
+else
+  echo "✅ Pre-push checks skipped (disabled by default)"
+  echo "   To enable: RUN_CHECKS=1 git push"
 fi

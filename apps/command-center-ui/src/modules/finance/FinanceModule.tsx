@@ -21,7 +21,7 @@ import {
   Settings
 } from 'lucide-react';
 
-import { useModuleSocket } from '../../stores/socket-store';
+import { useSocketStore } from '../../stores/socket-store';
 import { usePerformance } from '../../hooks/usePerformance';
 
 interface FinancialMetrics {
@@ -87,7 +87,7 @@ const FinanceModule: React.FC = () => {
   const [selectedView, setSelectedView] = useState('dashboard');
 
   const socketStore = useSocketStore();
-  const { trackPerformance } = usePerformance();
+  const { trackPerformance, trackInteraction } = usePerformance();
 
   // Fetch dashboard data
   const fetchDashboardData = async () => {
