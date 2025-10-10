@@ -4,7 +4,7 @@ const tsPlugin = require("@typescript-eslint/eslint-plugin");
 const globals = require("globals");
 
 module.exports = [
-  { ignores: ["**/.*", "dist/**", "build/**", "src/index.js", "vendor/**", "**/*.min.js"] },
+  { ignores: ["**/.*", "dist/**", "build/**", "src/**/index.js", "vendor/**", "**/*.min.js"] },
 
   // CJS config-bestanden
   {
