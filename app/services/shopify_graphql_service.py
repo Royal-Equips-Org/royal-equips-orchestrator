@@ -168,7 +168,7 @@ class ShopifyGraphQLService:
             fulfillment_status = order.get('displayFulfillmentStatus', '').upper()
             if fulfillment_status == 'FULFILLED':
                 fulfilled_orders += 1
-            elif fulfillment_status in ['UNFULFILLED', 'PENDING', 'PARTIALLY_FULFILLED', 'PARTIAL']:
+            elif fulfillment_status in ['UNFULFILLED', 'PARTIALLY_FULFILLED']:
                 pending_orders += 1
         
         return {
