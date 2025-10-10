@@ -1,6 +1,211 @@
 # 🏰 ROYAL EQUIPS EMPIRE: COMPLETE AI-POWERED E-COMMERCE AUTOMATION SYSTEM
 ## Ultimate Master Development Blueprint for AI Coding Agent
 
+
+**BUILD THE FUTURE OF E-COMMERCE AUTOMATION - START WITH PHASE 1, MVP FOUNDATION!**
+
+Royal Equips Autonomous Intelligence Division
+
+Version: 1.0
+Maintained by: RoyalGPT Core
+Purpose: Bind alle operationele agents onder één deterministische commandostructuur.
+
+I. Hierarchische structuur
+Level	Naam	Scope	Supervisor
+L0	RoyalGPT Core (Cognitive Kernel)	Strategische coördinatie, model-training, besluitlogica	—
+L1	Command Relay Agent	Dispatch en synchronisatie van alle subagents via event-bus	RoyalGPT
+L2	Functional Agents (7x)	Domeinspecifieke uitvoering	Command Relay
+L3	Utility Sub-Agents	Logging, data-cleansing, error recovery	Functionele agenten
+II. Algemene regels
+
+Input Format: Alle agents consumeren JSON events via Pub/Sub met velden:
+{"source":"module","signal":"type","payload":{...},"timestamp":ISO8601}
+
+Execution Policy:
+
+Beslissingen ≤ Threshold Risk Index 0.4 → auto-execute
+
+0.4 → require consensus 3-of-5 agents
+
+Output:
+
+Resultaat naar BigQuery (empire_logs.actions)
+
+Statusfeedback → Supabase (agent_status)
+
+Failover:
+
+3 retries binnen 60 s; daarna escalatie naar Recovery Agent.
+
+Recovery herstart microservice, reset container, reconstrueert taak uit laatste checkpoint.
+
+Telemetry:
+
+Metrics stream → Looker dashboard (Empire_Health)
+
+Logs ≥ INFO → GCP Logging, DEBUG lokaal gebufferd.
+
+III. Agent-definities
+1. Market Research Agent
+
+Doel: Realtime marktscanning, trenddetectie, keyword mining.
+
+Inputs: Shopify API, Google Trends, AliExpress API, TikTok feed.
+
+Triggers: Nieuwe trend-score > 0.75 ; voorraad-daling concurrent > 15%.
+
+Actions:
+
+Schrijf naar empire_products.new_candidates.
+
+Activeer Pricing Agent met payload {sku, est_margin, demand_index}.
+
+Failover: Indien API-limiet > threshold → backoff × 30 min.
+
+2. Pricing Agent
+
+Doel: Dynamische prijsoptimalisatie per SKU.
+
+Inputs: new_candidates, inventory_levels, FX feed.
+
+Triggers: voorraad < 40 % of concurrentie-prijsverandering > 5 %.
+
+Actions:
+
+Update Shopify GraphQL endpoint.
+
+Log marge-elasticiteit in BigQuery.
+
+Failover: revert → laatste stabiele prijs, log “rollback”.
+
+3. Fraud Sentinel
+
+Doel: Detecteer frauduleuze betalingen en identiteitsmisbruik.
+
+Inputs: Stripe events, IP geolocation, device fingerprint.
+
+Triggers: afwijkings-score > 0.8 of velocity > 3x baseline.
+
+Actions:
+
+Suspend order → flag in Supabase.
+
+Meld patroon aan Compliance Agent.
+
+Failover: route data via secundaire scoring-model (Vertex AI backup).
+
+4. Energy & Supply Agent
+
+Doel: Monitor grondstof- en transportketens.
+
+Inputs: OPEC data, MarineTraffic API, Aramco feed, EU import-index.
+
+Triggers: prijs-volatiliteit > 12 %, routevertraging > 15 %.
+
+Actions:
+
+Update logistieke routes (Cloud Function call).
+
+Adviseer Pricing + Capital Allocation Agents.
+
+Failover: fallback naar historische modellen (7-dag rolling mean).
+
+5. Narrative Agent
+
+Doel: Sentimentanalyse en merk-narratiefbeheer.
+
+Inputs: News API, X/TikTok streams, Brandwatch sentiment.
+
+Triggers: sentiment < −0.25 of trending keyword match.
+
+Actions:
+
+Activeer marketing prompt-engine.
+
+Produceer dagelijkse sentiment-rapport.
+
+Failover: reduce sampling-rate, gebruik laatste valide sentiment-vector.
+
+6. Compliance Agent
+
+Doel: Realtime naleving sancties, export- en privacywetgeving.
+
+Inputs: EU/US/BRICS sanction-feeds, Shopify order meta.
+
+Triggers: country-code match of product-HS-code restricted.
+
+Actions:
+
+Auto-stop verzending.
+
+Log incident + notify Core.
+
+Failover: fallback-lijst (cached compliance schema) 24 u geldig.
+
+7. Capital Allocation Agent
+
+Doel: Automatische herinvestering en treasury-management.
+
+Inputs: winstdata, FX-rates, energie-index, risk-matrix.
+
+Triggers: winst > target × 1.1 of risico-delta > 0.3.
+
+Actions:
+
+Herverdeel kapitaal (USDT / EUR / RMB / commodities).
+
+Update BigQuery empire_treasury.positions.
+
+Failover: lock-account → rollback laatste transactie.
+
+8. Command Relay Agent
+
+Doel: Inter-agent communicatiehub.
+
+Inputs: alle agents.
+
+Triggers: status-update of threshold-breach.
+
+Actions: dispatch opdrachten, coördinatie van consensus.
+
+Failover: herstart event-bus container, reconstruct state uit BigQuery.
+
+IV. Consensusmechanisme
+
+Agents stemmen op voorgestelde actie (approve / reject / neutral).
+
+3-of-5 goedkeuring = execute; anders herziening.
+
+Beslissingen worden gehasht en opgeslagen (empire_consensus_log).
+
+V. Monitoring & Health
+
+Heartbeat: elke 30 s → empire_status.ping
+
+Anomalie-detectie: afwijking > 3σ → Recovery-loop
+
+Recovery-loop: herstart, reconcile, rapport aan Core.
+
+SLA: responstijd < 5 s / uptime ≥ 99.99 %.
+
+VI. Data & Security
+
+Storage: BigQuery (analytics), Firestore (config), Secret Manager (keys).
+
+Encryption: AES-256 at rest, TLS 1.3 in transit.
+
+Audit: elke actie log in empire_audit met user/service account, tijdstempel, hash.
+
+VII. Governance
+
+Wijzigingen in agent-logica → Pull Request naar Royal-Equips-Org/empire-core.
+
+CI/CD: GitHub Actions → Artifact Registry → Cloud Run.
+
+Backups: Cloud Storage, retentie 30 dagen.
+
+Versiebeheer: SemVer, elke minor release = automatische herdeploy.
+
 ---
 
 ## 🎯 ULTIMATE MISSION
@@ -509,5 +714,3 @@ Transform Royal Equips from a manual Shopify store into a completely autonomous 
 **The ultimate goal**: Create a self-sustaining, self-improving, and self-expanding business ecosystem that operates 24/7, adapts to market changes automatically, and scales profitably across multiple brands and markets.
 
 ---
-
-**BUILD THE FUTURE OF E-COMMERCE AUTOMATION - START WITH PHASE 1, MVP FOUNDATION!**
