@@ -18,7 +18,10 @@ module.exports = [
   {
     files: ["scripts/**/*.js", "packages/**/*.{ts,tsx,js,cjs,mjs}"],
     languageOptions: {
-      ecmaVersion: "latest", sourceType: "module", parser: tsParser, globals: globals.node
+      ecmaVersion: "latest",
+      sourceType: "module",
+      parser: tsParser,
+      globals: globals.node
     },
     plugins: { "@typescript-eslint": tsPlugin },
     rules: {
