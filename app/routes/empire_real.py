@@ -393,6 +393,7 @@ async def empire_chat():
                 return jsonify({
                     'error': 'AIRA AI service is not configured. Please configure OPENAI_API_KEY environment variable to enable AI-powered responses.',
                     'content': 'I apologize, but I am currently unable to process your request. The AI service is not configured. Please contact your administrator to set up the OpenAI API key.',
+                    'agent_name': 'AIRA',
                     'timestamp': datetime.now().isoformat(),
                     'configured': False
                 }), 503
@@ -432,6 +433,7 @@ performance, reference real business KPIs and best practices."""
             
             return jsonify({
                 'content': response_content,
+                'agent_name': 'AIRA',
                 'timestamp': datetime.now().isoformat(),
                 'model': 'gpt-4-turbo-preview',
                 'configured': True
