@@ -138,7 +138,7 @@ class GitHubService:
                 raise GitHubServiceError("GitHub authentication failed")
             elif response.status_code == 403:
                 # Check if it's rate limit or other forbidden error
-                if 'rate limit' in response.text.lower() or self._rate_limit_remaining == 0:
+                if self._rate_limit_remaining == 0:
                     logger.warning("GitHub rate limit exceeded")
                     raise GitHubServiceError("GitHub rate limit exceeded")
                 else:
