@@ -43,8 +43,10 @@ module.exports = [
       "no-undef": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "@typescript-eslint/no-unused-expressions": "off",
-      "no-empty": "off", "no-case-declarations": "off",
-      "no-prototype-builtins": "off", "no-useless-escape": "off"
+      "no-empty": "off",
+      "no-case-declarations": "off",
+      "no-prototype-builtins": "off",
+      "no-useless-escape": "off"
     }
   },
 
