@@ -25,7 +25,7 @@ module.exports = [
       ...js.configs.recommended.rules,
       ...tsPlugin.configs.recommended.rules,
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-require-imports": "off"   // <-- Fix
+      "@typescript-eslint/no-require-imports": "off"   // Disabled because Node.js scripts and packages often use CommonJS 'require' imports.
     }
   },
 
