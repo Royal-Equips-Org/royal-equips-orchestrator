@@ -11,7 +11,7 @@ import json
 import logging
 import os
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -163,7 +163,7 @@ class RealTimeMarketSentiment:
                 'q': query,
                 'language': 'en',
                 'sortBy': 'publishedAt',
-                'from': (datetime.now() - timedelta(hours=24)).isoformat(),
+                'from': (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat(),
                 'apiKey': api_key,
                 'pageSize': 50
             }
@@ -203,7 +203,7 @@ class RealTimeMarketSentiment:
                 subjectivity=avg_subjectivity,
                 compound_score=avg_compound,
                 source_count=len(sentiments),
-                timestamp=datetime.now()
+                timestamp=datetime.now(timezone.utc)
             )
             
         except Exception as e:
@@ -245,7 +245,7 @@ class RealTimeMarketSentiment:
                 subjectivity=subjectivity,
                 compound_score=compound_score,
                 source_count=random.randint(15, 50),
-                timestamp=datetime.now()
+                timestamp=datetime.now(timezone.utc)
             )
             
         except Exception as e:
@@ -293,7 +293,7 @@ class RealTimeMarketSentiment:
                 subjectivity=subjectivity,
                 compound_score=compound_score,
                 source_count=1,  # Single aggregated market indicator
-                timestamp=datetime.now()
+                timestamp=datetime.now(timezone.utc)
             )
             
         except Exception as e:
@@ -386,7 +386,7 @@ class RealTimeMarketSentiment:
             subjectivity=avg_subjectivity,
             compound_score=avg_compound,
             source_count=total_sources,
-            timestamp=datetime.now()
+            timestamp=datetime.now(timezone.utc)
         )
     
     def _analyze_sentiment_trends(self) -> str:
@@ -512,7 +512,7 @@ class RealTimeMarketSentiment:
             subjectivity=0.5,
             compound_score=0.0,
             source_count=source_count,
-            timestamp=datetime.now()
+            timestamp=datetime.now(timezone.utc)
         )
     
     def get_sentiment_alerts(self, threshold_config: Dict[str, float] = None) -> List[Dict[str, Any]]:

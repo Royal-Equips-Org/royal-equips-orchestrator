@@ -1,1 +1,0 @@
-{"timestamp": "2025-08-17T13:51:07.927565+00:00", "session_id": "healing_session_1755438667", "summary": {"session_duration_seconds": 0.59, "session_status": "COMPLETED", "fixes_applied_count": 5, "files_modified_count": 2, "recommendations_count": 10, "phases_completed": 5, "healing_effectiveness": "MEDIUM"}, "fixes_applied_count": 5, "recommendations_count": 10}

@@ -1,0 +1,37 @@
+name: OSV-Scanner
+
+on:
+  pull_request:
+    branches: [ master ]
+  merge_group:
+    branches: [ master ]
+  schedule:
+    - cron: '34 9 * * 6'
+  push:
+    branches: [ master ]
+
+concurrency:
+  group: osv-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan-scheduled:
+    if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
+    uses: Royal-Equips-Org/royal-equips-orchestrator/.github/workflows/osv-scanner-reusable.yml@master
+    with:
+      scan-args: |
+        -r
+        --skip-git
+        ./
+  scan-pr:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    uses: Royal-Equips-Org/royal-equips-orchestrator/.github/workflows/osv-scanner-reusable-pr.yml@master
+    with:
+      scan-args: |
+        -r
+        --skip-git
+        ./

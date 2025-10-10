@@ -1,28 +1,36 @@
-version: "3.8"
-
-services:
-  orchestrator:
-    build: .
-    container_name: royal-equips-orchestrator
+  # --- Exporters for Prometheus ---
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter
     environment:
-      # Replace these with your actual Shopify and OpenAI credentials
-      SHOPIFY_API_KEY: "${SHOPIFY_API_KEY}"
-      SHOPIFY_API_SECRET: "${SHOPIFY_API_SECRET}"
-      SHOP_NAME: "${SHOP_NAME}"
-      OPENAI_API_KEY: "${OPENAI_API_KEY}"
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
-  command-center:
-    build:
-      context: .
-      dockerfile: admin/Dockerfile
-    container_name: royal-equips-command-center
-    environment:
-      VITE_API_URL: "http://localhost:8000"
-      VITE_WEBSOCKET_URL: "ws://localhost:8000/ws"
-    ports:
-      - "3000:3000"
+      DATA_SOURCE_NAME: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/royal_equips?sslmode=disable
     depends_on:
-      - orchestrator
+      postgres:
+        condition: service_healthy
+    ports:
+      - "9187:9187"
+    restart: unless-stopped
+
+  redis_exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    command: ["--redis.addr=redis://redis:6379"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "9121:9121"
+    restart: unless-stopped
+
+  nginx_exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    command: ["-nginx.scrape-uri", "http://nginx:80/stub_status"]
+    depends_on:
+      - nginx
+    ports:
+      - "9113:9113"
+    restart: unless-stopped
+
+  node_exporter:
+    image: prom/node-exporter:v1.8.2
+    pid: host
+    network_mode: host
     restart: unless-stopped

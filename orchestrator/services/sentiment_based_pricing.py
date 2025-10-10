@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -328,7 +328,7 @@ class SentimentBasedPricingService:
             competitor_factors=competitor_factors,
             safety_checks=safety_checks,
             approval_required=approval_required,
-            timestamp=datetime.now()
+            timestamp=datetime.now(timezone.utc)
         )
     
     def _calculate_sentiment_factors(self, sentiment: MarketSentimentData, product: Dict) -> Dict[str, float]:
@@ -427,7 +427,7 @@ class SentimentBasedPricingService:
         opportunity_score = (opportunities - risks) / 10.0  # Normalize
         
         # Seasonal factors (simplified)
-        month = datetime.now().month
+        month = datetime.now(timezone.utc).month
         seasonal_multiplier = 1.0
         if month in [11, 12]:  # Holiday season
             seasonal_multiplier = 1.2
@@ -475,7 +475,7 @@ class SentimentBasedPricingService:
         # Recent adjustment history increases risk
         recent_adjustments = [a for a in self.adjustment_history 
                             if a.product_id == product_id and 
-                            (datetime.now() - a.timestamp).hours < 24]
+                            (datetime.now(timezone.utc) - a.timestamp).hours < 24]
         if len(recent_adjustments) > 2:
             risk_factors += 2
         elif len(recent_adjustments) > 0:
@@ -688,7 +688,7 @@ class SentimentBasedPricingService:
                         recommended_action="monitor_results",
                         auto_action_taken=True,
                         manual_review_required=False,
-                        timestamp=datetime.now()
+                        timestamp=datetime.now(timezone.utc)
                     )
                     self.alert_history.append(alert)
                     
@@ -700,7 +700,7 @@ class SentimentBasedPricingService:
     def _in_cooling_period(self, product_id: str) -> bool:
         """Check if product is in cooling period after recent adjustment."""
         cooling_hours = self.config['cooling_period_hours']
-        cutoff_time = datetime.now() - timedelta(hours=cooling_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=cooling_hours)
         
         recent_adjustments = [a for a in self.adjustment_history 
                             if a.product_id == product_id and a.timestamp > cutoff_time]
@@ -725,7 +725,7 @@ class SentimentBasedPricingService:
                 self.product_data[adjustment.product_id] = self._generate_sample_product_data(adjustment.product_id)
             
             self.product_data[adjustment.product_id]['current_price'] = adjustment.suggested_price
-            self.product_data[adjustment.product_id]['last_updated'] = datetime.now()
+            self.product_data[adjustment.product_id]['last_updated'] = datetime.now(timezone.utc)
             
             return True
             
@@ -758,7 +758,7 @@ class SentimentBasedPricingService:
             recommended_action="immediate_manual_review",
             auto_action_taken=True,
             manual_review_required=True,
-            timestamp=datetime.now()
+            timestamp=datetime.now(timezone.utc)
         )
         
         self.alert_history.append(alert)
@@ -787,7 +787,7 @@ class SentimentBasedPricingService:
         Returns:
             Summary statistics
         """
-        cutoff_time = datetime.now() - timedelta(hours=time_period_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_period_hours)
         recent_adjustments = [a for a in self.adjustment_history if a.timestamp > cutoff_time]
         
         if not recent_adjustments:
@@ -820,7 +820,7 @@ class SentimentBasedPricingService:
             'auto_executed': len([a for a in recent_adjustments if not a.approval_required]),
             'manual_approval_required': len([a for a in recent_adjustments if a.approval_required]),
             'time_period_hours': time_period_hours,
-            'generated_at': datetime.now()
+            'generated_at': datetime.now(timezone.utc)
         }
     
     def get_service_metrics(self) -> Dict[str, Any]:
@@ -831,7 +831,7 @@ class SentimentBasedPricingService:
         """
         total_adjustments = len(self.adjustment_history)
         recent_adjustments = len([a for a in self.adjustment_history 
-                                if (datetime.now() - a.timestamp).days < 1])
+                                if (datetime.now(timezone.utc) - a.timestamp).days < 1])
         
         avg_confidence = np.mean([a.confidence_score for a in self.adjustment_history]) if self.adjustment_history else 0
         
@@ -847,5 +847,5 @@ class SentimentBasedPricingService:
             'emergency_freezes': len([a for a in self.alert_history if a.alert_type == 'emergency_freeze']),
             'last_adjustment': max([a.timestamp for a in self.adjustment_history]) if self.adjustment_history else None,
             'service_uptime': '99.9%',
-            'last_updated': datetime.now()
+            'last_updated': datetime.now(timezone.utc)
         }
