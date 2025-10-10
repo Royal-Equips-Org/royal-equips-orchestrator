@@ -60,10 +60,45 @@ class GitHubService:
         self._circuit_breaker_open = False
         self._failure_count = 0
         self._last_failure_time = None
+        
+        # Rate limit tracking
+        self._rate_limit_remaining = None
+        self._rate_limit_reset_time = None
+        
+        # Cache for frequently accessed data (5 minute TTL)
+        self._cache = {}
+        self._cache_ttl = 300  # 5 minutes
 
     def is_authenticated(self) -> bool:
         """Check if GitHub service is properly authenticated."""
         return self._authenticated
+
+    def _check_rate_limit(self) -> bool:
+        """Check if we have rate limit quota remaining."""
+        if self._rate_limit_remaining is not None and self._rate_limit_remaining <= 10:
+            if self._rate_limit_reset_time:
+                # Check if rate limit has reset
+                if datetime.now(timezone.utc).timestamp() < self._rate_limit_reset_time:
+                    logger.debug(f"GitHub rate limit low ({self._rate_limit_remaining} remaining), avoiding API call")
+                    return False
+                else:
+                    # Rate limit has reset
+                    self._rate_limit_remaining = None
+                    self._rate_limit_reset_time = None
+        return True
+    
+    def _get_cached(self, cache_key: str) -> Any:
+        """Get cached data if available and not expired."""
+        if cache_key in self._cache:
+            cached_data, cached_time = self._cache[cache_key]
+            if (datetime.now(timezone.utc) - cached_time).total_seconds() < self._cache_ttl:
+                logger.debug(f"Using cached GitHub data for {cache_key}")
+                return cached_data
+        return None
+    
+    def _set_cache(self, cache_key: str, data: Any):
+        """Cache data with timestamp."""
+        self._cache[cache_key] = (data, datetime.now(timezone.utc))
 
     @retry(
         stop=stop_after_attempt(3),
@@ -83,17 +118,32 @@ class GitHubService:
                 self._failure_count = 0
             else:
                 raise GitHubServiceError("Circuit breaker open - GitHub API temporarily unavailable")
+        
+        # Check rate limit before making request
+        if not self._check_rate_limit():
+            raise GitHubServiceError("GitHub rate limit exceeded")
 
         try:
             url = f"{self.base_url}/{endpoint.lstrip('/')}"
             response = requests.request(method, url, headers=self._headers, **kwargs)
+            
+            # Update rate limit tracking from response headers
+            if 'X-RateLimit-Remaining' in response.headers:
+                self._rate_limit_remaining = int(response.headers['X-RateLimit-Remaining'])
+            if 'X-RateLimit-Reset' in response.headers:
+                self._rate_limit_reset_time = int(response.headers['X-RateLimit-Reset'])
 
             if response.status_code == 401:
                 logger.error("GitHub authentication failed - check token")
                 raise GitHubServiceError("GitHub authentication failed")
             elif response.status_code == 403:
-                logger.warning("GitHub rate limit exceeded")
-                raise GitHubServiceError("GitHub rate limit exceeded")
+                # Check if it's rate limit or other forbidden error
+                if 'rate limit' in response.text.lower() or self._rate_limit_remaining == 0:
+                    logger.warning("GitHub rate limit exceeded")
+                    raise GitHubServiceError("GitHub rate limit exceeded")
+                else:
+                    logger.error("GitHub access forbidden")
+                    raise GitHubServiceError("GitHub access forbidden")
             elif response.status_code >= 500:
                 raise GitHubServiceError(f"GitHub API server error: {response.status_code}")
 
@@ -111,11 +161,16 @@ class GitHubService:
 
     def get_repo_info(self) -> Dict[str, Any]:
         """Get repository information and health status."""
+        cache_key = 'repo_info'
+        cached = self._get_cached(cache_key)
+        if cached:
+            return cached
+        
         try:
             response = self._make_request('GET', f'/repos/{self.repo_owner}/{self.repo_name}')
             if response.status_code == 200:
                 repo_data = response.json()
-                return {
+                result = {
                     'name': repo_data['name'],
                     'full_name': repo_data['full_name'],
                     'description': repo_data['description'],
@@ -128,23 +183,30 @@ class GitHubService:
                     'private': repo_data['private'],
                     'status': 'healthy'
                 }
+                self._set_cache(cache_key, result)
+                return result
             else:
                 logger.error(f"Failed to get repo info: {response.status_code}")
                 return {'status': 'error', 'message': 'Failed to fetch repository info'}
 
         except GitHubServiceError as e:
-            logger.error(f"GitHub service error: {e}")
+            logger.debug(f"GitHub service error (will use cache/skip): {e}")
             return {'status': 'error', 'message': str(e)}
 
     def get_recent_commits(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent commits from the repository."""
+        cache_key = f'commits_{limit}'
+        cached = self._get_cached(cache_key)
+        if cached:
+            return cached
+        
         try:
             params = {'per_page': limit, 'page': 1}
             response = self._make_request('GET', f'/repos/{self.repo_owner}/{self.repo_name}/commits', params=params)
 
             if response.status_code == 200:
                 commits = response.json()
-                return [
+                result = [
                     {
                         'sha': commit['sha'][:8],
                         'message': commit['commit']['message'].split('\n')[0],
@@ -154,23 +216,30 @@ class GitHubService:
                     }
                     for commit in commits
                 ]
+                self._set_cache(cache_key, result)
+                return result
             else:
                 logger.error(f"Failed to get commits: {response.status_code}")
                 return []
 
         except GitHubServiceError as e:
-            logger.error(f"GitHub service error getting commits: {e}")
+            logger.debug(f"GitHub service error getting commits (will use cache/skip): {e}")
             return []
 
     def get_workflow_runs(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent GitHub Actions workflow runs."""
+        cache_key = f'workflow_runs_{limit}'
+        cached = self._get_cached(cache_key)
+        if cached:
+            return cached
+        
         try:
             params = {'per_page': limit, 'page': 1}
             response = self._make_request('GET', f'/repos/{self.repo_owner}/{self.repo_name}/actions/runs', params=params)
 
             if response.status_code == 200:
                 runs = response.json()
-                return [
+                result = [
                     {
                         'id': run['id'],
                         'name': run['name'],
@@ -184,12 +253,14 @@ class GitHubService:
                     }
                     for run in runs['workflow_runs']
                 ]
+                self._set_cache(cache_key, result)
+                return result
             else:
                 logger.error(f"Failed to get workflow runs: {response.status_code}")
                 return []
 
         except GitHubServiceError as e:
-            logger.error(f"GitHub service error getting workflow runs: {e}")
+            logger.debug(f"GitHub service error getting workflow runs (will use cache/skip): {e}")
             return []
 
     def get_open_issues(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -318,6 +389,11 @@ class GitHubService:
 
     def get_repository_health(self) -> Dict[str, Any]:
         """Get overall repository health metrics."""
+        cache_key = 'repo_health'
+        cached = self._get_cached(cache_key)
+        if cached:
+            return cached
+        
         try:
             repo_info = self.get_repo_info()
             recent_commits = self.get_recent_commits(5)
@@ -353,7 +429,7 @@ class GitHubService:
                           'good' if health_score >= 70 else \
                           'fair' if health_score >= 50 else 'poor'
 
-            return {
+            result = {
                 'health_score': health_score,
                 'health_status': health_status,
                 'last_updated': datetime.now(timezone.utc).isoformat(),
@@ -364,9 +440,11 @@ class GitHubService:
                     'failed_workflows': len([r for r in workflow_runs if r['conclusion'] == 'failure'])
                 }
             }
+            self._set_cache(cache_key, result)
+            return result
 
         except Exception as e:
-            logger.error(f"Error calculating repository health: {e}")
+            logger.debug(f"Error calculating repository health (will use cache/skip): {e}")
             return {
                 'health_score': 0,
                 'health_status': 'error',
