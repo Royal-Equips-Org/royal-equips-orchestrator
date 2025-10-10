@@ -123,21 +123,34 @@ class RealEmpireService:
         
     async def initialize(self):
         """Initialize the service with real connections."""
+        orchestrator_available = False
+        
         try:
             # Initialize orchestrator connection
             from app.orchestrator_bridge import get_orchestrator
             self.orchestrator = get_orchestrator()
-            logger.info("✅ Orchestrator connected")
+            
+            # Check if orchestrator has required methods
+            if hasattr(self.orchestrator, 'get_all_agents_health'):
+                logger.info("✅ Orchestrator connected with full health monitoring")
+                orchestrator_available = True
+            else:
+                logger.warning("⚠️ Orchestrator available but missing health monitoring methods")
+                orchestrator_available = False
             
         except Exception as e:
             logger.warning(f"⚠️ Orchestrator not available: {e}")
             logger.warning("Empire Service will work with limited functionality")
             self.orchestrator = None
+            orchestrator_available = False
         
         try:
-            # Sync real agent data if orchestrator is available
-            if self.orchestrator:
+            # Sync real agent data if orchestrator is fully available
+            if orchestrator_available and self.orchestrator:
                 await self._sync_real_agents()
+                if not self.agents:
+                    # Fallback to minimal agents if sync produced no results
+                    await self._create_minimal_agents()
             else:
                 # Create minimal agent set without orchestrator
                 await self._create_minimal_agents()
@@ -146,13 +159,14 @@ class RealEmpireService:
             await self._load_real_opportunities()
             await self._load_real_campaigns()
             
-            logger.info("✅ Real Empire Service initialized successfully")
+            logger.info(f"✅ Real Empire Service initialized with {len(self.agents)} agents")
             
         except Exception as e:
             logger.error(f"❌ Failed to initialize Empire Service: {e}")
             # Create minimal working set even on error
-            await self._create_minimal_agents()
-            logger.warning("⚠️ Empire Service running with minimal configuration")
+            if not self.agents:
+                await self._create_minimal_agents()
+            logger.warning(f"⚠️ Empire Service running with minimal configuration ({len(self.agents)} agents)")
     
     async def _sync_real_agents(self):
         """Sync with real agent execution data from orchestrator."""
