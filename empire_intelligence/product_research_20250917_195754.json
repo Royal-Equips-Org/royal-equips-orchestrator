@@ -1,0 +1,150 @@
+{
+  "empire_metadata": {
+    "timestamp": "2025-09-17T19:57:54.267112",
+    "agent_type": "product_research_auto_upload",
+    "mission": "autonomous_product_discovery",
+    "target_revenue": "100M_USD_annual",
+    "repository": "Royal-Equips-Org/royal-equips-orchestrator"
+  },
+  "research_cycle_data": {
+    "opportunities_discovered": 5,
+    "research_sources_active": [
+      "amazon",
+      "google_trends"
+    ],
+    "success_rate": "processing",
+    "next_cycle": "2025-09-18T19:57:54.267129"
+  },
+  "product_opportunities": [
+    {
+      "title": "Smart Home Gadgets",
+      "trend_score": 90.0,
+      "profit_potential": "High",
+      "source_platform": "Google Trends",
+      "price_range": "\u20ac50-\u20ac150",
+      "market_insights": "Smart home gadgets are gaining popularity due to increasing interest in home automation and energy efficiency. Focus on unique features and integrations with popular smart home ecosystems."
+    },
+    {
+      "title": "DIY Tool Kits",
+      "trend_score": 88.0,
+      "profit_potential": "High",
+      "source_platform": "Google Trends",
+      "price_range": "\u20ac30-\u20ac100",
+      "market_insights": "With the rise of DIY culture, tool kits that offer versatility and ease of use are in demand. Emphasize quality and durability to attract hobbyists and professionals alike."
+    },
+    {
+      "title": "Compact Fitness Equipment",
+      "trend_score": 87.0,
+      "profit_potential": "High",
+      "source_platform": "Google Trends",
+      "price_range": "\u20ac40-\u20ac120",
+      "market_insights": "As more people opt for home workouts, compact and portable fitness equipment is trending. Highlight space-saving designs and multifunctionality."
+    },
+    {
+      "title": "Outdoor Adventure Gear",
+      "trend_score": 85.0,
+      "profit_potential": "High",
+      "source_platform": "Google Trends",
+      "price_range": "\u20ac60-\u20ac180",
+      "market_insights": "Outdoor activities are on the rise, with consumers seeking durable and innovative gear. Focus on lightweight materials and weather-resistant features."
+    },
+    {
+      "title": "Tech-Integrated Home Decor",
+      "trend_score": 84.0,
+      "profit_potential": "High",
+      "source_platform": "Google Trends",
+      "price_range": "\u20ac45-\u20ac150",
+      "market_insights": "The fusion of technology and home decor is gaining traction. Products that offer aesthetic appeal along with smart functionalities are highly sought after."
+    }
+  ],
+  "raw_research_data": {
+    "amazon": [],
+    "google_trends": [
+      {
+        "category": "hobby supplies 2024",
+        "title": "Toys & Hobby - United States | Statista Market Forecast",
+        "link": "https://www.statista.com/outlook/cmo/toys-hobby/united-states?srsltid=AfmBOopa_ogRDkdnmlGckiPyw0I1_Ok04UUTEcoP6llGQIl7k2NHRlut",
+        "snippet": "The US toy industry generated over 40 billion in sales, a figure that dwarfs even the biggest countries in the industry, such as China, Japan, and Germany.",
+        "source": "Google Trends"
+      },
+      {
+        "category": "hobby supplies 2024",
+        "title": "Toys & Hobby - Worldwide | Statista Market Forecast",
+        "link": "https://www.statista.com/outlook/emo/toys-hobby/worldwide?srsltid=AfmBOooldtnSB6ofc2z2ROtYIkiNZ2-QSHWjDaaophlRl-ewDnnIQVPG",
+        "snippet": "Revenue in the Toys & Hobby Market is projected to reach US$99.58bn in 2025. Revenue is expected to show an annual growth rate (CAGR 2025-2030) of 4.82%, ...",
+        "source": "Google Trends"
+      },
+      {
+        "category": "lifestyle gadgets",
+        "title": "100 Cool Tech Gadgets We Recommend in 2024",
+        "link": "https://www.housebeautiful.com/lifestyle/fun-at-home/g46574219/cool-tech-products-you-need/",
+        "snippet": "From smart home upgrades to new smartphones to a compact phone charger, we've found the coolest tech products you can gift in 2024.",
+        "source": "Google Trends"
+      },
+      {
+        "category": "lifestyle gadgets",
+        "title": "The 2024 Esquire Gadget Awards",
+        "link": "https://www.esquire.com/lifestyle/tech/a62693910/2024-esquire-gadget-awards/",
+        "snippet": "We've rigorously tested nearly every new gadget that hit the market this year. Explore our top picks for outdoor gear, wellness products, home gadgets, and ...",
+        "source": "Google Trends"
+      },
+      {
+        "category": "home accessories",
+        "title": "24 Interior Design Trends That Will Take Over 2024",
+        "link": "https://decormatters.com/blog/2024-home-decor-trends-24-interior-design-trends-to-transform-your-space",
+        "snippet": "Discover the top 2024 home decor trends and interior design ideas. Transform your space with tech-integrated, sustainable designs, ...",
+        "source": "Google Trends"
+      },
+      {
+        "category": "home accessories",
+        "title": "13 Homeware Trends of 2024",
+        "link": "https://www.maisonflaneur.com/blogs/flaneur-magazine/the-homeware-trends-of-2024",
+        "snippet": "In 2024 we will see the colour palette shift away from neutral and minimalistic colour tones and embrace the boldness!",
+        "source": "Google Trends"
+      },
+      {
+        "category": "fitness equipment",
+        "title": "20 Best Gym Equipment Brands in 2024 (With Price ...",
+        "link": "https://wod.guru/blog/gym-equipment-brands/",
+        "snippet": "One of the most expensive ones are Technogym's treadmills: $9,999. The cheapest pieces of equipment are TRX's suspension trainer tha costs $200.",
+        "source": "Google Trends"
+      },
+      {
+        "category": "fitness equipment",
+        "title": "Home Gym Equipment Trends Heading Into 2024",
+        "link": "https://www.garagegymreviews.com/home-gym-equipment-trends-2024",
+        "snippet": "Rowing machines, down 20% \u00b7 Exercise bikes, down 18% \u00b7 Ellipticals, down 13% \u00b7 Stationary bikes, down 12% \u00b7 Kettlebells, down 11% \u00b7 Jump ropes, down ...",
+        "source": "Google Trends"
+      },
+      {
+        "category": "outdoor gear",
+        "title": "Our Favorite Gear of 2024: The Greatest Gear of the Year",
+        "link": "https://www.treelinereview.com/news/gear-of-the-year-2024",
+        "snippet": "Our favorite gear items of the year ran the gamut from the apparel, pack, backpacking, camping, bike, and running categories.",
+        "source": "Google Trends"
+      },
+      {
+        "category": "outdoor gear",
+        "title": "Best of 2024 and Most Anticipated New Arrivals for 2025 ...",
+        "link": "https://www.theoutdoorshop.ie/blogs/blogs/staff-picks-best-of-2024-and-most-anticipated-new-arrivals-for-2025?srsltid=AfmBOor7dGP6lo0CjBgI6OYjDnyaKi5utsPwGOVFcrodPGmhj1rVpwzN",
+        "snippet": "From rugged jackets that braved Ireland's wild weather to innovative backpacks that became trail essentials, our staff has weighed in on their favourites.",
+        "source": "Google Trends"
+      },
+      {
+        "category": "DIY tools",
+        "title": "The Best Diy Tools 2024",
+        "link": "https://www.youtube.com/watch?v=i_8HkmX-Ovc&pp=0gcJCf8Ao7VqN5tD",
+        "snippet": "70 TOOLS That Are Too Satisfying to Watch \u00b7 New 3.6K views ; THREE CREATIVE TOOLS\u2757\u2757 Smart DIY welder makes tools you must have \u2757. WHU idemu \u00b7 51K ...",
+        "source": "Google Trends"
+      },
+      {
+        "category": "DIY tools",
+        "title": "Cool Tools 2024: Top 10 Coolest Tools of 2024 for Ultimate ...",
+        "link": "https://www.youtube.com/watch?v=IEKbeyRIsJ4",
+        "snippet": "Cool Tools 2024: Top 10 Coolest Tools of 2024 for Ultimate DIY Success ... 20 M12 12-Volt Lithium-Ion Cordless 1/4 in. Hex Screwdriver: https ...",
+        "source": "Google Trends"
+      }
+    ]
+  },
+  "master_agent_notes": "Ready for Master Agent coordination and advanced agent deployment"
+}

@@ -322,31 +322,25 @@ class AIPricingService:
             return self._fallback_recommendation(product_id, current_price, None)
     
     def _fallback_market_analysis(self, competitor_prices: Dict[str, float]) -> MarketAnalysis:
-        """Provide fallback market analysis when AI fails."""
-        return MarketAnalysis(
-            competitor_prices=competitor_prices,
-            market_trend="stable",
-            price_sensitivity=0.7,
-            competitive_intensity=0.6,
-            recommended_positioning="competitive"
+        """Raise error when AI pricing fails - no fallback mock data."""
+        raise RuntimeError(
+            "AI-powered market analysis failed and no fallback is available. "
+            "This pricing service requires real AI/ML models to analyze market conditions. "
+            "Please ensure the following:\n"
+            "1. OpenAI API key is configured (OPENAI_API_KEY)\n"
+            "2. ML pricing models are trained and loaded\n"
+            "3. External market data sources are accessible\n"
+            "This system does not provide mock or heuristic-based pricing - only real AI analysis."
         )
     
     def _fallback_recommendation(self, product_id: str, current_price: float, analysis: Optional[MarketAnalysis]) -> PriceRecommendation:
-        """Provide fallback recommendation when AI fails."""
-        # Simple heuristic: competitive pricing
-        if analysis and analysis.competitor_prices:
-            avg_competitor_price = sum(analysis.competitor_prices.values()) / len(analysis.competitor_prices)
-            recommended_price = avg_competitor_price * 0.95  # 5% below average
-        else:
-            recommended_price = current_price * 0.95  # 5% reduction as fallback
-            
-        return PriceRecommendation(
-            product_id=product_id,
-            current_price=current_price,
-            recommended_price=round(recommended_price, 2),
-            confidence=0.6,
-            reasoning="Fallback competitive pricing strategy",
-            market_positioning="competitive",
-            expected_impact="Conservative price adjustment",
-            risk_level="low"
+        """Raise error when AI pricing fails - no fallback mock data."""
+        raise RuntimeError(
+            f"AI pricing recommendation failed for product {product_id} and no fallback is available. "
+            "This pricing service requires real AI/ML models for price optimization. "
+            "Please ensure the following:\n"
+            "1. AI models are properly trained and loaded\n"
+            "2. Real-time market data is available\n"
+            "3. Competitor pricing data is accessible\n"
+            "This system does not provide heuristic or rule-based pricing - only real AI-driven recommendations."
         )

@@ -18,6 +18,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_from_directory,
     url_for,
 )
 
@@ -29,66 +30,15 @@ logger = logging.getLogger(__name__)
 
 @main_bp.route("/")
 def root():
-    """Root endpoint with landing page and command center access."""
-    app_name = current_app.config.get("APP_NAME", "Royal Equips Orchestrator")
-    
-    # Self-healing template system
+    """
+    Root endpoint - serves the React Command Center SPA.
+    Redirect to /command-center for proper SPA routing.
+    """
     try:
-        template_dir = Path(current_app.template_folder)
-        ensure_template_exists(template_dir / "index.html", app_name)
-        return render_template("index.html", app_name=app_name)
-    except Exception as e:
-        current_app.logger.warning(f"Template rendering failed for index.html: {e}")
-        
-        # Self-healing: attempt to validate and fix template directory
-        try:
-            template_dir = Path(current_app.template_folder)
-            validation_result = validate_template_directory(template_dir, app_name)
-            
-            if validation_result['valid']:
-                current_app.logger.info("Template directory validated/repaired successfully")
-                try:
-                    return render_template("index.html", app_name=app_name)
-                except:
-                    pass  # Fall through to JSON fallback
-            else:
-                current_app.logger.error(f"Template validation failed: {validation_result['errors']}")
-        except Exception as heal_error:
-            current_app.logger.error(f"Self-healing failed: {heal_error}")
-        
-        # Ultimate fallback when templates can't be recovered
-        return jsonify(
-            {
-                "service": "Royal Equips Orchestrator",
-                "status": "operational", 
-                "version": "2.0.0",
-                "backend": "flask",
-                "mode": "self-healing_fallback",
-                "message": "System running in resilient mode - all services operational",
-                "endpoints": {
-                    "health": "/healthz",
-                    "readiness": "/readyz", 
-                    "metrics": "/metrics",
-                    "command_center": "/command-center",
-                    "api_docs": "/docs",
-                },
-                "actions": {
-                    "access_dashboard": {
-                        "url": "/command-center",
-                        "description": "Access the Elite Control Center"
-                    },
-                    "system_health": {
-                        "url": "/healthz",
-                        "description": "Check system health status"
-                    }
-                },
-                "recovery_info": {
-                    "auto_healing": True,
-                    "resilient_mode": True,
-                    "template_system": "fallback_active"
-                }
-            }
-        )
+        return redirect(url_for("command_center.serve_spa"), code=302)
+    except Exception:
+        # Fallback to static path if endpoint does not exist
+        return redirect("/command-center", code=302)
 
 
 @main_bp.route("/command-center-redirect")
@@ -126,6 +76,21 @@ def favicon():
     response = make_response("", 204)
     response.headers["Content-Type"] = "image/x-icon"
     return response
+
+
+@main_bp.route("/assets/<path:filename>")
+def serve_assets(filename):
+    """Serve static assets for command center React app."""
+    try:
+        static_dir = Path(__file__).parent.parent.parent / "static"
+        assets_dir = static_dir / "assets"
+        if assets_dir.exists():
+            return send_from_directory(assets_dir, filename)
+        logger.warning(f"Asset not found: {filename}")
+        return "Asset not found", 404
+    except Exception as e:
+        logger.error(f"Error serving asset {filename}: {e}")
+        return "Error serving asset", 500
 
 
 # Removed duplicate /docs route - using Swagger docs instead
@@ -170,7 +135,8 @@ def create_event():
 
     except Exception as e:
         logger.error(f"Failed to create event: {e}")
-        return jsonify({"error": "Failed to create event", "message": str(e)}), 500
+        # Optionally: logger.exception("Failed to create event") for full stack trace
+        return jsonify({"error": "Failed to create event"}), 500
 
 
 @main_bp.route("/jobs", methods=["GET"])
@@ -197,4 +163,33 @@ def get_jobs():
 
     except Exception as e:
         logger.error(f"Failed to get jobs: {e}")
-        return jsonify({"error": "Failed to get jobs", "message": str(e)}), 500
+        # Optionally: logger.exception("Failed to get jobs") for full stack trace
+        return jsonify({"error": "Failed to get jobs"}), 500
+
+
+@main_bp.route("/test-inventory")
+def test_inventory():
+    """Serve inventory API test page for development and debugging."""
+    try:
+        # Read the test HTML file
+        from pathlib import Path
+        test_file = Path(__file__).parent.parent.parent / "test_inventory_page.html"
+        
+        if test_file.exists():
+            with open(test_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            response = make_response(content)
+            response.headers['Content-Type'] = 'text/html; charset=utf-8'
+            return response
+        else:
+            return jsonify({
+                "error": "Test page not found",
+                "message": "test_inventory_page.html is missing"
+            }), 404
+            
+    except Exception as e:
+        logger.exception(f"Error serving test inventory page")
+        return jsonify({
+            "error": "Failed to serve test page"
+        }), 500

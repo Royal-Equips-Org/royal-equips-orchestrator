@@ -10,7 +10,7 @@ Provides API endpoints for:
 """
 
 import logging
-from datetime import datetime
+from datetime import timezone, datetime
 
 from flask import Blueprint, jsonify, request
 
@@ -49,7 +49,7 @@ def get_github_status():
         "repo_owner": github_service.repo_owner,
         "repo_name": github_service.repo_name,
         "status": "operational" if github_service.is_authenticated() else "not_configured",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @github_bp.route("/repository", methods=["GET"])
@@ -130,7 +130,7 @@ def get_recent_commits():
         "commits": commits,
         "count": len(commits),
         "limit": limit,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @github_bp.route("/workflows", methods=["GET"])
@@ -166,7 +166,7 @@ def get_workflow_runs():
         "workflow_runs": workflows,
         "count": len(workflows),
         "limit": limit,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @github_bp.route("/issues", methods=["GET"])
@@ -202,7 +202,7 @@ def get_open_issues():
         "issues": issues,
         "count": len(issues),
         "limit": limit,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @github_bp.route("/pull-requests", methods=["GET"])
@@ -249,7 +249,7 @@ def get_pull_requests():
         "count": len(prs),
         "state": state,
         "limit": limit,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @github_bp.route("/issues", methods=["POST"])
@@ -381,7 +381,7 @@ def get_github_summary():
                 "pull_requests": prs
             },
             "deployment": deployment,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
 
     except Exception as e:

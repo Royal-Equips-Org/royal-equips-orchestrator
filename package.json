@@ -1,22 +1,46 @@
-﻿{
+{
   "name": "royal-equips-orchestrator",
   "private": true,
-  "packageManager": "pnpm@9.9.0",
+  "packageManager": "pnpm@10.17.0",
   "scripts": {
+    "dev": "concurrently \"pnpm dev:flask\" \"pnpm dev:ui\"",
+    "dev:flask": "python wsgi.py",
+    "dev:ui": "cd apps/command-center-ui && pnpm dev",
+    "build": "cd apps/command-center-ui && pnpm build",
+    "start": "python wsgi.py",
+    "typecheck": "tsc -p apps/command-center-ui/tsconfig.json --noEmit && tsc -p packages/shared-types/tsconfig.json --noEmit",
     "lint": "eslint . --ext .ts,.tsx,.js,.cjs",
-    "typecheck": "tsc -p tsconfig.base.json --noEmit",
+    "test": "cd apps/command-center-ui && pnpm test",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^17.7.0",
+    "@eslint/js": "9.35.0",
+    "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.29.1",
-    "husky": "^9.1.5",
-    "@commitlint/cli": "^19.4.0",
-    "@commitlint/config-conventional": "^19.4.0",
-    "prettier": "^3.3.3",
-    "typescript": "^5.5.4"
+    "chokidar": "^4.0.3",
+    "diff": "^8.0.2",
+    "eslint": "9.35.0",
+    "eslint-config-prettier": "9.1.2",
+    "eslint-plugin-import": "2.32.0",
+    "execa": "^9.6.0",
+    "fs-extra": "^11.3.1",
+    "globals": "15.15.0",
+    "globby": "^14.1.0",
+    "husky": "^9.1.7",
+    "jest": "29.7.0",
+    "jest-junit": "16.0.0",
+    "prettier": "3.6.2",
+    "ts-jest": "^29.4.2",
+    "tsx": "^4.20.5",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.43.0",
+    "vitest": "^3.2.4",
+    "yaml": "^2.8.1"
+  },
+  "engines": {
+    "node": "20"
   }
 }

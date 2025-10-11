@@ -1,1 +1,0 @@
-"""Royal EQ MCP test package."""

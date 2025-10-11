@@ -1,94 +1,62 @@
-# Render configuration for deploying Royal Equips Orchestrator Flask App
 services:
-  # Single web service that serves API + Control Center at /command-center
+  # Flask Backend API
   - type: web
-    name: orchestrator-api
-    env: docker
-    plan: free
-    dockerfilePath: ./Dockerfile
+    name: royal-equips-orchestrator
+    env: python
+    region: frankfurt
+    plan: starter
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && cd apps/command-center-ui && npm install && npm run build:render
+    startCommand: gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT --timeout 120 --log-level info wsgi:app
     healthCheckPath: /healthz
-    autoDeploy: true
     envVars:
-      - key: APP_TYPE
-        value: flask
-      # APP_PATH is not needed in Docker mode; startup is controlled by Dockerfile/start.sh
       - key: FLASK_ENV
         value: production
       - key: PORT
-        value: "10000"
-
-      # Configuration for command center
-      - key: COMMAND_CENTER_URL
-        value: /command-center
-
-      # Feature flags
-      - key: ENABLE_METRICS
-        value: "true"
-      - key: ENABLE_STREAMING
-        value: "true"
-
-      # Secrets (managed in Render dashboard)
+        value: 10000
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: LOG_LEVEL
+        value: INFO
+      # Shopify credentials (to be set in Render dashboard)
       - key: SHOPIFY_API_KEY
         sync: false
       - key: SHOPIFY_API_SECRET
         sync: false
       - key: SHOP_NAME
         sync: false
+      - key: SHOPIFY_ACCESS_TOKEN
+        sync: false
+      - key: SHOPIFY_STORE
+        sync: false
+      # OpenAI for AI features
       - key: OPENAI_API_KEY
         sync: false
-      - key: BIGQUERY_PROJECT_ID
+      # Sentry for error monitoring
+      - key: SENTRY_DSN
         sync: false
-      - key: BIGQUERY_DATASET
+      # Database (optional - Supabase or PostgreSQL)
+      - key: DATABASE_URL
         sync: false
-      - key: BIGQUERY_TABLE
+      # Redis (optional for caching)
+      - key: REDIS_URL
         sync: false
+      # GitHub integration
       - key: GITHUB_TOKEN
         sync: false
-
-  # Daily analytics export at 03:00 UTC
-  - type: cron
-    name: export-analytics
-    env: docker
-    dockerfilePath: ./Dockerfile
-    schedule: "0 3 * * *"
-    dockerCommand: >
-      python scripts/run_analytics.py
-    envVars:
-      - key: SHOPIFY_API_KEY
+      # Other integrations
+      - key: AUTO_DS_API_KEY
         sync: false
-      - key: SHOPIFY_API_SECRET
+      - key: SPOCKET_API_KEY
         sync: false
-      - key: SHOP_NAME
+      - key: KLAVIYO_API_KEY
         sync: false
-      - key: OPENAI_API_KEY
+      - key: FACEBOOK_ACCESS_TOKEN
         sync: false
-      - key: BIGQUERY_PROJECT_ID
+      - key: ZENDESK_DOMAIN
         sync: false
-      - key: BIGQUERY_DATASET
+      - key: ZENDESK_API_TOKEN
         sync: false
-      - key: BIGQUERY_TABLE
-        sync: false
-
-  # Daily security scan at 02:00 UTC
-  - type: cron
-    name: security-scan
-    env: docker
-    dockerfilePath: ./Dockerfile
-    schedule: "0 2 * * *"
-    dockerCommand: >
-      python scripts/run_security_checks.py
-    envVars:
-      - key: SHOPIFY_API_KEY
-        sync: false
-      - key: SHOPIFY_API_SECRET
-        sync: false
-      - key: SHOP_NAME
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: BIGQUERY_PROJECT_ID
-        sync: false
-      - key: BIGQUERY_DATASET
-        sync: false
-      - key: BIGQUERY_TABLE
+      - key: ZENDESK_EMAIL
         sync: false

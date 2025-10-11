@@ -1,4 +1,4 @@
-﻿# Branch protection (master)
+# Branch protection (master)
 - Required checks: ci, e2e (strict)
 - Require signed commits: true
 - Require conversation resolution: true

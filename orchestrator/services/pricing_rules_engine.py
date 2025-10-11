@@ -7,7 +7,7 @@ AI recommendations based on confidence thresholds and business rules.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -157,15 +157,15 @@ class AutomatedPricingEngine:
         
         # Create price change request
         request = PriceChangeRequest(
-            request_id=f"{product_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            request_id=f"{product_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             product_id=product_id,
             current_price=current_price,
             recommended_price=recommendation.recommended_price,
             recommendation=recommendation,
             applicable_rules=applicable_rules,
             status=PriceChangeStatus.PENDING,
-            created_at=datetime.now(),
-            expires_at=datetime.now() + timedelta(hours=24)  # Default expiry
+            created_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=24)  # Default expiry
         )
         
         # Process through rules
@@ -209,7 +209,7 @@ class AutomatedPricingEngine:
             True if the rule processed the request, False otherwise
         """
         # Check if rule is currently active
-        current_hour = datetime.now().hour
+        current_hour = datetime.now(timezone.utc).hour
         if current_hour not in rule.active_hours:
             return False
         
@@ -338,7 +338,7 @@ class AutomatedPricingEngine:
             return True
         
         history = self.price_change_history[product_id]
-        cutoff_time = datetime.now() - timedelta(hours=rule.cooldown_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=rule.cooldown_hours)
         
         # Check for recent changes by this rule
         for change in history:
@@ -353,7 +353,7 @@ class AutomatedPricingEngine:
         if product_id not in self.price_change_history:
             return True
         
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         history = self.price_change_history[product_id]
         
         # Count changes today
@@ -380,7 +380,7 @@ class AutomatedPricingEngine:
             
             # Update request status
             request.status = PriceChangeStatus.APPLIED
-            request.applied_at = datetime.now()
+            request.applied_at = datetime.now(timezone.utc)
             
             # Trigger price update callbacks
             for callback in self.price_update_callbacks:
@@ -429,7 +429,7 @@ class AutomatedPricingEngine:
             self.price_change_history[product_id] = []
         
         change_record = {
-            'timestamp': datetime.now(),
+            'timestamp': datetime.now(timezone.utc),
             'old_price': old_price,
             'new_price': new_price,
             'rule_id': rule_id,
@@ -440,7 +440,7 @@ class AutomatedPricingEngine:
         self.price_change_history[product_id].append(change_record)
         
         # Keep only recent history (last 30 days)
-        cutoff_date = datetime.now() - timedelta(days=30)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
         self.price_change_history[product_id] = [
             record for record in self.price_change_history[product_id]
             if record['timestamp'] > cutoff_date
@@ -454,14 +454,14 @@ class AutomatedPricingEngine:
     ) -> PriceChangeRequest:
         """Create a request for cases where no rules apply."""
         return PriceChangeRequest(
-            request_id=f"{product_id}_no_action_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            request_id=f"{product_id}_no_action_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             product_id=product_id,
             current_price=current_price,
             recommended_price=recommendation.recommended_price,
             recommendation=recommendation,
             applicable_rules=[],
             status=PriceChangeStatus.REJECTED,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
             approval_reason="No applicable pricing rules found"
         )
     
@@ -484,7 +484,7 @@ class AutomatedPricingEngine:
             )
             
             request.status = PriceChangeStatus.APPLIED
-            request.applied_at = datetime.now()
+            request.applied_at = datetime.now(timezone.utc)
             
             # Trigger callbacks
             for callback in self.price_update_callbacks:
@@ -513,7 +513,7 @@ class AutomatedPricingEngine:
         if product_id not in self.price_change_history:
             return []
         
-        cutoff_date = datetime.now() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         return [
             record for record in self.price_change_history[product_id]
             if record['timestamp'] > cutoff_date

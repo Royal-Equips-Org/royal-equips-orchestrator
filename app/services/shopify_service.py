@@ -82,7 +82,7 @@ class ShopifyService:
         if not all([self.api_key, self.api_secret, self.shop_name]):
             # Only log once per application startup
             if not ShopifyService._logged_warning:
-                logger.info("Shopify credentials not configured - service running in mock mode")
+                logger.error("Shopify credentials not configured - SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME required. No mock mode in production.")
                 ShopifyService._logged_warning = True
             self._configured = False
         else:

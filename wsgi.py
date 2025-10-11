@@ -3,6 +3,8 @@ WSGI entry point for Royal Equips Orchestrator Flask application.
 
 This module provides the WSGI application object for production deployment
 with Gunicorn or other WSGI servers, including WebSocket support.
+
+Sentry error monitoring is automatically initialized when creating the app.
 """
 
 import os
@@ -16,7 +18,7 @@ sys.path.insert(0, str(project_root))
 from app import create_app
 from app.sockets import socketio
 
-# Create the application instance
+# Create the application instance (Sentry auto-initialized)
 app = create_app()
 
 # For SocketIO WSGI support

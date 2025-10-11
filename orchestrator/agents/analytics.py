@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import timezone, datetime
 from typing import TYPE_CHECKING, Any
 
 from orchestrator.core.agent_base import AgentBase
@@ -31,11 +31,11 @@ class AnalyticsAgent(AgentBase):
     """Exports orchestrator metrics to BigQuery."""
 
     def __init__(self, orchestrator: Orchestrator, name: str = "analytics") -> None:
-        super().__init__(name)
+        super().__init__(name, agent_type="analytics", description="Advanced analytics agent")
         self.logger = logging.getLogger(self.name)
         self.orchestrator = orchestrator
 
-    async def run(self) -> None:
+    async def _execute_task(self) -> None:
         self.logger.info("Running analytics agent")
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._export_metrics)
@@ -55,7 +55,7 @@ class AnalyticsAgent(AgentBase):
         client = bigquery.Client(project=project_id)
         table_ref = client.dataset(dataset_id).table(table_id)
         # Build a row of metrics
-        metrics: dict[str, Any] = {"timestamp": datetime.utcnow().isoformat()}
+        metrics: dict[str, Any] = {"timestamp": datetime.now(timezone.utc).isoformat()}
         # Trending keywords
         prod_agent = self.orchestrator.agents.get("product_research")
         if prod_agent and hasattr(prod_agent, "trending_products"):

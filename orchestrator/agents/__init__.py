@@ -9,10 +9,31 @@ intervals. Additional configuration and credentials are read from
 environment variables or configuration files.
 """
 
-# Always import ProductResearchAgent (Phase 1 implementation)
+# Always import core agents (Tier 1 Critical)
 from orchestrator.agents.product_research import ProductResearchAgent
 
+# Import newly implemented critical agents
+try:
+    from orchestrator.agents.security import SecurityAgent
+    _SECURITY_AVAILABLE = True
+except ImportError:
+    SecurityAgent = None
+    _SECURITY_AVAILABLE = False
+
+try:
+    from orchestrator.agents.inventory_pricing import InventoryPricingAgent
+    _INVENTORY_PRICING_AVAILABLE = True
+except ImportError:
+    InventoryPricingAgent = None
+    _INVENTORY_PRICING_AVAILABLE = False
+
 __all__ = ["ProductResearchAgent"]
+
+if _SECURITY_AVAILABLE:
+    __all__.append("SecurityAgent")
+    
+if _INVENTORY_PRICING_AVAILABLE:
+    __all__.append("InventoryPricingAgent")
 
 # Conditionally import other agents that may have additional dependencies
 try:

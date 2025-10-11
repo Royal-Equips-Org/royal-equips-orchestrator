@@ -1,54 +1,113 @@
-name: "CodeQL Security Scanning"
+name: CodeQL Advanced
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master ]
+  merge_group:
+    branches: [ master ]
   schedule:
-    - cron: '0 2 * * 1'  # Weekly scan on Mondays at 2 AM UTC
+    - cron: '29 17 * * 6'
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+  actions: read
 
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    permissions:
-      security-events: write
-      packages: read
-      actions: read
-      contents: read
-
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         include:
-        - language: python
-          build-mode: none
-        - language: javascript-typescript
-          build-mode: none
+          - language: actions
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: python
+            build-mode: none
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        build-mode: ${{ matrix.build-mode }}
+      # JS/TS dependency graph without running project scripts
+      - name: Setup Node (JS/TS only)
+        if: ${{ matrix.language == 'javascript-typescript' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: |
+            **/pnpm-lock.yaml
 
-    - if: matrix.build-mode == 'manual'
-      shell: bash
-      run: |
-        echo 'If you are using a "manual" build mode for one or more of the' \
-          'languages you are analyzing, replace this with the commands to build' \
-          'your code, for example:'
-        echo '  make bootstrap'
-        echo '  make release'
-        exit 1
+      # Robust pnpm install with PATH fix and fallback
+      - name: Ensure pnpm (JS/TS only)
+        if: ${{ matrix.language == 'javascript-typescript' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+          mkdir -p "$NPM_CONFIG_PREFIX/bin"
+          export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+          # Try corepack first, then fallback to npm -g
+          (corepack enable && corepack prepare pnpm@9.9.0 --activate) || true
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm i -g pnpm@9.9.0
+          fi
+          pnpm -v
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{matrix.language}}"
+      - name: Install JS deps (JS/TS only)
+        if: ${{ matrix.language == 'javascript-typescript' }}
+        env:
+          HUSKY: '0'
+          CI: 'true'
+          PATH: $HOME/.npm-global/bin:${{ env.PATH }}
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --frozen-lockfile --ignore-scripts
+          elif [ -f package-lock.json ]; then
+            npm ci --ignore-scripts
+          elif [ -f yarn.lock ]; then
+            yarn install --ignore-scripts --frozen-lockfile
+          else
+            echo "No lockfile; skipping JS dependency install."
+          fi
+
+      # Optional Python resolution without running project scripts
+      - name: Setup Python (Python only)
+        if: ${{ matrix.language == 'python' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps (Python only)
+        if: ${{ matrix.language == 'python' }}
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt || true
+          else
+            echo "No requirements.txt; skipping Python deps."
+          fi
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix['build-mode'] }}
+          # queries: security-extended,security-and-quality
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

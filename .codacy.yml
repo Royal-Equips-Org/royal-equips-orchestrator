@@ -1,0 +1,19 @@
+﻿engines:
+  eslint:
+    enabled: true
+    configuration:
+      extensions: [.js, .jsx, .ts, .tsx]
+    exclude_paths:
+      - dist/**
+patterns:
+  security:
+    - id: no-eval
+      message: "Disallow eval"
+      languages: [javascript, typescript]
+      severity: error
+      regex: "\\beval\\("
+    - id: child_process-exec
+      message: "Disallow exec from child_process"
+      languages: [javascript, typescript]
+      severity: error
+      regex: "child_process\\.(exec|execSync)\\("

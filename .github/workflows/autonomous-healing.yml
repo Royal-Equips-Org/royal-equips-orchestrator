@@ -1,0 +1,108 @@
+name: 🤖 Autonomous Healing
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Every 30 minutes
+  workflow_dispatch:
+    inputs:
+      healing_type:
+        description: 'Type of healing'
+        required: true
+        default: 'standard'
+        type: choice
+        options:
+          - standard
+          - deep
+          - emergency
+  repository_dispatch:
+    types: [system-failure, service-down]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+env:
+  HEALING_TIMEOUT: 300
+
+jobs:
+  health-check:
+    name: 🩺 System Health Check
+    runs-on: ubuntu-latest
+    outputs:
+      needs_healing: ${{ steps.check.outputs.needs_healing }}
+      failed_services: ${{ steps.check.outputs.failed_services }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: 🔍 AI-Powered Health Diagnostics
+        id: check
+        run: |
+          echo "🤖 Running AI-powered health diagnostics..."
+          # Check deployment status
+          failed_services=""
+          
+          # Check Cloudflare deployment health
+          if ! curl -sf https://royal-equips-command-center.pages.dev/health 2>/dev/null; then
+            failed_services="$failed_services command-center"
+            echo "❌ Command Center health check failed"
+          else
+            echo "✅ Command Center is healthy"
+          fi
+          
+          # Check Workers health
+          if ! curl -sf https://royal-equips-orchestrator.workers.dev/health 2>/dev/null; then
+            failed_services="$failed_services workers"
+            echo "❌ Workers health check failed"
+          else
+            echo "✅ Workers are healthy"
+          fi
+          
+          if [ -n "$failed_services" ]; then
+            echo "🚨 AI Detection: Services need healing - $failed_services"
+            echo "needs_healing=true" >> $GITHUB_OUTPUT
+            echo "failed_services=$failed_services" >> $GITHUB_OUTPUT
+          else
+            echo "✅ AI Detection: All systems operational"
+            echo "needs_healing=false" >> $GITHUB_OUTPUT
+          fi
+
+  auto-heal:
+    name: 🔧 Auto Healing
+    runs-on: ubuntu-latest
+    needs: health-check
+    if: needs.health-check.outputs.needs_healing == 'true'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: 🔧 Setup Environment
+        run: |
+          npm install -g pnpm@10.17.0
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: 🤖 AI-Triggered Redeployment
+        if: contains(needs.health-check.outputs.failed_services, 'command-center') || contains(needs.health-check.outputs.failed_services, 'workers')
+        run: |
+          echo "🤖 AI Autonomous Healing: Triggering intelligent redeployment..."
+          echo "Failed services: ${{ needs.health-check.outputs.failed_services }}"
+          echo "Healing type: ${{ github.event.inputs.healing_type || 'automatic' }}"
+          gh workflow run cloudflare-deploy.yml --ref main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📢 Create Issue
+        if: failure()
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Autonomous Healing Failed - ${new Date().toISOString()}`,
+              body: `## System Status\n\n**Failed Services:** ${{ needs.health-check.outputs.failed_services }}\n\n**Healing Type:** ${{ github.event.inputs.healing_type || 'automatic' }}\n\n**Timestamp:** ${new Date().toISOString()}\n\n**Action Required:** Manual intervention needed for critical system recovery.`,
+              labels: ['bug', 'critical', 'autonomous-system']
+            })

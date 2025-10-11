@@ -1,0 +1,39 @@
+name = "royal-equips-proxy"
+main = "worker.js"
+compatibility_date = "2024-08-17"
+
+# Cloudflare deployment configuration for Royal Equips
+# Covers production, staging, and development environments with routes for both royalequips.com and royalequips.nl domains, including all subdomains.
+routes = [
+  { pattern = "royalequips.com/*", zone_name = "royalequips.com" },
+  { pattern = "*.royalequips.com/*", zone_name = "royalequips.com" },
+  { pattern = "royalequips.nl/*", zone_name = "royalequips.nl" },
+  { pattern = "*.royalequips.nl/*", zone_name = "royalequips.nl" }
+]
+
+[vars]
+UPSTREAM = "https://royal-equips-orchestrator.onrender.com"
+
+# For development
+[env.dev]
+vars = { UPSTREAM = "http://localhost:10000" }
+
+# For staging
+[env.staging]
+routes = [
+  { pattern = "staging.royalequips.com/*", zone_name = "royalequips.com" },
+  { pattern = "*.staging.royalequips.com/*", zone_name = "royalequips.com" },
+  { pattern = "staging.royalequips.nl/*", zone_name = "royalequips.nl" },
+  { pattern = "*.staging.royalequips.nl/*", zone_name = "royalequips.nl" }
+]
+vars = { UPSTREAM = "https://royal-equips-orchestrator-staging.onrender.com" }
+
+# For production  
+[env.production]
+routes = [
+  { pattern = "royalequips.com/*", zone_name = "royalequips.com" },
+  { pattern = "*.royalequips.com/*", zone_name = "royalequips.com" },
+  { pattern = "royalequips.nl/*", zone_name = "royalequips.nl" },
+  { pattern = "*.royalequips.nl/*", zone_name = "royalequips.nl" }
+]
+vars = { UPSTREAM = "https://royal-equips-orchestrator.onrender.com" }

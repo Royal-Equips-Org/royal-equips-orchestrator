@@ -1,0 +1,9 @@
+* [32m(no branch, rebasing master)     [m 0949397 Fix Royal Equips Command Center integration: Add real API connections, remove mock data, implement graceful degradation (#243)
+  chore/agent-auto-pr              [m bc161ca [[34morigin/chore/agent-auto-pr[m] ci: add autonomous orchestrator + agents + self-heal
+  chore/empire-pipeline            [m b8a2206 [[34morigin/chore/empire-pipeline[m] implemented real business logic and APIs
+  chore/eslint-flat                [m 0f53720 [[34morigin/chore/eslint-flat[m] chore(eslint): allow require() in scripts
+  chore/eslint-flat-20250914-173112[m 8ff15c5 [[34morigin/chore/eslint-flat-20250914-173112[m] chore: housekeeping tick to open PR
+  fix/bootstrap-runtime            [m 6027580 [[34morigin/fix/bootstrap-runtime[m] Replaces Command Center UI runbook with Orchestrator runbook
+  master                           [m 5db4dd2 [[34morigin/master[m: ahead 2, behind 72] Remove unused files and implement Analytics Module with real-time data fetching and reporting features
+  phase-0                          [m 7f41cbf chore: fix husky pre-commit (no BOM + LF + exec)
+  pr-76                            [m e2bc29e [[34morigin/pr-76[m] fix(security): configure Codacy Trivy patterns; make CodeQL SARIF categories unique

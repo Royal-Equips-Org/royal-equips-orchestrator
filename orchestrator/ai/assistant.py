@@ -11,7 +11,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 # Streamlit dependency removed - replaced by Flask WebSocket
@@ -342,7 +342,7 @@ Current system context:
         return ChatMessage(
             role="assistant",
             content=response_content,
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
             metadata=result.data
         )
 
@@ -366,7 +366,7 @@ def render_chat_interface(assistant: HolographicAssistant) -> None:
             ChatMessage(
                 role="assistant",
                 content="🌌 Hello! I'm ARIA, your holographic control center AI. How can I assist you today?",
-                timestamp=datetime.now()
+                timestamp=datetime.now(timezone.utc)
             )
         ]
 
@@ -384,7 +384,7 @@ def render_chat_interface(assistant: HolographicAssistant) -> None:
         user_message = ChatMessage(
             role="user",
             content=prompt,
-            timestamp=datetime.now()
+            timestamp=datetime.now(timezone.utc)
         )
         st.session_state.chat_history.append(user_message)
 

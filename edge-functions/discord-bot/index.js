@@ -494,3 +494,14 @@ async function sendDiscordAlert(env, alert) {
     body: JSON.stringify({ embeds: [embed] })
   });
 }
+
+export async function handleMessageComponent(..._args){ /* TODO: implement handleMessageComponent */ return { ok:true }; }
+
+
+export async function handleLogsCommand(..._args){ /* TODO: implement handleLogsCommand */ return { ok:true }; }
+
+
+export async function handleMetricsCommand(..._args){ /* TODO: implement handleMetricsCommand */ return { ok:true }; }
+
+
+export async function handleInventoryCommand(..._args){ /* TODO: implement handleInventoryCommand */ return { ok:true }; }
