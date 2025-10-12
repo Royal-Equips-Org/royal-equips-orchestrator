@@ -20,7 +20,13 @@ const IGNORE_PATTERNS = [
   "app/static/react-vendor*.js",
   "dashboard/.next/**",
   "dashboard/dist/**",
-  "tools/royal-fix-agent/**"
+  "tools/royal-fix-agent/**",
+  "**/dist/**",
+  "apps/command-center-ui/dist/**",
+  "packages/shared/dist/**",
+  "_diag/**",
+  "actions-runner/**",
+  "reports/**"
 ];
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
