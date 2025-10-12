@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import math
 import time
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 from typing import Any, Iterable
 
 from flask import Blueprint, jsonify, request
@@ -388,14 +388,14 @@ def list_products_v2():
 
     started = time.time()
     service = get_shopify_service()
-    
+
     # REQUIRE Shopify credentials - no fallback data
     if not service.is_configured():
         return _build_error(
             "Shopify API credentials required (SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME). No mock data in production.",
             503
         )
-    
+
     source_mode = "live"
     raw_products: list[dict[str, Any]] = []
 
@@ -407,7 +407,7 @@ def list_products_v2():
     except Exception as exc:
         logger.exception("Unexpected Shopify failure: %s", exc)
         return _build_error(f"Internal error: {str(exc)}", 500)
-    
+
     if not raw_products:
         return _build_error("No products found in Shopify", 404)
 
@@ -441,14 +441,14 @@ def analyse_product_v2():
         return _build_error("productId is required", 400)
 
     service = get_shopify_service()
-    
+
     # REQUIRE Shopify credentials - no fallback data
     if not service.is_configured():
         return _build_error(
             "Shopify API credentials required (SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SHOP_NAME). No mock data in production.",
             503
         )
-    
+
     raw_products: list[dict[str, Any]] = []
 
     try:
@@ -459,7 +459,7 @@ def analyse_product_v2():
     except Exception as exc:
         logger.exception("Unexpected Shopify failure: %s", exc)
         return _build_error(f"Internal error: {str(exc)}", 500)
-    
+
     if not raw_products:
         return _build_error("No products found in Shopify", 404)
 
@@ -585,7 +585,7 @@ def execute_agent(agent_id: str):
     FASE 2: Protected endpoint - requires RoyalGPT API key authentication.
     """
     from core.security.auth import is_royalgpt_authorized
-    
+
     # Check authentication
     if not is_royalgpt_authorized():
         return jsonify({
