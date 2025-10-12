@@ -8,7 +8,7 @@
 # static UI assets + optional Pages Functions (edge logic) included in the UI package.
 
 name = "royal-equips-orchestrator-ui"
-account_id = "" # (optional) override via CLOUDFLARE_ACCOUNT_ID environment variable in CI
+account_id = "" # WARNING: Must be set via CLOUDFLARE_ACCOUNT_ID env var or manually before deployment. Leaving this empty may cause deployment to the wrong account or fail. Validate this value in CI/CD.
 compatibility_date = "2025-01-05"
 
 # Required for Wrangler v3 + Pages to detect correct output directory
