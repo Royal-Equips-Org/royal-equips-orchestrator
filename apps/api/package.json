@@ -1,0 +1,35 @@
+{
+  "name": "@royal-equips/api",
+  "version": "1.0.0",
+  "description": "Royal Equips Single Entrypoint API - Core API serving frontend and /v1/* API",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@fastify/helmet": "^11.1.1",
+    "@fastify/rate-limit": "^9.1.0",
+    "@fastify/static": "^6.12.0",
+    "fastify": "^4.29.1",
+    "fastify-plugin": "^4.5.1",
+    "ky": "^1.2.3",
+    "p-retry": "^6.2.0",
+    "pino": "^8.16.2",
+    "pino-pretty": "^10.2.3",
+    "prom-client": "^15.1.0",
+    "redis": "^4.6.11",
+    "stripe": "^14.9.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "tsx": "^4.6.0",
+    "typescript": "^5.6.3"
+  }
+}

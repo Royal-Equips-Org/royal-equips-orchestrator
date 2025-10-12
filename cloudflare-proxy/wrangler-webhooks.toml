@@ -1,0 +1,48 @@
+name = "royal-equips-webhooks"
+main = "webhook-worker.js"
+compatibility_date = "2024-01-01"
+
+# Production deployment
+[env.production]
+name = "royal-equips-webhooks-prod"
+vars = { ENVIRONMENT = "production" }
+
+# Development deployment  
+[env.development]
+name = "royal-equips-webhooks-dev"
+vars = { ENVIRONMENT = "development" }
+
+# Routes for webhook endpoints
+[[routes]]
+pattern = "*.your-domain.com/webhooks/*"
+zone_name = "your-domain.com"
+
+[[routes]]
+pattern = "*.your-domain.com/api/*"
+zone_name = "your-domain.com"
+
+# Queue bindings for async processing
+[[queues.producers]]
+queue = "github-analytics-queue"
+binding = "GITHUB_ANALYTICS_QUEUE"
+
+[[queues.producers]]
+queue = "shopify-analytics-queue"
+binding = "SHOPIFY_ANALYTICS_QUEUE"
+
+[[queues.producers]]
+queue = "order-processing-queue"
+binding = "ORDER_PROCESSING_QUEUE"
+
+[[queues.producers]]
+queue = "inventory-queue"
+binding = "INVENTORY_QUEUE"
+
+# Environment variables (use wrangler secret for sensitive data)
+[vars]
+UPSTREAM = "https://your-backend-api.com"
+
+# Secrets to configure via CLI:
+# wrangler secret put GITHUB_WEBHOOK_SECRET --env production
+# wrangler secret put SHOPIFY_WEBHOOK_SECRET --env production
+# wrangler secret put UPSTREAM_API_KEY --env production

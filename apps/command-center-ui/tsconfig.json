@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { 
+    "jsx": "react-jsx", 
+    "baseUrl": ".",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
+  "exclude": ["dist", "build", ".next", "node_modules", "coverage"]
+}

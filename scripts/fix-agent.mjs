@@ -341,7 +341,7 @@ async function main() {
   watcher.on("all", () => {
     clearTimeout(timer);
     timer = setTimeout(async () => {
-      console.log("\n— change detected, running Fix-Agent —");
+      console.log("\n-- change detected, running Fix-Agent --");
       await oneRun();
     }, 500);
   });

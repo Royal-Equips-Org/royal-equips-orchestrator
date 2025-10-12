@@ -10,7 +10,7 @@ Provides API endpoints for:
 """
 
 import logging
-from datetime import datetime
+from datetime import timezone, datetime
 
 from flask import Blueprint, jsonify, request
 
@@ -52,7 +52,7 @@ def get_workspace_status():
     return jsonify({
         "status": "operational",
         "overview": overview,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @workspace_bp.route("/workspaces", methods=["GET"])
@@ -111,7 +111,7 @@ def list_workspaces():
             "type": workspace_type,
             "environment": environment
         },
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @workspace_bp.route("/workspaces", methods=["POST"])
@@ -235,7 +235,7 @@ def get_workspace_details(workspace_id):
 
     return jsonify({
         "workspace": status,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @workspace_bp.route("/workspaces/<workspace_id>/activate", methods=["POST"])
@@ -324,7 +324,7 @@ def get_active_workspace():
 
     return jsonify({
         "active_workspace": status,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @workspace_bp.route("/operations", methods=["POST"])
@@ -459,7 +459,7 @@ def get_environments():
 
     return jsonify({
         "environment_info": env_info,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @workspace_bp.route("/overview", methods=["GET"])

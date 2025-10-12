@@ -5,7 +5,7 @@ Provides runtime metrics, performance data, and system statistics.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, current_app, jsonify
 
@@ -29,8 +29,8 @@ def get_metrics():
 
     try:
         # Calculate uptime
-        startup_time = getattr(current_app, "startup_time", datetime.now())
-        uptime = (datetime.now() - startup_time).total_seconds()
+        startup_time = getattr(current_app, "startup_time", datetime.now(timezone.utc))
+        uptime = (datetime.now(timezone.utc) - startup_time).total_seconds()
 
         metrics = {
             "ok": True,
@@ -41,7 +41,7 @@ def get_metrics():
             "total_messages": _metrics_storage.get("agent_messages", 0),
             "total_requests": _metrics_storage.get("requests", 0),
             "total_errors": _metrics_storage.get("errors", 0),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "system": {
                 "python_version": f"{current_app.config.get('PYTHON_VERSION', 'unknown')}",
                 "flask_env": current_app.config.get("FLASK_ENV", "unknown"),
@@ -58,7 +58,7 @@ def get_metrics():
                 {
                     "ok": False,
                     "error": "Metrics collection failed",
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             ),
             500,

@@ -13,7 +13,7 @@ Provides API endpoints for:
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import timezone, datetime
 
 from flask import Blueprint, Response, jsonify, request
 
@@ -54,7 +54,7 @@ def get_assistant_status():
         "model": stats['model'],
         "conversation_length": stats['conversation_length'],
         "status": "operational" if stats['enabled'] else "not_configured",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 @assistant_bp.route("/chat", methods=["POST"])
@@ -321,7 +321,7 @@ def get_conversation_stats():
         stats = control_center_assistant.get_conversation_stats()
         return jsonify({
             "stats": stats,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
         logger.error(f"Error getting conversation stats: {e}")
@@ -731,5 +731,5 @@ def list_empire_commands():
     return jsonify({
         "commands": commands,
         "total_commands": len(commands),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })

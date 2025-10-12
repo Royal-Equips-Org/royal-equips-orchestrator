@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -124,7 +124,7 @@ class CrossAgentTools:
             output_schema={"clv": "float", "confidence": "float", "factors": "list"},
             confidence_level=0.85,
             performance_metrics={"accuracy": 0.87, "precision": 0.82},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -137,7 +137,7 @@ class CrossAgentTools:
             output_schema={"opportunities": "list", "priority_score": "float"},
             confidence_level=0.78,
             performance_metrics={"accuracy": 0.79, "recall": 0.74},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -150,7 +150,7 @@ class CrossAgentTools:
             output_schema={"intelligence_report": "dict", "threat_assessment": "dict"},
             confidence_level=0.82,
             performance_metrics={"coverage": 0.85, "timeliness": 0.91},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -163,7 +163,7 @@ class CrossAgentTools:
             output_schema={"demand_forecast": "list", "confidence_intervals": "list"},
             confidence_level=0.88,
             performance_metrics={"mae": 12.5, "mape": 8.2},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -176,7 +176,7 @@ class CrossAgentTools:
             output_schema={"elasticity_coefficients": "dict", "segment_analysis": "dict"},
             confidence_level=0.83,
             performance_metrics={"r_squared": 0.76, "prediction_accuracy": 0.81},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -189,7 +189,7 @@ class CrossAgentTools:
             output_schema={"optimal_levels": "dict", "reorder_points": "dict", "cost_savings": "float"},
             confidence_level=0.86,
             performance_metrics={"cost_reduction": 0.15, "stockout_reduction": 0.23},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         # Advanced Inventory Management Tools
@@ -203,7 +203,7 @@ class CrossAgentTools:
             output_schema={"predictions": "list", "reorder_triggers": "list"},
             confidence_level=0.88,
             performance_metrics={"prediction_accuracy": 0.89, "false_positive_rate": 0.12},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -216,7 +216,7 @@ class CrossAgentTools:
             output_schema={"supplier_scores": "dict", "backup_recommendations": "list"},
             confidence_level=0.85,
             performance_metrics={"scoring_accuracy": 0.87, "cost_optimization": 0.18},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -229,7 +229,7 @@ class CrossAgentTools:
             output_schema={"inventory_forecast": "dict", "optimization_savings": "float"},
             confidence_level=0.84,
             performance_metrics={"cost_reduction": 0.22, "demand_accuracy": 0.81},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         # Advanced Competitor Intelligence Tools
@@ -243,7 +243,7 @@ class CrossAgentTools:
             output_schema={"competitor_actions": "list", "threat_assessment": "dict"},
             confidence_level=0.83,
             performance_metrics={"detection_rate": 0.91, "false_positive_rate": 0.08},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -256,7 +256,7 @@ class CrossAgentTools:
             output_schema={"action_predictions": "list", "probability_scores": "dict"},
             confidence_level=0.79,
             performance_metrics={"prediction_accuracy": 0.76, "early_warning_rate": 0.84},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -269,7 +269,7 @@ class CrossAgentTools:
             output_schema={"price_trends": "list", "market_predictions": "dict"},
             confidence_level=0.82,
             performance_metrics={"trend_accuracy": 0.78, "price_prediction_error": 0.09},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         self.register_tool(ToolMetadata(
@@ -282,7 +282,7 @@ class CrossAgentTools:
             output_schema={"response_strategies": "list", "implementation_plan": "dict"},
             confidence_level=0.77,
             performance_metrics={"strategy_effectiveness": 0.73, "response_time": "2.3h"},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
         
         # Enhanced Pricing Automation Tools
@@ -296,7 +296,7 @@ class CrossAgentTools:
             output_schema={"pricing_adjustments": "list", "risk_assessments": "dict"},
             confidence_level=0.81,
             performance_metrics={"adjustment_accuracy": 0.84, "risk_mitigation": 0.92},
-            last_updated=datetime.now()
+            last_updated=datetime.now(timezone.utc)
         ))
     
     def register_tool(self, metadata: ToolMetadata) -> None:
@@ -350,10 +350,10 @@ class CrossAgentTools:
         # Log usage
         stats = self.tool_usage_stats[tool_id]
         stats["total_calls"] += 1
-        stats["last_used"] = datetime.now()
+        stats["last_used"] = datetime.now(timezone.utc)
         stats["user_agents"].add(agent_name)
         
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Route to appropriate tool implementation
@@ -389,7 +389,7 @@ class CrossAgentTools:
                 raise NotImplementedError(f"Tool {tool_id} implementation not found")
             
             # Update performance metrics
-            execution_time = (datetime.now() - start_time).total_seconds()
+            execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
             stats["avg_execution_time"] = (stats["avg_execution_time"] * (stats["total_calls"] - 1) + execution_time) / stats["total_calls"]
             
             self.logger.info(f"Tool {tool_id} executed successfully for {agent_name}")
@@ -410,7 +410,7 @@ class CrossAgentTools:
             return {
                 "success": False,
                 "error": str(e),
-                "execution_time": (datetime.now() - start_time).total_seconds(),
+                "execution_time": (datetime.now(timezone.utc) - start_time).total_seconds(),
                 "tool_confidence": 0.0
             }
     
@@ -598,7 +598,7 @@ class CrossAgentTools:
             "total_potential_revenue": total_revenue,
             "priority_score": weighted_confidence,
             "recommended_focus": opportunities[0].opportunity_type if opportunities else "none",
-            "analysis_timestamp": datetime.now().isoformat()
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     async def _analyze_competitive_intelligence(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -667,7 +667,7 @@ class CrossAgentTools:
                 "reports": [report.__dict__ for report in intelligence_reports],
                 "overall_competitive_pressure": overall_threat,
                 "key_insights": self._extract_competitive_insights(intelligence_reports),
-                "analysis_timestamp": datetime.now().isoformat()
+                "analysis_timestamp": datetime.now(timezone.utc).isoformat()
             },
             "threat_assessment": {
                 "overall_threat_level": overall_threat,
@@ -801,7 +801,7 @@ class CrossAgentTools:
                 "historical_mape": 15.2  # Estimated
             },
             "external_factors_impact": self._analyze_external_factors(external_factors),
-            "forecast_timestamp": datetime.now().isoformat()
+            "forecast_timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _analyze_external_factors(self, factors: Dict[str, Any]) -> Dict[str, str]:
@@ -894,7 +894,7 @@ class CrossAgentTools:
                 "least_sensitive": max(elasticity_results.keys(), key=lambda k: elasticity_results[k]["elasticity"]) if elasticity_results else None
             },
             "pricing_recommendations": self._generate_elasticity_recommendations(elasticity_results),
-            "analysis_timestamp": datetime.now().isoformat()
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _interpret_elasticity(self, elasticity: float) -> str:
@@ -1002,7 +1002,7 @@ class CrossAgentTools:
                 "understock_items": len([p for p, r in optimization_results.items() if r["current_level"] < r["reorder_point"]]),
                 "avg_turnover": sum([r["turnover_rate"] for r in optimization_results.values()]) / max(1, len(optimization_results))
             },
-            "optimization_timestamp": datetime.now().isoformat()
+            "optimization_timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _generate_inventory_recommendations(self, current: float, optimal: float, reorder: float) -> List[str]:
@@ -1388,7 +1388,7 @@ class CrossAgentTools:
                     description=action_data.get("description", "Competitor action"),
                     confidence_score=action_data.get("confidence", 0.7),
                     impact_assessment=action_data.get("impact", "medium"),
-                    detected_at=datetime.now(),
+                    detected_at=datetime.now(timezone.utc),
                     data_sources=action_data.get("data_sources", ["tracking"]),
                     affected_products=action_data.get("affected_products", []),
                     market_implications=action_data.get("market_implications", [])

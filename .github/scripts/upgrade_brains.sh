@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 update_file () {
   local f="$1"; [ -f "$f" ] || return 0

@@ -456,16 +456,16 @@ async function triggerPostPaymentWorkflows(env, paymentIntent) {
   }
 }
 
-export async function handlePaymentRequiresAction(..._args){ /* TODO: implement handlePaymentRequiresAction */ return new Response("handlePaymentRequiresAction: stub"); }
+export async function handlePaymentRequiresAction(..._args){ /* TODO: implement handlePaymentRequiresAction */ return new Response('stub'); }
 
 
-export async function handleInvoicePayment(..._args){ /* TODO: implement handleInvoicePayment */ return { ok:true }; }
+export async function handleInvoicePayment(..._args){ /* TODO: implement handleInvoicePayment */ return new Response('stub'); }
 
 
-export async function handleSubscriptionChange(..._args){ /* TODO: implement handleSubscriptionChange */ return { ok:true }; }
+export async function handleSubscriptionChange(..._args){ /* TODO: implement handleSubscriptionChange */ return new Response('stub'); }
 
 
-export async function handlePayout(..._args){ /* TODO: implement handlePayout */ return { ok:true }; }
+export async function handlePayout(..._args){ /* TODO: implement handlePayout */ return new Response('stub'); }
 
 
-export async function sendFailureAlert(..._args){ /* TODO: implement sendFailureAlert */ return { ok:true }; }
+export async function sendFailureAlert(..._args){ /* TODO: implement sendFailureAlert */ return new Response('stub'); }

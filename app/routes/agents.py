@@ -18,34 +18,67 @@ from flask import Blueprint, Response, current_app, jsonify, request
 agents_bp = Blueprint("agents", __name__)
 logger = logging.getLogger(__name__)
 
-# In-memory storage (TODO: Replace with Redis/Database)
-agent_sessions: Dict[str, Dict] = {}
-agent_messages: Dict[str, List[Dict]] = {}
+# Production storage with Redis backend
+import redis
+from core.secrets.secret_provider import UnifiedSecretResolver
+
+try:
+    secrets = UnifiedSecretResolver()
+    redis_url = secrets.get_secret('REDIS_URL') or 'redis://localhost:6379'
+    redis_client = redis.from_url(redis_url, decode_responses=True)
+    redis_client.ping()  # Test connection
+    logger.info("Connected to Redis for agent session storage")
+    USE_REDIS = True
+except Exception as e:
+    logger.warning(f"Redis not available, using in-memory storage: {e}")
+    redis_client = None
+    USE_REDIS = False
+    # Fallback to in-memory for development
+    agent_sessions: Dict[str, Dict] = {}
+    agent_messages: Dict[str, List[Dict]] = {}
 
 
 @agents_bp.route("/session", methods=["POST"])
 def create_agent_session():
-    """Create a new agent chat session."""
+    """Create a new agent chat session with persistent storage."""
     try:
+        data = request.get_json() or {}
+        agent_type = data.get("agent_type", "general")
+        user_id = data.get("user_id", "anonymous")
+        
         session_id = str(uuid.uuid4())
-
-        agent_sessions[session_id] = {
+        session_data = {
             "id": session_id,
+            "agent_type": agent_type,
+            "user_id": user_id,
             "created_at": datetime.now().isoformat(),
             "status": "active",
+            "message_count": 0
         }
 
-        agent_messages[session_id] = []
+        if USE_REDIS:
+            # Store in Redis with 1 hour expiry
+            redis_client.hset(f"session:{session_id}", mapping=session_data)
+            redis_client.expire(f"session:{session_id}", 3600)
+            redis_client.delete(f"messages:{session_id}")  # Clear any existing messages
+        else:
+            # Fallback to in-memory
+            agent_sessions[session_id] = session_data
+            agent_messages[session_id] = []
 
-        logger.info(f"Created agent session: {session_id}")
+        logger.info(f"Created agent session: {session_id} for type {agent_type}")
 
         # Update metrics
         from app.routes.metrics import increment_metric, set_metric
 
         increment_metric("agent_sessions")
-        set_metric("agent_sessions", len(agent_sessions))
+        if USE_REDIS:
+            active_sessions = len(redis_client.keys("session:*"))
+        else:
+            active_sessions = len(agent_sessions)
+        set_metric("agent_sessions", active_sessions)
 
-        return jsonify({"session_id": session_id}), 201
+        return jsonify({"session_id": session_id, "session": session_data}), 201
 
     except Exception as e:
         logger.error(f"Failed to create agent session: {e}")
@@ -427,3 +460,174 @@ def stop_agent(agent_id: str):
     except Exception as e:
         logger.error(f"Failed to stop agent {agent_id}: {e}")
         return jsonify({"error": "Failed to stop agent", "message": str(e)}), 500
+
+
+# Shopify-specific agent endpoints
+@agents_bp.route("/shopify", methods=["GET"])
+def get_shopify_agents():
+    """Get all Shopify automation agents and their status from real orchestrator."""
+    try:
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
+        
+        # Define agent metadata (descriptions and types)
+        agent_metadata = {
+            "shopify_inventory_sync": {
+                "name": "Inventory Sync Agent",
+                "type": "inventory",
+                "description": "Automatically syncs inventory levels between Shopify and warehouse systems"
+            },
+            "shopify_order_processor": {
+                "name": "Order Processing Agent",
+                "type": "orders",
+                "description": "Automates order processing, fulfillment routing, and customer notifications"
+            },
+            "shopify_pricing_optimizer": {
+                "name": "Dynamic Pricing Agent",
+                "type": "pricing",
+                "description": "Optimizes product pricing based on market conditions and inventory levels"
+            },
+            "shopify_marketing_automation": {
+                "name": "Marketing Automation Agent",
+                "type": "marketing",
+                "description": "Manages email campaigns, customer segmentation, and promotional activities"
+            },
+            "shopify_analytics_reporter": {
+                "name": "Analytics & Reporting Agent",
+                "type": "analytics",
+                "description": "Generates business reports, analyzes performance, and provides insights"
+            }
+        }
+        
+        shopify_agents = []
+        
+        # Get real agent status from orchestrator
+        for agent_id, metadata in agent_metadata.items():
+            try:
+                # Try to get real agent from orchestrator
+                agent = orchestrator.get_agent(agent_id)
+                
+                # Agent not registered yet - show as inactive
+                agent_info = {
+                    "id": agent_id,
+                    "name": metadata["name"],
+                    "type": metadata["type"],
+                    "description": metadata["description"],
+                    "status": "inactive",
+                    "lastRun": None,
+                    "tasksCompleted": 0,
+                    "performance": 0
+                }
+                
+                shopify_agents.append(agent_info)
+                
+            except Exception as e:
+                logger.warning(f"Could not get agent {agent_id}: {e}")
+                # Add agent with inactive status if there's an error
+                shopify_agents.append({
+                    "id": agent_id,
+                    "name": metadata["name"],
+                    "type": metadata["type"],
+                    "description": metadata["description"],
+                    "status": "error",
+                    "lastRun": None,
+                    "tasksCompleted": 0,
+                    "performance": 0
+                })
+        
+        return jsonify({
+            "agents": shopify_agents,
+            "summary": {
+                "total": len(shopify_agents),
+                "active": len([a for a in shopify_agents if a["status"] == "active"]),
+                "processing": len([a for a in shopify_agents if a["status"] == "processing"]),
+                "inactive": len([a for a in shopify_agents if a["status"] == "inactive"]),
+                "error": len([a for a in shopify_agents if a["status"] == "error"]),
+                "lastUpdated": datetime.now().isoformat()
+            }
+        }), 200
+        
+    except Exception as e:
+        safe_error = str(e)[:100]  # Limit error message length
+        logger.error(f"Failed to get Shopify agents: {safe_error}")
+        return jsonify({"error": "Failed to get Shopify agents"}), 500
+
+
+@agents_bp.route("/shopify/<agent_id>/toggle", methods=["POST"])
+def toggle_shopify_agent(agent_id: str):
+    """Toggle a Shopify automation agent on/off."""
+    try:
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
+        
+        # Valid Shopify agent IDs
+        valid_shopify_agents = [
+            "shopify_inventory_sync",
+            "shopify_order_processor", 
+            "shopify_pricing_optimizer",
+            "shopify_marketing_automation",
+            "shopify_analytics_reporter"
+        ]
+        
+        if agent_id not in valid_shopify_agents:
+            return jsonify({
+                "error": "Invalid Shopify agent ID", 
+                "valid_agents": valid_shopify_agents
+            }), 400
+        
+        # Try to get current status
+        current_status = orchestrator.get_agent_status(agent_id) or "inactive"
+        
+        # Toggle the agent
+        if current_status == "active":
+            success = orchestrator.stop_agent(agent_id)
+            new_status = "inactive" if success else current_status
+        else:
+            success = orchestrator.start_agent(agent_id)
+            new_status = "active" if success else current_status
+            
+        return jsonify({
+            "agent_id": agent_id,
+            "status": new_status,
+            "action": "started" if new_status == "active" else "stopped",
+            "success": success,
+            "timestamp": datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        # Sanitize agent_id for logging to prevent log injection
+        safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+        safe_error = str(e)[:100]
+        logger.error(f"Failed to toggle Shopify agent {safe_agent_id}: {safe_error}")
+        return jsonify({"error": "Failed to toggle agent"}), 500
+
+
+@agents_bp.route("/shopify/<agent_id>/status", methods=["GET"])
+def get_shopify_agent_status(agent_id: str):
+    """Get detailed status of a specific Shopify agent."""
+    try:
+        from app.orchestrator_bridge import get_orchestrator
+        orchestrator = get_orchestrator()
+        
+        # Get agent performance metrics
+        agent_metrics = orchestrator.get_agent_metrics(agent_id)
+        
+        return jsonify({
+            "agent_id": agent_id,
+            "status": orchestrator.get_agent_status(agent_id) or "unknown",
+            "metrics": agent_metrics or {
+                "uptime": "0h 0m",
+                "tasks_completed": 0,
+                "success_rate": 0.0,
+                "last_error": None,
+                "performance_score": 0.0
+            },
+            "timestamp": datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        # Sanitize agent_id for logging to prevent log injection
+        safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
+        safe_error = str(e)[:100]
+        logger.error(f"Failed to get Shopify agent status for {safe_agent_id}: {safe_error}")
+        return jsonify({"error": "Failed to get agent status"}), 500

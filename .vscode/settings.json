@@ -1,4 +1,4 @@
-﻿{
+{
   "github.copilot.chat.context.selection": "on",
   "github.copilot.chat.context.files": [
     "AGENT_INSTRUCTIONS.md",
@@ -8,5 +8,7 @@
     "platform/**",
     "infra/**",
     ".github/workflows/**"
-  ]
+  ],
+  "chat.agent.maxRequests": 150,
+  "github.copilot.chat.agent.thinkingTool": true
 }
