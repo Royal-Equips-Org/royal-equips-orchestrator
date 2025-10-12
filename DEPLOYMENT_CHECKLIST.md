@@ -193,3 +193,10 @@ After successful deployment (24h+):
 - [ ] Archive old deployment artifacts
 - [ ] Update team on successful deployment
 - [ ] Document any lessons learned
+
+## Cloudflare Pages (UI) Deployment Fix (2025-01-05)
+- Added root wrangler.toml with pages_build_output_dir=apps/command-center-ui/dist
+- Pages Functions directory: apps/command-center-ui/functions
+- Build command (Cloudflare): pnpm --filter @royal-equips/command-center-ui build
+- Ensure install step uses: pnpm install --no-frozen-lockfile (lockfile kept updated in repo)
+- If adding new UI deps: run pnpm install locally and commit updated pnpm-lock.yaml before pushing
