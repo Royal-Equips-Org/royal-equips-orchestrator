@@ -40,7 +40,7 @@ curl -s http://localhost:10000/readyz | jq '.'
 {
   "ready": true,
   "status": "healthy", 
-  "timestamp": "2025-01-01T12:00:00.000000",
+  "timestamp": "2025-01-01T12:00:00",
   "checks": [
     {
       "name": "core_service",
@@ -229,21 +229,18 @@ docker exec royal-equips-orchestrator nslookup api.shopify.com
 #### Performance Profiling
 ```bash
 # Enable debug logging
-docker restart royal-equips-orchestrator \
+docker stop royal-equips-orchestrator
+docker rm royal-equips-orchestrator
+docker run -d --name royal-equips-orchestrator \
+  -p 10000:10000 \
   -e FLASK_ENV=development \
-  -e LOG_LEVEL=DEBUG
+  -e LOG_LEVEL=DEBUG \
+  royal-equips-orchestrator:latest
 
 # Monitor response times
 curl -w "@curl-format.txt" -s http://localhost:10000/healthz
 
-# curl-format.txt:
-#     time_namelookup:  %{time_namelookup}\n
-#        time_connect:  %{time_connect}\n
-#     time_pretransfer:  %{time_pretransfer}\n
-#        time_redirect:  %{time_redirect}\n
-#   time_starttransfer:  %{time_starttransfer}\n
-#                     ----------\n
-#          time_total:  %{time_total}\n
+# Create curl-format.txt with the following content:
 ```
 
 ## Monitoring & Alerting
@@ -388,7 +385,7 @@ gunicorn --bind 0.0.0.0:10000 \
   --timeout 30 \
   --keepalive 5 \
   --access-logfile - \
-  --error-logfile - \
+  --workers $((4 * $(nproc) + 1)) \
   wsgi:app
 ```
 
