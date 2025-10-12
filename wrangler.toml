@@ -1,0 +1,30 @@
+###############################
+# Royal Equips Orchestrator  #
+# Cloudflare Pages / Wrangler #
+###############################
+
+# Root wrangler.toml enabling Cloudflare Pages deployment for the Command Center UI
+# The Python backend deploys separately (not via Pages). This file only concerns
+# static UI assets + optional Pages Functions (edge logic) included in the UI package.
+
+name = "royal-equips-orchestrator-ui"
+account_id = "" # WARNING: Must be set via CLOUDFLARE_ACCOUNT_ID env var or manually before deployment. Leaving this empty may cause deployment to the wrong account or fail. Validate this value in CI/CD.
+compatibility_date = "2025-01-05"
+
+# Required for Wrangler v3 + Pages to detect correct output directory
+pages_build_output_dir = "apps/command-center-ui/dist"
+
+# Point Pages Functions (if any) to the UI package functions folder.
+# The UI build script copies functions into dist/ as well for redundancy.
+functions = "apps/command-center-ui/functions"
+
+[vars]
+NODE_VERSION = "20"
+
+[build]
+# Build only the UI workspace. Avoid recursive -r builds to keep CI fast and isolated.
+# Use --filter syntax to target the package by name (workspace protocol).
+command = "pnpm install --frozen-lockfile && pnpm --filter @royal-equips/command-center-ui build"
+
+[env.production.vars]
+APP_ENV = "production"
