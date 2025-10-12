@@ -9,14 +9,17 @@
     "build": "cd apps/command-center-ui && pnpm build",
     "start": "python wsgi.py",
     "typecheck": "tsc -p apps/command-center-ui/tsconfig.json --noEmit && tsc -p packages/shared-types/tsconfig.json --noEmit",
-    "lint": "cd apps/command-center-ui && pnpm lint",
-    "test": "cd apps/command-center-ui && pnpm test"
+    "lint": "eslint . --ext .ts,.tsx,.js,.cjs",
+    "test": "cd apps/command-center-ui && pnpm test",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^17.7.0",
     "@eslint/js": "9.35.0",
     "@types/jest": "^29.5.14",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "chokidar": "^4.0.3",
     "diff": "^8.0.2",
     "eslint": "9.35.0",

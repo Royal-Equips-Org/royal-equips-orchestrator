@@ -1,3 +1,14 @@
+<<<<<<< HEAD:.github/workflows/e2e.yml
+﻿name: e2e
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ok"
+=======
 ﻿name: e2e
 
 on:
@@ -12,3 +23,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "ok"
+>>>>>>> origin/master:.github/workflows-backup/e2e.yml

@@ -6,6 +6,7 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": { "@types/*": ["./types/*"] },
@@ -13,8 +14,11 @@
     "esModuleInterop": true
   },
   "include": [
+    "packages/**/*",
+    "agents/**/*",
+    "services/**/*",
     "apps/*/src/**/*.ts",
-    "apps/*/src/**/*.tsx", 
+    "apps/*/src/**/*.tsx",
     "packages/*/src/**/*.ts",
     "packages/*/src/**/*.tsx",
     "packages/shared/**/*.ts",

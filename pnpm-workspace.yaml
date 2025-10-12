@@ -1,3 +1,6 @@
-﻿packages:  
+packages:
+  - "agents/*"
+  - "services/*"
+  - "packages/*"
   - "apps/command-center-ui"
   - "packages/shared-types"
