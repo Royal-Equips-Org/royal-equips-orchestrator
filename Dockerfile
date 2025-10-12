@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 # System deps (tiny, helps scientific libs/builds; safe to keep)
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
