@@ -28,7 +28,7 @@ jobs:
 
       # Enable and prepare pnpm for reproducible builds
       - run: corepack enable
-      - run: corepack prepare pnpm@9.9.0 --activate
+      - run: corepack prepare pnpm@10.17.0 --activate
 
       # Install dependencies (no lifecycle scripts for CI safety)
       - name: Install deps (no scripts)
