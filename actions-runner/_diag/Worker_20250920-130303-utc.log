@@ -1,0 +1,3139 @@
+[2025-09-20 13:03:03Z INFO HostContext] No proxy settings were found based on environmental variables (http_proxy/https_proxy/HTTP_PROXY/HTTPS_PROXY)
+[2025-09-20 13:03:03Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:03Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:03Z INFO HostContext] Well known config file 'Credentials': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known config file 'Runner': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner'
+[2025-09-20 13:03:04Z INFO Worker] Version: 2.328.0
+[2025-09-20 13:03:04Z INFO Worker] Commit: 6f9a9110adce65f44ca6f7c0ae142b9cc6af937b
+[2025-09-20 13:03:04Z INFO Worker] Culture: en-NL
+[2025-09-20 13:03:04Z INFO Worker] UI Culture: en-US
+[2025-09-20 13:03:04Z INFO Worker] Waiting to receive the job message from the channel.
+[2025-09-20 13:03:04Z INFO ProcessChannel] Receiving message of length 51388, with hash '384d9d2f506c3b2a4c3fb0078f5f7289328633e0da48a31019130d8b5ea4a4d6'
+[2025-09-20 13:03:04Z INFO Worker] Message received.
+[2025-09-20 13:03:04Z INFO Worker] Job message:
+ {
+  "fileTable": [
+    ".github/workflows/e2e.yml"
+  ],
+  "mask": [
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    }
+  ],
+  "steps": [
+    {
+      "type": "action",
+      "reference": {
+        "type": "script"
+      },
+      "contextName": "__run",
+      "inputs": {
+        "type": 2,
+        "map": [
+          {
+            "key": "script",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 14,
+              "col": 14,
+              "lit": "echo \"ok\""
+            }
+          }
+        ]
+      },
+      "condition": "success()",
+      "id": "ad34544f-8935-4e36-be89-6c683f62b560",
+      "name": "__run"
+    }
+  ],
+  "variables": {
+    "Actions.EnableHttpRedirects": {
+      "value": "true"
+    },
+    "DistributedTask.AddWarningToNode12Action": {
+      "value": "true"
+    },
+    "DistributedTask.AddWarningToNode16Action": {
+      "value": "true"
+    },
+    "DistributedTask.AllowRunnerContainerHooks": {
+      "value": "true"
+    },
+    "DistributedTask.DeprecateStepOutputCommands": {
+      "value": "true"
+    },
+    "DistributedTask.DetailUntarFailure": {
+      "value": "true"
+    },
+    "DistributedTask.EnableCompositeActions": {
+      "value": "true"
+    },
+    "DistributedTask.EnableJobServerQueueTelemetry": {
+      "value": "true"
+    },
+    "DistributedTask.EnhancedAnnotations": {
+      "value": "true"
+    },
+    "DistributedTask.ForceGithubJavascriptActionsToNode16": {
+      "value": "true"
+    },
+    "DistributedTask.ForceGithubJavascriptActionsToNode20": {
+      "value": "true"
+    },
+    "DistributedTask.LogTemplateErrorsAsDebugMessages": {
+      "value": "true"
+    },
+    "DistributedTask.MarkJobAsFailedOnWorkerCrash": {
+      "value": "true"
+    },
+    "DistributedTask.NewActionMetadata": {
+      "value": "true"
+    },
+    "DistributedTask.UploadStepSummary": {
+      "value": "true"
+    },
+    "DistributedTask.UseActionArchiveCache": {
+      "value": "true"
+    },
+    "DistributedTask.UseWhich2": {
+      "value": "true"
+    },
+    "RunService.FixEmbeddedIssues": {
+      "value": "true"
+    },
+    "actions_add_check_run_id_to_job_context": {
+      "value": "true"
+    },
+    "actions_display_helpful_actions_download_errors": {
+      "value": "true"
+    },
+    "actions_skip_retry_complete_job_upon_known_errors": {
+      "value": "true"
+    },
+    "actions_uses_cache_service_v2": {
+      "value": "true"
+    },
+    "github_token": {
+      "value": "***",
+      "isSecret": true
+    },
+    "system.from_run_service": {
+      "value": "true"
+    },
+    "system.github.job": {
+      "value": "e2e"
+    },
+    "system.github.launch_endpoint": {
+      "value": "https://launch.actions.githubusercontent.com"
+    },
+    "system.github.results_endpoint": {
+      "value": "https://results-receiver.actions.githubusercontent.com/"
+    },
+    "system.github.results_upload_with_sdk": {
+      "value": "true"
+    },
+    "system.github.token": {
+      "value": "***",
+      "isSecret": true
+    },
+    "system.github.token.permissions": {
+      "value": "{\"Contents\":\"read\",\"Metadata\":\"read\"}"
+    },
+    "system.orchestrationId": {
+      "value": "61909da6-3dc5-4fac-a814-8b833f2817ba.e2e.__default"
+    },
+    "system.phaseDisplayName": {
+      "value": "e2e"
+    },
+    "system.runner.lowdiskspacethreshold": {
+      "value": "100"
+    },
+    "system.runnerEnvironment": {
+      "value": "self-hosted"
+    },
+    "system.runnerGroupName": {
+      "value": "Default"
+    }
+  },
+  "messageType": "RunnerJobRequest",
+  "plan": {
+    "scopeIdentifier": "00000000-0000-0000-0000-000000000000",
+    "planType": "actions",
+    "version": 0,
+    "planId": "61909da6-3dc5-4fac-a814-8b833f2817ba",
+    "planGroup": null,
+    "artifactUri": null,
+    "artifactLocation": null,
+    "definition": null,
+    "owner": null
+  },
+  "timeline": {
+    "id": "61909da6-3dc5-4fac-a814-8b833f2817ba",
+    "changeId": 0,
+    "location": null
+  },
+  "jobId": "a337880f-c6ab-5612-aa8d-94ca6253d935",
+  "jobDisplayName": "e2e",
+  "jobName": "__default",
+  "requestId": 0,
+  "lockedUntil": "0001-01-01T00:00:00",
+  "resources": {
+    "endpoints": [
+      {
+        "data": {
+          "ServerId": "",
+          "ServerName": "",
+          "CacheServerUrl": "https://artifactcache.actions.githubusercontent.com/xk3qvcjiUjW5hEniMvcUvA3VHwLAefAgotrXYzQB9pIOSmQn2J/",
+          "FeedStreamUrl": "wss://results-receiver.actions.githubusercontent.com/_ws/ingest.sock",
+          "ResultsServiceUrl": "https://results-receiver.actions.githubusercontent.com/",
+          "PipelinesServiceUrl": "https://pipelinesghubeus9.actions.githubusercontent.com/xk3qvcjiUjW5hEniMvcUvA3VHwLAefAgotrXYzQB9pIOSmQn2J/",
+          "GenerateIdTokenUrl": ""
+        },
+        "name": "SystemVssConnection",
+        "url": "https://run-actions-1-azure-eastus.actions.githubusercontent.com/47/",
+        "authorization": {
+          "parameters": {
+            "AccessToken": "***"
+          },
+          "scheme": "OAuth"
+        },
+        "isShared": false,
+        "isReady": true
+      }
+    ]
+  },
+  "contextData": {
+    "github": {
+      "t": 2,
+      "d": [
+        {
+          "k": "ref",
+          "v": "refs/pull/112/merge"
+        },
+        {
+          "k": "sha",
+          "v": "3de0cd8a08575369c04a276f1994eff13ac7b57c"
+        },
+        {
+          "k": "repository",
+          "v": "Royal-Equips-Org/royal-equips-orchestrator"
+        },
+        {
+          "k": "repository_owner",
+          "v": "Royal-Equips-Org"
+        },
+        {
+          "k": "repository_owner_id",
+          "v": "228205603"
+        },
+        {
+          "k": "repositoryUrl",
+          "v": "git://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+        },
+        {
+          "k": "run_id",
+          "v": "17879952202"
+        },
+        {
+          "k": "run_number",
+          "v": "206"
+        },
+        {
+          "k": "retention_days",
+          "v": "90"
+        },
+        {
+          "k": "run_attempt",
+          "v": "1"
+        },
+        {
+          "k": "artifact_cache_size_limit",
+          "v": "10"
+        },
+        {
+          "k": "repository_visibility",
+          "v": "private"
+        },
+        {
+          "k": "actor_id",
+          "v": "193003369"
+        },
+        {
+          "k": "actor",
+          "v": "Skidaw23"
+        },
+        {
+          "k": "workflow",
+          "v": "e2e"
+        },
+        {
+          "k": "head_ref",
+          "v": "copilot/fix-fde79ca9-58b1-45b0-acbc-5fc4aad6cdc3"
+        },
+        {
+          "k": "base_ref",
+          "v": "master"
+        },
+        {
+          "k": "event_name",
+          "v": "pull_request"
+        },
+        {
+          "k": "server_url",
+          "v": "https://github.com"
+        },
+        {
+          "k": "api_url",
+          "v": "https://api.github.com"
+        },
+        {
+          "k": "graphql_url",
+          "v": "https://api.github.com/graphql"
+        },
+        {
+          "k": "ref_name",
+          "v": "112/merge"
+        },
+        {
+          "k": "ref_protected",
+          "v": false
+        },
+        {
+          "k": "ref_type",
+          "v": "branch"
+        },
+        {
+          "k": "secret_source",
+          "v": "Actions"
+        },
+        {
+          "k": "event",
+          "v": {
+            "t": 2,
+            "d": [
+              {
+                "k": "action",
+                "v": "synchronize"
+              },
+              {
+                "k": "after",
+                "v": "7a99e449008e9c3c40c0e4ddcd707e061b2d141a"
+              },
+              {
+                "k": "before",
+                "v": "9cc29a7daeebe4c9f512733a7cc051df84e8cd4d"
+              },
+              {
+                "k": "enterprise",
+                "v": {
+                  "t": 2,
+                  "d": [
+                    {
+                      "k": "avatar_url",
+                      "v": "https://avatars.githubusercontent.com/b/362492?v=4"
+                    },
+                    {
+                      "k": "created_at",
+                      "v": "2025-07-19T23:55:28Z"
+                    },
+                    {
+                      "k": "description",
+                      "v": "Skidaw23-Enterprise-Account"
+                    },
+                    {
+                      "k": "html_url",
+                      "v": "https://github.com/enterprises/Royal-Equips"
+                    },
+                    {
+                      "k": "id",
+                      "v": 362492.0
+                    },
+                    {
+                      "k": "name",
+                      "v": "royal-equips"
+                    },
+                    {
+                      "k": "node_id",
+                      "v": "E_kgDOAAWH_A"
+                    },
+                    {
+                      "k": "slug",
+                      "v": "Royal-Equips"
+                    },
+                    {
+                      "k": "updated_at",
+                      "v": "2025-08-31T00:31:37Z"
+                    },
+                    {
+                      "k": "website_url",
+                      "v": "https://github.com/enterprises/royal-equips"
+                    }
+                  ]
+                }
+              },
+              {
+                "k": "number",
+                "v": 112.0
+              },
+              {
+                "k": "organization",
+                "v": {
+                  "t": 2,
+                  "d": [
+                    {
+                      "k": "avatar_url",
+                      "v": "https://avatars.githubusercontent.com/u/228205603?v=4"
+                    },
+                    {
+                      "k": "description",
+                      "v": ""
+                    },
+                    {
+                      "k": "events_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/events"
+                    },
+                    {
+                      "k": "hooks_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/hooks"
+                    },
+                    {
+                      "k": "id",
+                      "v": 228205603.0
+                    },
+                    {
+                      "k": "issues_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/issues"
+                    },
+                    {
+                      "k": "login",
+                      "v": "Royal-Equips-Org"
+                    },
+                    {
+                      "k": "members_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/members{/member}"
+                    },
+                    {
+                      "k": "node_id",
+                      "v": "O_kgDODZokIw"
+                    },
+                    {
+                      "k": "public_members_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/public_members{/member}"
+                    },
+                    {
+                      "k": "repos_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/repos"
+                    },
+                    {
+                      "k": "url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org"
+                    }
+                  ]
+                }
+              },
+              {
+                "k": "pull_request",
+                "v": {
+                  "t": 2,
+                  "d": [
+                    {
+                      "k": "_links",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "comments",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "href",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/112/comments"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "commits",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "href",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls/112/commits"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "html",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "href",
+                                  "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator/pull/112"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "issue",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "href",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/112"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "review_comment",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "href",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls/comments{/number}"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "review_comments",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "href",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls/112/comments"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "self",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "href",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls/112"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "statuses",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "href",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/statuses/7a99e449008e9c3c40c0e4ddcd707e061b2d141a"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "active_lock_reason",
+                      "v": null
+                    },
+                    {
+                      "k": "additions",
+                      "v": 3110.0
+                    },
+                    {
+                      "k": "assignee",
+                      "v": null
+                    },
+                    {
+                      "k": "assignees",
+                      "v": {
+                        "t": 1,
+                        "a": [
+                          {
+                            "t": 2,
+                            "d": [
+                              {
+                                "k": "avatar_url",
+                                "v": "https://avatars.githubusercontent.com/u/193003369?v=4"
+                              },
+                              {
+                                "k": "events_url",
+                                "v": "https://api.github.com/users/Skidaw23/events{/privacy}"
+                              },
+                              {
+                                "k": "followers_url",
+                                "v": "https://api.github.com/users/Skidaw23/followers"
+                              },
+                              {
+                                "k": "following_url",
+                                "v": "https://api.github.com/users/Skidaw23/following{/other_user}"
+                              },
+                              {
+                                "k": "gists_url",
+                                "v": "https://api.github.com/users/Skidaw23/gists{/gist_id}"
+                              },
+                              {
+                                "k": "gravatar_id",
+                                "v": ""
+                              },
+                              {
+                                "k": "html_url",
+                                "v": "https://github.com/Skidaw23"
+                              },
+                              {
+                                "k": "id",
+                                "v": 193003369.0
+                              },
+                              {
+                                "k": "login",
+                                "v": "Skidaw23"
+                              },
+                              {
+                                "k": "node_id",
+                                "v": "U_kgDOC4D_aQ"
+                              },
+                              {
+                                "k": "organizations_url",
+                                "v": "https://api.github.com/users/Skidaw23/orgs"
+                              },
+                              {
+                                "k": "received_events_url",
+                                "v": "https://api.github.com/users/Skidaw23/received_events"
+                              },
+                              {
+                                "k": "repos_url",
+                                "v": "https://api.github.com/users/Skidaw23/repos"
+                              },
+                              {
+                                "k": "site_admin",
+                                "v": false
+                              },
+                              {
+                                "k": "starred_url",
+                                "v": "https://api.github.com/users/Skidaw23/starred{/owner}{/repo}"
+                              },
+                              {
+                                "k": "subscriptions_url",
+                                "v": "https://api.github.com/users/Skidaw23/subscriptions"
+                              },
+                              {
+                                "k": "type",
+                                "v": "User"
+                              },
+                              {
+                                "k": "url",
+                                "v": "https://api.github.com/users/Skidaw23"
+                              },
+                              {
+                                "k": "user_view_type",
+                                "v": "public"
+                              }
+                            ]
+                          },
+                          {
+                            "t": 2,
+                            "d": [
+                              {
+                                "k": "avatar_url",
+                                "v": "https://avatars.githubusercontent.com/in/1143301?v=4"
+                              },
+                              {
+                                "k": "events_url",
+                                "v": "https://api.github.com/users/Copilot/events{/privacy}"
+                              },
+                              {
+                                "k": "followers_url",
+                                "v": "https://api.github.com/users/Copilot/followers"
+                              },
+                              {
+                                "k": "following_url",
+                                "v": "https://api.github.com/users/Copilot/following{/other_user}"
+                              },
+                              {
+                                "k": "gists_url",
+                                "v": "https://api.github.com/users/Copilot/gists{/gist_id}"
+                              },
+                              {
+                                "k": "gravatar_id",
+                                "v": ""
+                              },
+                              {
+                                "k": "html_url",
+                                "v": "https://github.com/apps/copilot-swe-agent"
+                              },
+                              {
+                                "k": "id",
+                                "v": 198982749.0
+                              },
+                              {
+                                "k": "login",
+                                "v": "Copilot"
+                              },
+                              {
+                                "k": "node_id",
+                                "v": "BOT_kgDOC9w8XQ"
+                              },
+                              {
+                                "k": "organizations_url",
+                                "v": "https://api.github.com/users/Copilot/orgs"
+                              },
+                              {
+                                "k": "received_events_url",
+                                "v": "https://api.github.com/users/Copilot/received_events"
+                              },
+                              {
+                                "k": "repos_url",
+                                "v": "https://api.github.com/users/Copilot/repos"
+                              },
+                              {
+                                "k": "site_admin",
+                                "v": false
+                              },
+                              {
+                                "k": "starred_url",
+                                "v": "https://api.github.com/users/Copilot/starred{/owner}{/repo}"
+                              },
+                              {
+                                "k": "subscriptions_url",
+                                "v": "https://api.github.com/users/Copilot/subscriptions"
+                              },
+                              {
+                                "k": "type",
+                                "v": "Bot"
+                              },
+                              {
+                                "k": "url",
+                                "v": "https://api.github.com/users/Copilot"
+                              },
+                              {
+                                "k": "user_view_type",
+                                "v": "public"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "author_association",
+                      "v": "NONE"
+                    },
+                    {
+                      "k": "auto_merge",
+                      "v": null
+                    },
+                    {
+                      "k": "base",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "label",
+                            "v": "Royal-Equips-Org:master"
+                          },
+                          {
+                            "k": "ref",
+                            "v": "master"
+                          },
+                          {
+                            "k": "repo",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "allow_auto_merge",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_forking",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_merge_commit",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_rebase_merge",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_squash_merge",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_update_branch",
+                                  "v": true
+                                },
+                                {
+                                  "k": "archive_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/{archive_format}{/ref}"
+                                },
+                                {
+                                  "k": "archived",
+                                  "v": false
+                                },
+                                {
+                                  "k": "assignees_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/assignees{/user}"
+                                },
+                                {
+                                  "k": "blobs_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/blobs{/sha}"
+                                },
+                                {
+                                  "k": "branches_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/branches{/branch}"
+                                },
+                                {
+                                  "k": "clone_url",
+                                  "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+                                },
+                                {
+                                  "k": "collaborators_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/collaborators{/collaborator}"
+                                },
+                                {
+                                  "k": "comments_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/comments{/number}"
+                                },
+                                {
+                                  "k": "commits_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/commits{/sha}"
+                                },
+                                {
+                                  "k": "compare_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/compare/{base}...{head}"
+                                },
+                                {
+                                  "k": "contents_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/contents/{+path}"
+                                },
+                                {
+                                  "k": "contributors_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/contributors"
+                                },
+                                {
+                                  "k": "created_at",
+                                  "v": "2025-08-08T22:25:24Z"
+                                },
+                                {
+                                  "k": "default_branch",
+                                  "v": "master"
+                                },
+                                {
+                                  "k": "delete_branch_on_merge",
+                                  "v": true
+                                },
+                                {
+                                  "k": "deployments_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/deployments"
+                                },
+                                {
+                                  "k": "description",
+                                  "v": null
+                                },
+                                {
+                                  "k": "disabled",
+                                  "v": false
+                                },
+                                {
+                                  "k": "downloads_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/downloads"
+                                },
+                                {
+                                  "k": "events_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/events"
+                                },
+                                {
+                                  "k": "fork",
+                                  "v": false
+                                },
+                                {
+                                  "k": "forks",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "forks_count",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "forks_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/forks"
+                                },
+                                {
+                                  "k": "full_name",
+                                  "v": "Royal-Equips-Org/royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "git_commits_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/commits{/sha}"
+                                },
+                                {
+                                  "k": "git_refs_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/refs{/sha}"
+                                },
+                                {
+                                  "k": "git_tags_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/tags{/sha}"
+                                },
+                                {
+                                  "k": "git_url",
+                                  "v": "git://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+                                },
+                                {
+                                  "k": "has_discussions",
+                                  "v": false
+                                },
+                                {
+                                  "k": "has_downloads",
+                                  "v": true
+                                },
+                                {
+                                  "k": "has_issues",
+                                  "v": true
+                                },
+                                {
+                                  "k": "has_pages",
+                                  "v": false
+                                },
+                                {
+                                  "k": "has_projects",
+                                  "v": true
+                                },
+                                {
+                                  "k": "has_wiki",
+                                  "v": true
+                                },
+                                {
+                                  "k": "homepage",
+                                  "v": null
+                                },
+                                {
+                                  "k": "hooks_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/hooks"
+                                },
+                                {
+                                  "k": "html_url",
+                                  "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "id",
+                                  "v": 1034734350.0
+                                },
+                                {
+                                  "k": "is_template",
+                                  "v": false
+                                },
+                                {
+                                  "k": "issue_comment_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/comments{/number}"
+                                },
+                                {
+                                  "k": "issue_events_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/events{/number}"
+                                },
+                                {
+                                  "k": "issues_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues{/number}"
+                                },
+                                {
+                                  "k": "keys_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/keys{/key_id}"
+                                },
+                                {
+                                  "k": "labels_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/labels{/name}"
+                                },
+                                {
+                                  "k": "language",
+                                  "v": "Python"
+                                },
+                                {
+                                  "k": "languages_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/languages"
+                                },
+                                {
+                                  "k": "license",
+                                  "v": {
+                                    "t": 2,
+                                    "d": [
+                                      {
+                                        "k": "key",
+                                        "v": "mit"
+                                      },
+                                      {
+                                        "k": "name",
+                                        "v": "MIT License"
+                                      },
+                                      {
+                                        "k": "node_id",
+                                        "v": "MDc6TGljZW5zZTEz"
+                                      },
+                                      {
+                                        "k": "spdx_id",
+                                        "v": "MIT"
+                                      },
+                                      {
+                                        "k": "url",
+                                        "v": "https://api.github.com/licenses/mit"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "k": "merge_commit_message",
+                                  "v": "PR_TITLE"
+                                },
+                                {
+                                  "k": "merge_commit_title",
+                                  "v": "MERGE_MESSAGE"
+                                },
+                                {
+                                  "k": "merges_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/merges"
+                                },
+                                {
+                                  "k": "milestones_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/milestones{/number}"
+                                },
+                                {
+                                  "k": "mirror_url",
+                                  "v": null
+                                },
+                                {
+                                  "k": "name",
+                                  "v": "royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "node_id",
+                                  "v": "R_kgDOPazLDg"
+                                },
+                                {
+                                  "k": "notifications_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/notifications{?since,all,participating}"
+                                },
+                                {
+                                  "k": "open_issues",
+                                  "v": 3.0
+                                },
+                                {
+                                  "k": "open_issues_count",
+                                  "v": 3.0
+                                },
+                                {
+                                  "k": "owner",
+                                  "v": {
+                                    "t": 2,
+                                    "d": [
+                                      {
+                                        "k": "avatar_url",
+                                        "v": "https://avatars.githubusercontent.com/u/228205603?v=4"
+                                      },
+                                      {
+                                        "k": "events_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/events{/privacy}"
+                                      },
+                                      {
+                                        "k": "followers_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/followers"
+                                      },
+                                      {
+                                        "k": "following_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/following{/other_user}"
+                                      },
+                                      {
+                                        "k": "gists_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/gists{/gist_id}"
+                                      },
+                                      {
+                                        "k": "gravatar_id",
+                                        "v": ""
+                                      },
+                                      {
+                                        "k": "html_url",
+                                        "v": "https://github.com/Royal-Equips-Org"
+                                      },
+                                      {
+                                        "k": "id",
+                                        "v": 228205603.0
+                                      },
+                                      {
+                                        "k": "login",
+                                        "v": "Royal-Equips-Org"
+                                      },
+                                      {
+                                        "k": "node_id",
+                                        "v": "O_kgDODZokIw"
+                                      },
+                                      {
+                                        "k": "organizations_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/orgs"
+                                      },
+                                      {
+                                        "k": "received_events_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/received_events"
+                                      },
+                                      {
+                                        "k": "repos_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/repos"
+                                      },
+                                      {
+                                        "k": "site_admin",
+                                        "v": false
+                                      },
+                                      {
+                                        "k": "starred_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/starred{/owner}{/repo}"
+                                      },
+                                      {
+                                        "k": "subscriptions_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/subscriptions"
+                                      },
+                                      {
+                                        "k": "type",
+                                        "v": "Organization"
+                                      },
+                                      {
+                                        "k": "url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org"
+                                      },
+                                      {
+                                        "k": "user_view_type",
+                                        "v": "public"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "k": "private",
+                                  "v": true
+                                },
+                                {
+                                  "k": "pulls_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls{/number}"
+                                },
+                                {
+                                  "k": "pushed_at",
+                                  "v": "2025-09-20T12:39:57Z"
+                                },
+                                {
+                                  "k": "releases_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/releases{/id}"
+                                },
+                                {
+                                  "k": "size",
+                                  "v": 12759.0
+                                },
+                                {
+                                  "k": "squash_merge_commit_message",
+                                  "v": "COMMIT_MESSAGES"
+                                },
+                                {
+                                  "k": "squash_merge_commit_title",
+                                  "v": "COMMIT_OR_PR_TITLE"
+                                },
+                                {
+                                  "k": "ssh_url",
+                                  "v": "git@github.com:Royal-Equips-Org/royal-equips-orchestrator.git"
+                                },
+                                {
+                                  "k": "stargazers_count",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "stargazers_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/stargazers"
+                                },
+                                {
+                                  "k": "statuses_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/statuses/{sha}"
+                                },
+                                {
+                                  "k": "subscribers_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/subscribers"
+                                },
+                                {
+                                  "k": "subscription_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/subscription"
+                                },
+                                {
+                                  "k": "svn_url",
+                                  "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "tags_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/tags"
+                                },
+                                {
+                                  "k": "teams_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/teams"
+                                },
+                                {
+                                  "k": "topics",
+                                  "v": {
+                                    "t": 1
+                                  }
+                                },
+                                {
+                                  "k": "trees_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/trees{/sha}"
+                                },
+                                {
+                                  "k": "updated_at",
+                                  "v": "2025-09-20T09:11:14Z"
+                                },
+                                {
+                                  "k": "url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "use_squash_pr_title_as_default",
+                                  "v": false
+                                },
+                                {
+                                  "k": "visibility",
+                                  "v": "private"
+                                },
+                                {
+                                  "k": "watchers",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "watchers_count",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "web_commit_signoff_required",
+                                  "v": false
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "sha",
+                            "v": "a525d23a1e3327a836f07c7ecf98e1ea4ac515a3"
+                          },
+                          {
+                            "k": "user",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "avatar_url",
+                                  "v": "https://avatars.githubusercontent.com/u/228205603?v=4"
+                                },
+                                {
+                                  "k": "events_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/events{/privacy}"
+                                },
+                                {
+                                  "k": "followers_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/followers"
+                                },
+                                {
+                                  "k": "following_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/following{/other_user}"
+                                },
+                                {
+                                  "k": "gists_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/gists{/gist_id}"
+                                },
+                                {
+                                  "k": "gravatar_id",
+                                  "v": ""
+                                },
+                                {
+                                  "k": "html_url",
+                                  "v": "https://github.com/Royal-Equips-Org"
+                                },
+                                {
+                                  "k": "id",
+                                  "v": 228205603.0
+                                },
+                                {
+                                  "k": "login",
+                                  "v": "Royal-Equips-Org"
+                                },
+                                {
+                                  "k": "node_id",
+                                  "v": "O_kgDODZokIw"
+                                },
+                                {
+                                  "k": "organizations_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/orgs"
+                                },
+                                {
+                                  "k": "received_events_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/received_events"
+                                },
+                                {
+                                  "k": "repos_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/repos"
+                                },
+                                {
+                                  "k": "site_admin",
+                                  "v": false
+                                },
+                                {
+                                  "k": "starred_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/starred{/owner}{/repo}"
+                                },
+                                {
+                                  "k": "subscriptions_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/subscriptions"
+                                },
+                                {
+                                  "k": "type",
+                                  "v": "Organization"
+                                },
+                                {
+                                  "k": "url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org"
+                                },
+                                {
+                                  "k": "user_view_type",
+                                  "v": "public"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "body",
+                      "v": "This PR implements comprehensive cross-shell compatibility, structured logging, retry logic, and compliance across all critical workflows in `.github/workflows/`. The changes ensure workflows can run seamlessly on both GitHub-hosted (ubuntu-latest) and self-hosted Windows x64 runners with enterprise-grade reliability.\n\n## Problem Statement\n\nThe existing workflows were designed for single-platform execution (ubuntu-latest only) with basic error handling and no structured observability. This created operational challenges:\n\n- No support for self-hosted Windows x64 runners with tags `[self-hosted, Windows, X64]`\n- Bash-specific syntax preventing Windows PowerShell execution\n- No retry logic for transient failures\n- Basic logging without structured observability\n- Repository-level secrets without organization compliance\n\n## Solution Overview\n\nThis implementation provides enterprise-grade cross-platform CI/CD with self-healing capabilities:\n\n### Cross-Platform Matrix Strategy\n```yaml\nstrategy:\n  matrix:\n    include:\n      - os: 'ubuntu-latest'\n        shell: bash\n        platform: 'linux'\n      - os: '[self-hosted, Windows, X64]'\n        shell: pwsh\n        platform: 'windows'\nruns-on: ${{ fromJSON(matrix.os) }}\ndefaults:\n  run:\n    shell: ${{ matrix.shell }}\n```\n\n### Structured JSON Logging\nPlatform-specific structured logging for monitoring tool integration:\n\n```powershell\n# PowerShell (Windows)\nWrite-Host (@{level=\"info\"; message=\"Operation started\"; timestamp=(Get-Date -Format \"yyyy-MM-ddTHH:mm:ssZ\")} | ConvertTo-Json -Compress)\n```\n\n```bash\n# Bash (Linux)\necho '{\"level\":\"info\",\"message\":\"Operation started\",\"timestamp\":\"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'\"}'\n```\n\n### Self-Healing Retry Logic\nCritical operations wrapped with exponential backoff retry:\n\n```yaml\n- uses: nick-fields/retry@v3\n  with:\n    timeout_minutes: 10\n    max_attempts: 3\n    retry_on: error\n    command: critical-operation\n```\n\n### Organization-Level Secret Management\nSecure credential management with fallback patterns:\n\n```yaml\nenv:\n  DATABASE_URL: ${{ secrets.ORG_DATABASE_URL || secrets.DATABASE_URL }}\n  SLACK_WEBHOOK_URL: ${{ secrets.ORG_SLACK_WEBHOOK || vars.ORG_SLACK_WEBHOOK }}\n```\n\n## Key Implementations\n\n### Enhanced Reusable Base Workflow (`_reusable-base.yml`)\n- Configurable OS and shell parameters with JSON array parsing\n- Cross-platform structured logging and audit trails\n- Self-healing retry logic with exponential backoff\n- Rich Slack notifications with attachment fields\n- Organization-level secret integration\n\n### Core CI Pipeline Updates (`ci-complete.yml`, `comprehensive-ci.yml`)\n- Matrix strategy for parallel ubuntu-latest + windows-latest execution\n- Platform-specific dependency installation and caching\n- Cross-platform build and test execution with retry logic\n- Enhanced empire readiness checks with platform resilience\n- Comprehensive Python version testing (3.10, 3.11, 3.12) across platforms\n\n### Enterprise Agent Execution (`agents-execution.yml`)\n- **Tier 1 Critical Agents**: Cross-platform execution with health checks (inventory_pricing, order_fulfillment, fraud_security, analytics)\n- **Tier 2 Growth Agents**: Windows-optimized execution (marketing_automation, customer_support, content_creation, competitor_analysis, supplier_management)\n- **System Health Monitoring**: Automated health checks, auto-improvement PRs, and failure recovery\n\n### Cross-Platform Validation System (`cross-platform-validation.yml`)\nNew comprehensive environment validation workflow featuring:\n- Secrets validation and environment checks\n- Network connectivity testing with retry logic\n- Tool availability verification (Node.js, Python, Git)\n- Resource monitoring (memory, disk, network)\n- Scheduled weekly health checks (Mondays 6 AM UTC)\n\n### Multi-Platform Smoke Testing (`selfhosted-smoke.yml`)\n- Conditional platform execution with input parameters\n- System resource monitoring and validation\n- Package manager availability testing\n- Network connectivity resilience testing\n\n## Enterprise Features\n\n### Resource Optimization (4GB Memory Compatibility)\n- Real-time memory and disk usage monitoring\n- Appropriate timeouts for cross-platform operations\n- Efficient platform-specific caching strategies\n- Memory thresholds: 90% memory, 85% disk usage warnings\n\n### Observability & Monitoring\n- JSON structured logs for monitoring tool integration\n- Real-time Slack notifications with rich formatting\n- Cross-platform health reporting and alerting\n- Performance metrics collection and analysis\n\n### Security & Compliance\n- Organization-level secret management pattern\n- Zero hardcoded credentials policy\n- Structured audit logging for compliance\n- Cross-platform secret validation workflow\n\n## Validation Results\n\nAll 7 updated workflows pass YAML syntax validation:\n- `_reusable-base.yml`: ✅ OK\n- `ci-complete.yml`: ✅ OK  \n- `comprehensive-ci.yml`: ✅ OK\n- `orchestrator.yml`: ✅ OK\n- `selfhosted-smoke.yml`: ✅ OK\n- `cross-platform-validation.yml`: ✅ OK\n- `agents-execution.yml`: ✅ OK\n\n## Documentation\n\nCreated comprehensive documentation:\n- `docs/CROSS_PLATFORM_WORKFLOWS.md`: Complete implementation guide with patterns, examples, and best practices\n- `CROSS_PLATFORM_IMPLEMENTATION.md`: Technical summary with usage examples and validation results\n\n## Impact\n\nThis implementation enables the Royal Equips Empire to operate with enterprise-grade reliability across both GitHub-hosted and self-hosted infrastructure, providing:\n\n- **Cross-platform compatibility** for Windows and Linux execution\n- **Self-healing capabilities** with automatic retry and recovery\n- **Enterprise observability** with structured logging and monitoring\n- **Operational resilience** optimized for 4GB memory constraints\n- **Security compliance** with organization-level secret management\n\nThe foundation is now ready for 24/7 autonomous agent orchestration with enterprise-grade reliability and comprehensive observability.\n\n<!-- START COPILOT CODING AGENT TIPS -->\n---\n\n💬 Share your feedback on Copilot coding agent for the chance to win a $200 gift card! Click [here](https://survey3.medallia.com/?EAHeSx-AP01bZqG0Ld9QLQ) to start the survey."
+                    },
+                    {
+                      "k": "changed_files",
+                      "v": 11.0
+                    },
+                    {
+                      "k": "closed_at",
+                      "v": null
+                    },
+                    {
+                      "k": "comments",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "comments_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/112/comments"
+                    },
+                    {
+                      "k": "commits",
+                      "v": 11.0
+                    },
+                    {
+                      "k": "commits_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls/112/commits"
+                    },
+                    {
+                      "k": "created_at",
+                      "v": "2025-09-20T11:46:58Z"
+                    },
+                    {
+                      "k": "deletions",
+                      "v": 342.0
+                    },
+                    {
+                      "k": "diff_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator/pull/112.diff"
+                    },
+                    {
+                      "k": "draft",
+                      "v": true
+                    },
+                    {
+                      "k": "head",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "label",
+                            "v": "Royal-Equips-Org:copilot/fix-fde79ca9-58b1-45b0-acbc-5fc4aad6cdc3"
+                          },
+                          {
+                            "k": "ref",
+                            "v": "copilot/fix-fde79ca9-58b1-45b0-acbc-5fc4aad6cdc3"
+                          },
+                          {
+                            "k": "repo",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "allow_auto_merge",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_forking",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_merge_commit",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_rebase_merge",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_squash_merge",
+                                  "v": true
+                                },
+                                {
+                                  "k": "allow_update_branch",
+                                  "v": true
+                                },
+                                {
+                                  "k": "archive_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/{archive_format}{/ref}"
+                                },
+                                {
+                                  "k": "archived",
+                                  "v": false
+                                },
+                                {
+                                  "k": "assignees_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/assignees{/user}"
+                                },
+                                {
+                                  "k": "blobs_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/blobs{/sha}"
+                                },
+                                {
+                                  "k": "branches_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/branches{/branch}"
+                                },
+                                {
+                                  "k": "clone_url",
+                                  "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+                                },
+                                {
+                                  "k": "collaborators_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/collaborators{/collaborator}"
+                                },
+                                {
+                                  "k": "comments_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/comments{/number}"
+                                },
+                                {
+                                  "k": "commits_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/commits{/sha}"
+                                },
+                                {
+                                  "k": "compare_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/compare/{base}...{head}"
+                                },
+                                {
+                                  "k": "contents_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/contents/{+path}"
+                                },
+                                {
+                                  "k": "contributors_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/contributors"
+                                },
+                                {
+                                  "k": "created_at",
+                                  "v": "2025-08-08T22:25:24Z"
+                                },
+                                {
+                                  "k": "default_branch",
+                                  "v": "master"
+                                },
+                                {
+                                  "k": "delete_branch_on_merge",
+                                  "v": true
+                                },
+                                {
+                                  "k": "deployments_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/deployments"
+                                },
+                                {
+                                  "k": "description",
+                                  "v": null
+                                },
+                                {
+                                  "k": "disabled",
+                                  "v": false
+                                },
+                                {
+                                  "k": "downloads_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/downloads"
+                                },
+                                {
+                                  "k": "events_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/events"
+                                },
+                                {
+                                  "k": "fork",
+                                  "v": false
+                                },
+                                {
+                                  "k": "forks",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "forks_count",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "forks_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/forks"
+                                },
+                                {
+                                  "k": "full_name",
+                                  "v": "Royal-Equips-Org/royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "git_commits_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/commits{/sha}"
+                                },
+                                {
+                                  "k": "git_refs_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/refs{/sha}"
+                                },
+                                {
+                                  "k": "git_tags_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/tags{/sha}"
+                                },
+                                {
+                                  "k": "git_url",
+                                  "v": "git://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+                                },
+                                {
+                                  "k": "has_discussions",
+                                  "v": false
+                                },
+                                {
+                                  "k": "has_downloads",
+                                  "v": true
+                                },
+                                {
+                                  "k": "has_issues",
+                                  "v": true
+                                },
+                                {
+                                  "k": "has_pages",
+                                  "v": false
+                                },
+                                {
+                                  "k": "has_projects",
+                                  "v": true
+                                },
+                                {
+                                  "k": "has_wiki",
+                                  "v": true
+                                },
+                                {
+                                  "k": "homepage",
+                                  "v": null
+                                },
+                                {
+                                  "k": "hooks_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/hooks"
+                                },
+                                {
+                                  "k": "html_url",
+                                  "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "id",
+                                  "v": 1034734350.0
+                                },
+                                {
+                                  "k": "is_template",
+                                  "v": false
+                                },
+                                {
+                                  "k": "issue_comment_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/comments{/number}"
+                                },
+                                {
+                                  "k": "issue_events_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/events{/number}"
+                                },
+                                {
+                                  "k": "issues_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues{/number}"
+                                },
+                                {
+                                  "k": "keys_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/keys{/key_id}"
+                                },
+                                {
+                                  "k": "labels_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/labels{/name}"
+                                },
+                                {
+                                  "k": "language",
+                                  "v": "Python"
+                                },
+                                {
+                                  "k": "languages_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/languages"
+                                },
+                                {
+                                  "k": "license",
+                                  "v": {
+                                    "t": 2,
+                                    "d": [
+                                      {
+                                        "k": "key",
+                                        "v": "mit"
+                                      },
+                                      {
+                                        "k": "name",
+                                        "v": "MIT License"
+                                      },
+                                      {
+                                        "k": "node_id",
+                                        "v": "MDc6TGljZW5zZTEz"
+                                      },
+                                      {
+                                        "k": "spdx_id",
+                                        "v": "MIT"
+                                      },
+                                      {
+                                        "k": "url",
+                                        "v": "https://api.github.com/licenses/mit"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "k": "merge_commit_message",
+                                  "v": "PR_TITLE"
+                                },
+                                {
+                                  "k": "merge_commit_title",
+                                  "v": "MERGE_MESSAGE"
+                                },
+                                {
+                                  "k": "merges_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/merges"
+                                },
+                                {
+                                  "k": "milestones_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/milestones{/number}"
+                                },
+                                {
+                                  "k": "mirror_url",
+                                  "v": null
+                                },
+                                {
+                                  "k": "name",
+                                  "v": "royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "node_id",
+                                  "v": "R_kgDOPazLDg"
+                                },
+                                {
+                                  "k": "notifications_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/notifications{?since,all,participating}"
+                                },
+                                {
+                                  "k": "open_issues",
+                                  "v": 3.0
+                                },
+                                {
+                                  "k": "open_issues_count",
+                                  "v": 3.0
+                                },
+                                {
+                                  "k": "owner",
+                                  "v": {
+                                    "t": 2,
+                                    "d": [
+                                      {
+                                        "k": "avatar_url",
+                                        "v": "https://avatars.githubusercontent.com/u/228205603?v=4"
+                                      },
+                                      {
+                                        "k": "events_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/events{/privacy}"
+                                      },
+                                      {
+                                        "k": "followers_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/followers"
+                                      },
+                                      {
+                                        "k": "following_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/following{/other_user}"
+                                      },
+                                      {
+                                        "k": "gists_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/gists{/gist_id}"
+                                      },
+                                      {
+                                        "k": "gravatar_id",
+                                        "v": ""
+                                      },
+                                      {
+                                        "k": "html_url",
+                                        "v": "https://github.com/Royal-Equips-Org"
+                                      },
+                                      {
+                                        "k": "id",
+                                        "v": 228205603.0
+                                      },
+                                      {
+                                        "k": "login",
+                                        "v": "Royal-Equips-Org"
+                                      },
+                                      {
+                                        "k": "node_id",
+                                        "v": "O_kgDODZokIw"
+                                      },
+                                      {
+                                        "k": "organizations_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/orgs"
+                                      },
+                                      {
+                                        "k": "received_events_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/received_events"
+                                      },
+                                      {
+                                        "k": "repos_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/repos"
+                                      },
+                                      {
+                                        "k": "site_admin",
+                                        "v": false
+                                      },
+                                      {
+                                        "k": "starred_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/starred{/owner}{/repo}"
+                                      },
+                                      {
+                                        "k": "subscriptions_url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org/subscriptions"
+                                      },
+                                      {
+                                        "k": "type",
+                                        "v": "Organization"
+                                      },
+                                      {
+                                        "k": "url",
+                                        "v": "https://api.github.com/users/Royal-Equips-Org"
+                                      },
+                                      {
+                                        "k": "user_view_type",
+                                        "v": "public"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "k": "private",
+                                  "v": true
+                                },
+                                {
+                                  "k": "pulls_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls{/number}"
+                                },
+                                {
+                                  "k": "pushed_at",
+                                  "v": "2025-09-20T12:39:57Z"
+                                },
+                                {
+                                  "k": "releases_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/releases{/id}"
+                                },
+                                {
+                                  "k": "size",
+                                  "v": 12759.0
+                                },
+                                {
+                                  "k": "squash_merge_commit_message",
+                                  "v": "COMMIT_MESSAGES"
+                                },
+                                {
+                                  "k": "squash_merge_commit_title",
+                                  "v": "COMMIT_OR_PR_TITLE"
+                                },
+                                {
+                                  "k": "ssh_url",
+                                  "v": "git@github.com:Royal-Equips-Org/royal-equips-orchestrator.git"
+                                },
+                                {
+                                  "k": "stargazers_count",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "stargazers_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/stargazers"
+                                },
+                                {
+                                  "k": "statuses_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/statuses/{sha}"
+                                },
+                                {
+                                  "k": "subscribers_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/subscribers"
+                                },
+                                {
+                                  "k": "subscription_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/subscription"
+                                },
+                                {
+                                  "k": "svn_url",
+                                  "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "tags_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/tags"
+                                },
+                                {
+                                  "k": "teams_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/teams"
+                                },
+                                {
+                                  "k": "topics",
+                                  "v": {
+                                    "t": 1
+                                  }
+                                },
+                                {
+                                  "k": "trees_url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/trees{/sha}"
+                                },
+                                {
+                                  "k": "updated_at",
+                                  "v": "2025-09-20T09:11:14Z"
+                                },
+                                {
+                                  "k": "url",
+                                  "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator"
+                                },
+                                {
+                                  "k": "use_squash_pr_title_as_default",
+                                  "v": false
+                                },
+                                {
+                                  "k": "visibility",
+                                  "v": "private"
+                                },
+                                {
+                                  "k": "watchers",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "watchers_count",
+                                  "v": 0.0
+                                },
+                                {
+                                  "k": "web_commit_signoff_required",
+                                  "v": false
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "k": "sha",
+                            "v": "7a99e449008e9c3c40c0e4ddcd707e061b2d141a"
+                          },
+                          {
+                            "k": "user",
+                            "v": {
+                              "t": 2,
+                              "d": [
+                                {
+                                  "k": "avatar_url",
+                                  "v": "https://avatars.githubusercontent.com/u/228205603?v=4"
+                                },
+                                {
+                                  "k": "events_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/events{/privacy}"
+                                },
+                                {
+                                  "k": "followers_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/followers"
+                                },
+                                {
+                                  "k": "following_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/following{/other_user}"
+                                },
+                                {
+                                  "k": "gists_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/gists{/gist_id}"
+                                },
+                                {
+                                  "k": "gravatar_id",
+                                  "v": ""
+                                },
+                                {
+                                  "k": "html_url",
+                                  "v": "https://github.com/Royal-Equips-Org"
+                                },
+                                {
+                                  "k": "id",
+                                  "v": 228205603.0
+                                },
+                                {
+                                  "k": "login",
+                                  "v": "Royal-Equips-Org"
+                                },
+                                {
+                                  "k": "node_id",
+                                  "v": "O_kgDODZokIw"
+                                },
+                                {
+                                  "k": "organizations_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/orgs"
+                                },
+                                {
+                                  "k": "received_events_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/received_events"
+                                },
+                                {
+                                  "k": "repos_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/repos"
+                                },
+                                {
+                                  "k": "site_admin",
+                                  "v": false
+                                },
+                                {
+                                  "k": "starred_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/starred{/owner}{/repo}"
+                                },
+                                {
+                                  "k": "subscriptions_url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org/subscriptions"
+                                },
+                                {
+                                  "k": "type",
+                                  "v": "Organization"
+                                },
+                                {
+                                  "k": "url",
+                                  "v": "https://api.github.com/users/Royal-Equips-Org"
+                                },
+                                {
+                                  "k": "user_view_type",
+                                  "v": "public"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "html_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator/pull/112"
+                    },
+                    {
+                      "k": "id",
+                      "v": 2846210572.0
+                    },
+                    {
+                      "k": "issue_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/112"
+                    },
+                    {
+                      "k": "labels",
+                      "v": {
+                        "t": 1,
+                        "a": [
+                          {
+                            "t": 2,
+                            "d": [
+                              {
+                                "k": "color",
+                                "v": "000000"
+                              },
+                              {
+                                "k": "default",
+                                "v": false
+                              },
+                              {
+                                "k": "description",
+                                "v": "Pull requests that update GitHub Actions code"
+                              },
+                              {
+                                "k": "id",
+                                "v": 9158648728.0
+                              },
+                              {
+                                "k": "name",
+                                "v": "github_actions"
+                              },
+                              {
+                                "k": "node_id",
+                                "v": "LA_kwDOPazLDs8AAAACIeXjmA"
+                              },
+                              {
+                                "k": "url",
+                                "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/labels/github_actions"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "locked",
+                      "v": false
+                    },
+                    {
+                      "k": "maintainer_can_modify",
+                      "v": false
+                    },
+                    {
+                      "k": "merge_commit_sha",
+                      "v": "055a167d1a262e93755607cda05b1c5d99a8f7e1"
+                    },
+                    {
+                      "k": "mergeable",
+                      "v": null
+                    },
+                    {
+                      "k": "mergeable_state",
+                      "v": "unknown"
+                    },
+                    {
+                      "k": "merged",
+                      "v": false
+                    },
+                    {
+                      "k": "merged_at",
+                      "v": null
+                    },
+                    {
+                      "k": "merged_by",
+                      "v": null
+                    },
+                    {
+                      "k": "milestone",
+                      "v": null
+                    },
+                    {
+                      "k": "node_id",
+                      "v": "PR_kwDOPazLDs6ppboM"
+                    },
+                    {
+                      "k": "number",
+                      "v": 112.0
+                    },
+                    {
+                      "k": "patch_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator/pull/112.patch"
+                    },
+                    {
+                      "k": "rebaseable",
+                      "v": null
+                    },
+                    {
+                      "k": "requested_reviewers",
+                      "v": {
+                        "t": 1
+                      }
+                    },
+                    {
+                      "k": "requested_teams",
+                      "v": {
+                        "t": 1
+                      }
+                    },
+                    {
+                      "k": "review_comment_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls/comments{/number}"
+                    },
+                    {
+                      "k": "review_comments",
+                      "v": 7.0
+                    },
+                    {
+                      "k": "review_comments_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls/112/comments"
+                    },
+                    {
+                      "k": "state",
+                      "v": "open"
+                    },
+                    {
+                      "k": "statuses_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/statuses/7a99e449008e9c3c40c0e4ddcd707e061b2d141a"
+                    },
+                    {
+                      "k": "title",
+                      "v": "Enterprise Self-Healing & Cross-Shell Compatibility — Refactor All Workflows for Self-Hosted Windows + Ubuntu"
+                    },
+                    {
+                      "k": "updated_at",
+                      "v": "2025-09-20T12:39:57Z"
+                    },
+                    {
+                      "k": "url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls/112"
+                    },
+                    {
+                      "k": "user",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "avatar_url",
+                            "v": "https://avatars.githubusercontent.com/in/1143301?v=4"
+                          },
+                          {
+                            "k": "events_url",
+                            "v": "https://api.github.com/users/Copilot/events{/privacy}"
+                          },
+                          {
+                            "k": "followers_url",
+                            "v": "https://api.github.com/users/Copilot/followers"
+                          },
+                          {
+                            "k": "following_url",
+                            "v": "https://api.github.com/users/Copilot/following{/other_user}"
+                          },
+                          {
+                            "k": "gists_url",
+                            "v": "https://api.github.com/users/Copilot/gists{/gist_id}"
+                          },
+                          {
+                            "k": "gravatar_id",
+                            "v": ""
+                          },
+                          {
+                            "k": "html_url",
+                            "v": "https://github.com/apps/copilot-swe-agent"
+                          },
+                          {
+                            "k": "id",
+                            "v": 198982749.0
+                          },
+                          {
+                            "k": "login",
+                            "v": "Copilot"
+                          },
+                          {
+                            "k": "node_id",
+                            "v": "BOT_kgDOC9w8XQ"
+                          },
+                          {
+                            "k": "organizations_url",
+                            "v": "https://api.github.com/users/Copilot/orgs"
+                          },
+                          {
+                            "k": "received_events_url",
+                            "v": "https://api.github.com/users/Copilot/received_events"
+                          },
+                          {
+                            "k": "repos_url",
+                            "v": "https://api.github.com/users/Copilot/repos"
+                          },
+                          {
+                            "k": "site_admin",
+                            "v": false
+                          },
+                          {
+                            "k": "starred_url",
+                            "v": "https://api.github.com/users/Copilot/starred{/owner}{/repo}"
+                          },
+                          {
+                            "k": "subscriptions_url",
+                            "v": "https://api.github.com/users/Copilot/subscriptions"
+                          },
+                          {
+                            "k": "type",
+                            "v": "Bot"
+                          },
+                          {
+                            "k": "url",
+                            "v": "https://api.github.com/users/Copilot"
+                          },
+                          {
+                            "k": "user_view_type",
+                            "v": "public"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "k": "repository",
+                "v": {
+                  "t": 2,
+                  "d": [
+                    {
+                      "k": "allow_forking",
+                      "v": true
+                    },
+                    {
+                      "k": "archive_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/{archive_format}{/ref}"
+                    },
+                    {
+                      "k": "archived",
+                      "v": false
+                    },
+                    {
+                      "k": "assignees_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/assignees{/user}"
+                    },
+                    {
+                      "k": "blobs_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/blobs{/sha}"
+                    },
+                    {
+                      "k": "branches_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/branches{/branch}"
+                    },
+                    {
+                      "k": "clone_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+                    },
+                    {
+                      "k": "collaborators_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/collaborators{/collaborator}"
+                    },
+                    {
+                      "k": "comments_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/comments{/number}"
+                    },
+                    {
+                      "k": "commits_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/commits{/sha}"
+                    },
+                    {
+                      "k": "compare_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/compare/{base}...{head}"
+                    },
+                    {
+                      "k": "contents_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/contents/{+path}"
+                    },
+                    {
+                      "k": "contributors_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/contributors"
+                    },
+                    {
+                      "k": "created_at",
+                      "v": "2025-08-08T22:25:24Z"
+                    },
+                    {
+                      "k": "custom_properties",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "ai_agent_level",
+                            "v": "experimental"
+                          },
+                          {
+                            "k": "business_owner",
+                            "v": "royal-equips/platform-admins"
+                          },
+                          {
+                            "k": "data_classification",
+                            "v": "internal"
+                          },
+                          {
+                            "k": "shopify_module",
+                            "v": "general"
+                          },
+                          {
+                            "k": "system_tier",
+                            "v": "sandbox"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "default_branch",
+                      "v": "master"
+                    },
+                    {
+                      "k": "deployments_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/deployments"
+                    },
+                    {
+                      "k": "description",
+                      "v": null
+                    },
+                    {
+                      "k": "disabled",
+                      "v": false
+                    },
+                    {
+                      "k": "downloads_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/downloads"
+                    },
+                    {
+                      "k": "events_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/events"
+                    },
+                    {
+                      "k": "fork",
+                      "v": false
+                    },
+                    {
+                      "k": "forks",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "forks_count",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "forks_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/forks"
+                    },
+                    {
+                      "k": "full_name",
+                      "v": "Royal-Equips-Org/royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "git_commits_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/commits{/sha}"
+                    },
+                    {
+                      "k": "git_refs_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/refs{/sha}"
+                    },
+                    {
+                      "k": "git_tags_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/tags{/sha}"
+                    },
+                    {
+                      "k": "git_url",
+                      "v": "git://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+                    },
+                    {
+                      "k": "has_discussions",
+                      "v": false
+                    },
+                    {
+                      "k": "has_downloads",
+                      "v": true
+                    },
+                    {
+                      "k": "has_issues",
+                      "v": true
+                    },
+                    {
+                      "k": "has_pages",
+                      "v": false
+                    },
+                    {
+                      "k": "has_projects",
+                      "v": true
+                    },
+                    {
+                      "k": "has_wiki",
+                      "v": true
+                    },
+                    {
+                      "k": "homepage",
+                      "v": null
+                    },
+                    {
+                      "k": "hooks_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/hooks"
+                    },
+                    {
+                      "k": "html_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "id",
+                      "v": 1034734350.0
+                    },
+                    {
+                      "k": "is_template",
+                      "v": false
+                    },
+                    {
+                      "k": "issue_comment_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/comments{/number}"
+                    },
+                    {
+                      "k": "issue_events_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/events{/number}"
+                    },
+                    {
+                      "k": "issues_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues{/number}"
+                    },
+                    {
+                      "k": "keys_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/keys{/key_id}"
+                    },
+                    {
+                      "k": "labels_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/labels{/name}"
+                    },
+                    {
+                      "k": "language",
+                      "v": "Python"
+                    },
+                    {
+                      "k": "languages_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/languages"
+                    },
+                    {
+                      "k": "license",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "key",
+                            "v": "mit"
+                          },
+                          {
+                            "k": "name",
+                            "v": "MIT License"
+                          },
+                          {
+                            "k": "node_id",
+                            "v": "MDc6TGljZW5zZTEz"
+                          },
+                          {
+                            "k": "spdx_id",
+                            "v": "MIT"
+                          },
+                          {
+                            "k": "url",
+                            "v": "https://api.github.com/licenses/mit"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "merges_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/merges"
+                    },
+                    {
+                      "k": "milestones_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/milestones{/number}"
+                    },
+                    {
+                      "k": "mirror_url",
+                      "v": null
+                    },
+                    {
+                      "k": "name",
+                      "v": "royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "node_id",
+                      "v": "R_kgDOPazLDg"
+                    },
+                    {
+                      "k": "notifications_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/notifications{?since,all,participating}"
+                    },
+                    {
+                      "k": "open_issues",
+                      "v": 3.0
+                    },
+                    {
+                      "k": "open_issues_count",
+                      "v": 3.0
+                    },
+                    {
+                      "k": "owner",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "avatar_url",
+                            "v": "https://avatars.githubusercontent.com/u/228205603?v=4"
+                          },
+                          {
+                            "k": "events_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/events{/privacy}"
+                          },
+                          {
+                            "k": "followers_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/followers"
+                          },
+                          {
+                            "k": "following_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/following{/other_user}"
+                          },
+                          {
+                            "k": "gists_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/gists{/gist_id}"
+                          },
+                          {
+                            "k": "gravatar_id",
+                            "v": ""
+                          },
+                          {
+                            "k": "html_url",
+                            "v": "https://github.com/Royal-Equips-Org"
+                          },
+                          {
+                            "k": "id",
+                            "v": 228205603.0
+                          },
+                          {
+                            "k": "login",
+                            "v": "Royal-Equips-Org"
+                          },
+                          {
+                            "k": "node_id",
+                            "v": "O_kgDODZokIw"
+                          },
+                          {
+                            "k": "organizations_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/orgs"
+                          },
+                          {
+                            "k": "received_events_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/received_events"
+                          },
+                          {
+                            "k": "repos_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/repos"
+                          },
+                          {
+                            "k": "site_admin",
+                            "v": false
+                          },
+                          {
+                            "k": "starred_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/starred{/owner}{/repo}"
+                          },
+                          {
+                            "k": "subscriptions_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/subscriptions"
+                          },
+                          {
+                            "k": "type",
+                            "v": "Organization"
+                          },
+                          {
+                            "k": "url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org"
+                          },
+                          {
+                            "k": "user_view_type",
+                            "v": "public"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "private",
+                      "v": true
+                    },
+                    {
+                      "k": "pulls_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls{/number}"
+                    },
+                    {
+                      "k": "pushed_at",
+                      "v": "2025-09-20T12:39:57Z"
+                    },
+                    {
+                      "k": "releases_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/releases{/id}"
+                    },
+                    {
+                      "k": "size",
+                      "v": 12759.0
+                    },
+                    {
+                      "k": "ssh_url",
+                      "v": "git@github.com:Royal-Equips-Org/royal-equips-orchestrator.git"
+                    },
+                    {
+                      "k": "stargazers_count",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "stargazers_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/stargazers"
+                    },
+                    {
+                      "k": "statuses_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/statuses/{sha}"
+                    },
+                    {
+                      "k": "subscribers_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/subscribers"
+                    },
+                    {
+                      "k": "subscription_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/subscription"
+                    },
+                    {
+                      "k": "svn_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "tags_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/tags"
+                    },
+                    {
+                      "k": "teams_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/teams"
+                    },
+                    {
+                      "k": "topics",
+                      "v": {
+                        "t": 1
+                      }
+                    },
+                    {
+                      "k": "trees_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/trees{/sha}"
+                    },
+                    {
+                      "k": "updated_at",
+                      "v": "2025-09-20T09:11:14Z"
+                    },
+                    {
+                      "k": "url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "visibility",
+                      "v": "private"
+                    },
+                    {
+                      "k": "watchers",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "watchers_count",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "web_commit_signoff_required",
+                      "v": false
+                    }
+                  ]
+                }
+              },
+              {
+                "k": "sender",
+                "v": {
+                  "t": 2,
+                  "d": [
+                    {
+                      "k": "avatar_url",
+                      "v": "https://avatars.githubusercontent.com/u/193003369?v=4"
+                    },
+                    {
+                      "k": "events_url",
+                      "v": "https://api.github.com/users/Skidaw23/events{/privacy}"
+                    },
+                    {
+                      "k": "followers_url",
+                      "v": "https://api.github.com/users/Skidaw23/followers"
+                    },
+                    {
+                      "k": "following_url",
+                      "v": "https://api.github.com/users/Skidaw23/following{/other_user}"
+                    },
+                    {
+                      "k": "gists_url",
+                      "v": "https://api.github.com/users/Skidaw23/gists{/gist_id}"
+                    },
+                    {
+                      "k": "gravatar_id",
+                      "v": ""
+                    },
+                    {
+                      "k": "html_url",
+                      "v": "https://github.com/Skidaw23"
+                    },
+                    {
+                      "k": "id",
+                      "v": 193003369.0
+                    },
+                    {
+                      "k": "login",
+                      "v": "Skidaw23"
+                    },
+                    {
+                      "k": "node_id",
+                      "v": "U_kgDOC4D_aQ"
+                    },
+                    {
+                      "k": "organizations_url",
+                      "v": "https://api.github.com/users/Skidaw23/orgs"
+                    },
+                    {
+                      "k": "received_events_url",
+                      "v": "https://api.github.com/users/Skidaw23/received_events"
+                    },
+                    {
+                      "k": "repos_url",
+                      "v": "https://api.github.com/users/Skidaw23/repos"
+                    },
+                    {
+                      "k": "site_admin",
+                      "v": false
+                    },
+                    {
+                      "k": "starred_url",
+                      "v": "https://api.github.com/users/Skidaw23/starred{/owner}{/repo}"
+                    },
+                    {
+                      "k": "subscriptions_url",
+                      "v": "https://api.github.com/users/Skidaw23/subscriptions"
+                    },
+                    {
+                      "k": "type",
+                      "v": "User"
+                    },
+                    {
+                      "k": "url",
+                      "v": "https://api.github.com/users/Skidaw23"
+                    },
+                    {
+                      "k": "user_view_type",
+                      "v": "public"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "k": "workflow_ref",
+          "v": "Royal-Equips-Org/royal-equips-orchestrator/.github/workflows/e2e.yml@refs/pull/112/merge"
+        },
+        {
+          "k": "workflow_sha",
+          "v": "3de0cd8a08575369c04a276f1994eff13ac7b57c"
+        },
+        {
+          "k": "repository_id",
+          "v": "1034734350"
+        },
+        {
+          "k": "triggering_actor",
+          "v": "Skidaw23"
+        }
+      ]
+    },
+    "inputs": {
+      "t": 2
+    },
+    "job": {
+      "t": 2,
+      "d": [
+        {
+          "k": "check_run_id",
+          "v": 50846340897.0
+        }
+      ]
+    },
+    "matrix": null,
+    "needs": {
+      "t": 2
+    },
+    "strategy": {
+      "t": 2,
+      "d": [
+        {
+          "k": "fail-fast",
+          "v": true
+        },
+        {
+          "k": "job-index",
+          "v": 0.0
+        },
+        {
+          "k": "job-total",
+          "v": 1.0
+        },
+        {
+          "k": "max-parallel",
+          "v": 1.0
+        }
+      ]
+    },
+    "vars": {
+      "t": 2
+    }
+  },
+  "billingOwnerId": "E_kgDOAAWH_A"
+}
+[2025-09-20 13:03:04Z INFO JobRunner] Job ID a337880f-c6ab-5612-aa8d-94ca6253d935
+[2025-09-20 13:03:04Z INFO ConfigurationStore] currentAssemblyLocation: C:\Users\projo\royal-equips-orchestrator\actions-runner\bin\Runner.Worker.dll
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO ConfigurationStore] binPath: C:\Users\projo\royal-equips-orchestrator\actions-runner\bin
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO ConfigurationStore] RootFolder: C:\Users\projo\royal-equips-orchestrator\actions-runner
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known config file 'Runner': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner'
+[2025-09-20 13:03:04Z INFO ConfigurationStore] ConfigFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known config file 'MigratedRunner': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner_migrated'
+[2025-09-20 13:03:04Z INFO ConfigurationStore] MigratedConfigFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner_migrated
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known config file 'Credentials': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials'
+[2025-09-20 13:03:04Z INFO ConfigurationStore] CredFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known config file 'MigratedCredentials': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials_migrated'
+[2025-09-20 13:03:04Z INFO ConfigurationStore] MigratedCredFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials_migrated
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known config file 'Service': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.service'
+[2025-09-20 13:03:04Z INFO ConfigurationStore] ServiceConfigFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.service
+[2025-09-20 13:03:04Z INFO ConfigurationStore] Read setting file: 421 chars
+[2025-09-20 13:03:04Z INFO JobRunner] Initializing launch client
+[2025-09-20 13:03:04Z INFO JobServerQueue] Initializing results client
+[2025-09-20 13:03:04Z INFO ResultServer] Creating websocket client ...wss://results-receiver.actions.githubusercontent.com/_ws/ingest.sock
+[2025-09-20 13:03:04Z INFO ResultServer] Attempting to start websocket client with delay 00:00:00.
+[2025-09-20 13:03:04Z INFO JobServerQueue] Start process web console line queue.
+[2025-09-20 13:03:04Z INFO JobServerQueue] Start process file upload queue.
+[2025-09-20 13:03:04Z INFO JobServerQueue] Start results file upload queue.
+[2025-09-20 13:03:04Z INFO JobServerQueue] Starting results-based upload queue...
+[2025-09-20 13:03:04Z INFO JobServerQueue] Start process timeline update queue.
+[2025-09-20 13:03:04Z INFO ExecutionContext] Initializing Job context
+[2025-09-20 13:03:04Z INFO ExecutionContext] Initialize GitHub context
+[2025-09-20 13:03:04Z INFO ExecutionContext] Initialize Env context
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:04Z INFO JobRunner] Starting the job execution context.
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO JobRunner] Validating directory permissions for: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Tools': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_tool'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 13:03:04Z INFO JobRunner] Getting job extension.
+[2025-09-20 13:03:04Z INFO JobRunner] Initialize job. Getting all job steps.
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known config file 'Credentials': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known config file 'SetupInfo': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.setup_info'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO PipelineDirectoryManager] Loading tracking config if exists: C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_PipelineMapping\Royal-Equips-Org/royal-equips-orchestrator\PipelineFolder.json
+[2025-09-20 13:03:04Z INFO PipelineDirectoryManager] Updating job run properties.
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO JobExtension] Downloading actions
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 13:03:04Z INFO JobExtension] Adding .
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:04Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:05Z INFO JobExtension] Total accessible running process: 330.
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:05Z INFO JobExtension] Start checking service connectivity in background.
+[2025-09-20 13:03:05Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "setup_job",
+  "type": "runner",
+  "stage": "Pre",
+  "stepId": "73ecad0b-6897-451f-8d93-728e1eed90c4",
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 1,
+  "startTime": "2025-09-20T13:03:04.6941271Z",
+  "finishTime": "2025-09-20T13:03:05.0142386Z"
+}.
+[2025-09-20 13:03:05Z INFO JobRunner] Total job steps: 1.
+[2025-09-20 13:03:05Z INFO JobRunner] Run all job steps.
+[2025-09-20 13:03:05Z INFO StepsRunner] Processing step: DisplayName='Run echo "ok"'
+[2025-09-20 13:03:05Z INFO StepsRunner] Evaluating: success()
+[2025-09-20 13:03:05Z INFO StepsRunner] Result: true
+[2025-09-20 13:03:05Z INFO StepsRunner] Starting the step.
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:05Z INFO StepsRunner] Which2: 'chcp'
+[2025-09-20 13:03:05Z INFO StepsRunner] Location: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   File name: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Arguments: '65001'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper] Process started with process id 3068, waiting for process exit.
+[2025-09-20 13:03:05Z INFO Worker] Listening for cancel message from the channel.
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 13:03:05Z INFO Worker] Waiting for the job to complete or for a cancel message from the channel.
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper] Finished process 3068 with exit code 0, and elapsed time 00:00:00.0400796.
+[2025-09-20 13:03:05Z INFO StepsRunner] Successfully returned to code page 65001 (UTF8)
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 13:03:05Z INFO ExecutionContext] Write event payload to C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_github_workflow\event.json
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 13:03:05Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IFileCommandExtension'
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.AddPathFileCommand, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SetEnvFileCommand, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.CreateStepSummaryCommand, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SaveStateFileCommand, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SetOutputFileCommand, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IActionCommandExtension'
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.InternalPluginSetRepoPathCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SetEnvCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SetOutputCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SaveStateCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.AddPathCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.AddMaskCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.AddMatcherCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.RemoveMatcherCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.WarningCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.ErrorCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.NoticeCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.DebugCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.GroupCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.EndGroupCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.EchoCommandExtension, Runner.Worker
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command internal-set-repo-path
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command set-env
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command set-output
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command save-state
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command add-path
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command add-mask
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command add-matcher
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command remove-matcher
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command warning
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command error
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command notice
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command debug
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command group
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command endgroup
+[2025-09-20 13:03:05Z INFO ActionCommandManager] Register action command extension for command echo
+[2025-09-20 13:03:05Z INFO ScriptHandler] Which2: 'pwsh'
+[2025-09-20 13:03:05Z INFO ResultServer] Successfully started websocket client.
+[2025-09-20 13:03:05Z INFO JobServerQueue] Try to append 1 batches web console lines for record '73ecad0b-6897-451f-8d93-728e1eed90c4', success rate: 1/1.
+[2025-09-20 13:03:05Z INFO ScriptHandler] Location: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 13:03:05Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 13:03:05Z INFO ScriptHandler] Which2: 'pwsh'
+[2025-09-20 13:03:05Z INFO ScriptHandler] Location: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   File name: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Arguments: '-command ". 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\15409679-127c-45b5-8b9c-8d6d25b0173a.ps1'"'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\royal-equips-orchestrator\royal-equips-orchestrator'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 13:03:05Z INFO ProcessInvokerWrapper] Process started with process id 18588, waiting for process exit.
+[2025-09-20 13:03:05Z INFO JobServerQueue] Try to append 1 batches web console lines for record '73ecad0b-6897-451f-8d93-728e1eed90c4', success rate: 1/1.
+[2025-09-20 13:03:05Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'ad34544f-8935-4e36-be89-6c683f62b560', success rate: 1/1.
+[2025-09-20 13:03:05Z INFO JobServerQueue] Job timeline record has been updated for the first time.
+[2025-09-20 13:03:05Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 13:03:05Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\61909da6-3dc5-4fac-a814-8b833f2817ba_73ecad0b-6897-451f-8d93-728e1eed90c4.1
+[2025-09-20 13:03:05Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2025-09-20 13:03:06Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2025-09-20 13:03:07Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 13:03:07Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 13:03:07Z INFO ProcessInvokerWrapper] Finished process 18588 with exit code 0, and elapsed time 00:00:02.0116932.
+[2025-09-20 13:03:07Z INFO CreateStepSummaryCommand] Step Summary file (C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_runner_file_commands\step_summary_f36e5e4a-e2da-4c35-b9ac-aac56e22ceaf) is empty; skipping attachment upload
+[2025-09-20 13:03:07Z INFO StepsRunner] Step result: 
+[2025-09-20 13:03:07Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "pwsh",
+  "type": "run",
+  "stage": "Main",
+  "stepId": "ad34544f-8935-4e36-be89-6c683f62b560",
+  "stepContextName": "__run",
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 3,
+  "startTime": "2025-09-20T13:03:05.0297303Z",
+  "finishTime": "2025-09-20T13:03:07.2936339Z"
+}.
+[2025-09-20 13:03:07Z INFO StepsRunner] No need for updating job result with current step result 'Succeeded'.
+[2025-09-20 13:03:07Z INFO StepsRunner] Current state: job state = ''
+[2025-09-20 13:03:07Z INFO JobRunner] Finalize job.
+[2025-09-20 13:03:07Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:07Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:07Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:07Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:07Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:07Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:07Z INFO JobExtension] Initialize Env context
+[2025-09-20 13:03:07Z INFO JobExtension] Initialize steps context
+[2025-09-20 13:03:07Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 13:03:07Z INFO JobExtension] Total accessible running process: 323.
+[2025-09-20 13:03:07Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\61909da6-3dc5-4fac-a814-8b833f2817ba_ad34544f-8935-4e36-be89-6c683f62b560.1
+[2025-09-20 13:03:07Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'ad34544f-8935-4e36-be89-6c683f62b560', success rate: 1/1.
+[2025-09-20 13:03:07Z INFO JobServerQueue] Try to append 1 batches web console lines for record '82348f99-f449-4e10-a55f-11dcd7d010b2', success rate: 1/1.
+[2025-09-20 13:03:07Z INFO JobExtension] Inspecting process environment variables. PID: 3884 (svchost)
+[2025-09-20 13:03:07Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "complete_job",
+  "type": "runner",
+  "stage": "Post",
+  "stepId": "82348f99-f449-4e10-a55f-11dcd7d010b2",
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 1,
+  "startTime": "2025-09-20T13:03:07.3008125Z",
+  "finishTime": "2025-09-20T13:03:07.3382045Z"
+}.
+[2025-09-20 13:03:07Z INFO JobRunner] Job result after all job steps finish: Succeeded
+[2025-09-20 13:03:07Z INFO JobRunner] Completing the job execution context.
+[2025-09-20 13:03:07Z INFO JobRunner] Shutting down the job server queue.
+[2025-09-20 13:03:07Z INFO JobServerQueue] Fire signal to shutdown all queues.
+[2025-09-20 13:03:07Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2025-09-20 13:03:08Z INFO JobServerQueue] All queue process task stopped.
+[2025-09-20 13:03:08Z INFO JobServerQueue] Web console line queue drained.
+[2025-09-20 13:03:08Z INFO JobServerQueue] Uploading 3 files in one shot.
+[2025-09-20 13:03:08Z INFO JobServerQueue] Try to upload 3 log files or attachments, success rate: 3/3.
+[2025-09-20 13:03:08Z INFO JobServerQueue] File upload queue drained.
+[2025-09-20 13:03:08Z INFO JobServerQueue] Starting results-based upload queue...
+[2025-09-20 13:03:08Z INFO JobServerQueue] Uploading 2 file(s) in one shot through results service.
+[2025-09-20 13:03:08Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 13:03:08Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\61909da6-3dc5-4fac-a814-8b833f2817ba_82348f99-f449-4e10-a55f-11dcd7d010b2.1
+[2025-09-20 13:03:09Z INFO JobServerQueue] Got a job log file to send to results service.
+[2025-09-20 13:03:09Z INFO JobServerQueue] Starting upload of job log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\61909da6-3dc5-4fac-a814-8b833f2817ba_a337880f-c6ab-5612-aa8d-94ca6253d935.1
+[2025-09-20 13:03:09Z INFO JobServerQueue] Tried to upload 2 file(s) to results, success rate: 2/2.
+[2025-09-20 13:03:09Z INFO JobServerQueue] Results upload queue drained.
+[2025-09-20 13:03:09Z INFO JobServerQueue] Timeline update queue drained.
+[2025-09-20 13:03:09Z INFO JobServerQueue] Disposing job server ...
+[2025-09-20 13:03:09Z INFO JobServerQueue] Disposing results server ...
+[2025-09-20 13:03:09Z INFO JobServerQueue] All queue process tasks have been stopped, and all queues are drained.
+[2025-09-20 13:03:09Z INFO TempDirectoryManager] Cleaning runner temp folder: C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp
+[2025-09-20 13:03:09Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 13:03:09Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 13:03:09Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 13:03:09Z INFO HostContext] Well known config file 'Telemetry': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\.telemetry'
+[2025-09-20 13:03:09Z INFO JobRunner] Raising job completed against run service
+[2025-09-20 13:03:09Z INFO Worker] Job completed.
