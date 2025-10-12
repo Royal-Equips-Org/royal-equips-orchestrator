@@ -1,0 +1,173 @@
+name: Single Origin Smoke Tests
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL to test (e.g., https://command.royalequips.nl)'
+        required: true
+        default: 'https://command.royalequips.nl'
+
+env:
+  TARGET_URL: ${{ github.event.inputs.target_url || 'https://command.royalequips.nl' }}
+
+jobs:
+  smoke-tests:
+    name: Post-Deploy Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Test 1 - Homepage loads with correct title
+        run: |
+          echo "🧪 Testing homepage load and title..."
+          response=$(curl -fsS "$TARGET_URL/" -H "User-Agent: RoyalEquips-SmokeTest/1.0")
+          if echo "$response" | grep -q "<title>ROYAL EQUIPS EMPIRE COMMAND CENTER</title>"; then
+            echo "✅ Homepage title check passed"
+          else
+            echo "❌ Homepage title check failed"
+            echo "Response excerpt:"
+            echo "$response" | head -20
+            exit 1
+          fi
+
+      - name: Test 2 - Version endpoint responds
+        run: |
+          echo "🧪 Testing version endpoint..."
+          response=$(curl -fsS "$TARGET_URL/version" -H "Accept: application/json")
+          if echo "$response" | jq -e '.release' > /dev/null; then
+            echo "✅ Version endpoint check passed"
+            echo "Release: $(echo "$response" | jq -r '.release')"
+          else
+            echo "❌ Version endpoint check failed"
+            echo "Response: $response"
+            exit 1
+          fi
+
+      - name: Test 3 - Health endpoint responds
+        run: |
+          echo "🧪 Testing health endpoint..."
+          response=$(curl -fsS "$TARGET_URL/v1/healthz" -H "Accept: application/json")
+          if echo "$response" | jq -e '.status' > /dev/null; then
+            echo "✅ Health endpoint check passed"
+            echo "Status: $(echo "$response" | jq -r '.status')"
+          else
+            echo "❌ Health endpoint check failed"
+            echo "Response: $response"
+            exit 1
+          fi
+
+      - name: Test 4 - Readiness endpoint responds
+        run: |
+          echo "🧪 Testing readiness endpoint..."
+          response=$(curl -fsSL "$TARGET_URL/v1/readyz" -H "Accept: application/json")
+          status_code=$(curl -o /dev/null -s -w "%{http_code}" "$TARGET_URL/v1/readyz")
+          if [[ "$status_code" == "200" ]] || [[ "$status_code" == "503" ]]; then
+            echo "✅ Readiness endpoint responding (HTTP $status_code)"
+            if echo "$response" | jq -e '.' > /dev/null 2>&1; then
+              echo "Status: $(echo "$response" | jq -r '.status // "unknown"')"
+            fi
+          else
+            echo "❌ Readiness endpoint check failed (HTTP $status_code)"
+            exit 1
+          fi
+
+      - name: Test 5 - Cache headers validation
+        run: |
+          echo "🧪 Testing cache headers..."
+          # Test index.html has no-store
+          html_headers=$(curl -sI "$TARGET_URL/" | tr -d '\r')
+          if echo "$html_headers" | grep -i "cache-control" | grep -q "no-store"; then
+            echo "✅ HTML cache headers correct (no-store)"
+          else
+            echo "❌ HTML cache headers incorrect"
+            echo "Headers:"
+            echo "$html_headers" | grep -i "cache-control" || echo "No cache-control header found"
+            exit 1
+          fi
+
+      - name: Test 6 - API endpoints accessible
+        run: |
+          echo "🧪 Testing API accessibility..."
+          # Test system status (if available)
+          if curl -fsS "$TARGET_URL/v1/system/status" -H "Accept: application/json" > /dev/null 2>&1; then
+            echo "✅ System status endpoint accessible"
+          else
+            echo "⚠️ System status endpoint not accessible (may be normal)"
+          fi
+
+      - name: Test 7 - Circuit breaker reset endpoint
+        run: |
+          echo "🧪 Testing circuit breaker reset..."
+          response=$(curl -fsSL -X POST "$TARGET_URL/v1/admin/circuit/reset" -H "Accept: application/json" -H "Content-Type: application/json")
+          status_code=$(curl -o /dev/null -s -w "%{http_code}" -X POST "$TARGET_URL/v1/admin/circuit/reset")
+          if [[ "$status_code" == "200" ]]; then
+          result=$(curl -s -w "\n%{http_code}" -X POST "$TARGET_URL/v1/admin/circuit/reset" -H "Accept: application/json" -H "Content-Type: application/json")
+          response=$(echo "$result" | sed '$d')
+          status_code=$(echo "$result" | tail -n1)
+              echo "Reset confirmed: $(echo "$response" | jq -r '.ok')"
+            fi
+          else
+            echo "❌ Circuit breaker reset failed (HTTP $status_code)"
+            exit 1
+          fi
+
+      - name: Test 8 - Single origin validation
+        run: |
+          echo "🧪 Testing single origin architecture..."
+          # Verify no CORS preflight needed for same-origin requests
+          origin_header=$(curl -sI "$TARGET_URL/v1/healthz" | grep -i "access-control-allow-origin" || true)
+          if [[ -z "$origin_header" ]]; then
+            echo "✅ Single origin confirmed (no CORS headers needed)"
+          else
+            echo "⚠️ CORS headers present: $origin_header"
+            echo "This may indicate multi-origin setup, but not necessarily an error"
+          fi
+
+      - name: Performance baseline check
+        run: |
+          echo "🧪 Testing performance baseline..."
+          start_time=$(date +%s%N)
+          curl -fsSL "$TARGET_URL/" > /dev/null
+          end_time=$(date +%s%N)
+          duration=$(( (end_time - start_time) / 1000000 ))
+          echo "Homepage load time: ${duration}ms"
+          if [[ $duration -lt 5000 ]]; then
+            echo "✅ Performance within acceptable range (<5s)"
+          else
+            echo "⚠️ Performance slower than expected (${duration}ms)"
+          fi
+
+      - name: Generate test report
+        if: always()
+        run: |
+          echo "## Smoke Test Results for $TARGET_URL" > smoke-test-results.md
+          echo "" >> smoke-test-results.md
+          echo "- Target URL: $TARGET_URL" >> smoke-test-results.md
+          echo "- Test time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> smoke-test-results.md
+          echo "- Workflow: ${{ github.workflow }}" >> smoke-test-results.md
+          echo "- Run ID: ${{ github.run_id }}" >> smoke-test-results.md
+          echo "" >> smoke-test-results.md
+          echo "All critical endpoints validated for single-origin architecture." >> smoke-test-results.md
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results-${{ github.run_id }}
+          path: smoke-test-results.md
+          retention-days: 30

@@ -1,0 +1,107 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  checks: write
+  actions: read
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flask flask-cors
+        pip install ruff black pytest
+    
+    - name: Lint with Ruff
+      run: |
+        ruff check app/ --output-format=github
+        
+    - name: Check code formatting with Black
+      run: |
+        black --check app/ wsgi.py
+
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flask flask-cors pytest pytest-cov
+    
+    - name: Run tests
+      run: |
+        python -m pytest tests/test_flask_app.py -v --cov=app --cov-report=xml
+    
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      if: success()
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v5
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v6
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flask flask-cors gunicorn
+    
+    - name: Start application
+      run: |
+        gunicorn --bind 0.0.0.0:10000 --workers 1 --daemon wsgi:app
+        
+    - name: Wait for application to start
+      run: |
+        timeout 30 bash -c 'until curl -f http://localhost:10000/healthz; do sleep 1; done'
+    
+    - name: Run smoke tests
+      run: |
+        chmod +x scripts/smoke_test.sh
+        ./scripts/smoke_test.sh
+    
+    - name: Stop application
+      if: always()
+      run: |
+        pkill -f gunicorn || true

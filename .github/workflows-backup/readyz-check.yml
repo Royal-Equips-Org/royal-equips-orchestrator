@@ -1,0 +1,126 @@
+name: Ready Check
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/aira/**'
+      - 'workers/**'
+      - 'src/**'
+      - '.github/workflows/readyz-check.yml'
+  push:
+    branches: [main, master]
+    paths:
+      - 'apps/aira/**'
+      - 'workers/**'
+      - 'src/**'
+
+jobs:
+  readiness-check:
+    name: Health & Readiness Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build AIRA backend
+        run: pnpm --filter @royal-equips/aira build
+
+      - name: Start AIRA backend
+        run: |
+          # Set environment variables
+          export PORT=10000
+          export HOST=localhost
+          export REDIS_HOST=localhost
+          export REDIS_PORT=6379
+          export NODE_ENV=test
+          
+          # Start backend in background
+          pnpm --filter @royal-equips/aira start &
+          BACKEND_PID=$!
+          echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
+          
+          # Wait for startup
+          echo "Waiting for backend to start..."
+          for i in {1..30}; do
+            if curl -f http://localhost:10000/health >/dev/null 2>&1; then
+              echo "Backend started successfully"
+              break
+            fi
+            echo "Attempt $i/30: Backend not ready yet..."
+            sleep 2
+          done
+
+      - name: Test health endpoints
+        run: |
+          echo "Testing /health endpoint..."
+          curl -f http://localhost:10000/health | jq .
+          
+          echo "Testing /v1/healthz endpoint..."
+          curl -f http://localhost:10000/v1/healthz | jq .
+          
+          echo "Testing /v1/readyz endpoint..."
+          if curl -f http://localhost:10000/v1/readyz | jq .; then
+            echo "✅ Readiness check passed"
+          else
+            echo "❌ Readiness check failed"
+            exit 1
+          fi
+
+      - name: Test system endpoints
+        run: |
+          echo "Testing /v1/system/status endpoint..."
+          curl -f http://localhost:10000/v1/system/status | jq .
+          
+          echo "Testing /v1/admin/circuit/state endpoint..."
+          curl -f http://localhost:10000/v1/admin/circuit/state | jq .
+
+      - name: Test circuit breaker reset
+        run: |
+          echo "Testing circuit breaker reset..."
+          curl -X POST -f http://localhost:10000/v1/admin/circuit/reset | jq .
+          
+          echo "Verifying reset state..."
+          curl -f http://localhost:10000/v1/admin/circuit/state | jq .
+
+      - name: Test metrics endpoint
+        run: |
+          echo "Testing Prometheus metrics endpoint..."
+          curl -f http://localhost:10000/metrics | head -20
+
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ ! -z "$BACKEND_PID" ]; then
+            kill $BACKEND_PID || true
+          fi

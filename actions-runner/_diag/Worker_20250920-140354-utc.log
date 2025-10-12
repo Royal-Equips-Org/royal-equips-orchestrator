@@ -1,0 +1,3589 @@
+[2025-09-20 14:03:54Z INFO HostContext] No proxy settings were found based on environmental variables (http_proxy/https_proxy/HTTP_PROXY/HTTPS_PROXY)
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'Credentials': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'Runner': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner'
+[2025-09-20 14:03:54Z INFO Worker] Version: 2.328.0
+[2025-09-20 14:03:54Z INFO Worker] Commit: 6f9a9110adce65f44ca6f7c0ae142b9cc6af937b
+[2025-09-20 14:03:54Z INFO Worker] Culture: en-NL
+[2025-09-20 14:03:54Z INFO Worker] UI Culture: en-US
+[2025-09-20 14:03:54Z INFO Worker] Waiting to receive the job message from the channel.
+[2025-09-20 14:03:54Z INFO ProcessChannel] Receiving message of length 22896, with hash 'd1abe7f0b44f05b02262614268cd66face8c3089359a851ef69d62fd2d09f9dc'
+[2025-09-20 14:03:54Z INFO Worker] Message received.
+[2025-09-20 14:03:54Z INFO Worker] Job message:
+ {
+  "fileTable": [
+    ".github/workflows/empire-orchestrator.yml"
+  ],
+  "mask": [
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    },
+    {
+      "type": "regex",
+      "value": "***"
+    }
+  ],
+  "steps": [
+    {
+      "type": "action",
+      "reference": {
+        "type": "repository",
+        "name": "actions/checkout",
+        "ref": "v4",
+        "repositoryType": "GitHub"
+      },
+      "displayNameToken": {
+        "type": 0,
+        "file": 1,
+        "line": 25,
+        "col": 15,
+        "lit": "Checkout full history"
+      },
+      "contextName": "__actions_checkout",
+      "inputs": {
+        "type": 2,
+        "file": 1,
+        "line": 28,
+        "col": 11,
+        "map": [
+          {
+            "key": {
+              "type": 0,
+              "file": 1,
+              "line": 28,
+              "col": 11,
+              "lit": "fetch-depth"
+            },
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 28,
+              "col": 24,
+              "lit": "0"
+            }
+          }
+        ]
+      },
+      "condition": "success()",
+      "id": "6e9c6367-1e01-4bc0-a04d-f14b08e6423c",
+      "name": "__actions_checkout"
+    },
+    {
+      "type": "action",
+      "reference": {
+        "type": "script"
+      },
+      "displayNameToken": {
+        "type": 0,
+        "file": 1,
+        "line": 30,
+        "col": 15,
+        "lit": "Git identity"
+      },
+      "contextName": "__run",
+      "inputs": {
+        "type": 2,
+        "map": [
+          {
+            "key": "script",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 31,
+              "col": 14,
+              "lit": "git config user.name \"empire-orchestrator-bot\"\ngit config user.email \"bot@royalequips.org\"\ngit config gc.auto 0\n"
+            }
+          }
+        ]
+      },
+      "condition": "success()",
+      "id": "efa3d2ce-53cd-4fe4-855d-fcf250052285",
+      "name": "__run"
+    },
+    {
+      "type": "action",
+      "reference": {
+        "type": "script"
+      },
+      "displayNameToken": {
+        "type": 0,
+        "file": 1,
+        "line": 36,
+        "col": 15,
+        "lit": "Sync to latest origin/master (no branch creation)"
+      },
+      "contextName": "__run_2",
+      "inputs": {
+        "type": 2,
+        "map": [
+          {
+            "key": "script",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 37,
+              "col": 14,
+              "lit": "git fetch origin master\ngit checkout -B master origin/master\n# Zorgt voor rebase-achtig gedrag bij latere pulls in deze job\ngit config pull.rebase true\ngit config rebase.autoStash true\n# Hard reset naar remote om spookconflicten te voorkomen\ngit reset --hard origin/master\ngit status\n"
+            }
+          }
+        ]
+      },
+      "condition": "success()",
+      "id": "d6f06d11-99c7-438b-914b-527a43ddffec",
+      "name": "__run_2"
+    },
+    {
+      "type": "action",
+      "reference": {
+        "type": "script"
+      },
+      "displayNameToken": {
+        "type": 0,
+        "file": 1,
+        "line": 47,
+        "col": 15,
+        "lit": "Empire scan + real logic (agents, APIs, scraping, MI)"
+      },
+      "contextName": "__run_3",
+      "inputs": {
+        "type": 2,
+        "map": [
+          {
+            "key": "script",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 49,
+              "col": 14,
+              "lit": "set -eo pipefail\n# Alle taken roepen bestaande scripts aan. Niets maakt branches.\n# Zorg dat deze scripts idempotent zijn en alleen echte wijzigingen schrijven.\nif [ -x scripts/empire/scan_repo.sh ]; then scripts/empire/scan_repo.sh; fi\nif [ -x scripts/empire/scrape_markets.sh ]; then scripts/empire/scrape_markets.sh; fi\nif [ -x scripts/empire/market_intel.py ]; then python3 scripts/empire/market_intel.py; fi\nif [ -x scripts/empire/apply_business_logic.sh ]; then scripts/empire/apply_business_logic.sh; fi\nif [ -x scripts/empire/update_apis_endpoints.sh ]; then scripts/empire/update_apis_endpoints.sh; fi\nif [ -x scripts/empire/generate_tests_and_docs.sh ]; then scripts/empire/generate_tests_and_docs.sh; fi\n"
+            }
+          },
+          {
+            "key": "shell",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 48,
+              "col": 16,
+              "lit": "bash"
+            }
+          }
+        ]
+      },
+      "condition": "success()",
+      "id": "e0f4e7e6-0084-44f6-832a-427fd5601b61",
+      "name": "__run_3"
+    },
+    {
+      "type": "action",
+      "reference": {
+        "type": "script"
+      },
+      "displayNameToken": {
+        "type": 0,
+        "file": 1,
+        "line": 60,
+        "col": 15,
+        "lit": "Lint + test (fail fast)"
+      },
+      "contextName": "__run_4",
+      "inputs": {
+        "type": 2,
+        "map": [
+          {
+            "key": "script",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 61,
+              "col": 14,
+              "lit": "if [ -f requirements.txt ]; then pipx run nox -s tests || true; fi\nif command -v pnpm >/dev/null 2>&1; then pnpm -v || true; fi\n# voeg je linters/tests hier toe indien aanwezig:\n# ruff, eslint, pytest, jest, etc.\n"
+            }
+          }
+        ]
+      },
+      "condition": "success()",
+      "id": "d29bad1c-e5dc-4711-98f9-86a318183cf4",
+      "name": "__run_4"
+    },
+    {
+      "type": "action",
+      "reference": {
+        "type": "script"
+      },
+      "displayNameToken": {
+        "type": 0,
+        "file": 1,
+        "line": 67,
+        "col": 15,
+        "lit": "Commit changes if any"
+      },
+      "contextName": "commit",
+      "inputs": {
+        "type": 2,
+        "map": [
+          {
+            "key": "script",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 69,
+              "col": 14,
+              "lit": "set -eo pipefail\ngit add -A\nif git diff --cached --quiet; then\n  echo \"changed=false\" >> $GITHUB_OUTPUT\n  exit 0\nfi\nCOMMIT_MSG=\"chore(empire): autonomous upgrades (agents/APIs/MI)\"\ngit commit -m \"$COMMIT_MSG\"\necho \"changed=true\" >> $GITHUB_OUTPUT\n"
+            }
+          }
+        ]
+      },
+      "condition": "success()",
+      "id": "bf93b03f-a1e3-4fba-9d0f-d998aa702743",
+      "name": "commit"
+    },
+    {
+      "type": "action",
+      "reference": {
+        "type": "script"
+      },
+      "displayNameToken": {
+        "type": 0,
+        "file": 1,
+        "line": 80,
+        "col": 15,
+        "lit": "Push to master (attempt 1)"
+      },
+      "contextName": "__run_5",
+      "inputs": {
+        "type": 2,
+        "map": [
+          {
+            "key": "script",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 82,
+              "col": 14,
+              "lit": "set -eo pipefail\ngit push origin master\n"
+            }
+          }
+        ]
+      },
+      "condition": "success() && (steps.commit.outputs.changed == 'true')",
+      "id": "6e0c3bf9-396a-4d52-9ff6-3e10a84d9c65",
+      "name": "__run_5"
+    },
+    {
+      "type": "action",
+      "reference": {
+        "type": "script"
+      },
+      "displayNameToken": {
+        "type": 0,
+        "file": 1,
+        "line": 86,
+        "col": 15,
+        "lit": "Handle push race (rebase + retry once)"
+      },
+      "contextName": "__run_6",
+      "inputs": {
+        "type": 2,
+        "map": [
+          {
+            "key": "script",
+            "value": {
+              "type": 0,
+              "file": 1,
+              "line": 88,
+              "col": 14,
+              "lit": "set -eo pipefail\necho \"Push rejected. Rebasing on latest origin/master and retrying…\"\ngit fetch origin master\n# neem jouw wijzigingen bovenop de nieuwste master\ngit rebase origin/master\ngit push origin master\n"
+            }
+          }
+        ]
+      },
+      "condition": "failure() && steps.commit.outputs.changed == 'true'",
+      "id": "32beef32-75fc-45c9-9b9b-9e7228532a90",
+      "name": "__run_6"
+    }
+  ],
+  "variables": {
+    "Actions.EnableHttpRedirects": {
+      "value": "true"
+    },
+    "DistributedTask.AddWarningToNode12Action": {
+      "value": "true"
+    },
+    "DistributedTask.AddWarningToNode16Action": {
+      "value": "true"
+    },
+    "DistributedTask.AllowRunnerContainerHooks": {
+      "value": "true"
+    },
+    "DistributedTask.DeprecateStepOutputCommands": {
+      "value": "true"
+    },
+    "DistributedTask.DetailUntarFailure": {
+      "value": "true"
+    },
+    "DistributedTask.EnableCompositeActions": {
+      "value": "true"
+    },
+    "DistributedTask.EnableJobServerQueueTelemetry": {
+      "value": "true"
+    },
+    "DistributedTask.EnhancedAnnotations": {
+      "value": "true"
+    },
+    "DistributedTask.ForceGithubJavascriptActionsToNode16": {
+      "value": "true"
+    },
+    "DistributedTask.ForceGithubJavascriptActionsToNode20": {
+      "value": "true"
+    },
+    "DistributedTask.LogTemplateErrorsAsDebugMessages": {
+      "value": "true"
+    },
+    "DistributedTask.MarkJobAsFailedOnWorkerCrash": {
+      "value": "true"
+    },
+    "DistributedTask.NewActionMetadata": {
+      "value": "true"
+    },
+    "DistributedTask.UploadStepSummary": {
+      "value": "true"
+    },
+    "DistributedTask.UseActionArchiveCache": {
+      "value": "true"
+    },
+    "DistributedTask.UseWhich2": {
+      "value": "true"
+    },
+    "RunService.FixEmbeddedIssues": {
+      "value": "true"
+    },
+    "actions_add_check_run_id_to_job_context": {
+      "value": "true"
+    },
+    "actions_display_helpful_actions_download_errors": {
+      "value": "true"
+    },
+    "actions_skip_retry_complete_job_upon_known_errors": {
+      "value": "true"
+    },
+    "actions_uses_cache_service_v2": {
+      "value": "true"
+    },
+    "github_token": {
+      "value": "***",
+      "isSecret": true
+    },
+    "system.from_run_service": {
+      "value": "true"
+    },
+    "system.github.job": {
+      "value": "orchestrate"
+    },
+    "system.github.launch_endpoint": {
+      "value": "https://launch.actions.githubusercontent.com"
+    },
+    "system.github.results_endpoint": {
+      "value": "https://results-receiver.actions.githubusercontent.com/"
+    },
+    "system.github.results_upload_with_sdk": {
+      "value": "true"
+    },
+    "system.github.token": {
+      "value": "***",
+      "isSecret": true
+    },
+    "system.github.token.permissions": {
+      "value": "{\"Contents\":\"write\",\"Issues\":\"write\",\"Metadata\":\"read\",\"PullRequests\":\"write\"}"
+    },
+    "system.orchestrationId": {
+      "value": "7a1ec0bf-c323-4dcd-beec-947eb43a7ff7.orchestrate.__default"
+    },
+    "system.phaseDisplayName": {
+      "value": "orchestrate"
+    },
+    "system.runner.lowdiskspacethreshold": {
+      "value": "100"
+    },
+    "system.runnerEnvironment": {
+      "value": "self-hosted"
+    },
+    "system.runnerGroupName": {
+      "value": "Default"
+    }
+  },
+  "messageType": "RunnerJobRequest",
+  "plan": {
+    "scopeIdentifier": "00000000-0000-0000-0000-000000000000",
+    "planType": "actions",
+    "version": 0,
+    "planId": "7a1ec0bf-c323-4dcd-beec-947eb43a7ff7",
+    "planGroup": null,
+    "artifactUri": null,
+    "artifactLocation": null,
+    "definition": null,
+    "owner": null
+  },
+  "timeline": {
+    "id": "7a1ec0bf-c323-4dcd-beec-947eb43a7ff7",
+    "changeId": 0,
+    "location": null
+  },
+  "jobId": "cccd6e0a-5464-526c-ae4b-824d891a83bf",
+  "jobDisplayName": "orchestrate",
+  "jobName": "__default",
+  "requestId": 0,
+  "lockedUntil": "0001-01-01T00:00:00",
+  "resources": {
+    "endpoints": [
+      {
+        "data": {
+          "ServerId": "",
+          "ServerName": "",
+          "CacheServerUrl": "https://artifactcache.actions.githubusercontent.com/xk3qvcjiUjW5hEniMvcUvA3VHwLAefAgotrXYzQB9pIOSmQn2J/",
+          "FeedStreamUrl": "wss://results-receiver.actions.githubusercontent.com/_ws/ingest.sock",
+          "ResultsServiceUrl": "https://results-receiver.actions.githubusercontent.com/",
+          "PipelinesServiceUrl": "https://pipelinesghubeus9.actions.githubusercontent.com/xk3qvcjiUjW5hEniMvcUvA3VHwLAefAgotrXYzQB9pIOSmQn2J/",
+          "GenerateIdTokenUrl": ""
+        },
+        "name": "SystemVssConnection",
+        "url": "https://run-actions-3-azure-eastus.actions.githubusercontent.com/124/",
+        "authorization": {
+          "parameters": {
+            "AccessToken": "***"
+          },
+          "scheme": "OAuth"
+        },
+        "isShared": false,
+        "isReady": true
+      }
+    ]
+  },
+  "contextData": {
+    "github": {
+      "t": 2,
+      "d": [
+        {
+          "k": "ref",
+          "v": "refs/heads/master"
+        },
+        {
+          "k": "sha",
+          "v": "e30f9a6390c014b388916dac5150f178a77ed570"
+        },
+        {
+          "k": "repository",
+          "v": "Royal-Equips-Org/royal-equips-orchestrator"
+        },
+        {
+          "k": "repository_owner",
+          "v": "Royal-Equips-Org"
+        },
+        {
+          "k": "repository_owner_id",
+          "v": "228205603"
+        },
+        {
+          "k": "repositoryUrl",
+          "v": "git://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+        },
+        {
+          "k": "run_id",
+          "v": "17880777337"
+        },
+        {
+          "k": "run_number",
+          "v": "33"
+        },
+        {
+          "k": "retention_days",
+          "v": "90"
+        },
+        {
+          "k": "run_attempt",
+          "v": "3"
+        },
+        {
+          "k": "artifact_cache_size_limit",
+          "v": "10"
+        },
+        {
+          "k": "repository_visibility",
+          "v": "private"
+        },
+        {
+          "k": "actor_id",
+          "v": "193003369"
+        },
+        {
+          "k": "actor",
+          "v": "Skidaw23"
+        },
+        {
+          "k": "workflow",
+          "v": "Empire Orchestrator"
+        },
+        {
+          "k": "head_ref",
+          "v": ""
+        },
+        {
+          "k": "base_ref",
+          "v": ""
+        },
+        {
+          "k": "event_name",
+          "v": "schedule"
+        },
+        {
+          "k": "server_url",
+          "v": "https://github.com"
+        },
+        {
+          "k": "api_url",
+          "v": "https://api.github.com"
+        },
+        {
+          "k": "graphql_url",
+          "v": "https://api.github.com/graphql"
+        },
+        {
+          "k": "ref_name",
+          "v": "master"
+        },
+        {
+          "k": "ref_protected",
+          "v": true
+        },
+        {
+          "k": "ref_type",
+          "v": "branch"
+        },
+        {
+          "k": "secret_source",
+          "v": "Actions"
+        },
+        {
+          "k": "event",
+          "v": {
+            "t": 2,
+            "d": [
+              {
+                "k": "schedule",
+                "v": "*/30 * * * *"
+              },
+              {
+                "k": "enterprise",
+                "v": {
+                  "t": 2,
+                  "d": [
+                    {
+                      "k": "avatar_url",
+                      "v": "https://avatars.githubusercontent.com/b/362492?v=4"
+                    },
+                    {
+                      "k": "created_at",
+                      "v": "2025-07-19T23:55:28Z"
+                    },
+                    {
+                      "k": "description",
+                      "v": "Skidaw23-Enterprise-Account"
+                    },
+                    {
+                      "k": "html_url",
+                      "v": "https://github.com/enterprises/Royal-Equips"
+                    },
+                    {
+                      "k": "id",
+                      "v": 362492.0
+                    },
+                    {
+                      "k": "name",
+                      "v": "royal-equips"
+                    },
+                    {
+                      "k": "node_id",
+                      "v": "E_kgDOAAWH_A"
+                    },
+                    {
+                      "k": "slug",
+                      "v": "Royal-Equips"
+                    },
+                    {
+                      "k": "updated_at",
+                      "v": "2025-08-31T00:31:37Z"
+                    },
+                    {
+                      "k": "website_url",
+                      "v": "https://github.com/enterprises/royal-equips"
+                    }
+                  ]
+                }
+              },
+              {
+                "k": "repository",
+                "v": {
+                  "t": 2,
+                  "d": [
+                    {
+                      "k": "allow_forking",
+                      "v": true
+                    },
+                    {
+                      "k": "archive_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/{archive_format}{/ref}"
+                    },
+                    {
+                      "k": "archived",
+                      "v": false
+                    },
+                    {
+                      "k": "assignees_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/assignees{/user}"
+                    },
+                    {
+                      "k": "blobs_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/blobs{/sha}"
+                    },
+                    {
+                      "k": "branches_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/branches{/branch}"
+                    },
+                    {
+                      "k": "clone_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+                    },
+                    {
+                      "k": "collaborators_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/collaborators{/collaborator}"
+                    },
+                    {
+                      "k": "comments_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/comments{/number}"
+                    },
+                    {
+                      "k": "commits_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/commits{/sha}"
+                    },
+                    {
+                      "k": "compare_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/compare/{base}...{head}"
+                    },
+                    {
+                      "k": "contents_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/contents/{+path}"
+                    },
+                    {
+                      "k": "contributors_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/contributors"
+                    },
+                    {
+                      "k": "created_at",
+                      "v": "2025-08-08T22:25:24Z"
+                    },
+                    {
+                      "k": "custom_properties",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "ai_agent_level",
+                            "v": "experimental"
+                          },
+                          {
+                            "k": "business_owner",
+                            "v": "royal-equips/platform-admins"
+                          },
+                          {
+                            "k": "data_classification",
+                            "v": "internal"
+                          },
+                          {
+                            "k": "shopify_module",
+                            "v": "general"
+                          },
+                          {
+                            "k": "system_tier",
+                            "v": "sandbox"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "default_branch",
+                      "v": "master"
+                    },
+                    {
+                      "k": "deployments_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/deployments"
+                    },
+                    {
+                      "k": "description",
+                      "v": null
+                    },
+                    {
+                      "k": "disabled",
+                      "v": false
+                    },
+                    {
+                      "k": "downloads_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/downloads"
+                    },
+                    {
+                      "k": "events_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/events"
+                    },
+                    {
+                      "k": "fork",
+                      "v": false
+                    },
+                    {
+                      "k": "forks",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "forks_count",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "forks_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/forks"
+                    },
+                    {
+                      "k": "full_name",
+                      "v": "Royal-Equips-Org/royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "git_commits_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/commits{/sha}"
+                    },
+                    {
+                      "k": "git_refs_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/refs{/sha}"
+                    },
+                    {
+                      "k": "git_tags_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/tags{/sha}"
+                    },
+                    {
+                      "k": "git_url",
+                      "v": "git://github.com/Royal-Equips-Org/royal-equips-orchestrator.git"
+                    },
+                    {
+                      "k": "has_discussions",
+                      "v": false
+                    },
+                    {
+                      "k": "has_downloads",
+                      "v": true
+                    },
+                    {
+                      "k": "has_issues",
+                      "v": true
+                    },
+                    {
+                      "k": "has_pages",
+                      "v": false
+                    },
+                    {
+                      "k": "has_projects",
+                      "v": true
+                    },
+                    {
+                      "k": "has_wiki",
+                      "v": true
+                    },
+                    {
+                      "k": "homepage",
+                      "v": null
+                    },
+                    {
+                      "k": "hooks_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/hooks"
+                    },
+                    {
+                      "k": "html_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "id",
+                      "v": 1034734350.0
+                    },
+                    {
+                      "k": "is_template",
+                      "v": false
+                    },
+                    {
+                      "k": "issue_comment_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/comments{/number}"
+                    },
+                    {
+                      "k": "issue_events_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues/events{/number}"
+                    },
+                    {
+                      "k": "issues_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/issues{/number}"
+                    },
+                    {
+                      "k": "keys_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/keys{/key_id}"
+                    },
+                    {
+                      "k": "labels_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/labels{/name}"
+                    },
+                    {
+                      "k": "language",
+                      "v": "Python"
+                    },
+                    {
+                      "k": "languages_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/languages"
+                    },
+                    {
+                      "k": "license",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "key",
+                            "v": "mit"
+                          },
+                          {
+                            "k": "name",
+                            "v": "MIT License"
+                          },
+                          {
+                            "k": "node_id",
+                            "v": "MDc6TGljZW5zZTEz"
+                          },
+                          {
+                            "k": "spdx_id",
+                            "v": "MIT"
+                          },
+                          {
+                            "k": "url",
+                            "v": "https://api.github.com/licenses/mit"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "merges_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/merges"
+                    },
+                    {
+                      "k": "milestones_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/milestones{/number}"
+                    },
+                    {
+                      "k": "mirror_url",
+                      "v": null
+                    },
+                    {
+                      "k": "name",
+                      "v": "royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "node_id",
+                      "v": "R_kgDOPazLDg"
+                    },
+                    {
+                      "k": "notifications_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/notifications{?since,all,participating}"
+                    },
+                    {
+                      "k": "open_issues",
+                      "v": 3.0
+                    },
+                    {
+                      "k": "open_issues_count",
+                      "v": 3.0
+                    },
+                    {
+                      "k": "owner",
+                      "v": {
+                        "t": 2,
+                        "d": [
+                          {
+                            "k": "avatar_url",
+                            "v": "https://avatars.githubusercontent.com/u/228205603?v=4"
+                          },
+                          {
+                            "k": "events_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/events{/privacy}"
+                          },
+                          {
+                            "k": "followers_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/followers"
+                          },
+                          {
+                            "k": "following_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/following{/other_user}"
+                          },
+                          {
+                            "k": "gists_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/gists{/gist_id}"
+                          },
+                          {
+                            "k": "gravatar_id",
+                            "v": ""
+                          },
+                          {
+                            "k": "html_url",
+                            "v": "https://github.com/Royal-Equips-Org"
+                          },
+                          {
+                            "k": "id",
+                            "v": 228205603.0
+                          },
+                          {
+                            "k": "login",
+                            "v": "Royal-Equips-Org"
+                          },
+                          {
+                            "k": "node_id",
+                            "v": "O_kgDODZokIw"
+                          },
+                          {
+                            "k": "organizations_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/orgs"
+                          },
+                          {
+                            "k": "received_events_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/received_events"
+                          },
+                          {
+                            "k": "repos_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/repos"
+                          },
+                          {
+                            "k": "site_admin",
+                            "v": false
+                          },
+                          {
+                            "k": "starred_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/starred{/owner}{/repo}"
+                          },
+                          {
+                            "k": "subscriptions_url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org/subscriptions"
+                          },
+                          {
+                            "k": "type",
+                            "v": "Organization"
+                          },
+                          {
+                            "k": "url",
+                            "v": "https://api.github.com/users/Royal-Equips-Org"
+                          },
+                          {
+                            "k": "user_view_type",
+                            "v": "public"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "k": "private",
+                      "v": true
+                    },
+                    {
+                      "k": "pulls_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/pulls{/number}"
+                    },
+                    {
+                      "k": "pushed_at",
+                      "v": "2025-09-20T13:00:44Z"
+                    },
+                    {
+                      "k": "releases_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/releases{/id}"
+                    },
+                    {
+                      "k": "size",
+                      "v": 12800.0
+                    },
+                    {
+                      "k": "ssh_url",
+                      "v": "git@github.com:Royal-Equips-Org/royal-equips-orchestrator.git"
+                    },
+                    {
+                      "k": "stargazers_count",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "stargazers_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/stargazers"
+                    },
+                    {
+                      "k": "statuses_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/statuses/{sha}"
+                    },
+                    {
+                      "k": "subscribers_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/subscribers"
+                    },
+                    {
+                      "k": "subscription_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/subscription"
+                    },
+                    {
+                      "k": "svn_url",
+                      "v": "https://github.com/Royal-Equips-Org/royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "tags_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/tags"
+                    },
+                    {
+                      "k": "teams_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/teams"
+                    },
+                    {
+                      "k": "topics",
+                      "v": {
+                        "t": 1
+                      }
+                    },
+                    {
+                      "k": "trees_url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator/git/trees{/sha}"
+                    },
+                    {
+                      "k": "updated_at",
+                      "v": "2025-09-20T12:41:42Z"
+                    },
+                    {
+                      "k": "url",
+                      "v": "https://api.github.com/repos/Royal-Equips-Org/royal-equips-orchestrator"
+                    },
+                    {
+                      "k": "visibility",
+                      "v": "private"
+                    },
+                    {
+                      "k": "watchers",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "watchers_count",
+                      "v": 0.0
+                    },
+                    {
+                      "k": "web_commit_signoff_required",
+                      "v": false
+                    }
+                  ]
+                }
+              },
+              {
+                "k": "organization",
+                "v": {
+                  "t": 2,
+                  "d": [
+                    {
+                      "k": "avatar_url",
+                      "v": "https://avatars.githubusercontent.com/u/228205603?v=4"
+                    },
+                    {
+                      "k": "description",
+                      "v": ""
+                    },
+                    {
+                      "k": "events_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/events"
+                    },
+                    {
+                      "k": "hooks_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/hooks"
+                    },
+                    {
+                      "k": "id",
+                      "v": 228205603.0
+                    },
+                    {
+                      "k": "issues_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/issues"
+                    },
+                    {
+                      "k": "login",
+                      "v": "Royal-Equips-Org"
+                    },
+                    {
+                      "k": "members_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/members{/member}"
+                    },
+                    {
+                      "k": "node_id",
+                      "v": "O_kgDODZokIw"
+                    },
+                    {
+                      "k": "public_members_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/public_members{/member}"
+                    },
+                    {
+                      "k": "repos_url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org/repos"
+                    },
+                    {
+                      "k": "url",
+                      "v": "https://api.github.com/orgs/Royal-Equips-Org"
+                    }
+                  ]
+                }
+              },
+              {
+                "k": "workflow",
+                "v": ".github/workflows/empire-orchestrator.yml"
+              }
+            ]
+          }
+        },
+        {
+          "k": "workflow_ref",
+          "v": "Royal-Equips-Org/royal-equips-orchestrator/.github/workflows/empire-orchestrator.yml@refs/heads/master"
+        },
+        {
+          "k": "workflow_sha",
+          "v": "e30f9a6390c014b388916dac5150f178a77ed570"
+        },
+        {
+          "k": "repository_id",
+          "v": "1034734350"
+        },
+        {
+          "k": "triggering_actor",
+          "v": "github-actions[bot]"
+        }
+      ]
+    },
+    "inputs": {
+      "t": 2
+    },
+    "job": {
+      "t": 2,
+      "d": [
+        {
+          "k": "check_run_id",
+          "v": 50848174896.0
+        }
+      ]
+    },
+    "matrix": null,
+    "needs": {
+      "t": 2
+    },
+    "strategy": {
+      "t": 2,
+      "d": [
+        {
+          "k": "fail-fast",
+          "v": true
+        },
+        {
+          "k": "job-index",
+          "v": 0.0
+        },
+        {
+          "k": "job-total",
+          "v": 1.0
+        },
+        {
+          "k": "max-parallel",
+          "v": 1.0
+        }
+      ]
+    },
+    "vars": {
+      "t": 2
+    }
+  },
+  "billingOwnerId": "E_kgDOAAWH_A"
+}
+[2025-09-20 14:03:54Z INFO JobRunner] Job ID cccd6e0a-5464-526c-ae4b-824d891a83bf
+[2025-09-20 14:03:54Z INFO ConfigurationStore] currentAssemblyLocation: C:\Users\projo\royal-equips-orchestrator\actions-runner\bin\Runner.Worker.dll
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO ConfigurationStore] binPath: C:\Users\projo\royal-equips-orchestrator\actions-runner\bin
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO ConfigurationStore] RootFolder: C:\Users\projo\royal-equips-orchestrator\actions-runner
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'Runner': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner'
+[2025-09-20 14:03:54Z INFO ConfigurationStore] ConfigFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'MigratedRunner': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner_migrated'
+[2025-09-20 14:03:54Z INFO ConfigurationStore] MigratedConfigFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.runner_migrated
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'Credentials': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials'
+[2025-09-20 14:03:54Z INFO ConfigurationStore] CredFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'MigratedCredentials': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials_migrated'
+[2025-09-20 14:03:54Z INFO ConfigurationStore] MigratedCredFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials_migrated
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'Service': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.service'
+[2025-09-20 14:03:54Z INFO ConfigurationStore] ServiceConfigFilePath: C:\Users\projo\royal-equips-orchestrator\actions-runner\.service
+[2025-09-20 14:03:54Z INFO ConfigurationStore] Read setting file: 421 chars
+[2025-09-20 14:03:54Z INFO JobRunner] Initializing launch client
+[2025-09-20 14:03:54Z INFO JobServerQueue] Initializing results client
+[2025-09-20 14:03:54Z INFO ResultServer] Creating websocket client ...wss://results-receiver.actions.githubusercontent.com/_ws/ingest.sock
+[2025-09-20 14:03:54Z INFO ResultServer] Attempting to start websocket client with delay 00:00:00.
+[2025-09-20 14:03:54Z INFO JobServerQueue] Start process web console line queue.
+[2025-09-20 14:03:54Z INFO JobServerQueue] Start process file upload queue.
+[2025-09-20 14:03:54Z INFO JobServerQueue] Start results file upload queue.
+[2025-09-20 14:03:54Z INFO JobServerQueue] Starting results-based upload queue...
+[2025-09-20 14:03:54Z INFO JobServerQueue] Start process timeline update queue.
+[2025-09-20 14:03:54Z INFO ExecutionContext] Initializing Job context
+[2025-09-20 14:03:54Z INFO ExecutionContext] Initialize GitHub context
+[2025-09-20 14:03:54Z INFO ExecutionContext] Initialize Env context
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:54Z INFO JobRunner] Starting the job execution context.
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO JobRunner] Validating directory permissions for: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Tools': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_tool'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:03:54Z INFO JobRunner] Getting job extension.
+[2025-09-20 14:03:54Z INFO JobRunner] Initialize job. Getting all job steps.
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'Credentials': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.credentials'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known config file 'SetupInfo': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\.setup_info'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO PipelineDirectoryManager] Loading tracking config if exists: C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_PipelineMapping\Royal-Equips-Org/royal-equips-orchestrator\PipelineFolder.json
+[2025-09-20 14:03:54Z INFO PipelineDirectoryManager] Updating job run properties.
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO JobExtension] Downloading actions
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:54Z INFO Worker] Listening for cancel message from the channel.
+[2025-09-20 14:03:54Z INFO Worker] Waiting for the job to complete or for a cancel message from the channel.
+[2025-09-20 14:03:54Z INFO ResultServer] Successfully started websocket client.
+[2025-09-20 14:03:54Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'af1f8647-9313-4190-b9c0-98200bd38b5e', success rate: 1/1.
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:54Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:54Z INFO ActionManager] Save archive 'https://api.github.com/repos/actions/checkout/zipball/08eba0b27e820071cde6df949e0beb9ba4906955' into C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions\_temp_143dc0b0-5d56-4414-b7ec-8a3b60496b38\fee67fab-3ed3-41ff-85f0-ba6ee13bb8f8.zip.
+[2025-09-20 14:03:55Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'af1f8647-9313-4190-b9c0-98200bd38b5e', success rate: 1/1.
+[2025-09-20 14:03:55Z INFO JobServerQueue] Job timeline record has been updated for the first time.
+[2025-09-20 14:03:55Z INFO ActionManager] Request URL: https://api.github.com/repos/actions/checkout/zipball/08eba0b27e820071cde6df949e0beb9ba4906955 X-GitHub-Request-Id: CC56:29BE65:13D822:1D77AC:68CEB44B Http Status: OK
+[2025-09-20 14:03:55Z INFO ActionManager] Finished getting action repository.
+[2025-09-20 14:03:55Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:55Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:55Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:55Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:55Z INFO ActionManifestManager] Load schema file with definitions: [
+  "null",
+  "boolean",
+  "number",
+  "string",
+  "sequence",
+  "mapping",
+  "any",
+  "action-root",
+  "inputs",
+  "input",
+  "outputs",
+  "output-definition",
+  "runs",
+  "container-runs",
+  "container-runs-args",
+  "container-runs-env",
+  "node-runs",
+  "plugin-runs",
+  "composite-runs",
+  "composite-steps",
+  "composite-step",
+  "run-step",
+  "uses-step",
+  "container-runs-context",
+  "output-value",
+  "input-default-context",
+  "non-empty-string",
+  "string-steps-context",
+  "boolean-steps-context",
+  "step-env",
+  "step-if",
+  "step-with"
+]
+[2025-09-20 14:03:55Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:55Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:55Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:55Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Loaded action.yml file: {
+  "name": "Checkout",
+  "description": "Checkout a Git repository at a particular version",
+  "inputs": {
+    "type": 2,
+    "map": [
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 4,
+          "col": 3,
+          "lit": "repository"
+        },
+        "value": {
+          "type": 3,
+          "file": 2,
+          "line": 6,
+          "col": 14,
+          "expr": "github.repository"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 7,
+          "col": 3,
+          "lit": "ref"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 12,
+          "col": 3,
+          "lit": "token"
+        },
+        "value": {
+          "type": 3,
+          "file": 2,
+          "line": 24,
+          "col": 14,
+          "expr": "github.token"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 25,
+          "col": 3,
+          "lit": "ssh-key"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 37,
+          "col": 3,
+          "lit": "ssh-known-hosts"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 42,
+          "col": 3,
+          "lit": "ssh-strict"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 47,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 48,
+          "col": 3,
+          "lit": "ssh-user"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 51,
+          "col": 14,
+          "lit": "git"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 52,
+          "col": 3,
+          "lit": "persist-credentials"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 54,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 55,
+          "col": 3,
+          "lit": "path"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 57,
+          "col": 3,
+          "lit": "clean"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 59,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 60,
+          "col": 3,
+          "lit": "filter"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 64,
+          "col": 14,
+          "lit": ""
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 65,
+          "col": 3,
+          "lit": "sparse-checkout"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 69,
+          "col": 14,
+          "lit": ""
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 70,
+          "col": 3,
+          "lit": "sparse-checkout-cone-mode"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 73,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 74,
+          "col": 3,
+          "lit": "fetch-depth"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 76,
+          "col": 14,
+          "lit": "1"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 77,
+          "col": 3,
+          "lit": "fetch-tags"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 79,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 80,
+          "col": 3,
+          "lit": "show-progress"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 82,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 83,
+          "col": 3,
+          "lit": "lfs"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 85,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 86,
+          "col": 3,
+          "lit": "submodules"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 94,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 95,
+          "col": 3,
+          "lit": "set-safe-directory"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 97,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 98,
+          "col": 3,
+          "lit": "github-server-url"
+        },
+        "value": ""
+      }
+    ]
+  },
+  "execution": {
+    "executionType": "nodeJS",
+    "hasPre": false,
+    "hasPost": true,
+    "script": "dist/index.js",
+    "pre": null,
+    "post": "dist/index.js",
+    "nodeVersion": "node20",
+    "cleanupCondition": "always()",
+    "initCondition": "always()"
+  },
+  "deprecated": null
+}
+[2025-09-20 14:03:56Z INFO ActionManager] Action node.js file: dist/index.js, no more preparation.
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:56Z INFO ActionManager] Load action that reference repository from 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions\actions\checkout\v4'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Loaded action.yml file: {
+  "name": "Checkout",
+  "description": "Checkout a Git repository at a particular version",
+  "inputs": {
+    "type": 2,
+    "map": [
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 4,
+          "col": 3,
+          "lit": "repository"
+        },
+        "value": {
+          "type": 3,
+          "file": 2,
+          "line": 6,
+          "col": 14,
+          "expr": "github.repository"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 7,
+          "col": 3,
+          "lit": "ref"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 12,
+          "col": 3,
+          "lit": "token"
+        },
+        "value": {
+          "type": 3,
+          "file": 2,
+          "line": 24,
+          "col": 14,
+          "expr": "github.token"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 25,
+          "col": 3,
+          "lit": "ssh-key"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 37,
+          "col": 3,
+          "lit": "ssh-known-hosts"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 42,
+          "col": 3,
+          "lit": "ssh-strict"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 47,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 48,
+          "col": 3,
+          "lit": "ssh-user"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 51,
+          "col": 14,
+          "lit": "git"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 52,
+          "col": 3,
+          "lit": "persist-credentials"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 54,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 55,
+          "col": 3,
+          "lit": "path"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 57,
+          "col": 3,
+          "lit": "clean"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 59,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 60,
+          "col": 3,
+          "lit": "filter"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 64,
+          "col": 14,
+          "lit": ""
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 65,
+          "col": 3,
+          "lit": "sparse-checkout"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 69,
+          "col": 14,
+          "lit": ""
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 70,
+          "col": 3,
+          "lit": "sparse-checkout-cone-mode"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 73,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 74,
+          "col": 3,
+          "lit": "fetch-depth"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 76,
+          "col": 14,
+          "lit": "1"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 77,
+          "col": 3,
+          "lit": "fetch-tags"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 79,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 80,
+          "col": 3,
+          "lit": "show-progress"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 82,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 83,
+          "col": 3,
+          "lit": "lfs"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 85,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 86,
+          "col": 3,
+          "lit": "submodules"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 94,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 95,
+          "col": 3,
+          "lit": "set-safe-directory"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 97,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 98,
+          "col": 3,
+          "lit": "github-server-url"
+        },
+        "value": ""
+      }
+    ]
+  },
+  "execution": {
+    "executionType": "nodeJS",
+    "hasPre": false,
+    "hasPost": true,
+    "script": "dist/index.js",
+    "pre": null,
+    "post": "dist/index.js",
+    "nodeVersion": "node20",
+    "cleanupCondition": "always()",
+    "initCondition": "always()"
+  },
+  "deprecated": null
+}
+[2025-09-20 14:03:56Z INFO ActionManager] Action pre node.js file: N/A.
+[2025-09-20 14:03:56Z INFO ActionManager] Action node.js file: dist/index.js.
+[2025-09-20 14:03:56Z INFO ActionManager] Action post node.js file: dist/index.js.
+[2025-09-20 14:03:56Z INFO JobExtension] Adding .
+[2025-09-20 14:03:56Z INFO JobExtension] Adding .
+[2025-09-20 14:03:56Z INFO JobExtension] Adding .
+[2025-09-20 14:03:56Z INFO JobExtension] Adding .
+[2025-09-20 14:03:56Z INFO JobExtension] Adding .
+[2025-09-20 14:03:56Z INFO JobExtension] Adding .
+[2025-09-20 14:03:56Z INFO JobExtension] Adding .
+[2025-09-20 14:03:56Z INFO JobExtension] Adding .
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO JobExtension] Total accessible running process: 322.
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO JobExtension] Start checking service connectivity in background.
+[2025-09-20 14:03:56Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "setup_job",
+  "type": "runner",
+  "stage": "Pre",
+  "stepId": "af1f8647-9313-4190-b9c0-98200bd38b5e",
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 2,
+  "startTime": "2025-09-20T14:03:54.4575081Z",
+  "finishTime": "2025-09-20T14:03:56.0791301Z"
+}.
+[2025-09-20 14:03:56Z INFO JobRunner] Total job steps: 8.
+[2025-09-20 14:03:56Z INFO JobRunner] Run all job steps.
+[2025-09-20 14:03:56Z INFO StepsRunner] Processing step: DisplayName='Checkout full history'
+[2025-09-20 14:03:56Z INFO StepsRunner] Evaluating: success()
+[2025-09-20 14:03:56Z INFO StepsRunner] Result: true
+[2025-09-20 14:03:56Z INFO StepsRunner] Starting the step.
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO StepsRunner] Which2: 'chcp'
+[2025-09-20 14:03:56Z INFO StepsRunner] Location: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   File name: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Arguments: '65001'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper] Process started with process id 19512, waiting for process exit.
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper] Finished process 19512 with exit code 0, and elapsed time 00:00:00.0175767.
+[2025-09-20 14:03:56Z INFO StepsRunner] Successfully returned to code page 65001 (UTF8)
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:56Z INFO ActionManager] Load action that reference repository from 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions\actions\checkout\v4'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Loaded action.yml file: {
+  "name": "Checkout",
+  "description": "Checkout a Git repository at a particular version",
+  "inputs": {
+    "type": 2,
+    "map": [
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 4,
+          "col": 3,
+          "lit": "repository"
+        },
+        "value": {
+          "type": 3,
+          "file": 2,
+          "line": 6,
+          "col": 14,
+          "expr": "github.repository"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 7,
+          "col": 3,
+          "lit": "ref"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 12,
+          "col": 3,
+          "lit": "token"
+        },
+        "value": {
+          "type": 3,
+          "file": 2,
+          "line": 24,
+          "col": 14,
+          "expr": "github.token"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 25,
+          "col": 3,
+          "lit": "ssh-key"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 37,
+          "col": 3,
+          "lit": "ssh-known-hosts"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 42,
+          "col": 3,
+          "lit": "ssh-strict"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 47,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 48,
+          "col": 3,
+          "lit": "ssh-user"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 51,
+          "col": 14,
+          "lit": "git"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 52,
+          "col": 3,
+          "lit": "persist-credentials"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 54,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 55,
+          "col": 3,
+          "lit": "path"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 57,
+          "col": 3,
+          "lit": "clean"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 59,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 60,
+          "col": 3,
+          "lit": "filter"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 64,
+          "col": 14,
+          "lit": ""
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 65,
+          "col": 3,
+          "lit": "sparse-checkout"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 69,
+          "col": 14,
+          "lit": ""
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 70,
+          "col": 3,
+          "lit": "sparse-checkout-cone-mode"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 73,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 74,
+          "col": 3,
+          "lit": "fetch-depth"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 76,
+          "col": 14,
+          "lit": "1"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 77,
+          "col": 3,
+          "lit": "fetch-tags"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 79,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 80,
+          "col": 3,
+          "lit": "show-progress"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 82,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 83,
+          "col": 3,
+          "lit": "lfs"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 85,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 86,
+          "col": 3,
+          "lit": "submodules"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 94,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 95,
+          "col": 3,
+          "lit": "set-safe-directory"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 97,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 98,
+          "col": 3,
+          "lit": "github-server-url"
+        },
+        "value": ""
+      }
+    ]
+  },
+  "execution": {
+    "executionType": "nodeJS",
+    "hasPre": false,
+    "hasPost": true,
+    "script": "dist/index.js",
+    "pre": null,
+    "post": "dist/index.js",
+    "nodeVersion": "node20",
+    "cleanupCondition": "always()",
+    "initCondition": "always()"
+  },
+  "deprecated": null
+}
+[2025-09-20 14:03:56Z INFO ActionManager] Action pre node.js file: N/A.
+[2025-09-20 14:03:56Z INFO ActionManager] Action node.js file: dist/index.js.
+[2025-09-20 14:03:56Z INFO ActionManager] Action post node.js file: dist/index.js.
+[2025-09-20 14:03:56Z INFO ExecutionContext] Reserve record order 10 to 18 for post job actions.
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:03:56Z INFO ExecutionContext] Write event payload to C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_github_workflow\event.json
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:03:56Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IFileCommandExtension'
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.AddPathFileCommand, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SetEnvFileCommand, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.CreateStepSummaryCommand, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SaveStateFileCommand, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SetOutputFileCommand, Runner.Worker
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'repository': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 6,
+  "col": 14,
+  "lit": "Royal-Equips-Org/royal-equips-orchestrator"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'ref': default value evaluate result: ""
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'token': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 24,
+  "col": 14,
+  "lit": "***"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'ssh-key': default value evaluate result: ""
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'ssh-known-hosts': default value evaluate result: ""
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'ssh-strict': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 47,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'ssh-user': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 51,
+  "col": 14,
+  "lit": "git"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'persist-credentials': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 54,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'path': default value evaluate result: ""
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'clean': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 59,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'filter': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 64,
+  "col": 14,
+  "lit": ""
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'sparse-checkout': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 69,
+  "col": 14,
+  "lit": ""
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'sparse-checkout-cone-mode': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 73,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'fetch-tags': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 79,
+  "col": 14,
+  "lit": "false"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'show-progress': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 82,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'lfs': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 85,
+  "col": 14,
+  "lit": "false"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'submodules': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 94,
+  "col": 14,
+  "lit": "false"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'set-safe-directory': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 97,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:03:56Z INFO ActionManifestManager] Input 'github-server-url': default value evaluate result: ""
+[2025-09-20 14:03:56Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IActionCommandExtension'
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.InternalPluginSetRepoPathCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SetEnvCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SetOutputCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.SaveStateCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.AddPathCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.AddMaskCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.AddMatcherCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.RemoveMatcherCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.WarningCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.ErrorCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.NoticeCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.DebugCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.GroupCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.EndGroupCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ExtensionManager] Creating instance: GitHub.Runner.Worker.EchoCommandExtension, Runner.Worker
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command internal-set-repo-path
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command set-env
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command set-output
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command save-state
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command add-path
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command add-mask
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command add-matcher
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command remove-matcher
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command warning
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command error
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command notice
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command debug
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command group
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command endgroup
+[2025-09-20 14:03:56Z INFO ActionCommandManager] Register action command extension for command echo
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:03:56Z INFO HostContext] Well known directory 'Externals': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\externals'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   File name: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\externals\node20\bin\node.exe'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Arguments: '"C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions\actions\checkout\v4\dist/index.js"'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\royal-equips-orchestrator\royal-equips-orchestrator'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Encoding web name: utf-8 ; code page: '65001'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:03:56Z INFO ProcessInvokerWrapper] Process started with process id 11620, waiting for process exit.
+[2025-09-20 14:03:56Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'af1f8647-9313-4190-b9c0-98200bd38b5e', success rate: 1/1.
+[2025-09-20 14:03:56Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:03:56Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 14:03:56Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\7a1ec0bf-c323-4dcd-beec-947eb43a7ff7_af1f8647-9313-4190-b9c0-98200bd38b5e.1
+[2025-09-20 14:03:56Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2025-09-20 14:03:56Z INFO AddMaskCommandExtension] Add new secret mask with length of 76
+[2025-09-20 14:03:56Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:03:57Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:03:57Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2025-09-20 14:03:58Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:03:58Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:03:59Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:04:00Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:04:00Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:04:01Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] Finished process 11620 with exit code 0, and elapsed time 00:00:05.2454714.
+[2025-09-20 14:04:01Z INFO CreateStepSummaryCommand] Step Summary file (C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_runner_file_commands\step_summary_a24643a1-80e4-456c-ae95-54cdd63bf78d) is empty; skipping attachment upload
+[2025-09-20 14:04:01Z INFO StepsRunner] Step result: 
+[2025-09-20 14:04:01Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "actions/checkout",
+  "ref": "v4",
+  "type": "node20",
+  "stage": "Main",
+  "stepId": "6e9c6367-1e01-4bc0-a04d-f14b08e6423c",
+  "stepContextName": "__actions_checkout",
+  "hasPreStep": false,
+  "hasPostStep": true,
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 6,
+  "startTime": "2025-09-20T14:03:56.0925208Z",
+  "finishTime": "2025-09-20T14:04:01.4652028Z"
+}.
+[2025-09-20 14:04:01Z INFO StepsRunner] No need for updating job result with current step result 'Succeeded'.
+[2025-09-20 14:04:01Z INFO StepsRunner] Current state: job state = ''
+[2025-09-20 14:04:01Z INFO StepsRunner] Processing step: DisplayName='Git identity'
+[2025-09-20 14:04:01Z INFO StepsRunner] Evaluating: success()
+[2025-09-20 14:04:01Z INFO StepsRunner] Result: true
+[2025-09-20 14:04:01Z INFO StepsRunner] Starting the step.
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:01Z INFO StepsRunner] Which2: 'chcp'
+[2025-09-20 14:04:01Z INFO StepsRunner] Location: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   File name: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Arguments: '65001'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] Process started with process id 10848, waiting for process exit.
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] Finished process 10848 with exit code 0, and elapsed time 00:00:00.0140272.
+[2025-09-20 14:04:01Z INFO StepsRunner] Successfully returned to code page 65001 (UTF8)
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:01Z INFO ExecutionContext] Write event payload to C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_github_workflow\event.json
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:01Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IFileCommandExtension'
+[2025-09-20 14:04:01Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IActionCommandExtension'
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command internal-set-repo-path
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command set-env
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command set-output
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command save-state
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command add-path
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command add-mask
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command add-matcher
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command remove-matcher
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command warning
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command error
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command notice
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command debug
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command group
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command endgroup
+[2025-09-20 14:04:01Z INFO ActionCommandManager] Register action command extension for command echo
+[2025-09-20 14:04:01Z INFO ScriptHandler] Which2: 'pwsh'
+[2025-09-20 14:04:01Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2025-09-20 14:04:01Z INFO JobServerQueue] Try to append 1 batches web console lines for record '6e9c6367-1e01-4bc0-a04d-f14b08e6423c', success rate: 1/1.
+[2025-09-20 14:04:01Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'efa3d2ce-53cd-4fe4-855d-fcf250052285', success rate: 1/1.
+[2025-09-20 14:04:01Z INFO ScriptHandler] Location: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:01Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:01Z INFO ScriptHandler] Which2: 'pwsh'
+[2025-09-20 14:04:01Z INFO ScriptHandler] Location: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   File name: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Arguments: '-command ". 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\e50323d9-bb98-48b2-9b06-0087a8742bd6.ps1'"'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\royal-equips-orchestrator\royal-equips-orchestrator'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:04:01Z INFO ProcessInvokerWrapper] Process started with process id 7120, waiting for process exit.
+[2025-09-20 14:04:01Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'efa3d2ce-53cd-4fe4-855d-fcf250052285', success rate: 1/1.
+[2025-09-20 14:04:02Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 14:04:02Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\7a1ec0bf-c323-4dcd-beec-947eb43a7ff7_6e9c6367-1e01-4bc0-a04d-f14b08e6423c.1
+[2025-09-20 14:04:02Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] Finished process 7120 with exit code 0, and elapsed time 00:00:01.5216668.
+[2025-09-20 14:04:03Z INFO CreateStepSummaryCommand] Step Summary file (C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_runner_file_commands\step_summary_17868901-2207-40dc-9110-6fcf4ffa6830) is empty; skipping attachment upload
+[2025-09-20 14:04:03Z INFO StepsRunner] Step result: 
+[2025-09-20 14:04:03Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "pwsh",
+  "type": "run",
+  "stage": "Main",
+  "stepId": "efa3d2ce-53cd-4fe4-855d-fcf250052285",
+  "stepContextName": "__run",
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 2,
+  "startTime": "2025-09-20T14:04:01.4668039Z",
+  "finishTime": "2025-09-20T14:04:03.0598346Z"
+}.
+[2025-09-20 14:04:03Z INFO StepsRunner] No need for updating job result with current step result 'Succeeded'.
+[2025-09-20 14:04:03Z INFO StepsRunner] Current state: job state = ''
+[2025-09-20 14:04:03Z INFO StepsRunner] Processing step: DisplayName='Sync to latest origin/master (no branch creation)'
+[2025-09-20 14:04:03Z INFO StepsRunner] Evaluating: success()
+[2025-09-20 14:04:03Z INFO StepsRunner] Result: true
+[2025-09-20 14:04:03Z INFO StepsRunner] Starting the step.
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:03Z INFO StepsRunner] Which2: 'chcp'
+[2025-09-20 14:04:03Z INFO StepsRunner] Location: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   File name: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Arguments: '65001'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] Process started with process id 20928, waiting for process exit.
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] Finished process 20928 with exit code 0, and elapsed time 00:00:00.0218135.
+[2025-09-20 14:04:03Z INFO StepsRunner] Successfully returned to code page 65001 (UTF8)
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:03Z INFO ExecutionContext] Write event payload to C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_github_workflow\event.json
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:03Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IFileCommandExtension'
+[2025-09-20 14:04:03Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IActionCommandExtension'
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command internal-set-repo-path
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command set-env
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command set-output
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command save-state
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command add-path
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command add-mask
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command add-matcher
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command remove-matcher
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command warning
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command error
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command notice
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command debug
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command group
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command endgroup
+[2025-09-20 14:04:03Z INFO ActionCommandManager] Register action command extension for command echo
+[2025-09-20 14:04:03Z INFO ScriptHandler] Which2: 'pwsh'
+[2025-09-20 14:04:03Z INFO ScriptHandler] Location: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:03Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:03Z INFO ScriptHandler] Which2: 'pwsh'
+[2025-09-20 14:04:03Z INFO ScriptHandler] Location: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   File name: 'C:\Program Files\PowerShell\7\pwsh.EXE'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Arguments: '-command ". 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\24a3d6d9-e7d3-4ea0-afe0-dbd5644b0d3b.ps1'"'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\royal-equips-orchestrator\royal-equips-orchestrator'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:04:03Z INFO ProcessInvokerWrapper] Process started with process id 14312, waiting for process exit.
+[2025-09-20 14:04:03Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'd6f06d11-99c7-438b-914b-527a43ddffec', success rate: 1/1.
+[2025-09-20 14:04:03Z INFO JobServerQueue] Try to upload 1 log files or attachments, success rate: 1/1.
+[2025-09-20 14:04:03Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 14:04:03Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\7a1ec0bf-c323-4dcd-beec-947eb43a7ff7_efa3d2ce-53cd-4fe4-855d-fcf250052285.1
+[2025-09-20 14:04:03Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2025-09-20 14:04:04Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'd6f06d11-99c7-438b-914b-527a43ddffec', success rate: 1/1.
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] Finished process 14312 with exit code 0, and elapsed time 00:00:01.4641531.
+[2025-09-20 14:04:04Z INFO CreateStepSummaryCommand] Step Summary file (C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_runner_file_commands\step_summary_4122ceb5-ec2b-472d-9733-4b7d6ded64a3) is empty; skipping attachment upload
+[2025-09-20 14:04:04Z INFO StepsRunner] Step result: 
+[2025-09-20 14:04:04Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "pwsh",
+  "type": "run",
+  "stage": "Main",
+  "stepId": "d6f06d11-99c7-438b-914b-527a43ddffec",
+  "stepContextName": "__run_2",
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 2,
+  "startTime": "2025-09-20T14:04:03.0608463Z",
+  "finishTime": "2025-09-20T14:04:04.626225Z"
+}.
+[2025-09-20 14:04:04Z INFO StepsRunner] No need for updating job result with current step result 'Succeeded'.
+[2025-09-20 14:04:04Z INFO StepsRunner] Current state: job state = ''
+[2025-09-20 14:04:04Z INFO StepsRunner] Processing step: DisplayName='Empire scan + real logic (agents, APIs, scraping, MI)'
+[2025-09-20 14:04:04Z INFO StepsRunner] Evaluating: success()
+[2025-09-20 14:04:04Z INFO StepsRunner] Result: true
+[2025-09-20 14:04:04Z INFO StepsRunner] Starting the step.
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:04Z INFO StepsRunner] Which2: 'chcp'
+[2025-09-20 14:04:04Z INFO StepsRunner] Location: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   File name: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Arguments: '65001'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] Process started with process id 18044, waiting for process exit.
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] Finished process 18044 with exit code 0, and elapsed time 00:00:00.0131825.
+[2025-09-20 14:04:04Z INFO StepsRunner] Successfully returned to code page 65001 (UTF8)
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:04Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'd6f06d11-99c7-438b-914b-527a43ddffec', success rate: 1/1.
+[2025-09-20 14:04:04Z INFO ExecutionContext] Write event payload to C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_github_workflow\event.json
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:04Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IFileCommandExtension'
+[2025-09-20 14:04:04Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IActionCommandExtension'
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command internal-set-repo-path
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command set-env
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command set-output
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command save-state
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command add-path
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command add-mask
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command add-matcher
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command remove-matcher
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command warning
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command error
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command notice
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command debug
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command group
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command endgroup
+[2025-09-20 14:04:04Z INFO ActionCommandManager] Register action command extension for command echo
+[2025-09-20 14:04:04Z INFO ScriptHandler] Which2: 'bash'
+[2025-09-20 14:04:04Z INFO ScriptHandler] Location: 'C:\WINDOWS\system32\bash.EXE'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:04Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:04Z INFO ScriptHandler] Which2: 'bash'
+[2025-09-20 14:04:04Z INFO ScriptHandler] Location: 'C:\WINDOWS\system32\bash.EXE'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   File name: 'C:\WINDOWS\system32\bash.EXE'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Arguments: '--noprofile --norc -e -o pipefail C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\c29ff95d-4cf4-4150-9ae5-7148d6df7ce3.sh'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\royal-equips-orchestrator\royal-equips-orchestrator'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:04:04Z INFO ProcessInvokerWrapper] Process started with process id 9324, waiting for process exit.
+[2025-09-20 14:04:04Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 14:04:04Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\7a1ec0bf-c323-4dcd-beec-947eb43a7ff7_d6f06d11-99c7-438b-914b-527a43ddffec.1
+[2025-09-20 14:04:04Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'e0f4e7e6-0084-44f6-832a-427fd5601b61', success rate: 1/1.
+[2025-09-20 14:04:05Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'e0f4e7e6-0084-44f6-832a-427fd5601b61', success rate: 1/1.
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] Finished process 9324 with exit code 1, and elapsed time 00:00:00.5437720.
+[2025-09-20 14:04:05Z INFO CreateStepSummaryCommand] Step Summary file (C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_runner_file_commands\step_summary_0d553621-589c-460e-a264-688c563f5517) is empty; skipping attachment upload
+[2025-09-20 14:04:05Z INFO StepsRunner] Step result: Failed
+[2025-09-20 14:04:05Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "bash",
+  "type": "run",
+  "stage": "Main",
+  "stepId": "e0f4e7e6-0084-44f6-832a-427fd5601b61",
+  "stepContextName": "__run_3",
+  "result": "failed",
+  "errorMessages": [
+    "Process completed with exit code 1."
+  ],
+  "executionTimeInSeconds": 1,
+  "startTime": "2025-09-20T14:04:04.6277281Z",
+  "finishTime": "2025-09-20T14:04:05.2023656Z"
+}.
+[2025-09-20 14:04:05Z INFO StepsRunner] Update job result with current step result 'Failed'.
+[2025-09-20 14:04:05Z INFO StepsRunner] Current state: job state = 'Failed'
+[2025-09-20 14:04:05Z INFO StepsRunner] Processing step: DisplayName='Lint + test (fail fast)'
+[2025-09-20 14:04:05Z INFO StepsRunner] Evaluating: success()
+[2025-09-20 14:04:05Z INFO StepsRunner] Result: false
+[2025-09-20 14:04:05Z INFO StepsRunner] Skipping step due to condition evaluation.
+[2025-09-20 14:04:05Z INFO StepsRunner] No need for updating job result with current step result 'Skipped'.
+[2025-09-20 14:04:05Z INFO StepsRunner] Current state: job state = 'Failed'
+[2025-09-20 14:04:05Z INFO StepsRunner] Processing step: DisplayName='Commit changes if any'
+[2025-09-20 14:04:05Z INFO StepsRunner] Evaluating: success()
+[2025-09-20 14:04:05Z INFO StepsRunner] Result: false
+[2025-09-20 14:04:05Z INFO StepsRunner] Skipping step due to condition evaluation.
+[2025-09-20 14:04:05Z INFO StepsRunner] No need for updating job result with current step result 'Skipped'.
+[2025-09-20 14:04:05Z INFO StepsRunner] Current state: job state = 'Failed'
+[2025-09-20 14:04:05Z INFO StepsRunner] Processing step: DisplayName='Push to master (attempt 1)'
+[2025-09-20 14:04:05Z INFO StepsRunner] Evaluating: (success() && (steps.commit.outputs.changed == 'true'))
+[2025-09-20 14:04:05Z INFO StepsRunner] Expanded: (false && (steps['commit']['outputs']['changed'] == 'true'))
+[2025-09-20 14:04:05Z INFO StepsRunner] Result: false
+[2025-09-20 14:04:05Z INFO StepsRunner] Skipping step due to condition evaluation.
+[2025-09-20 14:04:05Z INFO StepsRunner] No need for updating job result with current step result 'Skipped'.
+[2025-09-20 14:04:05Z INFO StepsRunner] Current state: job state = 'Failed'
+[2025-09-20 14:04:05Z INFO StepsRunner] Processing step: DisplayName='Handle push race (rebase + retry once)'
+[2025-09-20 14:04:05Z INFO StepsRunner] Evaluating: (failure() && (steps.commit.outputs.changed == 'true'))
+[2025-09-20 14:04:05Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2025-09-20 14:04:05Z INFO StepsRunner] Expanded: (true && (null == 'true'))
+[2025-09-20 14:04:05Z INFO StepsRunner] Result: false
+[2025-09-20 14:04:05Z INFO StepsRunner] Skipping step due to condition evaluation.
+[2025-09-20 14:04:05Z INFO StepsRunner] No need for updating job result with current step result 'Skipped'.
+[2025-09-20 14:04:05Z INFO StepsRunner] Current state: job state = 'Failed'
+[2025-09-20 14:04:05Z INFO StepsRunner] Processing step: DisplayName='Post Checkout full history'
+[2025-09-20 14:04:05Z INFO StepsRunner] Evaluating: always()
+[2025-09-20 14:04:05Z INFO StepsRunner] Result: true
+[2025-09-20 14:04:05Z INFO StepsRunner] Starting the step.
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:05Z INFO StepsRunner] Which2: 'chcp'
+[2025-09-20 14:04:05Z INFO StepsRunner] Location: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   File name: 'C:\WINDOWS\system32\chcp.COM'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Arguments: '65001'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] Process started with process id 6616, waiting for process exit.
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] Finished process 6616 with exit code 0, and elapsed time 00:00:00.0133094.
+[2025-09-20 14:04:05Z INFO StepsRunner] Successfully returned to code page 65001 (UTF8)
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:04:05Z INFO ActionManager] Load action that reference repository from 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions\actions\checkout\v4'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Actions': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions'
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Loaded action.yml file: {
+  "name": "Checkout",
+  "description": "Checkout a Git repository at a particular version",
+  "inputs": {
+    "type": 2,
+    "map": [
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 4,
+          "col": 3,
+          "lit": "repository"
+        },
+        "value": {
+          "type": 3,
+          "file": 2,
+          "line": 6,
+          "col": 14,
+          "expr": "github.repository"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 7,
+          "col": 3,
+          "lit": "ref"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 12,
+          "col": 3,
+          "lit": "token"
+        },
+        "value": {
+          "type": 3,
+          "file": 2,
+          "line": 24,
+          "col": 14,
+          "expr": "github.token"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 25,
+          "col": 3,
+          "lit": "ssh-key"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 37,
+          "col": 3,
+          "lit": "ssh-known-hosts"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 42,
+          "col": 3,
+          "lit": "ssh-strict"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 47,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 48,
+          "col": 3,
+          "lit": "ssh-user"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 51,
+          "col": 14,
+          "lit": "git"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 52,
+          "col": 3,
+          "lit": "persist-credentials"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 54,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 55,
+          "col": 3,
+          "lit": "path"
+        },
+        "value": ""
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 57,
+          "col": 3,
+          "lit": "clean"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 59,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 60,
+          "col": 3,
+          "lit": "filter"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 64,
+          "col": 14,
+          "lit": ""
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 65,
+          "col": 3,
+          "lit": "sparse-checkout"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 69,
+          "col": 14,
+          "lit": ""
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 70,
+          "col": 3,
+          "lit": "sparse-checkout-cone-mode"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 73,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 74,
+          "col": 3,
+          "lit": "fetch-depth"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 76,
+          "col": 14,
+          "lit": "1"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 77,
+          "col": 3,
+          "lit": "fetch-tags"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 79,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 80,
+          "col": 3,
+          "lit": "show-progress"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 82,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 83,
+          "col": 3,
+          "lit": "lfs"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 85,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 86,
+          "col": 3,
+          "lit": "submodules"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 94,
+          "col": 14,
+          "lit": "false"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 95,
+          "col": 3,
+          "lit": "set-safe-directory"
+        },
+        "value": {
+          "type": 0,
+          "file": 2,
+          "line": 97,
+          "col": 14,
+          "lit": "true"
+        }
+      },
+      {
+        "key": {
+          "type": 0,
+          "file": 2,
+          "line": 98,
+          "col": 3,
+          "lit": "github-server-url"
+        },
+        "value": ""
+      }
+    ]
+  },
+  "execution": {
+    "executionType": "nodeJS",
+    "hasPre": false,
+    "hasPost": true,
+    "script": "dist/index.js",
+    "pre": null,
+    "post": "dist/index.js",
+    "nodeVersion": "node20",
+    "cleanupCondition": "always()",
+    "initCondition": "always()"
+  },
+  "deprecated": null
+}
+[2025-09-20 14:04:05Z INFO ActionManager] Action pre node.js file: N/A.
+[2025-09-20 14:04:05Z INFO ActionManager] Action node.js file: dist/index.js.
+[2025-09-20 14:04:05Z INFO ActionManager] Action post node.js file: dist/index.js.
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:05Z INFO ExecutionContext] Write event payload to C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_github_workflow\event.json
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Temp': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp'
+[2025-09-20 14:04:05Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IFileCommandExtension'
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'repository': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 6,
+  "col": 14,
+  "lit": "Royal-Equips-Org/royal-equips-orchestrator"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'ref': default value evaluate result: ""
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'token': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 24,
+  "col": 14,
+  "lit": "***"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'ssh-key': default value evaluate result: ""
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'ssh-known-hosts': default value evaluate result: ""
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'ssh-strict': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 47,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'ssh-user': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 51,
+  "col": 14,
+  "lit": "git"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'persist-credentials': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 54,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'path': default value evaluate result: ""
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'clean': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 59,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'filter': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 64,
+  "col": 14,
+  "lit": ""
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'sparse-checkout': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 69,
+  "col": 14,
+  "lit": ""
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'sparse-checkout-cone-mode': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 73,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'fetch-tags': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 79,
+  "col": 14,
+  "lit": "false"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'show-progress': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 82,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'lfs': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 85,
+  "col": 14,
+  "lit": "false"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'submodules': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 94,
+  "col": 14,
+  "lit": "false"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'set-safe-directory': default value evaluate result: {
+  "type": 0,
+  "file": 2,
+  "line": 97,
+  "col": 14,
+  "lit": "true"
+}
+[2025-09-20 14:04:05Z INFO ActionManifestManager] Input 'github-server-url': default value evaluate result: ""
+[2025-09-20 14:04:05Z INFO ExtensionManager] Getting extensions for interface: 'GitHub.Runner.Worker.IActionCommandExtension'
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command internal-set-repo-path
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command set-env
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command set-output
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command save-state
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command add-path
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command add-mask
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command add-matcher
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command remove-matcher
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command warning
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command error
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command notice
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command debug
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command group
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command endgroup
+[2025-09-20 14:04:05Z INFO ActionCommandManager] Register action command extension for command echo
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:05Z INFO HostContext] Well known directory 'Externals': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\externals'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] Starting process:
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   File name: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\externals\node20\bin\node.exe'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Arguments: '"C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_actions\actions\checkout\v4\dist/index.js"'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Working directory: 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\royal-equips-orchestrator\royal-equips-orchestrator'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Encoding web name: utf-8 ; code page: '65001'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Persist current code page: 'True'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper]   High priority process: 'False'
+[2025-09-20 14:04:05Z INFO ProcessInvokerWrapper] Process started with process id 18520, waiting for process exit.
+[2025-09-20 14:04:05Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'e0f4e7e6-0084-44f6-832a-427fd5601b61', success rate: 1/1.
+[2025-09-20 14:04:05Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'a7687e01-fd54-49f2-9ee9-41c434bf6d74', success rate: 1/1.
+[2025-09-20 14:04:05Z INFO JobServerQueue] Try to upload 2 log files or attachments, success rate: 2/2.
+[2025-09-20 14:04:05Z INFO AddMaskCommandExtension] Add new secret mask with length of 32
+[2025-09-20 14:04:05Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'a7687e01-fd54-49f2-9ee9-41c434bf6d74', success rate: 1/1.
+[2025-09-20 14:04:06Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:06Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:06Z INFO HostContext] Well known directory 'Work': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_work'
+[2025-09-20 14:04:06Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'a7687e01-fd54-49f2-9ee9-41c434bf6d74', success rate: 1/1.
+[2025-09-20 14:04:06Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 14:04:06Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\7a1ec0bf-c323-4dcd-beec-947eb43a7ff7_e0f4e7e6-0084-44f6-832a-427fd5601b61.1
+[2025-09-20 14:04:06Z INFO JobServerQueue] Tried to upload 1 file(s) to results, success rate: 1/1.
+[2025-09-20 14:04:07Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'a7687e01-fd54-49f2-9ee9-41c434bf6d74', success rate: 1/1.
+[2025-09-20 14:04:07Z INFO JobServerQueue] Try to append 1 batches web console lines for record 'a7687e01-fd54-49f2-9ee9-41c434bf6d74', success rate: 1/1.
+[2025-09-20 14:04:09Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:09Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2025-09-20 14:04:09Z INFO ProcessInvokerWrapper] Finished process 18520 with exit code 0, and elapsed time 00:00:03.7903044.
+[2025-09-20 14:04:09Z INFO CreateStepSummaryCommand] Step Summary file (C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp\_runner_file_commands\step_summary_0ecf8ee3-a958-4308-8844-8b75ade82982) is empty; skipping attachment upload
+[2025-09-20 14:04:09Z INFO StepsRunner] Step result: 
+[2025-09-20 14:04:09Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "actions/checkout",
+  "ref": "v4",
+  "type": "node20",
+  "stage": "Post",
+  "stepId": "a7687e01-fd54-49f2-9ee9-41c434bf6d74",
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 4,
+  "startTime": "2025-09-20T14:04:05.2200121Z",
+  "finishTime": "2025-09-20T14:04:09.0589438Z"
+}.
+[2025-09-20 14:04:09Z INFO StepsRunner] No need for updating job result with current step result 'Succeeded'.
+[2025-09-20 14:04:09Z INFO StepsRunner] Current state: job state = 'Failed'
+[2025-09-20 14:04:09Z INFO JobRunner] Finalize job.
+[2025-09-20 14:04:09Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:09Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:09Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:04:09Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:09Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:09Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:04:09Z INFO JobExtension] Initialize Env context
+[2025-09-20 14:04:09Z INFO JobExtension] Initialize steps context
+[2025-09-20 14:04:09Z INFO JobExtension] Total accessible running process: 328.
+[2025-09-20 14:04:09Z INFO JobExtension] Inspecting process environment variables. PID: 11256 (wslhost)
+[2025-09-20 14:04:09Z INFO JobExtension] Inspecting process environment variables. PID: 14584 (conhost)
+[2025-09-20 14:04:09Z INFO JobExtension] Inspecting process environment variables. PID: 20780 (wslhost)
+[2025-09-20 14:04:09Z INFO JobExtension] Inspecting process environment variables. PID: 14216 (conhost)
+[2025-09-20 14:04:09Z INFO JobExtension] Inspecting process environment variables. PID: 17376 (msrdc)
+[2025-09-20 14:04:09Z INFO JobExtension] Inspecting process environment variables. PID: 14084 (powershell)
+[2025-09-20 14:04:09Z INFO JobExtension] Inspecting process environment variables. PID: 20944 (conhost)
+[2025-09-20 14:04:09Z INFO ExecutionContext] Publish step telemetry for current step {
+  "action": "complete_job",
+  "type": "runner",
+  "stage": "Post",
+  "stepId": "1d4273c9-6680-472c-8b21-68fcd9389bc4",
+  "result": "succeeded",
+  "errorMessages": [],
+  "executionTimeInSeconds": 1,
+  "startTime": "2025-09-20T14:04:09.0934196Z",
+  "finishTime": "2025-09-20T14:04:09.2829839Z"
+}.
+[2025-09-20 14:04:09Z INFO JobRunner] Job result after all job steps finish: Failed
+[2025-09-20 14:04:09Z INFO JobRunner] Completing the job execution context.
+[2025-09-20 14:04:09Z INFO JobRunner] Shutting down the job server queue.
+[2025-09-20 14:04:09Z INFO JobServerQueue] Fire signal to shutdown all queues.
+[2025-09-20 14:04:09Z INFO JobServerQueue] All queue process task stopped.
+[2025-09-20 14:04:09Z INFO JobServerQueue] Try to append 1 batches web console lines for record '1d4273c9-6680-472c-8b21-68fcd9389bc4', success rate: 1/1.
+[2025-09-20 14:04:09Z INFO JobServerQueue] Web console line queue drained.
+[2025-09-20 14:04:09Z INFO JobServerQueue] Uploading 3 files in one shot.
+[2025-09-20 14:04:09Z INFO JobServerQueue] Try to upload 3 log files or attachments, success rate: 3/3.
+[2025-09-20 14:04:09Z INFO JobServerQueue] File upload queue drained.
+[2025-09-20 14:04:09Z INFO JobServerQueue] Starting results-based upload queue...
+[2025-09-20 14:04:09Z INFO JobServerQueue] Uploading 3 file(s) in one shot through results service.
+[2025-09-20 14:04:09Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 14:04:09Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\7a1ec0bf-c323-4dcd-beec-947eb43a7ff7_a7687e01-fd54-49f2-9ee9-41c434bf6d74.1
+[2025-09-20 14:04:10Z INFO JobServerQueue] Got a step log file to send to results service.
+[2025-09-20 14:04:10Z INFO JobServerQueue] Starting upload of step log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\7a1ec0bf-c323-4dcd-beec-947eb43a7ff7_1d4273c9-6680-472c-8b21-68fcd9389bc4.1
+[2025-09-20 14:04:10Z INFO JobServerQueue] Got a job log file to send to results service.
+[2025-09-20 14:04:10Z INFO JobServerQueue] Starting upload of job log file to results service ResultsLog, C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\blocks\7a1ec0bf-c323-4dcd-beec-947eb43a7ff7_cccd6e0a-5464-526c-ae4b-824d891a83bf.1
+[2025-09-20 14:04:10Z INFO JobServerQueue] Tried to upload 3 file(s) to results, success rate: 3/3.
+[2025-09-20 14:04:10Z INFO JobServerQueue] Results upload queue drained.
+[2025-09-20 14:04:10Z INFO JobServerQueue] Timeline update queue drained.
+[2025-09-20 14:04:10Z INFO JobServerQueue] Disposing job server ...
+[2025-09-20 14:04:10Z INFO JobServerQueue] Disposing results server ...
+[2025-09-20 14:04:10Z INFO JobServerQueue] All queue process tasks have been stopped, and all queues are drained.
+[2025-09-20 14:04:10Z INFO TempDirectoryManager] Cleaning runner temp folder: C:\Users\projo\royal-equips-orchestrator\actions-runner\_work\_temp
+[2025-09-20 14:04:10Z INFO HostContext] Well known directory 'Bin': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\bin'
+[2025-09-20 14:04:10Z INFO HostContext] Well known directory 'Root': 'C:\Users\projo\royal-equips-orchestrator\actions-runner'
+[2025-09-20 14:04:10Z INFO HostContext] Well known directory 'Diag': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag'
+[2025-09-20 14:04:10Z INFO HostContext] Well known config file 'Telemetry': 'C:\Users\projo\royal-equips-orchestrator\actions-runner\_diag\.telemetry'
+[2025-09-20 14:04:10Z INFO JobRunner] Raising job completed against run service
+[2025-09-20 14:04:11Z INFO Worker] Job completed.

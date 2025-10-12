@@ -1,0 +1,34 @@
+# .github/copilot-policy.yml
+policies:
+  completion:
+    enable_advanced_suggestions: true
+    context_window_size: 16000
+    block_test_mocks: true
+    block_placeholder_text: true
+  chat:
+    enable_chat: true
+    chat_participants: ["@copilot"]
+  security:
+    enable_vulnerability_scanning: true
+    block_insecure_patterns: true
+    require_secret_detection: true
+  quality:
+    require_docstrings: true
+    enforce_type_hints: true
+    max_function_complexity: 20
+    forbid_todos: true
+  automation:
+    enable_auto_pr_reviews: true
+    enable_code_suggestions: true
+    auto_fix_simple_issues: true
+    auto_fix_complex_issues: true
+  enforcement:
+    require_conventional_commits: true
+    require_signed_commits: true
+    require_tests_for_new_code: true
+    require_observability_for_new_services: true
+    forbid_cleartext_secrets: true
+    forbid_pii_logging: true
+  empire_doctrine:
+    default_ruleset: security>integrity>idempotency>profit
+    disallow: ["mock", "placeholder", "lorem", "dummy", "TODO", "fixme"]

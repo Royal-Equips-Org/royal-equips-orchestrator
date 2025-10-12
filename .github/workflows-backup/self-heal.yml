@@ -1,0 +1,28 @@
+﻿name: Self-Heal Rerunner
+on:
+  workflow_run:
+    workflows: ["Product Research Agent","Order Processing Agent","Marketing Campaign Agent","Empire Orchestrator"]
+    types: [completed]
+permissions:
+  actions: write
+  contents: read
+jobs:
+  rerun-on-failure:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const attempts = run.run_attempt || 1;
+            if (attempts >= 3) {
+              core.info(`Max attempts reached (${attempts}). Not rerunning.`);
+              return;
+            }
+            await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: run.id
+            });
+            core.info(`Rerun requested for run ${run.id}, attempt ${attempts+1}.`);

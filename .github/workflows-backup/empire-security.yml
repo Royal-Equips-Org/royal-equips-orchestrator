@@ -1,0 +1,322 @@
+name: '🛡️ Empire Security - Advanced Threat Detection'
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  schedule:
+    # Daily security scan at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.9.0'
+
+jobs:
+  security-analysis:
+    name: '🔍 Advanced Security Analysis'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      
+    steps:
+      - name: '📥 Checkout Empire Code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: '🔧 Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Setup pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+  codeql-analysis:
+    name: '🧬 CodeQL Deep Analysis'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript', 'typescript']
+        
+    steps:
+      - name: '📥 Checkout Repository'
+        uses: actions/checkout@v4
+        
+      - name: '🧬 Initialize CodeQL'
+        uses: github/codeql-action@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
+          
+      - name: '🔧 Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Setup pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: '🏗️ Build for Analysis'
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm build
+          
+      - name: '🧬 Perform CodeQL Analysis'
+        uses: github/codeql-action@v3
+        with:
+          category: "/language:${{matrix.language}}"
+
+  gitleaks-scan:
+    name: '🔐 Secret Scanning with GitLeaks'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: '🔐 Run GitLeaks Secret Scan'
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  trivy-security-scan:
+    name: '🔬 Trivy Vulnerability Scan'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: '📥 Checkout Repository'
+        uses: actions/checkout@v4
+        
+      - name: '🔬 Run Trivy Vulnerability Scanner'
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          
+      - name: '📊 Upload Trivy Results to Security Tab'
+        uses: github/codeql-action@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  dependency-review:
+    name: '📦 Dependency Security Review'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        
+      - name: '📦 Dependency Review'
+        uses: actions/dependency-review-action@4081bf99e2866ebe428fc0477b69eb4fcda7220a  # actions/dependency-review-action@v4
+        with:
+          fail-on-severity: critical
+          fail-on-score: 0.7
+          
+  npm-audit:
+    name: '🔍 NPM Security Audit'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        
+      - name: '🔧 Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Setup pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: '🏗️ Install Dependencies'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        
+      - name: '🔍 Run Security Audit'
+        run: |
+          echo "🔍 Running comprehensive security audit..."
+          
+          # Run pnpm audit
+          pnpm audit --audit-level=high || AUDIT_FAILED=true
+          
+          # Check for known vulnerabilities
+          echo "📊 Audit Summary:"
+          pnpm audit --json > audit-results.json || true
+          
+          if [[ "$AUDIT_FAILED" == "true" ]]; then
+            echo "⚠️ Security vulnerabilities detected!"
+            echo "📋 Review audit-results.json for details"
+            
+            # In production, could auto-create issues for critical vulnerabilities
+            exit 1
+          else
+            echo "✅ No high-severity vulnerabilities detected"
+          fi
+
+  empire-security-policy-check:
+    name: '⚖️ Empire Security Policy Enforcement'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        
+      - name: '⚖️ Enforce Security Policies'
+        run: |
+          echo "⚖️ Checking Royal Equips Empire Security Policies..."
+          
+          POLICY_VIOLATIONS=0
+          
+          # Check 1: Ensure no hardcoded secrets
+          echo "🔐 Checking for hardcoded secrets..."
+          if grep -r "api[_-]key\|password\|secret" --include="*.ts" --include="*.js" apps/ packages/ || true; then
+            echo "❌ Potential hardcoded secrets detected"
+            POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+          fi
+          
+          # Check 2: Ensure proper error handling
+          echo "🛡️ Checking error handling patterns..."
+          if ! grep -r "try.*catch" --include="*.ts" apps/*/src/ packages/*/src/ > /dev/null; then
+            echo "⚠️ Limited error handling detected - consider adding more try/catch blocks"
+          fi
+          
+          # Check 3: Validate environment variable usage
+          echo "🌍 Checking environment variable security..."
+          if grep -r "process\.env\." --include="*.ts" --include="*.js" apps/ packages/ | grep -v "NODE_ENV" | head -5; then
+            echo "ℹ️ Environment variables in use - ensure they're properly secured"
+          fi
+          
+          # Check 4: Ensure TypeScript strict mode
+          echo "📘 Checking TypeScript configuration..."
+          if ! grep -r '"strict": true' tsconfig*.json; then
+            echo "⚠️ TypeScript strict mode not enabled in all configs"
+            POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+          fi
+          
+          # Check 5: Validate package.json security
+          echo "📦 Checking package.json security..."
+          if grep -r "\"scripts\"" package.json | grep -E "(rm -rf|sudo|curl.*sh)"; then
+            echo "❌ Potentially dangerous scripts detected"
+            POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+          fi
+          
+          # Final policy verdict
+          echo ""
+          echo "📊 Security Policy Check Results:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          if [[ $POLICY_VIOLATIONS -eq 0 ]]; then
+            echo "✅ All security policies compliant"
+            echo "🏰 Empire security standards maintained"
+          else
+            echo "❌ $POLICY_VIOLATIONS policy violations detected"
+            echo "🚨 Review required before deployment"
+            exit 1
+          fi
+
+  security-summary:
+    name: '📋 Security Analysis Summary'
+    runs-on: ubuntu-latest
+    needs: [codeql-analysis, gitleaks-scan, trivy-security-scan, npm-audit, empire-security-policy-check]
+    if: always()
+    
+    steps:
+      - name: '📊 Generate Security Summary'
+        run: |
+          echo "## 🛡️ Royal Equips Empire - Security Analysis Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🕐 Scan Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**🔍 Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**📊 Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check job results
+          CODEQL_STATUS="${{ needs.codeql-analysis.result }}"
+          GITLEAKS_STATUS="${{ needs.gitleaks-scan.result }}"
+          TRIVY_STATUS="${{ needs.trivy-security-scan.result }}"
+          AUDIT_STATUS="${{ needs.npm-audit.result }}"
+          POLICY_STATUS="${{ needs.empire-security-policy-check.result }}"
+          
+          echo "### 🔍 Security Scan Results:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # CodeQL Analysis
+          if [[ "$CODEQL_STATUS" == "success" ]]; then
+            echo "- ✅ **CodeQL Analysis**: No critical vulnerabilities detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **CodeQL Analysis**: Issues detected - check Security tab" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # GitLeaks
+          if [[ "$GITLEAKS_STATUS" == "success" ]]; then
+            echo "- ✅ **Secret Scanning**: No leaked secrets found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Secret Scanning**: Potential secrets detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Trivy
+          if [[ "$TRIVY_STATUS" == "success" ]]; then
+            echo "- ✅ **Vulnerability Scan**: No high-severity issues" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Vulnerability Scan**: High-severity vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # NPM Audit
+          if [[ "$AUDIT_STATUS" == "success" ]]; then
+            echo "- ✅ **Dependency Audit**: All packages secure" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Dependency Audit**: Vulnerable dependencies detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Policy Check
+          if [[ "$POLICY_STATUS" == "success" ]]; then
+            echo "- ✅ **Security Policies**: All policies compliant" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Security Policies**: Policy violations detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Overall status
+          if [[ "$CODEQL_STATUS" == "success" && "$GITLEAKS_STATUS" == "success" && "$TRIVY_STATUS" == "success" && "$AUDIT_STATUS" == "success" && "$POLICY_STATUS" == "success" ]]; then
+            echo "### 🎉 Overall Status: **SECURE** 🏰" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ The Royal Equips Empire meets all security standards" >> $GITHUB_STEP_SUMMARY
+            echo "🚀 Safe for autonomous operations" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⚠️ Overall Status: **REQUIRES ATTENTION** 🚨" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Security issues detected - review required" >> $GITHUB_STEP_SUMMARY
+            echo "🔒 Address issues before deployment" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*🤖 Automated security analysis by Royal Equips Empire*" >> $GITHUB_STEP_SUMMARY
