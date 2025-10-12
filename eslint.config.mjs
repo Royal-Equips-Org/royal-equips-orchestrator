@@ -16,18 +16,17 @@ const IGNORE_PATTERNS = [
   "coverage/**",
   "vendor/**",
   "**/*.min.js",
-  "**/*.bundle.js",
-  "**/*.generated.js",
-  "**/*.generated.ts",
   "app/static/assets/**",
   "app/static/react-vendor*.js",
   "dashboard/.next/**",
   "dashboard/dist/**",
   "tools/royal-fix-agent/**",
-  "scripts/fix-agent.mjs",  // Temporarily ignore due to syntax issues
-  "reports/**",
-  ".wrangler/**",
-  "apps/command-center-ui/.vite/"
+  "**/dist/**",
+  "apps/command-center-ui/dist/**",
+  "packages/shared/dist/**",
+  "_diag/**",
+  "actions-runner/**",
+  "reports/**"
 ];
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
@@ -46,13 +45,8 @@ export default [
       ...cfg.languageOptions,
       sourceType: "module",
       parserOptions: {
-        project: [
-          "./tsconfig.base.json", 
-          "./tsconfig.tests.json",
-          "./apps/*/tsconfig.json",
-          "./packages/*/tsconfig.json"
-        ],
-        tsconfigRootDir: import.meta.dirname,
+        project: ["./tsconfig.base.json", "./tsconfig.tests.json"],
+        tsconfigRootDir: process.cwd(),
         ecmaVersion: 2022
       }
     },
@@ -64,21 +58,9 @@ export default [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
       ],
-      // Reduce strictness for existing codebase
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/explicit-function-return-type": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-call": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unsafe-argument": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/restrict-template-expressions": "off",
-      "@typescript-eslint/require-await": "off",
-      "@typescript-eslint/no-floating-promises": "warn",
-      "@typescript-eslint/no-misused-promises": "warn",
-      "@typescript-eslint/no-redundant-type-constituents": "warn",
-      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
-      "no-prototype-builtins": "error"
+      // Extra strictness for enterprise: ban explicit any, enforce return types
+      "@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: false }],
+      "@typescript-eslint/explicit-function-return-type": "warn"
     }
   })),
 
@@ -106,7 +88,6 @@ export default [
   // Frontend/browser code - allow browser, serviceworker, webworker globals
   {
     files: [
-      "apps/command-center-ui/**/*.{js,ts,jsx,tsx}",
       "dashboard/**/*.{js,ts,jsx,tsx}",
       "public/**/*.{js,jsx}"
     ],
@@ -147,15 +128,8 @@ export default [
       }
     },
     rules: {
-      // Allow unused vars for event-driven handlers with underscore prefix
-      "no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
-      ],
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
-      ]
+      // Allow unused vars for event-driven handlers
+      "no-unused-vars": "off"
     }
   },
 

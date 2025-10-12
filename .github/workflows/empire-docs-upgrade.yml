@@ -1,0 +1,41 @@
+﻿name: Empire Docs Upgrade
+on:
+  schedule: [ { cron: "15 * * * *" } ]
+  workflow_dispatch:
+  push:
+    paths:
+      - "AGENT_INSTRUCTIONS.md"
+      - "EMPIRE_PROMPT.md"
+      - "EMPIRE_INFRASTRUCTURE.md"
+      - "INSTRUCTIONS.md"
+      - ".github/COPILOT.md"
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  normalize-brains:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Import GPG key
+        if: ${{ secrets.GPG_PRIVATE_KEY && secrets.GPG_PASSPHRASE && secrets.BOT_EMAIL && secrets.BOT_NAME }}
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+      - name: Configure git
+        run: |
+          git config user.name  "${{ secrets.BOT_NAME || 'empire-bot' }}"
+          git config user.email "${{ secrets.BOT_EMAIL || 'bot@example.local' }}"
+      - name: Ensure canonical headers, version tags, TOC
+        run: bash .github/scripts/upgrade_brains.sh
+      - name: Commit changes
+        run: |
+          if ! git diff --quiet; then
+            git add -A
+            git commit -S -m "chore(docs): normalize & upgrade empire brains" || git commit -m "chore(docs): normalize & upgrade empire brains"
+            git push
+          fi
