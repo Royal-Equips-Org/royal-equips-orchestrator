@@ -12,12 +12,12 @@ The ultimate private AI DEV Partner with complete knowledge of:
 - Empire-level automation and control
 """
 
+import base64
+import io
 import logging
 import os
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict
-import io
-import base64
 
 try:
     import openai
@@ -413,21 +413,21 @@ Health Metrics:
                 'transcription': '',
                 'response': 'Voice control unavailable. Please configure OpenAI API key.'
             }
-        
+
         try:
             # Convert bytes to file-like object for OpenAI Whisper
             audio_file = io.BytesIO(audio_data)
             audio_file.name = "audio.wav"  # OpenAI needs a filename
-            
+
             # Transcribe audio using Whisper
             transcript_response = self.client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file,
                 response_format="text"
             )
-            
+
             transcription = transcript_response.strip()
-            
+
             if not transcription:
                 return {
                     'success': False,
@@ -435,7 +435,7 @@ Health Metrics:
                     'transcription': '',
                     'response': 'I did not detect any speech in the audio. Please try again.'
                 }
-            
+
             # Process the transcribed command with ARIA
             voice_prompt = f"""VOICE COMMAND RECEIVED: "{transcription}"
 
@@ -448,7 +448,7 @@ This is a voice command from the CEO. Respond as ARIA with:
 Maintain your elite, authoritative tone while being helpful and efficient."""
 
             ai_response = await self.get_response(voice_prompt, include_system_status=True)
-            
+
             if ai_response['success']:
                 return {
                     'success': True,
@@ -465,7 +465,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                     'transcription': transcription,
                     'response': ai_response['response']
                 }
-                
+
         except Exception as e:
             logger.error(f"Voice command processing error: {e}")
             return {
@@ -490,7 +490,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 'success': False,
                 'error': 'ARIA not configured - OpenAI API key required'
             }
-        
+
         try:
             # Generate speech using OpenAI TTS
             response = self.client.audio.speech.create(
@@ -499,11 +499,11 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 input=text[:4096],  # Limit to avoid quota issues
                 response_format="mp3"
             )
-            
+
             # Convert response to base64 for web transmission
             audio_content = response.content
             audio_base64 = base64.b64encode(audio_content).decode('utf-8')
-            
+
             return {
                 'success': True,
                 'audio_data': audio_base64,
@@ -513,7 +513,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 'model': 'tts-1-hd',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Voice generation error: {e}")
             return {
@@ -540,11 +540,11 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 'command': command,
                 'status': 'unavailable'
             }
-        
+
         try:
             # Log the command execution
             logger.info(f"ARIA executing empire command: {command} with parameters: {parameters}")
-            
+
             # Define available empire commands
             empire_commands = {
                 'sync_shopify': self._execute_shopify_sync,
@@ -555,7 +555,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 'generate_report': self._execute_report_generation,
                 'optimize_performance': self._execute_performance_optimization
             }
-            
+
             if command not in empire_commands:
                 return {
                     'success': False,
@@ -564,10 +564,10 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                     'command': command,
                     'status': 'invalid'
                 }
-            
+
             # Execute the command
             result = await empire_commands[command](parameters or {})
-            
+
             # Add command metadata
             result.update({
                 'command': command,
@@ -575,9 +575,9 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 'executed_by': 'ARIA',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Empire command execution error: {e}")
             return {
@@ -592,17 +592,17 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
         """Execute Shopify synchronization."""
         try:
             from app.services.shopify_service import shopify_service
-            
+
             if not shopify_service.is_configured():
                 return {
                     'success': False,
                     'error': 'Shopify not configured',
                     'status': 'not_configured'
                 }
-            
+
             # Trigger sync operations
             sync_type = parameters.get('sync_type', 'full')
-            
+
             # For now, return success status - in real implementation would call actual sync
             return {
                 'success': True,
@@ -610,7 +610,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 'sync_type': sync_type,
                 'message': f'Shopify {sync_type} sync completed successfully'
             }
-            
+
         except Exception as e:
             return {
                 'success': False,
@@ -623,7 +623,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
         try:
             agents = parameters.get('agents', ['all'])
             environment = parameters.get('environment', 'production')
-            
+
             deployed_agents = []
             for agent in agents:
                 deployed_agents.append({
@@ -631,14 +631,14 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                     'status': 'deployed',
                     'environment': environment
                 })
-            
+
             return {
                 'success': True,
                 'status': 'completed',
                 'deployed_agents': deployed_agents,
                 'environment': environment
             }
-            
+
         except Exception as e:
             return {
                 'success': False,
@@ -651,9 +651,9 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
         try:
             scope = parameters.get('scope', 'all')
             reason = parameters.get('reason', 'Emergency stop requested')
-            
+
             logger.critical(f"EMERGENCY STOP activated by ARIA - Scope: {scope}, Reason: {reason}")
-            
+
             stopped_components = []
             if scope in ['all', 'agents']:
                 stopped_components.append('agents')
@@ -661,7 +661,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 stopped_components.append('shopify_sync')
             if scope in ['all', 'webhooks']:
                 stopped_components.append('webhooks')
-            
+
             return {
                 'success': True,
                 'status': 'emergency_stop_activated',
@@ -669,7 +669,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                 'reason': reason,
                 'can_resume': True
             }
-            
+
         except Exception as e:
             return {
                 'success': False,
@@ -681,16 +681,16 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
         """Execute comprehensive health check."""
         try:
             from app.services.health_service import health_service
-            
+
             health_data = health_service.get_comprehensive_health() if health_service else {}
-            
+
             return {
                 'success': True,
                 'status': 'completed',
                 'health_data': health_data,
                 'overall_status': health_data.get('status', 'unknown')
             }
-            
+
         except Exception as e:
             return {
                 'success': False,
@@ -702,7 +702,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
         """Execute agent restart."""
         try:
             agents = parameters.get('agents', ['all'])
-            
+
             restarted_agents = []
             for agent in agents:
                 restarted_agents.append({
@@ -710,13 +710,13 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
                     'status': 'restarted',
                     'restart_time': datetime.now(timezone.utc).isoformat()
                 })
-            
+
             return {
                 'success': True,
                 'status': 'completed',
                 'restarted_agents': restarted_agents
             }
-            
+
         except Exception as e:
             return {
                 'success': False,
@@ -729,7 +729,7 @@ Maintain your elite, authoritative tone while being helpful and efficient."""
         try:
             report_type = parameters.get('report_type', 'executive')
             timeframe = parameters.get('timeframe', '24h')
-            
+
             # Generate AI-powered report
             report_prompt = f"""Generate a comprehensive {report_type} report for the Royal Equips empire covering the last {timeframe}.
 
@@ -746,7 +746,7 @@ Include:
 Format as a professional executive report suitable for a billion-dollar company CEO."""
 
             report_response = await self.get_response(report_prompt, include_system_status=True)
-            
+
             return {
                 'success': True,
                 'status': 'completed',
@@ -755,7 +755,7 @@ Format as a professional executive report suitable for a billion-dollar company 
                 'report_content': report_response['response'] if report_response['success'] else 'Report generation failed',
                 'generated_at': datetime.now(timezone.utc).isoformat()
             }
-            
+
         except Exception as e:
             return {
                 'success': False,
@@ -767,7 +767,7 @@ Format as a professional executive report suitable for a billion-dollar company 
         """Execute performance optimization."""
         try:
             targets = parameters.get('targets', ['system', 'agents', 'database'])
-            
+
             optimizations = []
             for target in targets:
                 optimizations.append({
@@ -775,14 +775,14 @@ Format as a professional executive report suitable for a billion-dollar company 
                     'status': 'optimized',
                     'improvements': f'{target} performance enhanced'
                 })
-            
+
             return {
                 'success': True,
                 'status': 'completed',
                 'optimizations': optimizations,
                 'overall_improvement': '15-25% performance boost expected'
             }
-            
+
         except Exception as e:
             return {
                 'success': False,

@@ -551,7 +551,7 @@ def get_products():
         # Get query parameters
         limit = request.args.get('limit', 50, type=int)
         force_refresh = request.args.get('force') == '1'
-        
+
         # Validate limit
         if limit < 1 or limit > 250:
             return jsonify({
@@ -560,24 +560,24 @@ def get_products():
             }), 400
 
         start_time = datetime.now(timezone.utc)
-        
+
         try:
             # Get products from Shopify
             products_data, _ = service.list_products(limit=limit)
-            
+
             # Transform to the expected format
             transformed_products = []
             low_stock_count = 0
-            
+
             for product in products_data:
                 # Calculate total inventory across all variants
                 total_inventory = 0
                 variants = []
-                
+
                 for variant in product.get('variants', []):
                     inventory_qty = variant.get('inventory_quantity', 0)
                     total_inventory += inventory_qty
-                    
+
                     variants.append({
                         "id": f"gid://shopify/ProductVariant/{variant.get('id')}",
                         "sku": variant.get('sku', ''),
@@ -585,11 +585,11 @@ def get_products():
                         "inventoryQuantity": inventory_qty,
                         "tracked": variant.get('inventory_management') == 'shopify'
                     })
-                
+
                 # Check for low stock (threshold: 10)
                 if 0 < total_inventory <= 10:
                     low_stock_count += 1
-                
+
                 transformed_product = {
                     "id": f"gid://shopify/Product/{product.get('id')}",
                     "title": product.get('title', ''),
@@ -597,13 +597,13 @@ def get_products():
                     "totalInventory": total_inventory,
                     "variants": variants
                 }
-                
+
                 transformed_products.append(transformed_product)
-            
+
             # Calculate metrics
             fetch_time_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
             shop_name = f"{service.shop_name}.myshopify.com" if service.shop_name else "unknown"
-            
+
             response_data = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "shop": shop_name,
@@ -616,9 +616,9 @@ def get_products():
                     "apiCalls": 1
                 }
             }
-            
+
             return jsonify(response_data), 200
-            
+
         except ShopifyAuthError as e:
             logger.error(f"Shopify authentication error: {e}")
             return jsonify({
@@ -634,7 +634,7 @@ def get_products():
                 },
                 "error": "Authentication failed"
             }), 401
-            
+
         except ShopifyAPIError as e:
             logger.error(f"Shopify API error: {e}")
             return jsonify({
@@ -705,7 +705,7 @@ def get_orders():
         # Get query parameters
         limit = request.args.get('limit', 20, type=int)
         status = request.args.get('status', 'any')
-        
+
         # Validate limit
         if limit < 1 or limit > 250:
             return jsonify({
@@ -716,10 +716,10 @@ def get_orders():
         try:
             # Get orders from Shopify
             orders_data, _ = service.list_orders(limit=limit, status=status)
-            
+
             # Transform to the expected format
             transformed_orders = []
-            
+
             for order in orders_data:
                 line_items = []
                 for item in order.get('line_items', []):
@@ -729,7 +729,7 @@ def get_orders():
                         "quantity": item.get('quantity', 0),
                         "price": item.get('price', '0')
                     })
-                
+
                 transformed_order = {
                     "id": f"gid://shopify/Order/{order.get('id')}",
                     "orderNumber": str(order.get('order_number', order.get('name', ''))),
@@ -740,16 +740,16 @@ def get_orders():
                     "createdAt": order.get('created_at', datetime.now(timezone.utc).isoformat()),
                     "lineItems": line_items
                 }
-                
+
                 transformed_orders.append(transformed_order)
-            
+
             response_data = {
                 "orders": transformed_orders,
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
-            
+
             return jsonify(response_data), 200
-            
+
         except ShopifyAuthError as e:
             logger.error(f"Shopify authentication error: {e}")
             return jsonify({
@@ -757,7 +757,7 @@ def get_orders():
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "error": "Authentication failed"
             }), 401
-            
+
         except ShopifyAPIError as e:
             logger.error(f"Shopify API error: {e}")
             return jsonify({
@@ -840,22 +840,22 @@ def get_shopify_metrics_old():
             # Fetch live data
             products, _ = service.list_products(limit=250)
             orders, _ = service.list_orders(limit=250, status='any')
-            
+
             # Calculate real metrics
             total_revenue = 0
             total_orders = len(orders)
             total_products = len(products)
-            
+
             # Calculate revenue from orders
             for order in orders:
                 try:
                     total_revenue += float(order.get('total_price', '0'))
                 except (ValueError, TypeError):
                     continue
-            
+
             # Calculate average order value
             average_order_value = total_revenue / total_orders if total_orders > 0 else 0
-            
+
             # Get top products by analyzing orders
             product_sales = {}
             for order in orders:
@@ -878,7 +878,7 @@ def get_shopify_metrics_old():
                             product_sales[product_id]['ordersCount'] += 1
                         except (ValueError, TypeError):
                             continue
-            
+
             # Get inventory levels from products
             for product in products:
                 product_id = str(product.get('id'))
@@ -888,14 +888,14 @@ def get_shopify_metrics_old():
                     product_sales[product_id]['inventoryLevel'] = total_inventory
                     if not product_sales[product_id]['handle']:
                         product_sales[product_id]['handle'] = product.get('handle', '')
-            
+
             # Sort and get top 5 products
             top_products = sorted(
-                list(product_sales.values()), 
-                key=lambda x: x['totalSales'], 
+                list(product_sales.values()),
+                key=lambda x: x['totalSales'],
                 reverse=True
             )[:5]
-            
+
             # Get recent orders (last 10)
             recent_orders = []
             for order in sorted(orders, key=lambda x: x.get('created_at', ''), reverse=True)[:10]:
@@ -908,22 +908,22 @@ def get_shopify_metrics_old():
                     'createdAt': order.get('created_at', datetime.now(timezone.utc).isoformat()),
                     'fulfillmentStatus': order.get('fulfillment_status', 'unfulfilled')
                 })
-            
+
             # Estimate metrics (simplified calculations)
             # Get unique customers from orders
             unique_customers = len(set(
-                order.get('customer', {}).get('id') 
-                for order in orders 
+                order.get('customer', {}).get('id')
+                for order in orders
                 if order.get('customer', {}).get('id')
             ))
-            
+
             # Simple conversion rate estimation (orders per unique customer)
             conversion_rate = (total_orders / max(unique_customers, 1)) * 100 if unique_customers > 0 else 0
             conversion_rate = min(conversion_rate, 100)  # Cap at 100%
-            
+
             # Traffic estimate (very simplified)
             traffic_estimate = int(unique_customers * 10)  # Rough estimate
-            
+
             metrics = {
                 "totalRevenue": round(total_revenue, 2),
                 "totalOrders": total_orders,
@@ -938,7 +938,7 @@ def get_shopify_metrics_old():
                 "lastUpdated": datetime.now(timezone.utc).isoformat(),
                 "connected": True
             }
-            
+
             return jsonify(metrics), 200
 
         except Exception as e:
@@ -1097,7 +1097,7 @@ def get_shopify_metrics():
     """Get comprehensive Shopify store metrics for dashboard."""
     try:
         service = get_shopify_service()
-        
+
         if not service.is_configured():
             return jsonify({
                 "error": "Shopify service not configured",
@@ -1115,36 +1115,36 @@ def get_shopify_metrics():
                     "lifetimeValue": 0
                 }
             }), 503
-        
+
         # Get live metrics from Shopify
         products_count = service.get_products_count()
         orders_count = service.get_orders_count()
         customers_count = service.get_customers_count()
-        
+
         # Calculate revenue from recent orders
         recent_orders = service.get_orders(limit=250)
         total_revenue = sum(float(order.get('total_price', 0)) for order in recent_orders)
-        
+
         # Get inventory value from products
         products = service.get_products(limit=250)
         inventory_value = 0
         low_stock_count = 0
-        
+
         for product in products:
             for variant in product.get('variants', []):
                 price = float(variant.get('price', 0))
                 inventory = variant.get('inventory_quantity', 0)
                 inventory_value += price * inventory
-                
+
                 if inventory < 5:  # Low stock threshold
                     low_stock_count += 1
-        
+
         # Customer insights
         customers = service.get_customers(limit=100)
         new_customers = len([c for c in customers if c.get('orders_count', 0) <= 1])
         returning_customers = len(customers) - new_customers
         avg_order_value = total_revenue / max(orders_count, 1)
-        
+
         return jsonify({
             "totalProducts": products_count,
             "totalOrders": orders_count,
@@ -1160,7 +1160,7 @@ def get_shopify_metrics():
                 "lifetimeValue": avg_order_value * 3.5  # Estimated LTV
             }
         }), 200
-        
+
     except Exception as e:
         # Sanitize agent_id for logging to prevent log injection
         safe_error = str(e)[:100]  # Limit error message length
@@ -1173,30 +1173,30 @@ def sync_all_data():
     """Trigger comprehensive data sync with Supabase storage."""
     try:
         service = get_shopify_service()
-        
+
         if not service.is_configured():
             return jsonify({"error": "Shopify service not configured"}), 503
-        
+
         # Start async jobs for comprehensive sync
         sync_jobs = []
-        
+
         # Start product sync
         product_job_id = run_job_async(sync_products_job)
         sync_jobs.append({"type": "products", "job_id": product_job_id})
-        
-        # Start inventory sync  
+
+        # Start inventory sync
         inventory_job_id = run_job_async(sync_inventory_job)
         sync_jobs.append({"type": "inventory", "job_id": inventory_job_id})
-        
+
         # Start orders sync
         orders_job_id = run_job_async(sync_orders_job)
         sync_jobs.append({"type": "orders", "job_id": orders_job_id})
-        
+
         # Store sync data in Supabase if available
         try:
             from packages.connectors.src.supabase import SupabaseConnector
             supabase = SupabaseConnector()
-            
+
             # Log sync event
             sync_record = {
                 "sync_type": "comprehensive",
@@ -1204,20 +1204,20 @@ def sync_all_data():
                 "initiated_at": datetime.now(timezone.utc).isoformat(),
                 "status": "started"
             }
-            
+
             # This would use auto-schema creation to store sync logs
             logger.info(f"Comprehensive sync started: {sync_record}")
-            
+
         except Exception as supabase_error:
             logger.warning(f"Could not log to Supabase: {supabase_error}")
-        
+
         return jsonify({
             "status": "sync_started",
             "jobs": sync_jobs,
             "message": "Comprehensive data sync initiated",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }), 202
-        
+
     except Exception as e:
         logger.error(f"Failed to start comprehensive sync: {e}")
         return jsonify({"error": "Failed to start sync", "message": "An internal error has occurred."}), 500

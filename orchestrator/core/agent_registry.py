@@ -19,7 +19,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
@@ -281,7 +281,7 @@ class AgentRegistry:
             agent_heartbeat = agent.last_heartbeat
             if agent_heartbeat.tzinfo is None:
                 agent_heartbeat = agent_heartbeat.replace(tzinfo=timezone.utc)
-            
+
             if agent_heartbeat < timeout_threshold:
                 if agent.status not in [AgentStatus.STOPPED, AgentStatus.MAINTENANCE]:
                     self.logger.warning(

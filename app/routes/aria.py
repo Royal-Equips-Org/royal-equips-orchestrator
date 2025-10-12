@@ -6,6 +6,7 @@ with voice control, real-time monitoring, and executive command capabilities.
 """
 
 import logging
+
 from flask import Blueprint, render_template
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ def aria_demo():
         "message": "ARIA - AI Empire Operator is online",
         "capabilities": [
             "Voice command processing",
-            "Empire operations management", 
+            "Empire operations management",
             "Real-time system monitoring",
             "Executive business intelligence",
             "Strategic command execution",

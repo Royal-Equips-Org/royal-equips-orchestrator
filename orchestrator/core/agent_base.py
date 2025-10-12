@@ -15,18 +15,17 @@ from __future__ import annotations
 
 import abc
 import asyncio
-import os
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, Optional
+from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 class AgentStatus(Enum):
     """Agent operational status"""
     ACTIVE = "active"
-    INACTIVE = "inactive" 
+    INACTIVE = "inactive"
     DEPLOYING = "deploying"
     ERROR = "error"
     MAINTENANCE = "maintenance"
@@ -42,12 +41,12 @@ class AgentBase(abc.ABC):
         self.name = name
         self.agent_type = agent_type
         self.description = description
-        
+
         # Enhanced status tracking
         self.status = AgentStatus.INACTIVE
         self.autonomous_mode = False
         self.emergency_stop = False
-        
+
         # Performance metrics
         self.performance_score = 0.0
         self.discoveries_count = 0
@@ -55,7 +54,7 @@ class AgentBase(abc.ABC):
         self.last_execution: Optional[datetime] = None
         self.next_scheduled: Optional[datetime] = None
         self.current_task = "Initializing"
-        
+
         # Health indicators
         self.health_indicators = {
             'cpu_usage': 0.0,
@@ -63,7 +62,7 @@ class AgentBase(abc.ABC):
             'error_rate': 0.0,
             'response_time': 0.0
         }
-        
+
         # Legacy compatibility
         self._last_run: float | None = None
 
@@ -80,10 +79,10 @@ class AgentBase(abc.ABC):
         """Initialize the agent - called once before starting operations"""
         self.status = AgentStatus.DEPLOYING
         self.current_task = "Initializing agent systems"
-        
+
         # Agent-specific initialization
         await self._agent_initialize()
-        
+
         self.status = AgentStatus.ACTIVE
         self.current_task = "Ready for operations"
         logger.info(f"✅ {self.name} initialized successfully")
@@ -99,21 +98,21 @@ class AgentBase(abc.ABC):
         """
         if self.emergency_stop:
             return
-        
+
         try:
             self.status = AgentStatus.ACTIVE
             self.current_task = "Executing primary task"
             self.last_execution = datetime.now(timezone.utc)
-            
+
             # Run agent-specific logic
             await self._execute_task()
-            
+
             # Update performance metrics
             await self._update_performance_metrics()
-            
+
             # Legacy compatibility
             self._last_run = asyncio.get_event_loop().time()
-            
+
         except Exception as e:
             self.status = AgentStatus.ERROR
             self.current_task = f"Error: {str(e)}"
@@ -128,14 +127,14 @@ class AgentBase(abc.ABC):
     async def start_autonomous_workflow(self):
         """Start autonomous operation workflow - override in subclasses"""
         logger.info(f"🤖 {self.name} autonomous workflow started")
-        
+
         while not self.emergency_stop:
             try:
                 if self.autonomous_mode and self.status == AgentStatus.ACTIVE:
                     await self.run()
-                
+
                 await asyncio.sleep(300)  # 5-minute default cycle
-                
+
             except Exception as e:
                 logger.error(f"❌ {self.name} autonomous workflow error: {e}")
                 await asyncio.sleep(600)  # 10-minute error cooldown
@@ -184,7 +183,7 @@ class AgentBase(abc.ABC):
         if self.last_execution:
             time_since_last = (datetime.now(timezone.utc) - self.last_execution).total_seconds()
             self.performance_score = max(0, 100 - (time_since_last / 3600))  # Decay over time
-        
+
         # Update health indicators
         self.health_indicators['response_time'] = asyncio.get_event_loop().time()
 
@@ -197,7 +196,7 @@ class AgentBase(abc.ABC):
         """Return enhanced health status dictionary."""
         now = asyncio.get_event_loop().time()
         last = self._last_run or now
-        
+
         return {
             "name": self.name,
             "agent_type": self.agent_type,
@@ -217,10 +216,10 @@ class AgentBase(abc.ABC):
         """Enhanced shutdown with status updates."""
         self.status = AgentStatus.MAINTENANCE
         self.current_task = "Shutting down"
-        
+
         # Agent-specific cleanup
         await self._agent_shutdown()
-        
+
         self.status = AgentStatus.INACTIVE
         logger.info(f"🛑 {self.name} shutdown completed")
 

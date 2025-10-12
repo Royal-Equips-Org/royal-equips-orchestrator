@@ -16,14 +16,13 @@ Key Features:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
-import json
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
-import httpx
+from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import httpx
 
 from orchestrator.core.agent_base import AgentBase
 
@@ -61,22 +60,22 @@ class OrderFulfillmentAgent(AgentBase):
     async def _execute_task(self) -> None:
         """Execute order fulfillment tasks."""
         self.logger.info("Running order fulfillment agent")
-        
+
         # Fetch new orders from Shopify
         new_orders = await self._fetch_new_orders()
-        
+
         for order in new_orders:
             try:
                 # Step 1: Risk assessment
                 risk_level = await self._assess_order_risk(order)
-                
+
                 # Step 2: Route order based on risk and products
                 if risk_level != OrderRisk.BLOCKED:
                     await self._route_order_to_supplier(order, risk_level)
-                    
+
                 # Step 3: Update order status and notify customer
                 await self._update_order_status(order)
-                
+
                 # Step 4: Track processed order
                 self.processed_orders.append({
                     'order_id': order.get('id'),
@@ -84,16 +83,16 @@ class OrderFulfillmentAgent(AgentBase):
                     'processed_at': datetime.now(timezone.utc).isoformat(),
                     'status': OrderStatus.PROCESSING.value
                 })
-                
+
             except Exception as e:
                 self.logger.error(f"Error processing order {order.get('id')}: {e}")
-        
+
         # Update supplier performance
         await self._update_supplier_performance()
-        
+
         # Update discoveries count
         self.discoveries_count = len(self.processed_orders)
-        
+
         self.logger.info(
             "Order fulfillment cycle completed: %d orders processed, %d high-risk orders",
             len(new_orders),
@@ -105,18 +104,18 @@ class OrderFulfillmentAgent(AgentBase):
         try:
             shopify_token = os.getenv('SHOPIFY_ACCESS_TOKEN')
             shop_domain = os.getenv('SHOPIFY_STORE')
-            
+
             if not shopify_token or not shop_domain:
                 error_msg = "Shopify credentials required (SHOPIFY_ACCESS_TOKEN, SHOPIFY_STORE). No mock data in production."
                 self.logger.error(error_msg)
                 raise ValueError(error_msg)
-                
+
             async with httpx.AsyncClient() as client:
                 headers = {
                     'X-Shopify-Access-Token': shopify_token,
                     'Content-Type': 'application/json'
                 }
-                
+
                 # Fetch unfulfilled orders
                 response = await client.get(
                     f'https://{shop_domain}/admin/api/2023-10/orders.json',
@@ -128,7 +127,7 @@ class OrderFulfillmentAgent(AgentBase):
                     },
                     timeout=30
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     orders = data.get('orders', [])
@@ -138,7 +137,7 @@ class OrderFulfillmentAgent(AgentBase):
                     error_msg = f"Shopify API returned status {response.status_code}"
                     self.logger.error(error_msg)
                     raise RuntimeError(error_msg)
-                    
+
         except Exception as e:
             self.logger.error(f"Error fetching orders: {e}")
             raise
@@ -149,17 +148,17 @@ class OrderFulfillmentAgent(AgentBase):
         """Assess order risk level using multiple factors."""
         try:
             risk_score = 0
-            
+
             # Factor 1: Customer history
             customer = order.get('customer', {})
             orders_count = int(customer.get('orders_count', 0))
             total_spent = float(customer.get('total_spent', 0))
-            
+
             if orders_count == 0:  # New customer
                 risk_score += 20
             elif orders_count < 3:  # Limited history
                 risk_score += 10
-                
+
             # Factor 2: Order value
             order_value = float(order.get('total_price', 0))
             if order_value > 500:
@@ -168,22 +167,22 @@ class OrderFulfillmentAgent(AgentBase):
                 risk_score += 15
             elif order_value > 100:
                 risk_score += 5
-                
+
             # Factor 3: Billing/Shipping mismatch
             billing = order.get('billing_address', {})
             shipping = order.get('shipping_address', billing)
-            
+
             if billing.get('country') != shipping.get('country'):
                 risk_score += 30
             elif billing.get('city') != shipping.get('city'):
                 risk_score += 15
-                
+
             # Factor 4: Payment method (would need real payment data)
             # risk_score += self._assess_payment_risk(order)
-            
+
             # Factor 5: Velocity check (multiple orders in short time)
             # risk_score += self._assess_velocity_risk(order)
-            
+
             # Determine risk level
             if risk_score >= 80:
                 risk_level = OrderRisk.BLOCKED
@@ -193,7 +192,7 @@ class OrderFulfillmentAgent(AgentBase):
                 risk_level = OrderRisk.MEDIUM
             else:
                 risk_level = OrderRisk.LOW
-                
+
             if risk_level in [OrderRisk.HIGH, OrderRisk.BLOCKED]:
                 self.high_risk_orders.append({
                     'order_id': order.get('id'),
@@ -201,13 +200,13 @@ class OrderFulfillmentAgent(AgentBase):
                     'risk_score': risk_score,
                     'flagged_at': datetime.now(timezone.utc).isoformat()
                 })
-                
+
             self.logger.info(
                 f"Order {order.get('id')} risk assessment: {risk_level.value} (score: {risk_score})"
             )
-            
+
             return risk_level
-            
+
         except Exception as e:
             self.logger.error(f"Error assessing order risk: {e}")
             return OrderRisk.MEDIUM  # Default to medium risk on error
@@ -216,21 +215,21 @@ class OrderFulfillmentAgent(AgentBase):
         """Route order to appropriate supplier based on products and risk."""
         try:
             line_items = order.get('line_items', [])
-            
+
             for item in line_items:
                 sku = item.get('sku', '')
                 title = item.get('title', '')
-                
+
                 # Determine supplier based on product type and risk
                 supplier = await self._select_supplier(item, risk_level)
-                
+
                 if supplier == 'autods':
                     await self._route_to_autods(order, item)
                 elif supplier == 'printful':
                     await self._route_to_printful(order, item)
                 else:
                     await self._route_to_manual_processing(order, item)
-                    
+
         except Exception as e:
             self.logger.error(f"Error routing order: {e}")
 
@@ -238,19 +237,19 @@ class OrderFulfillmentAgent(AgentBase):
         """Select best supplier for item based on various factors."""
         sku = item.get('sku', '')
         title = item.get('title', '').lower()
-        
+
         # High-risk orders go to most reliable supplier
         if risk_level == OrderRisk.HIGH:
             return 'printful'  # Most reliable for high-risk
-            
+
         # Electronics/tech items prefer AutoDS
         if any(keyword in title for keyword in ['wireless', 'bluetooth', 'charger', 'electronic']):
             return 'autods'
-            
+
         # Print-on-demand items go to Printful
         if any(keyword in title for keyword in ['shirt', 'mug', 'poster', 'custom']):
             return 'printful'
-            
+
         # Default to AutoDS for general dropshipping
         return 'autods'
 
@@ -262,13 +261,13 @@ class OrderFulfillmentAgent(AgentBase):
                 error_msg = "AUTO_DS_API_KEY required. No mock routing in production."
                 self.logger.error(error_msg)
                 raise ValueError(error_msg)
-                
+
             async with httpx.AsyncClient() as client:
                 headers = {
                     'Authorization': f'Bearer {autods_key}',
                     'Content-Type': 'application/json'
                 }
-                
+
                 payload = {
                     'order': {
                         'external_id': order.get('id'),
@@ -281,21 +280,21 @@ class OrderFulfillmentAgent(AgentBase):
                         }]
                     }
                 }
-                
+
                 response = await client.post(
                     'https://app.autods.com/api/v1/orders',
                     headers=headers,
                     json=payload,
                     timeout=30
                 )
-                
+
                 if response.status_code == 201:
                     self.logger.info(f"Order {order.get('id')} routed to AutoDS successfully")
                     return True
                 else:
                     self.logger.error(f"AutoDS routing failed: {response.status_code}")
                     return False
-                    
+
         except Exception as e:
             self.logger.error(f"Error routing to AutoDS: {e}")
             return False
@@ -308,7 +307,7 @@ class OrderFulfillmentAgent(AgentBase):
                 error_msg = "PRINTFUL_API_KEY required. No mock routing in production."
                 self.logger.error(error_msg)
                 raise ValueError(error_msg)
-                
+
             # Implement real Printful API integration
             async with httpx.AsyncClient() as client:
                 headers = {
@@ -340,7 +339,7 @@ class OrderFulfillmentAgent(AgentBase):
                 else:
                     self.logger.error(f"Printful routing failed: {response.status_code} - {response.text}")
                     return False
-            
+
         except Exception as e:
             self.logger.error(f"Error routing to Printful: {e}")
             return False
@@ -356,13 +355,13 @@ class OrderFulfillmentAgent(AgentBase):
         """Update order status in Shopify and notify customer."""
         try:
             order_id = order.get('id')
-            
+
             # Update order status in Shopify using real API
             await self._update_shopify_order_status(order_id, OrderStatus.PROCESSING)
-            
+
             # Send customer notification
             await self._send_order_notification(order)
-            
+
         except Exception as e:
             self.logger.error(f"Error updating order status: {e}")
 
@@ -375,7 +374,7 @@ class OrderFulfillmentAgent(AgentBase):
         """Send order confirmation/update to customer."""
         email = order.get('email')
         order_number = order.get('order_number')
-        
+
         # Mock implementation - would integrate with email service
         self.logger.info(f"Order notification sent to {email} for order {order_number}")
 
@@ -383,7 +382,7 @@ class OrderFulfillmentAgent(AgentBase):
         """Update supplier performance metrics."""
         try:
             suppliers = ['AutoDS', 'Printful', 'Manual']
-            
+
             for supplier in suppliers:
                 if supplier not in self.supplier_performance:
                     self.supplier_performance[supplier] = {
@@ -392,11 +391,11 @@ class OrderFulfillmentAgent(AgentBase):
                         'avg_processing_time': 24,  # hours
                         'last_updated': datetime.now(timezone.utc).isoformat()
                     }
-                    
+
                 # Update metrics based on recent performance
                 self.supplier_performance[supplier]['orders_processed'] += 1
                 self.supplier_performance[supplier]['last_updated'] = datetime.now(timezone.utc).isoformat()
-                
+
         except Exception as e:
             self.logger.error(f"Error updating supplier performance: {e}")
 
@@ -404,7 +403,7 @@ class OrderFulfillmentAgent(AgentBase):
         """Get count of orders processed today."""
         today = datetime.now(timezone.utc).date()
         today_orders = [
-            o for o in self.processed_orders 
+            o for o in self.processed_orders
             if datetime.fromisoformat(o.get('processed_at', '')).date() == today
         ]
         return len(today_orders)
@@ -412,7 +411,7 @@ class OrderFulfillmentAgent(AgentBase):
     async def _update_performance_metrics(self):
         """Update agent performance metrics."""
         await super()._update_performance_metrics()
-        
+
         # Calculate success rate based on successful order processing
         if self.processed_orders:
             # Success rate based on non-blocked orders
@@ -420,7 +419,7 @@ class OrderFulfillmentAgent(AgentBase):
             self.success_rate = max(0, ((len(self.processed_orders) - blocked_orders) / len(self.processed_orders)) * 100)
         else:
             self.success_rate = 100.0
-        
+
         # Update performance score based on order volume and risk management
         risk_management_bonus = max(0, 10 - len(self.high_risk_orders))  # Bonus for fewer high-risk orders
         self.performance_score = min(100, (len(self.processed_orders) * 3) + risk_management_bonus)

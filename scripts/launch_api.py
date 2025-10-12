@@ -5,7 +5,7 @@ This file is kept for backward compatibility only.
 """
 
 import sys
-import os
+
 
 def main():
     """Legacy launcher that redirects to Flask app."""

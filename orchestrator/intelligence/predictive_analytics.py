@@ -6,20 +6,20 @@ demand prediction, and trend analysis.
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
 
 class PredictiveAnalyticsEngine:
     """Predictive analytics engine for business intelligence."""
-    
+
     def __init__(self):
         """Initialize predictive analytics engine."""
         self.logger = logger
         self.models = {}
-    
+
     async def predict_demand(self, product_id: str, horizon_days: int = 30) -> Dict[str, Any]:
         """Predict demand for a product.
         
@@ -31,7 +31,7 @@ class PredictiveAnalyticsEngine:
             Demand forecast data
         """
         self.logger.info(f"Predicting demand for {product_id} over {horizon_days} days")
-        
+
         # Stub implementation - would use ML models in production
         return {
             'product_id': product_id,
@@ -41,7 +41,7 @@ class PredictiveAnalyticsEngine:
             'trend': 'stable',
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
-    
+
     async def analyze_trends(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Analyze trends in historical data.
         
@@ -52,7 +52,7 @@ class PredictiveAnalyticsEngine:
             Trend analysis results
         """
         self.logger.info(f"Analyzing trends in {len(data)} data points")
-        
+
         return {
             'trend_direction': 'upward',
             'strength': 0.8,
@@ -60,8 +60,8 @@ class PredictiveAnalyticsEngine:
             'anomalies': [],
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
-    
-    async def forecast_revenue(self, historical_data: List[Dict[str, Any]], 
+
+    async def forecast_revenue(self, historical_data: List[Dict[str, Any]],
                               horizon_days: int = 30) -> Dict[str, Any]:
         """Forecast revenue based on historical data.
         
@@ -73,7 +73,7 @@ class PredictiveAnalyticsEngine:
             Revenue forecast
         """
         self.logger.info(f"Forecasting revenue for {horizon_days} days")
-        
+
         return {
             'forecast_horizon': horizon_days,
             'predicted_revenue': 50000.0,  # Placeholder

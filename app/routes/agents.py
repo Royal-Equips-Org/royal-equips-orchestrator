@@ -5,7 +5,6 @@ Maintains compatibility with existing FastAPI agent functionality
 including session management, messaging, and streaming responses.
 """
 
-import importlib
 import json
 import logging
 import time
@@ -20,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Production storage with Redis backend
 import redis
+
 from core.secrets.secret_provider import UnifiedSecretResolver
 
 try:
@@ -45,7 +45,7 @@ def create_agent_session():
         data = request.get_json() or {}
         agent_type = data.get("agent_type", "general")
         user_id = data.get("user_id", "anonymous")
-        
+
         session_id = str(uuid.uuid4())
         session_data = {
             "id": session_id,
@@ -233,7 +233,7 @@ def get_agents_status():
     try:
         # Try to import agents with graceful error handling
         available_agents = {}
-        
+
         # Define agent configurations
         agent_configs = {
             "product_research": {
@@ -242,7 +242,7 @@ def get_agents_status():
                 "module": "orchestrator.agents.product_research"
             },
             "inventory_forecasting": {
-                "name": "Inventory Forecasting Agent", 
+                "name": "Inventory Forecasting Agent",
                 "description": "Prophet + Shopify integration for demand prediction",
                 "module": "orchestrator.agents.inventory_forecasting"
             },
@@ -277,18 +277,18 @@ def get_agents_status():
                 "module": "orchestrator.agents.analytics"
             }
         }
-        
+
         # Check each agent's availability
         for agent_id, config in agent_configs.items():
             try:
                 # Try to import the agent module
                 import importlib
                 importlib.import_module(config["module"])
-                
+
                 # Determine status based on dependencies
                 status = "operational"
                 enabled = True
-                
+
                 # Special cases for agents with external dependencies
                 if agent_id == "customer_support":
                     if not current_app.config.get("OPENAI_API_KEY"):
@@ -296,7 +296,7 @@ def get_agents_status():
                         enabled = False
                 elif agent_id == "order_management":
                     if not current_app.config.get("SHOPIFY_API_KEY"):
-                        status = "needs_config" 
+                        status = "needs_config"
                         enabled = False
                 elif agent_id == "inventory_forecasting":
                     # Check if pandas/prophet are available
@@ -306,12 +306,12 @@ def get_agents_status():
                     except ImportError:
                         status = "missing_deps"
                         enabled = False
-                        
+
             except ImportError as e:
                 status = "import_error"
                 enabled = False
                 logger.warning(f"Failed to import agent {agent_id}: {e}")
-                
+
             available_agents[agent_id] = {
                 "name": config["name"],
                 "status": status,
@@ -328,7 +328,7 @@ def get_agents_status():
         needs_config_count = sum(1 for agent in available_agents.values() if agent["status"] == "needs_config")
         missing_deps_count = sum(1 for agent in available_agents.values() if agent["status"] == "missing_deps")
         import_error_count = sum(1 for agent in available_agents.values() if agent["status"] == "import_error")
-        
+
         return jsonify({
             "agents": available_agents,
             "summary": {
@@ -403,17 +403,17 @@ def run_agent(agent_id: str):
         # Validate agent_id
         valid_agents = [
             "product_research", "inventory_forecasting", "pricing_optimizer",
-            "marketing_automation", "customer_support", "order_management", 
+            "marketing_automation", "customer_support", "order_management",
             "product_recommendation", "analytics"
         ]
-        
+
         if agent_id not in valid_agents:
             return jsonify({"error": "Invalid agent ID", "valid_agents": valid_agents}), 400
 
         # Use orchestrator bridge to start the agent
         from app.orchestrator_bridge import get_orchestrator
         orchestrator = get_orchestrator()
-        
+
         execution_record = orchestrator.start_agent(agent_id)
 
         return jsonify({
@@ -430,24 +430,24 @@ def run_agent(agent_id: str):
         return jsonify({"error": "Failed to run agent", "message": str(e)}), 500
 
 
-@agents_bp.route("/stop/<agent_id>", methods=["POST"]) 
+@agents_bp.route("/stop/<agent_id>", methods=["POST"])
 def stop_agent(agent_id: str):
     """Stop a running agent."""
     try:
         # Validate agent_id
         valid_agents = [
-            "product_research", "inventory_forecasting", "pricing_optimizer", 
+            "product_research", "inventory_forecasting", "pricing_optimizer",
             "marketing_automation", "customer_support", "order_management",
             "product_recommendation", "analytics"
         ]
-        
+
         if agent_id not in valid_agents:
             return jsonify({"error": "Invalid agent ID", "valid_agents": valid_agents}), 400
 
         # Use orchestrator bridge to stop the agent
         from app.orchestrator_bridge import get_orchestrator
         orchestrator = get_orchestrator()
-        
+
         stopped = orchestrator.stop_agent(agent_id)
 
         return jsonify({
@@ -469,7 +469,7 @@ def get_shopify_agents():
     try:
         from app.orchestrator_bridge import get_orchestrator
         orchestrator = get_orchestrator()
-        
+
         # Define agent metadata (descriptions and types)
         agent_metadata = {
             "shopify_inventory_sync": {
@@ -498,15 +498,15 @@ def get_shopify_agents():
                 "description": "Generates business reports, analyzes performance, and provides insights"
             }
         }
-        
+
         shopify_agents = []
-        
+
         # Get real agent status from orchestrator
         for agent_id, metadata in agent_metadata.items():
             try:
                 # Try to get real agent from orchestrator
                 agent = orchestrator.get_agent(agent_id)
-                
+
                 # Agent not registered yet - show as inactive
                 agent_info = {
                     "id": agent_id,
@@ -518,9 +518,9 @@ def get_shopify_agents():
                     "tasksCompleted": 0,
                     "performance": 0
                 }
-                
+
                 shopify_agents.append(agent_info)
-                
+
             except Exception as e:
                 logger.warning(f"Could not get agent {agent_id}: {e}")
                 # Add agent with inactive status if there's an error
@@ -534,7 +534,7 @@ def get_shopify_agents():
                     "tasksCompleted": 0,
                     "performance": 0
                 })
-        
+
         return jsonify({
             "agents": shopify_agents,
             "summary": {
@@ -546,7 +546,7 @@ def get_shopify_agents():
                 "lastUpdated": datetime.now().isoformat()
             }
         }), 200
-        
+
     except Exception as e:
         safe_error = str(e)[:100]  # Limit error message length
         logger.error(f"Failed to get Shopify agents: {safe_error}")
@@ -559,25 +559,25 @@ def toggle_shopify_agent(agent_id: str):
     try:
         from app.orchestrator_bridge import get_orchestrator
         orchestrator = get_orchestrator()
-        
+
         # Valid Shopify agent IDs
         valid_shopify_agents = [
             "shopify_inventory_sync",
-            "shopify_order_processor", 
+            "shopify_order_processor",
             "shopify_pricing_optimizer",
             "shopify_marketing_automation",
             "shopify_analytics_reporter"
         ]
-        
+
         if agent_id not in valid_shopify_agents:
             return jsonify({
-                "error": "Invalid Shopify agent ID", 
+                "error": "Invalid Shopify agent ID",
                 "valid_agents": valid_shopify_agents
             }), 400
-        
+
         # Try to get current status
         current_status = orchestrator.get_agent_status(agent_id) or "inactive"
-        
+
         # Toggle the agent
         if current_status == "active":
             success = orchestrator.stop_agent(agent_id)
@@ -585,7 +585,7 @@ def toggle_shopify_agent(agent_id: str):
         else:
             success = orchestrator.start_agent(agent_id)
             new_status = "active" if success else current_status
-            
+
         return jsonify({
             "agent_id": agent_id,
             "status": new_status,
@@ -593,7 +593,7 @@ def toggle_shopify_agent(agent_id: str):
             "success": success,
             "timestamp": datetime.now().isoformat()
         }), 200
-        
+
     except Exception as e:
         # Sanitize agent_id for logging to prevent log injection
         safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]
@@ -608,10 +608,10 @@ def get_shopify_agent_status(agent_id: str):
     try:
         from app.orchestrator_bridge import get_orchestrator
         orchestrator = get_orchestrator()
-        
+
         # Get agent performance metrics
         agent_metrics = orchestrator.get_agent_metrics(agent_id)
-        
+
         return jsonify({
             "agent_id": agent_id,
             "status": orchestrator.get_agent_status(agent_id) or "unknown",
@@ -624,7 +624,7 @@ def get_shopify_agent_status(agent_id: str):
             },
             "timestamp": datetime.now().isoformat()
         }), 200
-        
+
     except Exception as e:
         # Sanitize agent_id for logging to prevent log injection
         safe_agent_id = agent_id.replace('\n', '').replace('\r', '')[:50]

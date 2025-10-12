@@ -6,17 +6,18 @@ ENV → GitHub Actions → Cloudflare → External Vault → Cache
 """
 
 from __future__ import annotations
-import os
-import time
-import base64
-import secrets as crypto_secrets
-import hashlib
+
 import asyncio
-from typing import Optional, Dict, List, Protocol, Any, Callable
+import base64
+import hashlib
+import json
+import os
+import secrets as crypto_secrets
+import time
+import warnings
 from dataclasses import dataclass
 from enum import Enum
-import json
-import warnings
+from typing import Any, Callable, Dict, List, Optional, Protocol
 
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -58,23 +59,23 @@ class SecretResult:
     source: SecretSource
     fetched_at: float
     ttl: Optional[int] = None
-    
+
     def __str__(self) -> str:
         """Return the secret value when converted to string."""
         return self.value
-    
+
     def __repr__(self) -> str:
         """Return safe representation without exposing the secret value."""
         return f"SecretResult(key={self.key!r}, value='***', source={self.source!r}, fetched_at={self.fetched_at}, ttl={self.ttl})"
-    
+
     def endswith(self, suffix: str) -> bool:
         """Check if the secret value ends with the given suffix."""
         return self.value.endswith(suffix)
-    
+
     def startswith(self, prefix: str) -> bool:
         """Check if the secret value starts with the given prefix."""
         return self.value.startswith(prefix)
-    
+
     def replace(self, old: str, new: str) -> str:
         """Replace occurrences in the secret value."""
         return self.value.replace(old, new)
@@ -83,7 +84,7 @@ class SecretResult:
 class SecretProvider(Protocol):
     """Protocol for secret providers."""
     name: str
-    
+
     async def get(self, key: str) -> Optional[SecretResult]:
         """Get secret value for key, return None if not found."""
         ...
@@ -92,15 +93,15 @@ class SecretProvider(Protocol):
 class EnvProvider:
     """Environment variable provider."""
     name = "EnvProvider"
-    
+
     async def get(self, key: str) -> Optional[SecretResult]:
         v = os.getenv(key)
         if not v:
             return None
         return SecretResult(
-            key=key, 
-            value=v, 
-            source=SecretSource.ENV, 
+            key=key,
+            value=v,
+            source=SecretSource.ENV,
             fetched_at=time.time()
         )
 
@@ -108,16 +109,16 @@ class EnvProvider:
 class GitHubActionsProvider:
     """GitHub Actions secrets provider (reads from environment)."""
     name = "GitHubActionsProvider"
-    
+
     async def get(self, key: str) -> Optional[SecretResult]:
         # Only active in GitHub Actions environment
         if not os.getenv("GITHUB_ACTIONS"):
             return None
-            
+
         v = os.getenv(key)
         if not v:
             return None
-            
+
         return SecretResult(
             key=key,
             value=v,
@@ -129,10 +130,10 @@ class GitHubActionsProvider:
 class CloudflareProvider:
     """Cloudflare Workers/Pages environment provider."""
     name = "CloudflareProvider"
-    
+
     def __init__(self, bindings: Optional[Dict[str, str]] = None):
         self.bindings = bindings or {}
-    
+
     async def get(self, key: str) -> Optional[SecretResult]:
         v = self.bindings.get(key)
         if not v:
@@ -148,7 +149,7 @@ class CloudflareProvider:
 class ExternalVaultProvider:
     """External vault provider (AWS SSM, HashiCorp Vault, etc.)."""
     name = "ExternalVaultProvider"
-    
+
     async def get(self, key: str) -> Optional[SecretResult]:
         # TODO: Implement actual SSM / Vault / GCP Secret Manager integration
         # This is a placeholder interface to avoid vendor lock-in
@@ -170,7 +171,7 @@ class UnifiedSecretResolver:
     
     Resolution order: ENV → GitHub Actions → Cloudflare → External Vault → Cache
     """
-    
+
     def __init__(
         self,
         providers: Optional[List[SecretProvider]] = None,
@@ -193,7 +194,7 @@ class UnifiedSecretResolver:
         """Derive encryption key from environment or use default."""
         global _default_key_warning_shown
         seed = os.getenv("SECRET_ENCRYPTION_KEY") or "royal-equips-default-dev-key-change-in-prod"
-        
+
         if seed == "royal-equips-default-dev-key-change-in-prod" and not _default_key_warning_shown:
             print(json.dumps({
                 "level": "warn",
@@ -201,7 +202,7 @@ class UnifiedSecretResolver:
                 "message": "Using default encryption key - set SECRET_ENCRYPTION_KEY in production"
             }))
             _default_key_warning_shown = True
-        
+
         # Use SHA-256 to derive 32-byte key
         return hashlib.sha256(seed.encode()).digest()
 
@@ -213,11 +214,11 @@ class UnifiedSecretResolver:
                 "nonce": base64.b64encode(b"no-crypto-fallback").decode(),
                 "cipher": base64.b64encode(plaintext.encode()).decode()
             }
-        
+
         aes = AESGCM(self.key)
         nonce = crypto_secrets.token_bytes(12)
         ct = aes.encrypt(nonce, plaintext.encode(), None)
-        
+
         return {
             "nonce": base64.b64encode(nonce).decode(),
             "cipher": base64.b64encode(ct).decode()
@@ -228,7 +229,7 @@ class UnifiedSecretResolver:
         if not AESGCM:
             # Fallback: base64 decoding (not secure, for testing only)
             return base64.b64decode(enc["cipher"]).decode()
-        
+
         aes = AESGCM(self.key)
         nonce = base64.b64decode(enc["nonce"])
         ct = base64.b64decode(enc["cipher"])
@@ -261,20 +262,20 @@ class UnifiedSecretResolver:
             SecretNotFoundError: If secret not found in any provider
         """
         cached = self.cache.get(key)
-        
+
         # Check cache first
         if cached and not self._expired(cached):
             start = time.time()
             value = self._decrypt(cached["data"])
             latency_ms = (time.time() - start) * 1000
-            
+
             key_hash = self._create_key_hash(key)
             if self.metrics:
                 if self.metrics.on_cache_hit:
                     self.metrics.on_cache_hit(key_hash, latency_ms)
                 if self.metrics.on_resolve:
                     self.metrics.on_resolve(key_hash, SecretSource.CACHE.value, 0, latency_ms)
-            
+
             return SecretResult(
                 key=key,
                 value=value,
@@ -292,7 +293,7 @@ class UnifiedSecretResolver:
             self.metrics.on_cache_miss(key_hash)
 
         start = time.time()
-        
+
         # Try each provider in order
         for depth, provider in enumerate(self.providers, start=1):
             try:
@@ -300,7 +301,7 @@ class UnifiedSecretResolver:
                 if res:
                     effective_ttl = ttl or self.cache_ttl
                     enc = self._encrypt(res.value)
-                    
+
                     # Cache encrypted result
                     self.cache[key] = {
                         "data": enc,
@@ -308,11 +309,11 @@ class UnifiedSecretResolver:
                         "source": res.source.value,
                         "ts": time.time()
                     }
-                    
+
                     latency_ms = (time.time() - start) * 1000
                     if self.metrics and self.metrics.on_resolve:
                         self.metrics.on_resolve(key_hash, res.source.value, depth, latency_ms)
-                    
+
                     return res
             except Exception as e:
                 # Log error but continue to next provider
@@ -423,11 +424,11 @@ async def example():
         # Get a secret with fallback
         stripe_key = await secrets.get_secret_with_fallback("STRIPE_API_KEY", "test_key")
         print(f"Stripe key resolved (first 8 chars): {stripe_key[:8]}...")
-        
+
         # Get cache stats
         stats = secrets.get_cache_stats()
         print(f"Cache stats: {stats}")
-        
+
     except SecretNotFoundError as e:
         print(f"Secret not found: {e}")
 

@@ -11,12 +11,10 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 import openai
-import requests
-from dataclasses import dataclass
 
 
 @dataclass
@@ -44,7 +42,7 @@ class MarketAnalysis:
 
 class AIPricingService:
     """AI-powered pricing recommendation service."""
-    
+
     def __init__(self, openai_api_key: str, model: str = "gpt-4"):
         """Initialize the AI pricing service.
         
@@ -55,9 +53,9 @@ class AIPricingService:
         self.client = openai.OpenAI(api_key=openai_api_key)
         self.model = model
         self.logger = logging.getLogger(__name__)
-        
+
     async def analyze_market_conditions(
-        self, 
+        self,
         product_id: str,
         competitor_prices: Dict[str, float],
         historical_prices: List[Dict[str, any]] = None
@@ -84,15 +82,15 @@ class AIPricingService:
                 },
                 "historical_data": historical_prices or []
             }
-            
+
             # AI prompt for market analysis
             prompt = self._build_market_analysis_prompt(market_data)
-            
+
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {
-                        "role": "system", 
+                        "role": "system",
                         "content": "You are an expert e-commerce pricing strategist with deep knowledge of competitive pricing, market analysis, and consumer behavior."
                     },
                     {"role": "user", "content": prompt}
@@ -100,19 +98,19 @@ class AIPricingService:
                 temperature=0.3,
                 max_tokens=800
             )
-            
+
             # Parse AI response
             analysis_text = response.choices[0].message.content
             market_analysis = self._parse_market_analysis(analysis_text, competitor_prices)
-            
+
             self.logger.info(f"Market analysis completed for {product_id}")
             return market_analysis
-            
+
         except Exception as e:
             self.logger.error(f"Error analyzing market conditions: {e}")
             # Return fallback analysis
             return self._fallback_market_analysis(competitor_prices)
-    
+
     async def generate_pricing_recommendation(
         self,
         product_id: str,
@@ -137,12 +135,12 @@ class AIPricingService:
                 "min_margin": 0.15,
                 "max_discount": 0.30
             }
-            
+
             # Build AI prompt for pricing recommendation
             prompt = self._build_pricing_prompt(
                 product_id, current_price, market_analysis, objectives
             )
-            
+
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -155,21 +153,21 @@ class AIPricingService:
                 temperature=0.2,
                 max_tokens=1000
             )
-            
+
             # Parse recommendation
             recommendation_text = response.choices[0].message.content
             recommendation = self._parse_pricing_recommendation(
                 product_id, current_price, recommendation_text
             )
-            
+
             self.logger.info(f"Pricing recommendation generated for {product_id}: ${recommendation.recommended_price:.2f} (confidence: {recommendation.confidence:.2f})")
             return recommendation
-            
+
         except Exception as e:
             self.logger.error(f"Error generating pricing recommendation: {e}")
             # Return fallback recommendation
             return self._fallback_recommendation(product_id, current_price, market_analysis)
-    
+
     def _build_market_analysis_prompt(self, market_data: Dict) -> str:
         """Build AI prompt for market analysis."""
         return f"""
@@ -192,11 +190,11 @@ class AIPricingService:
         
         Format your response as structured analysis with clear metrics.
         """
-    
+
     def _build_pricing_prompt(
-        self, 
-        product_id: str, 
-        current_price: float, 
+        self,
+        product_id: str,
+        current_price: float,
         analysis: MarketAnalysis,
         objectives: Dict
     ) -> str:
@@ -229,13 +227,13 @@ class AIPricingService:
         
         Format as structured recommendation with clear price and confidence.
         """
-    
+
     def _parse_market_analysis(self, analysis_text: str, competitor_prices: Dict[str, float]) -> MarketAnalysis:
         """Parse AI market analysis response."""
         try:
             # Simple parsing - in production, use more robust JSON parsing
             lines = analysis_text.lower()
-            
+
             # Determine trend
             if "rising" in lines or "increasing" in lines:
                 trend = "rising"
@@ -243,28 +241,28 @@ class AIPricingService:
                 trend = "falling"
             else:
                 trend = "stable"
-            
+
             # Extract sensitivity (fallback to heuristic)
             price_sensitivity = 0.7  # Default moderate sensitivity
             if "high sensitivity" in lines or "very sensitive" in lines:
                 price_sensitivity = 0.9
             elif "low sensitivity" in lines or "not sensitive" in lines:
                 price_sensitivity = 0.3
-            
+
             # Extract competitive intensity
             competitive_intensity = 0.6  # Default moderate competition
             if "intense" in lines or "high competition" in lines:
                 competitive_intensity = 0.9
             elif "low competition" in lines or "limited competition" in lines:
                 competitive_intensity = 0.3
-            
+
             # Determine positioning
             positioning = "competitive"
             if "premium" in lines:
                 positioning = "premium"
             elif "aggressive" in lines:
                 positioning = "aggressive"
-            
+
             return MarketAnalysis(
                 competitor_prices=competitor_prices,
                 market_trend=trend,
@@ -272,40 +270,40 @@ class AIPricingService:
                 competitive_intensity=competitive_intensity,
                 recommended_positioning=positioning
             )
-            
+
         except Exception as e:
             self.logger.error(f"Error parsing market analysis: {e}")
             return self._fallback_market_analysis(competitor_prices)
-    
+
     def _parse_pricing_recommendation(self, product_id: str, current_price: float, text: str) -> PriceRecommendation:
         """Parse AI pricing recommendation response."""
         try:
             lines = text.lower()
-            
+
             # Extract recommended price
             import re
             price_match = re.search(r'\$?([0-9,]+\.?[0-9]*)', text)
             recommended_price = float(price_match.group(1).replace(',', '')) if price_match else current_price
-            
+
             # Extract confidence score
             confidence_match = re.search(r'confidence[:\s]*([0-9]*\.?[0-9]+)', lines)
             confidence = float(confidence_match.group(1)) if confidence_match else 0.5
             confidence = min(1.0, max(0.0, confidence))
-            
+
             # Determine risk level
             risk_level = "medium"
             if "high risk" in lines or "risky" in lines:
                 risk_level = "high"
             elif "low risk" in lines or "safe" in lines:
                 risk_level = "low"
-            
+
             # Positioning
             positioning = "competitive"
             if "premium" in lines:
                 positioning = "premium"
             elif "aggressive" in lines:
                 positioning = "aggressive"
-            
+
             return PriceRecommendation(
                 product_id=product_id,
                 current_price=current_price,
@@ -316,11 +314,11 @@ class AIPricingService:
                 expected_impact="Price optimization based on AI analysis",
                 risk_level=risk_level
             )
-            
+
         except Exception as e:
             self.logger.error(f"Error parsing pricing recommendation: {e}")
             return self._fallback_recommendation(product_id, current_price, None)
-    
+
     def _fallback_market_analysis(self, competitor_prices: Dict[str, float]) -> MarketAnalysis:
         """Raise error when AI pricing fails - no fallback mock data."""
         raise RuntimeError(
@@ -332,7 +330,7 @@ class AIPricingService:
             "3. External market data sources are accessible\n"
             "This system does not provide mock or heuristic-based pricing - only real AI analysis."
         )
-    
+
     def _fallback_recommendation(self, product_id: str, current_price: float, analysis: Optional[MarketAnalysis]) -> PriceRecommendation:
         """Raise error when AI pricing fails - no fallback mock data."""
         raise RuntimeError(

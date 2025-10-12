@@ -7,6 +7,6 @@ This package contains foundational components including:
 - Logging and metrics
 """
 
-from .secret_provider import UnifiedSecretResolver, SecretNotFoundError
+from .secret_provider import SecretNotFoundError, UnifiedSecretResolver
 
 __all__ = ['UnifiedSecretResolver', 'SecretNotFoundError']

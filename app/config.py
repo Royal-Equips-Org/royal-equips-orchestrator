@@ -6,9 +6,9 @@ and environment variable support. Uses UnifiedSecretResolver to fetch
 secrets from Cloudflare/deployment variables when available.
 """
 
-import os
 import asyncio
-from typing import Type, Optional
+import os
+from typing import Optional, Type
 
 # Import secret resolver for secure credential management
 try:
@@ -32,7 +32,7 @@ def _get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
                 return value
         except Exception:
             pass
-    
+
     # Fallback to environment variable
     return os.getenv(key, default)
 

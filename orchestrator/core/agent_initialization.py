@@ -8,13 +8,11 @@ This module ensures all agents are connected to the Command Center on startup.
 """
 
 import logging
-import asyncio
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from orchestrator.core.agent_registry import (
-    get_agent_registry,
     AgentCapability,
-    AgentStatus
+    get_agent_registry,
 )
 from orchestrator.core.aira_integration import get_aira_integration
 
@@ -88,7 +86,7 @@ AGENT_CONFIGURATIONS = [
         'max_concurrent_tasks': 12,
         'tags': {'analytics', 'reporting', 'intelligence'}
     },
-    
+
     # Production Agents
     {
         'agent_id': 'production_inventory_agent',
@@ -138,7 +136,7 @@ AGENT_CONFIGURATIONS = [
         'max_concurrent_tasks': 10,
         'tags': {'production', 'finance', 'payments'}
     },
-    
+
     # Security and DevOps
     {
         'agent_id': 'security_agent',
@@ -156,7 +154,7 @@ AGENT_CONFIGURATIONS = [
         'max_concurrent_tasks': 5,
         'tags': {'devops', 'infrastructure', 'automation'}
     },
-    
+
     # Specialized Agents
     {
         'agent_id': 'recommendation_agent',
@@ -185,13 +183,13 @@ async def initialize_all_agents() -> Dict[str, Any]:
         Dict containing initialization results and statistics
     """
     logger.info("Starting agent initialization and registration...")
-    
+
     registry = get_agent_registry()
     integration = get_aira_integration()
-    
+
     successful = []
     failed = []
-    
+
     for config in AGENT_CONFIGURATIONS:
         try:
             success = await registry.register_agent(
@@ -206,18 +204,18 @@ async def initialize_all_agents() -> Dict[str, Any]:
                     'config_version': '1.0'
                 }
             )
-            
+
             if success:
                 successful.append(config['agent_id'])
                 logger.info(f"✓ Registered: {config['name']} ({config['agent_id']})")
             else:
                 failed.append(config['agent_id'])
                 logger.error(f"✗ Failed to register: {config['name']} ({config['agent_id']})")
-                
+
         except Exception as e:
             failed.append(config['agent_id'])
             logger.error(f"✗ Error registering {config['agent_id']}: {e}", exc_info=True)
-    
+
     # Start background monitoring and task processing
     try:
         await registry.start_monitoring()
@@ -225,7 +223,7 @@ async def initialize_all_agents() -> Dict[str, Any]:
         logger.info("✓ Background monitoring and task processing started")
     except Exception as e:
         logger.error(f"✗ Failed to start background services: {e}", exc_info=True)
-    
+
     results = {
         'total_agents': len(AGENT_CONFIGURATIONS),
         'successful': len(successful),
@@ -235,21 +233,21 @@ async def initialize_all_agents() -> Dict[str, Any]:
         'registry_stats': registry.get_registry_stats(),
         'status': 'success' if len(failed) == 0 else 'partial' if len(successful) > 0 else 'failed'
     }
-    
+
     logger.info(
         f"Agent initialization complete: {len(successful)}/{len(AGENT_CONFIGURATIONS)} agents registered successfully"
     )
-    
+
     return results
 
 
 async def shutdown_all_agents() -> None:
     """Gracefully shutdown all agents and stop background services."""
     logger.info("Shutting down agent orchestration system...")
-    
+
     registry = get_agent_registry()
     integration = get_aira_integration()
-    
+
     try:
         # Stop background services
         await integration.stop_task_processing()
@@ -257,7 +255,7 @@ async def shutdown_all_agents() -> None:
         logger.info("✓ Background services stopped")
     except Exception as e:
         logger.error(f"✗ Error stopping background services: {e}", exc_info=True)
-    
+
     # Unregister all agents
     all_agents = registry.get_all_agents()
     for agent in all_agents:
@@ -265,7 +263,7 @@ async def shutdown_all_agents() -> None:
             await registry.unregister_agent(agent.agent_id)
         except Exception as e:
             logger.error(f"✗ Error unregistering {agent.agent_id}: {e}")
-    
+
     logger.info("Agent orchestration system shutdown complete")
 
 

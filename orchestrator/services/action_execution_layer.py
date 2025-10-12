@@ -3,13 +3,13 @@ Action Execution Layer
 Executes approved business actions across all platforms and systems
 """
 import asyncio
-import aiohttp
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
-import json
 import os
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+import aiohttp
 
 from ..core.agent_base import AgentBase
 
@@ -43,48 +43,48 @@ class ActionExecutionLayer(AgentBase):
     - Supplier communications
     - Financial transactions
     """
-    
+
     def __init__(self):
         super().__init__(
             name="Action Execution Layer",
             agent_type="action_execution",
             description="Executes approved business actions across all platforms"
         )
-        
+
         # Platform credentials
         self.shopify_credentials = {
             'shop_url': os.getenv('SHOPIFY_SHOP_URL'),
             'access_token': os.getenv('SHOPIFY_ACCESS_TOKEN'),
             'api_version': '2024-01'
         }
-        
+
         self.email_credentials = {
             'smtp_server': os.getenv('SMTP_SERVER'),
             'username': os.getenv('EMAIL_USERNAME'),
             'password': os.getenv('EMAIL_PASSWORD')
         }
-        
+
         # Execution tracking
         self.pending_actions: Dict[str, ExecutionAction] = {}
         self.execution_history: List[Dict[str, Any]] = []
         self.platform_clients = {}
-        
+
         # Execution settings
         self.max_concurrent_actions = 10
         self.retry_delays = [30, 60, 300, 900]  # Exponential backoff
-        
+
     async def initialize(self):
         """Initialize action execution layer"""
         await super().initialize()
-        
+
         # Initialize platform clients
         await self._initialize_platform_clients()
-        
+
         # Load pending actions
         await self._load_pending_actions()
-        
+
         logger.info("✅ Action Execution Layer initialized")
-    
+
     async def start_autonomous_workflow(self):
         """Start autonomous action execution workflow"""
         while not self.emergency_stop:
@@ -92,29 +92,29 @@ class ActionExecutionLayer(AgentBase):
                 if self.status.value == "active":
                     # Execute pending actions
                     await self._execute_pending_actions()
-                    
+
                     # Retry failed actions
                     await self._retry_failed_actions()
-                    
+
                     # Clean up completed actions
                     await self._cleanup_completed_actions()
-                    
+
                     # Update performance metrics
                     await self._update_execution_metrics()
-                    
+
                     self.current_task = "Monitoring action executions"
-                
+
                 await asyncio.sleep(60)  # 1-minute execution cycles
-                
+
             except Exception as e:
                 logger.error(f"❌ Action execution workflow error: {e}")
                 await asyncio.sleep(300)
-    
+
     async def execute_decision(self, decision: Dict[str, Any]) -> bool:
         """Execute a business decision"""
         try:
             decision_type = decision.get('type', '')
-            
+
             if decision_type == 'product_approval':
                 return await self.approve_product_opportunity(decision.get('data', {}))
             elif decision_type == 'price_adjustment':
@@ -126,11 +126,11 @@ class ActionExecutionLayer(AgentBase):
             else:
                 logger.warning(f"⚠️ Unknown decision type: {decision_type}")
                 return False
-                
+
         except Exception as e:
             logger.error(f"❌ Decision execution failed: {e}")
             return False
-    
+
     async def approve_product_opportunity(self, opportunity: Dict[str, Any]) -> bool:
         """Approve and add a product opportunity to Shopify"""
         try:
@@ -139,7 +139,7 @@ class ActionExecutionLayer(AgentBase):
                 action_id=f"product_add_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 action_type="product_creation",
                 title=f"Add Product: {opportunity.get('title', 'Unknown')}",
-                description=f"Adding product opportunity to Shopify store",
+                description="Adding product opportunity to Shopify store",
                 target_platform="shopify",
                 parameters={
                     'product_data': opportunity,
@@ -155,16 +155,16 @@ class ActionExecutionLayer(AgentBase):
                 retry_count=0,
                 max_retries=3
             )
-            
+
             self.pending_actions[action.action_id] = action
             logger.info(f"📦 Product approval action queued: {action.title}")
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"❌ Product approval failed: {e}")
             return False
-    
+
     async def adjust_product_pricing(self, pricing_data: Dict[str, Any]) -> bool:
         """Adjust product pricing across platforms"""
         try:
@@ -184,16 +184,16 @@ class ActionExecutionLayer(AgentBase):
                 retry_count=0,
                 max_retries=3
             )
-            
+
             self.pending_actions[action.action_id] = action
             logger.info(f"💰 Price adjustment action queued: {action.title}")
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"❌ Price adjustment failed: {e}")
             return False
-    
+
     async def execute_inventory_reorder(self, reorder_data: Dict[str, Any]) -> bool:
         """Execute inventory reorder actions"""
         try:
@@ -213,16 +213,16 @@ class ActionExecutionLayer(AgentBase):
                 retry_count=0,
                 max_retries=2
             )
-            
+
             self.pending_actions[action.action_id] = action
             logger.info(f"📦 Inventory reorder action queued: {action.title}")
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"❌ Inventory reorder failed: {e}")
             return False
-    
+
     async def launch_marketing_campaign(self, campaign_data: Dict[str, Any]) -> bool:
         """Launch marketing campaign"""
         try:
@@ -242,39 +242,39 @@ class ActionExecutionLayer(AgentBase):
                 retry_count=0,
                 max_retries=2
             )
-            
+
             self.pending_actions[action.action_id] = action
             logger.info(f"📢 Marketing campaign action queued: {action.title}")
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"❌ Marketing campaign launch failed: {e}")
             return False
-    
+
     async def _execute_pending_actions(self):
         """Execute all pending actions"""
         pending_actions = [a for a in self.pending_actions.values() if a.status == "pending"]
-        
+
         # Limit concurrent executions
         semaphore = asyncio.Semaphore(self.max_concurrent_actions)
-        
+
         async def execute_action(action: ExecutionAction):
             async with semaphore:
                 await self._execute_single_action(action)
-        
+
         # Execute actions concurrently
         if pending_actions:
             await asyncio.gather(*[execute_action(action) for action in pending_actions])
-    
+
     async def _execute_single_action(self, action: ExecutionAction):
         """Execute a single action"""
         try:
             action.status = "executing"
             action.started_at = datetime.now(timezone.utc)
-            
+
             logger.info(f"⚡ Executing action: {action.title}")
-            
+
             # Route to appropriate execution method
             if action.action_type == "product_creation":
                 result = await self._execute_shopify_product_creation(action)
@@ -286,12 +286,12 @@ class ActionExecutionLayer(AgentBase):
                 result = await self._execute_marketing_campaign_action(action)
             else:
                 raise ValueError(f"Unknown action type: {action.action_type}")
-            
+
             # Mark as completed
             action.status = "completed"
             action.completed_at = datetime.now(timezone.utc)
             action.result = result
-            
+
             # Record in history
             self.execution_history.append({
                 'action_id': action.action_id,
@@ -303,22 +303,22 @@ class ActionExecutionLayer(AgentBase):
                 'duration': (action.completed_at - action.started_at).total_seconds(),
                 'result': result
             })
-            
+
             logger.info(f"✅ Action completed successfully: {action.title}")
             self.discoveries_count += 1
-            
+
         except Exception as e:
             action.status = "failed"
             action.error_message = str(e)
             action.completed_at = datetime.now(timezone.utc)
-            
+
             logger.error(f"❌ Action execution failed: {action.title} - {e}")
-    
+
     async def _execute_shopify_product_creation(self, action: ExecutionAction) -> Dict[str, Any]:
         """Execute Shopify product creation"""
         try:
             product_data = action.parameters.get('product_data', {})
-            
+
             # Build Shopify product object
             shopify_product = {
                 "product": {
@@ -334,7 +334,7 @@ class ActionExecutionLayer(AgentBase):
                     }]
                 }
             }
-            
+
             # Make API call to Shopify
             if self.shopify_credentials['shop_url'] and self.shopify_credentials['access_token']:
                 async with aiohttp.ClientSession() as session:
@@ -342,9 +342,9 @@ class ActionExecutionLayer(AgentBase):
                         'X-Shopify-Access-Token': self.shopify_credentials['access_token'],
                         'Content-Type': 'application/json'
                     }
-                    
+
                     url = f"https://{self.shopify_credentials['shop_url']}/admin/api/{self.shopify_credentials['api_version']}/products.json"
-                    
+
                     async with session.post(url, headers=headers, json=shopify_product) as response:
                         if response.status == 201:
                             result = await response.json()
@@ -363,11 +363,11 @@ class ActionExecutionLayer(AgentBase):
                     'product_id': 'demo_product_123',
                     'message': 'Product would be created in live Shopify store'
                 }
-                
+
         except Exception as e:
             logger.error(f"❌ Shopify product creation failed: {e}")
             raise
-    
+
     async def _execute_price_adjustment(self, action: ExecutionAction) -> Dict[str, Any]:
         """Execute price adjustment action"""
         # Placeholder implementation
@@ -376,7 +376,7 @@ class ActionExecutionLayer(AgentBase):
             'products_updated': 1,
             'message': 'Price adjustment completed'
         }
-    
+
     async def _execute_inventory_reorder_action(self, action: ExecutionAction) -> Dict[str, Any]:
         """Execute inventory reorder action"""
         # Placeholder implementation
@@ -386,7 +386,7 @@ class ActionExecutionLayer(AgentBase):
             'total_cost': action.parameters.get('total_cost', 0),
             'message': 'Inventory reorder completed'
         }
-    
+
     async def _execute_marketing_campaign_action(self, action: ExecutionAction) -> Dict[str, Any]:
         """Execute marketing campaign action"""
         # Placeholder implementation
@@ -396,7 +396,7 @@ class ActionExecutionLayer(AgentBase):
             'platforms': ['email', 'social'],
             'message': 'Marketing campaign launched'
         }
-    
+
     def _extract_price(self, price_range: str) -> float:
         """Extract price from price range string"""
         try:
@@ -406,49 +406,49 @@ class ActionExecutionLayer(AgentBase):
             return float(numbers[0]) if numbers else 50.0
         except:
             return 50.0
-    
+
     async def _retry_failed_actions(self):
         """Retry failed actions that haven't exceeded retry limit"""
         failed_actions = [a for a in self.pending_actions.values() if a.status == "failed"]
-        
+
         for action in failed_actions:
             if action.retry_count < action.max_retries:
                 delay = self.retry_delays[min(action.retry_count, len(self.retry_delays) - 1)]
-                
+
                 if action.completed_at and (datetime.now(timezone.utc) - action.completed_at).total_seconds() > delay:
                     action.status = "pending"
                     action.retry_count += 1
                     action.error_message = None
-                    
+
                     logger.info(f"🔄 Retrying action: {action.title} (attempt {action.retry_count + 1})")
-    
+
     async def get_daily_discoveries(self) -> int:
         """Get daily action execution count"""
         today = datetime.now(timezone.utc).date()
         return len([a for a in self.execution_history if a['executed_at'].date() == today])
-    
+
     async def _initialize_platform_clients(self):
         """Initialize platform API clients"""
         # Initialize various platform clients
         pass
-    
+
     async def _load_pending_actions(self):
         """Load pending actions from storage"""
         pass
-    
+
     async def _cleanup_completed_actions(self):
         """Clean up old completed actions"""
         cutoff_date = datetime.now(timezone.utc) - timedelta(hours=24)
-        
+
         # Remove completed actions older than 24 hours
         to_remove = [
             action_id for action_id, action in self.pending_actions.items()
             if action.status == "completed" and action.completed_at and action.completed_at < cutoff_date
         ]
-        
+
         for action_id in to_remove:
             del self.pending_actions[action_id]
-    
+
     async def _update_execution_metrics(self):
         """Update execution performance metrics"""
         total_actions = len(self.execution_history)
@@ -456,5 +456,5 @@ class ActionExecutionLayer(AgentBase):
             successful_actions = len([a for a in self.execution_history if a['status'] == 'completed'])
             self.success_rate = (successful_actions / total_actions) * 100
             self.performance_score = min(self.success_rate, 100)
-        
+
         self.last_execution = datetime.now(timezone.utc)

@@ -4,8 +4,9 @@ Authentication utilities for Flask routes.
 
 import logging
 from functools import wraps
-from typing import Optional, Dict, Any
-from flask import request, jsonify, g
+from typing import Any, Dict, Optional
+
+from flask import g
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ def get_current_user() -> Optional[Dict[str, Any]]:
     # In development, return a default user
     if hasattr(g, 'user'):
         return g.user
-    
+
     # TODO: Implement proper user retrieval from session/token
     return {
         'id': 'dev-user',

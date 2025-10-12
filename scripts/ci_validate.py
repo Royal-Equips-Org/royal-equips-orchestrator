@@ -7,12 +7,12 @@ can be started successfully. It's designed to be run in CI/CD pipelines to catch
 deployment issues before they reach production.
 """
 
-import os
-import sys
 import importlib
 import importlib.util
+import os
+import sys
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Add current directory to Python path so we can import local modules
 sys.path.insert(0, str(Path.cwd()))
@@ -29,10 +29,10 @@ def check_python_module(module_name: str) -> Tuple[bool, Optional[str]]:
         spec = importlib.util.find_spec(module_name)
         if spec is None:
             return False, "Module not found"
-        
+
         # Try to actually import it
         module = importlib.import_module(module_name)
-        return True, f"Module loaded successfully"
+        return True, "Module loaded successfully"
     except ImportError as e:
         return False, f"Import error: {str(e)}"
     except Exception as e:
@@ -71,9 +71,9 @@ def detect_framework_from_file(file_path: str) -> List[str]:
     """Detect which frameworks are used in a Python file."""
     frameworks = []
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
-            
+
         # Check for various framework imports
         if any(pattern in content for pattern in ['from fastapi import', 'import fastapi', 'FastAPI(']):
             frameworks.append('FastAPI')
@@ -85,7 +85,7 @@ def detect_framework_from_file(file_path: str) -> List[str]:
             frameworks.append('Django')
     except Exception:
         pass
-    
+
     return frameworks
 
 
@@ -96,9 +96,9 @@ def validate_fastapi_app(app_spec: str) -> Dict[str, any]:
             'valid': False,
             'error': 'FastAPI app specification must be in format "module:app"'
         }
-    
+
     module_name, attr_name = app_spec.split(':', 1)
-    
+
     # Check module
     module_ok, module_msg = check_python_module(module_name)
     if not module_ok:
@@ -106,7 +106,7 @@ def validate_fastapi_app(app_spec: str) -> Dict[str, any]:
             'valid': False,
             'error': f'Module "{module_name}" cannot be imported: {module_msg}'
         }
-    
+
     # Check attribute
     attr_ok, attr_msg = check_module_attribute(module_name, attr_name)
     if not attr_ok:
@@ -114,7 +114,7 @@ def validate_fastapi_app(app_spec: str) -> Dict[str, any]:
             'valid': False,
             'error': f'Attribute "{attr_name}" not found in module "{module_name}": {attr_msg}'
         }
-    
+
     return {
         'valid': True,
         'module': module_name,
@@ -131,14 +131,14 @@ def validate_streamlit_app(file_path: str) -> Dict[str, any]:
             'valid': False,
             'error': f'Streamlit file "{file_path}" is not accessible: {file_msg}'
         }
-    
+
     frameworks = detect_framework_from_file(file_path)
     if 'Streamlit' not in frameworks:
         return {
             'valid': False,
             'error': f'File "{file_path}" does not appear to be a Streamlit app (no streamlit imports found)'
         }
-    
+
     return {
         'valid': True,
         'file': file_path,
@@ -156,15 +156,15 @@ def validate_dependencies() -> Dict[str, any]:
         'gunicorn': False,
         'flask': False,
     }
-    
+
     for dep in dependencies:
         available, _ = check_python_module(dep)
         dependencies[dep] = available
-    
+
     # Check if we have at least one framework and one server
     has_framework = dependencies['fastapi'] or dependencies['streamlit'] or dependencies['flask']
     has_server = dependencies['uvicorn'] or dependencies['gunicorn']
-    
+
     return {
         'dependencies': dependencies,
         'has_framework': has_framework,
@@ -176,32 +176,32 @@ def validate_dependencies() -> Dict[str, any]:
 def main():
     """Main CI validation routine."""
     log("INFO", "🔍 Starting CI validation for Royal Equips Orchestrator")
-    
+
     # Get environment configuration
     app_type = os.getenv('APP_TYPE', 'auto').lower()
     app_path = os.getenv('APP_PATH', '')
-    
+
     log("INFO", f"Configuration: APP_TYPE={app_type}, APP_PATH={app_path}")
-    
+
     # Validate dependencies
     log("INFO", "Validating dependencies...")
     deps_result = validate_dependencies()
-    
+
     for dep, available in deps_result['dependencies'].items():
         status = "✅" if available else "❌"
         log("INFO", f"  {status} {dep}")
-    
+
     if not deps_result['deployment_ready']:
         log("ERROR", "❌ Missing required dependencies for deployment")
         log("ERROR", "Required: At least one framework (FastAPI/Streamlit/Flask) + appropriate server")
         return False
-    
+
     # Validate specific APP_TYPE configurations
     if app_type in ['fastapi', 'api']:
         if not app_path:
             log("ERROR", "❌ APP_TYPE=fastapi requires APP_PATH to be set")
             return False
-        
+
         log("INFO", f"Validating FastAPI app: {app_path}")
         result = validate_fastapi_app(app_path)
         if result['valid']:
@@ -209,12 +209,12 @@ def main():
         else:
             log("ERROR", f"❌ FastAPI validation failed: {result['error']}")
             return False
-    
+
     elif app_type in ['streamlit', 'st']:
         if not app_path:
             log("ERROR", "❌ APP_TYPE=streamlit requires APP_PATH to be set")
             return False
-        
+
         log("INFO", f"Validating Streamlit app: {app_path}")
         result = validate_streamlit_app(app_path)
         if result['valid']:
@@ -222,16 +222,16 @@ def main():
         else:
             log("ERROR", f"❌ Streamlit validation failed: {result['error']}")
             return False
-    
+
     elif app_type == 'auto':
         log("INFO", "Auto-detection mode - validating known good configurations...")
-        
+
         # Check Flask patterns (current production setup)
         flask_candidates = [
             "wsgi:app",
             "app:create_app"
         ]
-        
+
         flask_valid = []
         for candidate in flask_candidates:
             result = validate_flask_app(candidate)
@@ -240,14 +240,14 @@ def main():
                 log("INFO", f"✅ Flask candidate valid: {candidate}")
             else:
                 log("WARN", f"❌ Flask candidate failed: {candidate} - {result.get('error', 'Unknown error')}")
-        
+
         # Legacy FastAPI check (deprecated)
         # Note: FastAPI endpoints have been removed in favor of Flask
         fastapi_candidates = [
             # "api.main:app",  # Removed - no longer exists
             "orchestrator.api:app"
         ]
-        
+
         fastapi_valid = []
         for candidate in fastapi_candidates:
             result = validate_fastapi_app(candidate)
@@ -256,13 +256,13 @@ def main():
                 log("INFO", f"✅ FastAPI candidate valid: {candidate}")
             else:
                 log("WARNING", f"⚠️  FastAPI candidate invalid: {candidate} - {result['error']}")
-        
+
         # Check common Streamlit patterns
         streamlit_candidates = [
             "streamlit_app.py",
             "app.py",
         ]
-        
+
         streamlit_valid = []
         for candidate in streamlit_candidates:
             result = validate_streamlit_app(candidate)
@@ -271,34 +271,34 @@ def main():
                 log("INFO", f"✅ Streamlit candidate valid: {candidate}")
             else:
                 log("WARNING", f"⚠️  Streamlit candidate invalid: {candidate} - {result['error']}")
-        
+
         if not fastapi_valid and not streamlit_valid:
             log("ERROR", "❌ No valid application entrypoints found in auto-detection mode")
             return False
-        
+
         log("INFO", f"✅ Auto-detection found {len(fastapi_valid)} FastAPI + {len(streamlit_valid)} Streamlit valid apps")
-    
+
     else:
         log("ERROR", f"❌ Unknown APP_TYPE: {app_type}")
         return False
-    
+
     # Additional validations
     log("INFO", "Performing additional checks...")
-    
+
     # Check start.sh exists and is executable
     start_script = Path("start.sh")
     if start_script.exists() and os.access("start.sh", os.X_OK):
         log("INFO", "✅ start.sh exists and is executable")
     else:
         log("WARNING", "⚠️  start.sh is missing or not executable")
-    
+
     # Check diagnosis script exists
     diag_script = Path("scripts/diagnose_stack.sh")
     if diag_script.exists():
         log("INFO", "✅ diagnose_stack.sh exists")
     else:
         log("WARNING", "⚠️  diagnose_stack.sh is missing")
-    
+
     log("INFO", "✅ All CI validations passed")
     return True
 

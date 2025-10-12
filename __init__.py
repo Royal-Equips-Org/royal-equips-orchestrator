@@ -10,7 +10,7 @@ orchestrator and agents directly from here.
 __all__ = [
     "Orchestrator",
     "ProductResearchAgent",
-    "InventoryForecastingAgent", 
+    "InventoryForecastingAgent",
     "PricingOptimizerAgent",
     "MarketingAutomationAgent",
     "CustomerSupportAgent",
@@ -32,11 +32,11 @@ def __getattr__(name):
             import warnings
             warnings.warn(f"Failed to import Orchestrator: {e}")
             return None
-    
-    # Agent imports 
+
+    # Agent imports
     agent_map = {
         "AnalyticsAgent": "orchestrator.agents.analytics",
-        "CustomerSupportAgent": "orchestrator.agents.customer_support", 
+        "CustomerSupportAgent": "orchestrator.agents.customer_support",
         "InventoryForecastingAgent": "orchestrator.agents.inventory_forecasting",
         "MarketingAutomationAgent": "orchestrator.agents.marketing_automation",
         "OrderManagementAgent": "orchestrator.agents.order_management",
@@ -44,7 +44,7 @@ def __getattr__(name):
         "ProductRecommendationAgent": "orchestrator.agents.recommendation",
         "ProductResearchAgent": "orchestrator.agents.product_research",
     }
-    
+
     if name in agent_map:
         try:
             module = __import__(agent_map[name], fromlist=[name])
@@ -53,7 +53,7 @@ def __getattr__(name):
             import warnings
             warnings.warn(f"Failed to import {name}: {e}")
             return None
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 __version__ = "0.1.0"

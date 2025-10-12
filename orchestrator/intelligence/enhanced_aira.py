@@ -5,21 +5,16 @@ Integration layer that combines consciousness engine, digital twin system,
 and existing AIRA capabilities into a unified AI-native command nexus.
 """
 
-import asyncio
-import logging
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
-import json
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
 
-from orchestrator.intelligence.consciousness_engine import (
-    ConsciousnessEngine, DecisionContext, AwarenessLevel
-)
-from orchestrator.intelligence.digital_twin import (
-    DigitalTwinEngine, TwinType, SimulationMode
-)
-from orchestrator.core.orchestrator import Orchestrator
 from orchestrator.core.agent_base import AgentBase
+from orchestrator.intelligence.consciousness_engine import (
+    ConsciousnessEngine,
+    DecisionContext,
+)
+from orchestrator.intelligence.digital_twin import DigitalTwinEngine, TwinType
 
 
 @dataclass
@@ -40,22 +35,22 @@ class EnhancedAIRAAgent(AgentBase):
     Provides AI-native intelligence for autonomous business operations
     with real-time learning, adaptation, and decision making.
     """
-    
+
     def __init__(
-        self, 
+        self,
         name: str = "AIRA-Intelligence",
         config: Optional[AIRAIntelligenceConfig] = None,
         empire_context: Optional[Dict[str, Any]] = None
     ):
         super().__init__(name, "ai_intelligence", "AI-native intelligence system for Royal Equips")
-        
+
         self.config = config or AIRAIntelligenceConfig()
         self.empire_context = empire_context or {}
-        
+
         # Initialize intelligence components
         self.consciousness = ConsciousnessEngine(empire_context) if self.config.consciousness_enabled else None
         self.digital_twin = DigitalTwinEngine(empire_context) if self.config.digital_twin_enabled else None
-        
+
         # Intelligence state
         self.intelligence_metrics = {
             'total_decisions': 0,
@@ -64,15 +59,15 @@ class EnhancedAIRAAgent(AgentBase):
             'system_intelligence_score': 0.0,
             'adaptation_success_rate': 0.0
         }
-        
+
         # Business intelligence cache
         self.business_insights = {}
         self.market_predictions = {}
         self.operational_optimizations = {}
-        
+
         self.logger.info("🧠 Enhanced AIRA Intelligence System initialized")
-    
-    
+
+
     async def _agent_initialize(self):
         """Initialize AIRA intelligence components"""
         try:
@@ -80,53 +75,53 @@ class EnhancedAIRAAgent(AgentBase):
             if self.consciousness:
                 await self.consciousness.start_consciousness()
                 self.logger.info("✅ Consciousness engine started")
-            
+
             # Start digital twin engine
             if self.digital_twin:
                 await self.digital_twin.start_engine()
-                
+
                 # Create essential business twins
                 await self._create_essential_twins()
                 self.logger.info("✅ Digital twin engine started")
-            
+
             # Initialize business intelligence
             await self._initialize_business_intelligence()
-            
+
             self.current_task = "AI Intelligence System Active"
-            
+
         except Exception as e:
             self.logger.error(f"AIRA initialization failed: {e}")
             raise
-    
-    
+
+
     async def run(self):
         """Main AIRA intelligence processing loop"""
         try:
             self.last_execution = datetime.now(timezone.utc)
-            
+
             # Perform intelligent analysis
             await self._perform_intelligence_analysis()
-            
+
             # Make autonomous decisions if enabled
             if self.config.autonomous_mode:
                 await self._make_autonomous_decisions()
-            
+
             # Update business insights
             await self._update_business_insights()
-            
+
             # Learn from recent outcomes
             await self._continuous_learning()
-            
+
             # Update performance metrics
             await self._update_intelligence_metrics()
-            
+
             self._last_run = datetime.now(timezone.utc).timestamp()
-            
+
         except Exception as e:
             self.logger.error(f"AIRA intelligence run failed: {e}")
             raise
-    
-    
+
+
     async def make_business_decision(
         self,
         situation: Dict[str, Any],
@@ -150,7 +145,7 @@ class EnhancedAIRAAgent(AgentBase):
         """
         if not self.consciousness:
             return None
-        
+
         try:
             # Create decision context
             context = DecisionContext(
@@ -162,23 +157,23 @@ class EnhancedAIRAAgent(AgentBase):
                 time_horizon=situation.get('time_horizon', 'medium_term'),
                 stakeholders=situation.get('stakeholders', [])
             )
-            
+
             # Use consciousness engine for decision
             decision = await self.consciousness.make_intelligent_decision(
-                context, 
+                context,
                 require_confidence or self.config.decision_confidence_threshold
             )
-            
+
             if decision:
                 # Enhance with digital twin predictions if available
                 if self.digital_twin:
                     twin_predictions = await self._get_relevant_predictions(situation)
                     decision.expected_outcome.update({'twin_predictions': twin_predictions})
-                
+
                 self.intelligence_metrics['total_decisions'] += 1
-                
+
                 self.logger.info(f"🎯 Business decision made: {decision.action} (confidence: {decision.confidence:.2f})")
-                
+
                 return {
                     'action': decision.action,
                     'confidence': decision.confidence,
@@ -189,14 +184,14 @@ class EnhancedAIRAAgent(AgentBase):
                     'execution_priority': decision.execution_priority,
                     'resource_requirements': decision.resource_requirements
                 }
-            
+
             return None
-            
+
         except Exception as e:
             self.logger.error(f"Business decision failed: {e}")
             return None
-    
-    
+
+
     async def get_market_intelligence(self) -> Dict[str, Any]:
         """Get comprehensive market intelligence analysis"""
         try:
@@ -207,7 +202,7 @@ class EnhancedAIRAAgent(AgentBase):
                 'market_predictions': self.market_predictions.copy(),
                 'business_insights': self.business_insights.copy()
             }
-            
+
             # Get consciousness insights
             if self.consciousness:
                 consciousness_status = await self.consciousness.get_consciousness_status()
@@ -217,29 +212,29 @@ class EnhancedAIRAAgent(AgentBase):
                     'confidence_level': consciousness_status['consciousness_state']['confidence_level'],
                     'decision_queue_depth': consciousness_status['consciousness_state']['decision_queue_depth']
                 }
-            
+
             # Get digital twin market simulation
             if self.digital_twin:
                 market_sim = await self.digital_twin.get_market_simulation()
                 intelligence['digital_twin_data'] = market_sim
-            
+
             return intelligence
-            
+
         except Exception as e:
             self.logger.error(f"Market intelligence failed: {e}")
             return {}
-    
-    
+
+
     async def optimize_business_operations(
-        self, 
+        self,
         focus_areas: List[str] = None
     ) -> Dict[str, Any]:
         """Optimize business operations using AI intelligence"""
         try:
             focus_areas = focus_areas or ['revenue', 'efficiency', 'customer_satisfaction', 'cost_reduction']
-            
+
             optimizations = {}
-            
+
             for area in focus_areas:
                 # Get digital twin optimization if available
                 if self.digital_twin:
@@ -247,17 +242,17 @@ class EnhancedAIRAAgent(AgentBase):
                         twin_id for twin_id, config in self.digital_twin.twins.items()
                         if config.twin_type == TwinType.BUSINESS_PROCESS
                     ]
-                    
+
                     for twin_id in process_twins:
                         optimization = await self.digital_twin.optimize_business_process(
                             twin_id,
                             [area],
                             {'budget_constraint': 10000, 'time_constraint': 30}
                         )
-                        
+
                         if optimization:
                             optimizations[f"{area}_{twin_id}"] = optimization
-                
+
                 # Use consciousness engine for strategic optimization
                 if self.consciousness:
                     decision_context = DecisionContext(
@@ -275,11 +270,11 @@ class EnhancedAIRAAgent(AgentBase):
                         time_horizon='medium_term',
                         stakeholders=['operations', 'finance', 'customers']
                     )
-                    
+
                     optimization_decision = await self.consciousness.make_intelligent_decision(
                         decision_context, 0.7
                     )
-                    
+
                     if optimization_decision:
                         optimizations[f"{area}_strategic"] = {
                             'recommended_action': optimization_decision.action,
@@ -287,22 +282,22 @@ class EnhancedAIRAAgent(AgentBase):
                             'expected_impact': optimization_decision.expected_outcome,
                             'implementation_priority': optimization_decision.execution_priority
                         }
-            
+
             # Store optimizations for future reference
             self.operational_optimizations.update(optimizations)
-            
+
             return {
                 'optimizations': optimizations,
                 'implementation_roadmap': self._create_implementation_roadmap(optimizations),
                 'roi_projections': self._calculate_roi_projections(optimizations),
                 'generated_at': datetime.now(timezone.utc).isoformat()
             }
-            
+
         except Exception as e:
             self.logger.error(f"Business optimization failed: {e}")
             return {}
-    
-    
+
+
     async def learn_from_business_outcome(
         self,
         action_taken: str,
@@ -314,8 +309,10 @@ class EnhancedAIRAAgent(AgentBase):
         try:
             if self.consciousness:
                 # Create a mock decision for learning (in production, store actual decisions)
-                from orchestrator.intelligence.consciousness_engine import IntelligenceDecision
-                
+                from orchestrator.intelligence.consciousness_engine import (
+                    IntelligenceDecision,
+                )
+
                 decision = IntelligenceDecision(
                     action=action_taken,
                     confidence=0.8,  # Would be actual confidence from stored decision
@@ -327,19 +324,19 @@ class EnhancedAIRAAgent(AgentBase):
                     estimated_duration=timedelta(hours=24),
                     resource_requirements={}
                 )
-                
+
                 await self.consciousness.learn_from_outcome(decision, actual_outcome)
-            
+
             # Update learning metrics
             success_score = self._calculate_business_success(expected_outcome, actual_outcome)
             self._update_learning_metrics(success_score)
-            
+
             self.logger.info(f"📚 Learned from business outcome: {action_taken}")
-            
+
         except Exception as e:
             self.logger.error(f"Learning from outcome failed: {e}")
-    
-    
+
+
     async def get_intelligence_status(self) -> Dict[str, Any]:
         """Get comprehensive AIRA intelligence status"""
         status = {
@@ -356,20 +353,20 @@ class EnhancedAIRAAgent(AgentBase):
             'market_predictions_count': len(self.market_predictions),
             'operational_optimizations_count': len(self.operational_optimizations)
         }
-        
+
         # Add consciousness status
         if self.consciousness:
             status['consciousness_status'] = await self.consciousness.get_consciousness_status()
-        
+
         # Add digital twin status
         if self.digital_twin:
             status['digital_twin_status'] = await self.digital_twin.get_engine_status()
-        
+
         return status
-    
-    
+
+
     # Internal helper methods
-    
+
     async def _create_essential_twins(self):
         """Create essential business twins for the empire"""
         essential_twins = [
@@ -406,11 +403,11 @@ class EnhancedAIRAAgent(AgentBase):
                 'key_metrics': ['efficiency', 'throughput', 'quality_score', 'cost_per_unit']
             }
         ]
-        
+
         for twin_config in essential_twins:
             await self.digital_twin.create_business_twin(**twin_config)
-    
-    
+
+
     async def _initialize_business_intelligence(self):
         """Initialize business intelligence systems"""
         # Initialize with basic business insights
@@ -420,7 +417,7 @@ class EnhancedAIRAAgent(AgentBase):
             'market_position': 'Tracking competitive position and market share',
             'operational_efficiency': 'Optimizing processes and resource utilization'
         }
-        
+
         # Initialize market predictions
         self.market_predictions = {
             'demand_forecast': 'Predicting product demand and market trends',
@@ -428,13 +425,13 @@ class EnhancedAIRAAgent(AgentBase):
             'customer_acquisition': 'Forecasting customer acquisition and retention',
             'market_expansion': 'Identifying growth opportunities and expansion'
         }
-    
-    
+
+
     async def _perform_intelligence_analysis(self):
         """Perform comprehensive intelligence analysis"""
         # Analyze current business state
         business_state = await self._analyze_business_state()
-        
+
         # Update insights based on analysis
         if business_state:
             self.business_insights.update({
@@ -442,16 +439,16 @@ class EnhancedAIRAAgent(AgentBase):
                 'risk_assessment': business_state.get('risk_factors', 'Evaluating...'),
                 'growth_opportunities': business_state.get('opportunities', 'Identifying...')
             })
-    
-    
+
+
     async def _make_autonomous_decisions(self):
         """Make autonomous decisions when enabled"""
         if not self.consciousness:
             return
-        
+
         # Check for decision-worthy situations
         decision_triggers = await self._check_decision_triggers()
-        
+
         for trigger in decision_triggers:
             context = DecisionContext(
                 situation=trigger,
@@ -462,17 +459,17 @@ class EnhancedAIRAAgent(AgentBase):
                 time_horizon='short_term',
                 stakeholders=trigger.get('stakeholders', [])
             )
-            
+
             decision = await self.consciousness.make_intelligent_decision(context, 0.8)
-            
+
             if decision:
                 self.intelligence_metrics['autonomous_actions'] += 1
                 self.logger.info(f"🤖 Autonomous decision: {decision.action}")
-                
+
                 # In production, execute the decision
                 # await self._execute_autonomous_decision(decision)
-    
-    
+
+
     async def _update_business_insights(self):
         """Update business insights based on current data"""
         # Update market predictions
@@ -483,22 +480,22 @@ class EnhancedAIRAAgent(AgentBase):
                 )
                 if prediction:
                     self.market_predictions[f"{twin_id}_forecast"] = prediction
-    
-    
+
+
     async def _continuous_learning(self):
         """Continuous learning and adaptation process"""
         # Analyze recent performance
         recent_performance = await self._analyze_recent_performance()
-        
+
         if recent_performance:
             learning_score = recent_performance.get('learning_score', 0.0)
             self.intelligence_metrics['learning_progress'] = learning_score
-            
+
             # Adapt configuration based on performance
             if learning_score > self.config.adaptation_threshold:
                 await self._adapt_intelligence_parameters()
-    
-    
+
+
     async def _update_intelligence_metrics(self):
         """Update intelligence performance metrics"""
         # Calculate system intelligence score
@@ -508,20 +505,20 @@ class EnhancedAIRAAgent(AgentBase):
             'adaptation_rate': self._calculate_adaptation_rate(),
             'autonomous_efficiency': self._calculate_autonomous_efficiency()
         }
-        
+
         self.intelligence_metrics['system_intelligence_score'] = sum(factors.values()) / len(factors)
-        
+
         # Update adaptation success rate
         self.intelligence_metrics['adaptation_success_rate'] = self._calculate_adaptation_success_rate()
-    
-    
+
+
     async def _get_relevant_predictions(self, situation: Dict[str, Any]) -> Dict[str, Any]:
         """Get relevant digital twin predictions for a situation"""
         predictions = {}
-        
+
         if not self.digital_twin:
             return predictions
-        
+
         # Determine relevant twins based on situation
         relevant_twins = []
         if 'revenue' in situation or 'financial' in str(situation).lower():
@@ -530,7 +527,7 @@ class EnhancedAIRAAgent(AgentBase):
             relevant_twins.append('customer_experience')
         if 'market' in str(situation).lower():
             relevant_twins.append('market_dynamics')
-        
+
         # Get predictions from relevant twins
         for twin_id in relevant_twins:
             for metric in ['sentiment', 'demand', 'satisfaction']:
@@ -539,14 +536,14 @@ class EnhancedAIRAAgent(AgentBase):
                 )
                 if prediction:
                     predictions[f"{twin_id}_{metric}"] = prediction
-        
+
         return predictions
-    
-    
+
+
     def _create_implementation_roadmap(self, optimizations: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Create implementation roadmap for optimizations"""
         roadmap = []
-        
+
         for opt_id, optimization in optimizations.items():
             if isinstance(optimization, dict) and 'implementation_priority' in optimization:
                 roadmap.append({
@@ -556,10 +553,10 @@ class EnhancedAIRAAgent(AgentBase):
                     'resource_requirements': 'Medium',
                     'expected_roi': optimization.get('expected_impact', {}).get('roi', 'TBD')
                 })
-        
+
         return sorted(roadmap, key=lambda x: x['priority'], reverse=True)
-    
-    
+
+
     def _calculate_roi_projections(self, optimizations: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate ROI projections for optimizations"""
         return {
@@ -569,20 +566,20 @@ class EnhancedAIRAAgent(AgentBase):
             'payback_period': '3-6 months',
             'confidence_level': 0.75
         }
-    
-    
+
+
     def _calculate_business_success(self, expected: Dict[str, Any], actual: Dict[str, Any]) -> float:
         """Calculate business success score from outcomes"""
         # Mock calculation - in production, use domain-specific metrics
         return 0.8
-    
-    
+
+
     def _update_learning_metrics(self, success_score: float):
         """Update learning-related metrics"""
         current_progress = self.intelligence_metrics['learning_progress']
         self.intelligence_metrics['learning_progress'] = (current_progress * 0.9 + success_score * 0.1)
-    
-    
+
+
     async def _analyze_business_state(self) -> Optional[Dict[str, Any]]:
         """Analyze current business state"""
         # Mock analysis - in production, integrate with real business metrics
@@ -591,57 +588,57 @@ class EnhancedAIRAAgent(AgentBase):
             'risk_factors': 'Low to moderate risk levels detected',
             'opportunities': 'Growth opportunities identified in customer acquisition'
         }
-    
-    
+
+
     async def _check_decision_triggers(self) -> List[Dict[str, Any]]:
         """Check for autonomous decision triggers"""
         # Mock triggers - in production, monitor real business conditions
         return []
-    
-    
+
+
     async def _analyze_recent_performance(self) -> Optional[Dict[str, Any]]:
         """Analyze recent intelligence performance"""
         return {'learning_score': 0.75}
-    
-    
+
+
     async def _adapt_intelligence_parameters(self):
         """Adapt intelligence parameters based on performance"""
         # Increase confidence threshold if performing well
         if self.intelligence_metrics['system_intelligence_score'] > 0.8:
             self.config.decision_confidence_threshold = min(0.9, self.config.decision_confidence_threshold + 0.05)
-    
-    
+
+
     def _calculate_adaptation_rate(self) -> float:
         """Calculate how quickly the system adapts"""
         # TODO: Calculate based on learning metrics and decision velocity
         # For now, returns baseline adaptation rate for AIRA intelligence
         return 0.7
-    
-    
+
+
     def _calculate_autonomous_efficiency(self) -> float:
         """Calculate autonomous decision efficiency"""
         if self.intelligence_metrics['total_decisions'] == 0:
             return 0.0
         return self.intelligence_metrics['autonomous_actions'] / self.intelligence_metrics['total_decisions']
-    
-    
+
+
     def _calculate_adaptation_success_rate(self) -> float:
         """Calculate adaptation success rate"""
         # TODO: Track actual adaptation outcomes and success metrics
         # For now, returns baseline success rate for AIRA intelligence
         return 0.8
-    
-    
+
+
     async def shutdown(self):
         """Shutdown AIRA intelligence system"""
         try:
             if self.consciousness:
                 await self.consciousness.shutdown()
-            
+
             if self.digital_twin:
                 await self.digital_twin.shutdown()
-            
+
             self.logger.info("🛑 AIRA Intelligence System shutdown complete")
-            
+
         except Exception as e:
             self.logger.error(f"Shutdown error: {e}")

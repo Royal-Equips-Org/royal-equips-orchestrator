@@ -2,23 +2,22 @@
 
 import asyncio
 import logging
-import time
 import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from ..database.session import get_db_session
 from ..database.models import AgentRun, AgentStatus
+from ..database.session import get_db_session
 
 
 class AgentPriority(int, Enum):
     """Agent execution priority levels."""
     CRITICAL = 1
-    HIGH = 2  
+    HIGH = 2
     NORMAL = 3
     LOW = 4
     BACKGROUND = 5
@@ -42,11 +41,11 @@ class AgentConfig(BaseModel):
     retry_count: int = 3
     retry_delay: int = 60  # seconds
     enabled: bool = True
-    
+
     # Rate limiting
     max_runs_per_hour: int = 60
     max_runs_per_day: int = 1000
-    
+
     # Resource limits
     memory_limit_mb: int = 512
     cpu_limit_percent: int = 50
@@ -60,16 +59,16 @@ class BaseAgent(ABC):
     This base class provides logging, error handling, execution tracking, and
     integration with the database layer.
     """
-    
+
     def __init__(self, config: AgentConfig):
         """Initialize the base agent."""
         self.config = config
         self.logger = logging.getLogger(f"agent.{config.name}")
         self.current_run_id: Optional[str] = None
         self.start_time: Optional[datetime] = None
-        
+
         self.logger.info(f"Agent {config.name} initialized with priority {config.priority.name}")
-    
+
     @abstractmethod
     async def execute(self) -> AgentResult:
         """
@@ -82,8 +81,8 @@ class BaseAgent(ABC):
             AgentResult: The result of the agent execution
         """
         pass
-    
-    @abstractmethod  
+
+    @abstractmethod
     def get_health_status(self) -> Dict[str, Any]:
         """
         Get the current health status of the agent.
@@ -92,7 +91,7 @@ class BaseAgent(ABC):
             Dict containing health metrics and status
         """
         pass
-    
+
     async def run(self) -> AgentResult:
         """
         Run the agent with full error handling and logging.
@@ -106,15 +105,15 @@ class BaseAgent(ABC):
         if not self.config.enabled:
             self.logger.info(f"Agent {self.config.name} is disabled, skipping execution")
             return AgentResult(success=False, errors=["Agent is disabled"])
-        
+
         # Check rate limits
         if not await self._check_rate_limits():
             return AgentResult(success=False, errors=["Rate limit exceeded"])
-        
+
         # Start execution tracking
         self.current_run_id = str(uuid.uuid4())
         self.start_time = datetime.now(timezone.utc)
-        
+
         run_record = AgentRun(
             id=uuid.UUID(self.current_run_id),
             agent_name=self.config.name,
@@ -122,25 +121,25 @@ class BaseAgent(ABC):
             started_at=self.start_time,
             metadata={"priority": self.config.priority.value}
         )
-        
+
         try:
             with get_db_session() as session:
                 session.add(run_record)
                 session.commit()
-            
+
             self.logger.info(f"Starting agent {self.config.name} execution (run_id: {self.current_run_id})")
-            
+
             # Execute with timeout
             result = await asyncio.wait_for(
                 self.execute(),
                 timeout=self.config.max_execution_time
             )
-            
+
             # Calculate execution time
             end_time = datetime.now(timezone.utc)
             execution_time = (end_time - self.start_time).total_seconds()
             result.execution_time_seconds = execution_time
-            
+
             # Update run record
             with get_db_session() as session:
                 run_record = session.get(AgentRun, uuid.UUID(self.current_run_id))
@@ -156,7 +155,7 @@ class BaseAgent(ABC):
                     if result.errors:
                         run_record.error_details = "; ".join(result.errors)
                     session.commit()
-            
+
             if result.success:
                 self.logger.info(
                     f"Agent {self.config.name} completed successfully in {execution_time:.2f}s "
@@ -167,13 +166,13 @@ class BaseAgent(ABC):
                     f"Agent {self.config.name} failed after {execution_time:.2f}s "
                     f"(errors: {len(result.errors)})"
                 )
-            
+
             return result
-            
+
         except asyncio.TimeoutError:
             error_msg = f"Agent {self.config.name} timed out after {self.config.max_execution_time}s"
             self.logger.error(error_msg)
-            
+
             # Update run record with timeout
             with get_db_session() as session:
                 run_record = session.get(AgentRun, uuid.UUID(self.current_run_id))
@@ -182,13 +181,13 @@ class BaseAgent(ABC):
                     run_record.completed_at = datetime.now(timezone.utc)
                     run_record.error_details = error_msg
                     session.commit()
-            
+
             return AgentResult(success=False, errors=[error_msg])
-            
+
         except Exception as e:
             error_msg = f"Agent {self.config.name} failed with unexpected error: {str(e)}"
             self.logger.exception(error_msg)
-            
+
             # Update run record with error
             with get_db_session() as session:
                 run_record = session.get(AgentRun, uuid.UUID(self.current_run_id))
@@ -197,41 +196,41 @@ class BaseAgent(ABC):
                     run_record.completed_at = datetime.now(timezone.utc)
                     run_record.error_details = str(e)
                     session.commit()
-            
+
             return AgentResult(success=False, errors=[error_msg])
-    
+
     async def _check_rate_limits(self) -> bool:
         """Check if agent can run within rate limits."""
         try:
             with get_db_session() as session:
                 now = datetime.now(timezone.utc)
-                
+
                 # Check hourly limit
                 hourly_runs = session.query(AgentRun).filter(
                     AgentRun.agent_name == self.config.name,
                     AgentRun.started_at >= now - timedelta(hours=1)
                 ).count()
-                
+
                 if hourly_runs >= self.config.max_runs_per_hour:
                     self.logger.warning(f"Agent {self.config.name} exceeded hourly rate limit")
                     return False
-                
+
                 # Check daily limit
                 daily_runs = session.query(AgentRun).filter(
                     AgentRun.agent_name == self.config.name,
                     AgentRun.started_at >= now - timedelta(days=1)
                 ).count()
-                
+
                 if daily_runs >= self.config.max_runs_per_day:
                     self.logger.warning(f"Agent {self.config.name} exceeded daily rate limit")
                     return False
-                
+
                 return True
-                
+
         except Exception as e:
             self.logger.error(f"Error checking rate limits: {e}")
             return True  # Allow execution on error to avoid blocking
-    
+
     def should_retry(self, result: AgentResult, attempt: int) -> bool:
         """
         Determine if the agent should retry execution.
@@ -245,39 +244,39 @@ class BaseAgent(ABC):
         """
         if attempt >= self.config.retry_count:
             return False
-        
+
         # Don't retry if it's a configuration error
-        config_errors = ["Agent is disabled", "Rate limit exceeded"]  
+        config_errors = ["Agent is disabled", "Rate limit exceeded"]
         if any(error in result.errors for error in config_errors):
             return False
-        
+
         return True
-    
+
     async def run_with_retry(self) -> AgentResult:
         """Run the agent with retry logic."""
         last_result = None
-        
+
         for attempt in range(1, self.config.retry_count + 1):
             result = await self.run()
-            
+
             if result.success:
                 return result
-            
+
             last_result = result
-            
+
             if not self.should_retry(result, attempt):
                 break
-            
+
             if attempt < self.config.retry_count:
                 self.logger.info(
                     f"Agent {self.config.name} failed (attempt {attempt}), "
                     f"retrying in {self.config.retry_delay}s"
                 )
                 await asyncio.sleep(self.config.retry_delay)
-        
+
         self.logger.error(f"Agent {self.config.name} failed after {self.config.retry_count} attempts")
         return last_result or AgentResult(success=False, errors=["No execution attempts"])
-    
+
     def get_execution_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent execution history for this agent."""
         try:
@@ -285,7 +284,7 @@ class BaseAgent(ABC):
                 runs = session.query(AgentRun).filter(
                     AgentRun.agent_name == self.config.name
                 ).order_by(AgentRun.started_at.desc()).limit(limit).all()
-                
+
                 return [
                     {
                         "id": str(run.id),
@@ -303,33 +302,33 @@ class BaseAgent(ABC):
         except Exception as e:
             self.logger.error(f"Error fetching execution history: {e}")
             return []
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get performance metrics for this agent."""
         try:
             with get_db_session() as session:
                 now = datetime.now(timezone.utc)
-                
+
                 # Last 24 hours metrics
                 recent_runs = session.query(AgentRun).filter(
                     AgentRun.agent_name == self.config.name,
                     AgentRun.started_at >= now - timedelta(hours=24)
                 ).all()
-                
+
                 total_runs = len(recent_runs)
                 successful_runs = len([r for r in recent_runs if r.status == AgentStatus.ACTIVE])
                 failed_runs = total_runs - successful_runs
-                
+
                 avg_duration = 0
                 total_actions = 0
                 total_items = 0
-                
+
                 if recent_runs:
                     durations = [r.duration_seconds for r in recent_runs if r.duration_seconds]
                     avg_duration = sum(durations) / len(durations) if durations else 0
                     total_actions = sum(r.actions_taken or 0 for r in recent_runs)
                     total_items = sum(r.items_processed or 0 for r in recent_runs)
-                
+
                 return {
                     "agent_name": self.config.name,
                     "last_24h": {

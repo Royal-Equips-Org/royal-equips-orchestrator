@@ -4,8 +4,9 @@ Validation utilities for Flask routes.
 
 import logging
 from functools import wraps
-from typing import Dict, Any, Optional
-from flask import request, jsonify
+from typing import Any, Dict, Optional
+
+from flask import jsonify, request
 
 logger = logging.getLogger(__name__)
 
@@ -24,22 +25,22 @@ def validate_json(required_fields: Optional[list] = None):
                 return jsonify({
                     'error': 'Content-Type must be application/json'
                 }), 400
-            
+
             data = request.get_json()
-            
+
             # Validate required fields
             if required_fields:
                 missing_fields = []
                 for field in required_fields:
                     if field not in data:
                         missing_fields.append(field)
-                
+
                 if missing_fields:
                     return jsonify({
                         'error': 'Missing required fields',
                         'missing_fields': missing_fields
                     }), 400
-            
+
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -85,10 +86,10 @@ def sanitize_string(value: str, max_length: int = 1000) -> str:
     """
     if not isinstance(value, str):
         return ""
-    
+
     # Remove null bytes and control characters
     sanitized = ''.join(char for char in value if ord(char) >= 32 or char in '\n\r\t')
-    
+
     # Truncate to max length
     return sanitized[:max_length]
 
@@ -105,19 +106,19 @@ def validate_pagination(page: int, per_page: int, max_per_page: int = 100) -> Di
         Dict with validated page and per_page, or error
     """
     errors = []
-    
+
     if page < 1:
         errors.append("Page must be >= 1")
-    
+
     if per_page < 1:
         errors.append("Per page must be >= 1")
-    
+
     if per_page > max_per_page:
         errors.append(f"Per page must be <= {max_per_page}")
-    
+
     if errors:
         return {'error': True, 'messages': errors}
-    
+
     return {
         'error': False,
         'page': page,

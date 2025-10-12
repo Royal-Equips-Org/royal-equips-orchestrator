@@ -7,16 +7,17 @@ For production, use Redis-backed rate limiting.
 
 import logging
 import time
-from typing import Dict, Tuple, Optional
 from functools import wraps
-from flask import request, jsonify
+from typing import Dict, Optional, Tuple
+
+from flask import jsonify, request
 
 logger = logging.getLogger(__name__)
 
 
 class RateLimiter:
     """Simple in-memory rate limiter for API endpoints."""
-    
+
     def __init__(self, default_limits: Optional[Dict[str, Tuple[int, int]]] = None):
         """Initialize rate limiter.
         
@@ -25,8 +26,8 @@ class RateLimiter:
         """
         self.default_limits = default_limits or {}
         self._requests: Dict[str, Dict[str, list]] = {}
-    
-    def limit(self, endpoint_name: str, max_requests: Optional[int] = None, 
+
+    def limit(self, endpoint_name: str, max_requests: Optional[int] = None,
               window_seconds: Optional[int] = None):
         """Decorator to rate limit an endpoint.
         
@@ -40,32 +41,32 @@ class RateLimiter:
             default = self.default_limits.get(endpoint_name, (100, 3600))
             max_requests = max_requests or default[0]
             window_seconds = window_seconds or default[1]
-        
+
         def decorator(f):
             @wraps(f)
             def decorated_function(*args, **kwargs):
                 # Get client identifier (IP address)
                 client_id = request.remote_addr or 'unknown'
-                
+
                 # Get current time
                 current_time = time.time()
-                
+
                 # Initialize endpoint tracking
                 if endpoint_name not in self._requests:
                     self._requests[endpoint_name] = {}
-                
+
                 # Initialize client tracking
                 if client_id not in self._requests[endpoint_name]:
                     self._requests[endpoint_name][client_id] = []
-                
+
                 # Get client's request history
                 request_times = self._requests[endpoint_name][client_id]
-                
+
                 # Remove old requests outside the window
                 cutoff_time = current_time - window_seconds
                 request_times = [t for t in request_times if t > cutoff_time]
                 self._requests[endpoint_name][client_id] = request_times
-                
+
                 # Check if rate limit exceeded
                 if len(request_times) >= max_requests:
                     logger.warning(f"Rate limit exceeded for {client_id} on {endpoint_name}")
@@ -74,16 +75,16 @@ class RateLimiter:
                         'message': f'Maximum {max_requests} requests per {window_seconds} seconds',
                         'retry_after': int(request_times[0] + window_seconds - current_time)
                     }), 429
-                
+
                 # Add current request
                 request_times.append(current_time)
-                
+
                 # Call the actual endpoint
                 return f(*args, **kwargs)
-            
+
             return decorated_function
         return decorator
-    
+
     def check_limit(self, endpoint_name: str, client_id: str) -> Dict[str, any]:
         """Check rate limit status for a client.
         
@@ -96,24 +97,24 @@ class RateLimiter:
         """
         if endpoint_name not in self._requests:
             return {'allowed': True, 'remaining': 'unlimited'}
-        
+
         if client_id not in self._requests[endpoint_name]:
             return {'allowed': True, 'remaining': 'unlimited'}
-        
+
         # Get limits
         default = self.default_limits.get(endpoint_name, (100, 3600))
         max_requests, window_seconds = default
-        
+
         # Get current time and request history
         current_time = time.time()
         request_times = self._requests[endpoint_name][client_id]
-        
+
         # Remove old requests
         cutoff_time = current_time - window_seconds
         request_times = [t for t in request_times if t > cutoff_time]
-        
+
         remaining = max_requests - len(request_times)
-        
+
         return {
             'allowed': remaining > 0,
             'remaining': remaining,
@@ -121,7 +122,7 @@ class RateLimiter:
             'window_seconds': window_seconds,
             'reset_at': request_times[0] + window_seconds if request_times else None
         }
-    
+
     def reset(self, endpoint_name: Optional[str] = None, client_id: Optional[str] = None):
         """Reset rate limit counters.
         

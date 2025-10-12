@@ -1,6 +1,7 @@
+import subprocess
 import sys
 import time
-import subprocess
+
 cmd = sys.argv[1:] or ["echo","no-op"]
 for i in range(3):
     try:

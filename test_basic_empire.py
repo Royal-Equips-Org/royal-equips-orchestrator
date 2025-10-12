@@ -6,11 +6,12 @@ import asyncio
 import json
 from datetime import datetime
 
+
 async def test_basic_empire_data():
     """Test basic empire data generation without dependencies."""
-    
+
     print("🏰 Testing Basic Empire Data Generation...")
-    
+
     # Simulate basic empire metrics (similar to what our function should return)
     empire_data = {
         'revenue': {
@@ -44,25 +45,25 @@ async def test_basic_empire_data():
         'timestamp': datetime.now().isoformat(),
         'fallback_mode': True
     }
-    
+
     print("✅ Basic Empire Data Generated Successfully!")
     print(f"📊 Revenue this month: {empire_data['revenue']['this_month']}")
     print(f"🔧 Orders processed: {empire_data['operations']['orders_processed']}")
     print(f"🤖 Active agents: {empire_data['agents']['active_agents']}")
     print(f"📈 Agent health: {empire_data['agents']['health_score']}/100")
-    
+
     return empire_data
 
 async def main():
     print("🚀 ROYAL EQUIPS EMPIRE - BASIC DATA TEST")
     print("=" * 60)
-    
+
     empire_data = await test_basic_empire_data()
-    
-    print(f"\n🎯 Empire Status: READY FOR WEBSOCKET BROADCASTING")
+
+    print("\n🎯 Empire Status: READY FOR WEBSOCKET BROADCASTING")
     print(f"📡 Data size: {len(json.dumps(empire_data))} bytes")
     print(f"🕒 Generated at: {empire_data['timestamp']}")
-    
+
     print("\n✨ SUCCESS: WebSocket empire data structure validated!")
     print("🏰 The Royal Equips Empire is prepared for real-time monitoring.")
 

@@ -3,26 +3,20 @@ Customer Support API Routes - Production Implementation
 Real-time support ticket management, AI responses, and customer service automation
 """
 
-import asyncio
-import json
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
+from typing import Optional
 
-from flask import Blueprint, request, jsonify, current_app
-from marshmallow import Schema, fields, ValidationError
+from flask import Blueprint, current_app, jsonify, request
+from marshmallow import Schema, ValidationError, fields
 
-from orchestrator.agents.production_customer_support import (
-    ProductionCustomerSupportAgent, 
-    SupportTicket, 
-    TicketPriority, 
-    TicketStatus,
-    create_production_customer_support_agent
-)
 from app.services.database_service import DatabaseService
-from core.security.rate_limiter import RateLimiter
-from app.utils.auth import require_auth, get_current_user
+from app.utils.auth import get_current_user, require_auth
 from app.utils.validation import validate_json
-
+from core.security.rate_limiter import RateLimiter
+from orchestrator.agents.production_customer_support import (
+    ProductionCustomerSupportAgent,
+    create_production_customer_support_agent,
+)
 
 # Blueprint setup
 customer_support_bp = Blueprint('customer_support', __name__, url_prefix='/api/customer-support')
@@ -73,10 +67,10 @@ class AIResponseSchema(Schema):
 async def get_agent() -> ProductionCustomerSupportAgent:
     """Get or create customer support agent instance."""
     global customer_support_agent
-    
+
     if customer_support_agent is None:
         customer_support_agent = await create_production_customer_support_agent()
-    
+
     return customer_support_agent
 
 
@@ -105,7 +99,7 @@ async def get_support_tickets():
         date_to = request.args.get('date_to')
         page = int(request.args.get('page', 1))
         limit = min(int(request.args.get('limit', 20)), 100)
-        
+
         # Build filters
         filters = {}
         if status:
@@ -118,7 +112,7 @@ async def get_support_tickets():
             filters['created_after'] = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
         if date_to:
             filters['created_before'] = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
-        
+
         # Get tickets from database
         db_service = DatabaseService()
         tickets_result = await db_service.get_support_tickets(
@@ -126,7 +120,7 @@ async def get_support_tickets():
             page=page,
             limit=limit
         )
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -141,7 +135,7 @@ async def get_support_tickets():
             },
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Failed to get support tickets: {e}")
         return jsonify({
@@ -169,20 +163,20 @@ async def create_support_ticket():
     """
     try:
         data = request.get_json()
-        
+
         # Get customer support agent
         agent = await get_agent()
-        
+
         # Create ticket ID
         import uuid
         ticket_id = f"TK-{uuid.uuid4().hex[:8].upper()}"
-        
+
         # Analyze ticket using AI
         ticket_analysis = await agent._analyze_ticket({
             'subject': data['subject'],
             'description': data['description']
         })
-        
+
         # Create ticket record
         ticket_data = {
             'id': ticket_id,
@@ -199,19 +193,19 @@ async def create_support_ticket():
             'updated_at': datetime.now(),
             'ai_analysis': ticket_analysis
         }
-        
+
         # Save to database
         db_service = DatabaseService()
         saved_ticket = await db_service.create_support_ticket(ticket_data)
-        
+
         # Generate AI response if appropriate
         ai_response = None
         if ticket_analysis.get('auto_response_appropriate', False):
             ai_response = await agent._generate_ticket_response(
-                ticket_data, 
+                ticket_data,
                 ticket_analysis
             )
-            
+
             if ai_response:
                 # Save AI response
                 await db_service.add_ticket_response(
@@ -219,14 +213,14 @@ async def create_support_ticket():
                     ai_response,
                     'ai_agent'
                 )
-        
+
         # Trigger real-time update
         from app.sockets import socketio
         socketio.emit('ticket_created', {
             'ticket': saved_ticket,
             'ai_response_generated': ai_response is not None
         }, namespace='/customer-support')
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -238,14 +232,14 @@ async def create_support_ticket():
             'message': 'Support ticket created successfully',
             'timestamp': datetime.now().isoformat()
         }), 201
-        
+
     except ValidationError as e:
         return jsonify({
             'success': False,
             'error': 'Validation failed',
             'details': e.messages
         }), 400
-        
+
     except Exception as e:
         current_app.logger.error(f"Failed to create support ticket: {e}")
         return jsonify({
@@ -264,22 +258,22 @@ async def get_support_ticket(ticket_id: str):
         # Get ticket from database
         db_service = DatabaseService()
         ticket = await db_service.get_support_ticket_by_id(ticket_id)
-        
+
         if not ticket:
             return jsonify({
                 'success': False,
                 'error': 'Ticket not found'
             }), 404
-        
+
         # Get ticket responses/history
         ticket_history = await db_service.get_ticket_history(ticket_id)
-        
+
         # Get customer context
         agent = await get_agent()
         customer_context = await agent._get_customer_context(
             ticket.get('customer_id')
         )
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -289,7 +283,7 @@ async def get_support_ticket(ticket_id: str):
             },
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Failed to get support ticket {ticket_id}: {e}")
         return jsonify({
@@ -308,40 +302,40 @@ async def update_support_ticket(ticket_id: str):
     try:
         data = request.get_json()
         user = get_current_user()
-        
+
         # Get existing ticket
         db_service = DatabaseService()
         existing_ticket = await db_service.get_support_ticket_by_id(ticket_id)
-        
+
         if not existing_ticket:
             return jsonify({
                 'success': False,
                 'error': 'Ticket not found'
             }), 404
-        
+
         # Update ticket data
         update_data = {
             'updated_at': datetime.now(),
             'updated_by': user.get('id', 'unknown')
         }
-        
+
         if 'status' in data:
             update_data['status'] = data['status']
             if data['status'] == 'resolved':
                 update_data['resolved_at'] = datetime.now()
-        
+
         if 'priority' in data:
             update_data['priority'] = data['priority']
-        
+
         if 'agent_response' in data:
             update_data['agent_response'] = data['agent_response']
-        
+
         if 'customer_satisfaction_rating' in data:
             update_data['customer_satisfaction_rating'] = data['customer_satisfaction_rating']
-        
+
         # Save updates
         updated_ticket = await db_service.update_support_ticket(ticket_id, update_data)
-        
+
         # Add to ticket history
         if 'agent_response' in data:
             await db_service.add_ticket_response(
@@ -350,7 +344,7 @@ async def update_support_ticket(ticket_id: str):
                 user.get('id', 'agent'),
                 internal_notes=data.get('internal_notes')
             )
-        
+
         # Trigger real-time update
         from app.sockets import socketio
         socketio.emit('ticket_updated', {
@@ -358,7 +352,7 @@ async def update_support_ticket(ticket_id: str):
             'updates': update_data,
             'updated_by': user.get('name', 'Agent')
         }, namespace='/customer-support')
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -368,14 +362,14 @@ async def update_support_ticket(ticket_id: str):
             'message': 'Support ticket updated successfully',
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except ValidationError as e:
         return jsonify({
             'success': False,
             'error': 'Validation failed',
             'details': e.messages
         }), 400
-        
+
     except Exception as e:
         current_app.logger.error(f"Failed to update support ticket {ticket_id}: {e}")
         return jsonify({
@@ -402,39 +396,39 @@ async def generate_ai_response():
     try:
         data = request.get_json()
         ticket_id = data['ticket_id']
-        
+
         # Get ticket details
         db_service = DatabaseService()
         ticket = await db_service.get_support_ticket_by_id(ticket_id)
-        
+
         if not ticket:
             return jsonify({
                 'success': False,
                 'error': 'Ticket not found'
             }), 404
-        
+
         # Get customer support agent
         agent = await get_agent()
-        
+
         # Analyze ticket for context
         ticket_analysis = await agent._analyze_ticket(ticket)
-        
+
         # Add custom context
         if data.get('context'):
             ticket_analysis.update(data['context'])
-        
+
         # Generate AI response
         ai_response = await agent._generate_ticket_response(
             ticket,
             ticket_analysis
         )
-        
+
         if not ai_response:
             return jsonify({
                 'success': False,
                 'error': 'Failed to generate AI response'
             }), 500
-        
+
         # Optionally save as draft response
         user = get_current_user()
         await db_service.add_ticket_response(
@@ -444,7 +438,7 @@ async def generate_ai_response():
             is_draft=True,
             generated_by=user.get('id')
         )
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -459,14 +453,14 @@ async def generate_ai_response():
             },
             'message': 'AI response generated successfully'
         })
-        
+
     except ValidationError as e:
         return jsonify({
             'success': False,
             'error': 'Validation failed',
             'details': e.messages
         }), 400
-        
+
     except Exception as e:
         current_app.logger.error(f"Failed to generate AI response: {e}")
         return jsonify({
@@ -490,7 +484,7 @@ async def get_support_analytics():
     try:
         period = request.args.get('period', '7d')
         breakdown = request.args.get('breakdown', 'status')
-        
+
         # Calculate date range
         period_map = {
             '24h': timedelta(hours=24),
@@ -499,16 +493,16 @@ async def get_support_analytics():
             '90d': timedelta(days=90),
             '1y': timedelta(days=365)
         }
-        
+
         if period not in period_map:
             return jsonify({
                 'success': False,
                 'error': 'Invalid period. Use: 24h, 7d, 30d, 90d, 1y'
             }), 400
-        
+
         end_date = datetime.now()
         start_date = end_date - period_map[period]
-        
+
         # Get analytics from database
         db_service = DatabaseService()
         analytics = await db_service.get_support_analytics(
@@ -516,15 +510,15 @@ async def get_support_analytics():
             end_date=end_date,
             breakdown=breakdown
         )
-        
+
         # Get agent performance metrics
         agent = await get_agent()
         agent_metrics = agent.performance_metrics
-        
+
         # Calculate additional metrics
         response_metrics = await db_service.get_response_metrics(start_date, end_date)
         sentiment_trends = await db_service.get_sentiment_trends(start_date, end_date)
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -541,7 +535,7 @@ async def get_support_analytics():
             },
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Failed to get support analytics: {e}")
         return jsonify({
@@ -566,17 +560,17 @@ async def escalate_ticket(ticket_id: str):
     try:
         data = request.get_json() or {}
         user = get_current_user()
-        
+
         # Get ticket
         db_service = DatabaseService()
         ticket = await db_service.get_support_ticket_by_id(ticket_id)
-        
+
         if not ticket:
             return jsonify({
                 'success': False,
                 'error': 'Ticket not found'
             }), 404
-        
+
         # Update ticket to escalated status
         escalation_data = {
             'status': 'escalated',
@@ -586,13 +580,13 @@ async def escalate_ticket(ticket_id: str):
             'escalation_reason': data.get('reason', 'Manual escalation'),
             'updated_at': datetime.now()
         }
-        
+
         if 'assign_to' in data:
             escalation_data['assigned_to'] = data['assign_to']
-        
+
         # Save escalation
         updated_ticket = await db_service.update_support_ticket(ticket_id, escalation_data)
-        
+
         # Add escalation note
         await db_service.add_ticket_response(
             ticket_id,
@@ -600,7 +594,7 @@ async def escalate_ticket(ticket_id: str):
             user.get('id', 'system'),
             is_internal=True
         )
-        
+
         # Trigger notifications
         from app.sockets import socketio
         socketio.emit('ticket_escalated', {
@@ -609,7 +603,7 @@ async def escalate_ticket(ticket_id: str):
             'reason': data.get('reason'),
             'new_priority': escalation_data['priority']
         }, namespace='/customer-support')
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -618,7 +612,7 @@ async def escalate_ticket(ticket_id: str):
             },
             'message': 'Ticket escalated successfully'
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Failed to escalate ticket {ticket_id}: {e}")
         return jsonify({
@@ -635,11 +629,11 @@ async def get_support_status():
         # Get agent status
         agent = await get_agent()
         agent_status = await agent.get_status()
-        
+
         # Get system metrics
         db_service = DatabaseService()
         system_metrics = await db_service.get_system_metrics()
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -655,7 +649,7 @@ async def get_support_status():
             },
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         current_app.logger.error(f"Failed to get support status: {e}")
         return jsonify({

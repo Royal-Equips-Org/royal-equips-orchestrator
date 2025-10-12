@@ -47,7 +47,7 @@ def _load_openapi_template() -> Optional[Dict[str, Any]]:
             if not isinstance(template, dict):
                 raise ValueError("OpenAPI document must deserialize to a dictionary")
             return template
-    except (yaml.YAMLError, ValueError, IOError) as exc:  # pragma: no cover - defensive logging
+    except (OSError, yaml.YAMLError, ValueError) as exc:  # pragma: no cover - defensive logging
         logger.exception("Failed to load or parse OpenAPI specification: %s", exc)
         return None
 
@@ -100,7 +100,7 @@ def init_swagger(app):
     return swagger
 
 
-@docs_bp.route("/api-documentation")  
+@docs_bp.route("/api-documentation")
 def docs_redirect():
     """
     Redirect to Swagger UI documentation.

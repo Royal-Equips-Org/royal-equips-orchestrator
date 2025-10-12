@@ -10,7 +10,7 @@ Provides API endpoints for:
 """
 
 import logging
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
 

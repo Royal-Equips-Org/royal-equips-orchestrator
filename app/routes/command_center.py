@@ -6,14 +6,15 @@ SPA routing fallback support, plus provides enhanced empire status
 data for the control center dashboard.
 """
 
-import logging
-from pathlib import Path
-from datetime import timezone, datetime
 import json
+import logging
 import threading
-from typing import Dict, List, Any, Optional
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List
 
-from flask import Blueprint, send_file, send_from_directory, jsonify, request, Response
+from flask import Blueprint, Response, jsonify, send_file, send_from_directory
+
 from app.services.health_service import get_health_service
 
 logger = logging.getLogger(__name__)
@@ -243,13 +244,13 @@ def get_empire_status_for_dashboard():
     """
     try:
         health_service = get_health_service()
-        
+
         # Get empire health (will use cache if recent)
         empire_health = health_service.check_empire_health()
-        
+
         # Get recommendations with priority categorization
         all_recommendations = health_service.get_empire_recommendations()
-        
+
         # Categorize recommendations by priority
         recommendations_by_priority = {
             'IMMEDIATE': [],
@@ -257,15 +258,15 @@ def get_empire_status_for_dashboard():
             'MEDIUM': [],
             'STRATEGIC': []
         }
-        
+
         for rec in all_recommendations:
             priority = rec.get('priority', 'MEDIUM')
             if priority in recommendations_by_priority:
                 recommendations_by_priority[priority].append(rec)
-        
+
         # Get scan results for detailed metrics
         scan_results = health_service.get_empire_scan_results()
-        
+
         # Build comprehensive dashboard data
         dashboard_data = {
             'empire_overview': {
@@ -311,11 +312,11 @@ def get_empire_status_for_dashboard():
             'timestamp': datetime.now().isoformat(),
             'dashboard_version': '2.0.0'
         }
-        
+
         # Enhance with detailed scan data if available
         if scan_results:
             phases = scan_results.get('phases', {})
-            
+
             # Add security details
             if 'security' in phases:
                 security_data = phases['security']
@@ -324,7 +325,7 @@ def get_empire_status_for_dashboard():
                     'risk_level': security_data.get('risk_level', 'UNKNOWN'),
                     'patterns_detected': security_data.get('patterns_detected', {})
                 })
-                
+
                 # Determine threat level based on risk
                 risk_level = security_data.get('risk_level', 'LOW')
                 if risk_level == 'CRITICAL':
@@ -336,7 +337,7 @@ def get_empire_status_for_dashboard():
                 elif risk_level == 'MEDIUM':
                     dashboard_data['security_metrics']['threat_level'] = 'MEDIUM'
                     dashboard_data['security_metrics']['security_status'] = 'MONITORING'
-            
+
             # Add code health details
             if 'code_health' in phases:
                 code_health = phases['code_health']
@@ -346,12 +347,12 @@ def get_empire_status_for_dashboard():
                     'docstring_coverage': code_health.get('docstring_coverage', 0),
                     'test_coverage_estimate': code_health.get('test_coverage_estimate', 0)
                 })
-        
+
         return jsonify({
             'success': True,
             'empire_dashboard': dashboard_data
         })
-        
+
     except Exception as e:
         logger.error(f"Empire dashboard status failed: {e}")
         return jsonify({
@@ -379,13 +380,13 @@ def get_empire_alerts():
     """
     try:
         health_service = get_health_service()
-        
+
         # Get current recommendations to identify alerts
         recommendations = health_service.get_empire_recommendations()
-        
+
         alerts = []
         notifications = []
-        
+
         for rec in recommendations:
             if rec.get('priority') == 'IMMEDIATE':
                 alerts.append({
@@ -407,11 +408,11 @@ def get_empire_alerts():
                     'action_required': False,
                     'actions': rec.get('action_items', [])[:2]  # Top 2 actions
                 })
-        
+
         # Add system status notifications
         empire_health = health_service.check_empire_health()
         readiness_score = empire_health.get('empire_readiness_score', 0)
-        
+
         if readiness_score >= 90:
             notifications.append({
                 'type': 'SUCCESS',
@@ -430,7 +431,7 @@ def get_empire_alerts():
                 'timestamp': datetime.now().isoformat(),
                 'action_required': False
             })
-        
+
         return jsonify({
             'success': True,
             'alerts': alerts,
@@ -442,7 +443,7 @@ def get_empire_alerts():
             },
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         logger.error(f"Empire alerts retrieval failed: {e}")
         return jsonify({
@@ -463,7 +464,7 @@ def get_empire_alerts():
 # Advanced Command Center Features
 class CommandCenterController:
     """Advanced controller for enhanced empire management"""
-    
+
     def __init__(self):
         # Real-time metrics cache
         self.metrics_cache = {
@@ -474,10 +475,10 @@ class CommandCenterController:
             "agent_status": {},
             "alerts": []
         }
-        
+
         # Start background monitoring
         self._start_monitoring()
-    
+
     def _start_monitoring(self):
         """Start background monitoring thread"""
         def monitor_loop():
@@ -488,10 +489,10 @@ class CommandCenterController:
                 except Exception as e:
                     logger.error(f"Monitoring error: {e}")
                     threading.Event().wait(60)  # Wait longer on error
-        
+
         monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
         monitor_thread.start()
-    
+
     def _update_metrics(self):
         """Update real-time metrics cache"""
         try:
@@ -505,7 +506,7 @@ class CommandCenterController:
             })
         except Exception as e:
             logger.error(f"Error updating metrics: {e}")
-    
+
     def _get_empire_status(self) -> Dict[str, Any]:
         """Get overall empire status"""
         return {
@@ -518,7 +519,7 @@ class CommandCenterController:
             "uptime": "99.97%",
             "last_incident": "None in 47 days"
         }
-    
+
     def _get_business_metrics(self) -> Dict[str, Any]:
         """Get business performance metrics"""
         return {
@@ -547,7 +548,7 @@ class CommandCenterController:
                 "impressions": 245800
             }
         }
-    
+
     def _get_market_intelligence(self) -> Dict[str, Any]:
         """Get market intelligence data"""
         return {
@@ -562,7 +563,7 @@ class CommandCenterController:
                 "product_coverage": 87.4
             }
         }
-    
+
     def _get_agent_status(self) -> Dict[str, Any]:
         """Get autonomous agent status"""
         return {
@@ -575,7 +576,7 @@ class CommandCenterController:
             },
             "inventory_pricing_agent": {
                 "status": "Active",
-                "last_run": "2024-01-01 14:45:00", 
+                "last_run": "2024-01-01 14:45:00",
                 "prices_optimized": 345,
                 "revenue_impact": "+$12,450",
                 "success_rate": 97.8
@@ -588,7 +589,7 @@ class CommandCenterController:
                 "success_rate": 91.5
             }
         }
-    
+
     def _get_active_alerts(self) -> List[Dict[str, Any]]:
         """Get active system alerts"""
         return [
@@ -641,25 +642,25 @@ def trigger_agent(agent_name):
     """Manually trigger an autonomous agent"""
     try:
         valid_agents = ["product_research", "inventory_pricing", "marketing_automation", "order_processing"]
-        
+
         if agent_name not in valid_agents:
             return jsonify({
                 "success": False,
                 "error": f"Invalid agent name. Valid agents: {valid_agents}"
             }), 400
-        
+
         # Trigger the agent (this would actually trigger the real agent)
         # Sanitize agent_name before logging to prevent log injection
         safe_agent_name = agent_name.replace('\r', '').replace('\n', '')
         logger.info(f"Manually triggering {safe_agent_name} agent")
-        
+
         return jsonify({
             "success": True,
             "message": f"{agent_name} agent triggered successfully",
             "agent": agent_name,
             "trigger_time": datetime.now(timezone.utc).isoformat()
         })
-        
+
     except Exception as e:
         safe_agent_name = agent_name.replace('\r', '').replace('\n', '')
         logger.error(f"Error triggering agent {safe_agent_name}: {e}")
@@ -729,5 +730,5 @@ def stream_metrics():
             except Exception as e:
                 logger.error(f"Streaming error: {e}")
                 break
-    
+
     return Response(generate(), mimetype='text/plain')

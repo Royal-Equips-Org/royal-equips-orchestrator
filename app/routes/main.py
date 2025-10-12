@@ -16,13 +16,10 @@ from flask import (
     jsonify,
     make_response,
     redirect,
-    render_template,
     request,
     send_from_directory,
     url_for,
 )
-
-from app.utils.template_utils import validate_template_directory, ensure_template_exists
 
 main_bp = Blueprint("main", __name__)
 logger = logging.getLogger(__name__)
@@ -174,11 +171,11 @@ def test_inventory():
         # Read the test HTML file
         from pathlib import Path
         test_file = Path(__file__).parent.parent.parent / "test_inventory_page.html"
-        
+
         if test_file.exists():
-            with open(test_file, 'r', encoding='utf-8') as f:
+            with open(test_file, encoding='utf-8') as f:
                 content = f.read()
-            
+
             response = make_response(content)
             response.headers['Content-Type'] = 'text/html; charset=utf-8'
             return response
@@ -187,9 +184,9 @@ def test_inventory():
                 "error": "Test page not found",
                 "message": "test_inventory_page.html is missing"
             }), 404
-            
-    except Exception as e:
-        logger.exception(f"Error serving test inventory page")
+
+    except Exception:
+        logger.exception("Error serving test inventory page")
         return jsonify({
             "error": "Failed to serve test page"
         }), 500

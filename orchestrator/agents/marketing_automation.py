@@ -19,9 +19,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import json
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, List
+
 import httpx
 
 from orchestrator.core.agent_base import AgentBase
@@ -40,22 +40,22 @@ class MarketingAutomationAgent(AgentBase):
     async def _execute_task(self) -> None:
         """Execute marketing automation tasks."""
         self.logger.info("Running marketing automation agent")
-        
+
         # Update customer segments
         await self._update_customer_segments()
-        
+
         # Check for triggered campaigns
         await self._check_triggered_campaigns()
-        
+
         # Execute scheduled campaigns
         await self._execute_scheduled_campaigns()
-        
+
         # Monitor campaign performance
         await self._monitor_campaign_performance()
-        
+
         # Update discoveries count
         self.discoveries_count = len(self.campaign_log) + len(self.active_campaigns)
-        
+
         self.logger.info(
             "Marketing automation cycle completed: %d campaigns executed, %d active campaigns",
             len(self.campaign_log),
@@ -66,10 +66,10 @@ class MarketingAutomationAgent(AgentBase):
         """Update customer segments based on behavior and purchase history."""
         try:
             self.logger.info("Updating customer segments")
-            
+
             # Get customer data from Shopify
             customers = await self._fetch_shopify_customers()
-            
+
             # Segment customers
             segments = {
                 'high_value': [],
@@ -78,31 +78,31 @@ class MarketingAutomationAgent(AgentBase):
                 'new_customers': [],
                 'cart_abandoners': []
             }
-            
+
             for customer in customers:
                 customer_id = str(customer.get('id'))
                 total_spent = float(customer.get('total_spent', 0))
                 orders_count = int(customer.get('orders_count', 0))
                 last_order_date = customer.get('last_order_name')
-                
+
                 # High value customers (>$500 spent)
                 if total_spent > 500:
                     segments['high_value'].append(customer_id)
-                
+
                 # Repeat customers (>3 orders)
                 if orders_count > 3:
                     segments['repeat_customers'].append(customer_id)
-                
+
                 # New customers (first order in last 30 days)
                 if orders_count == 1:
                     segments['new_customers'].append(customer_id)
-                
+
                 # At-risk customers (no orders in 90+ days)
                 if orders_count > 0 and self._days_since_last_order(customer) > 90:
                     segments['at_risk'].append(customer_id)
-            
+
             self.customer_segments = segments
-            
+
             self.logger.info(
                 "Customer segments updated: %d high-value, %d repeat, %d new, %d at-risk",
                 len(segments['high_value']),
@@ -110,7 +110,7 @@ class MarketingAutomationAgent(AgentBase):
                 len(segments['new_customers']),
                 len(segments['at_risk'])
             )
-            
+
         except Exception as e:
             self.logger.error(f"Error updating customer segments: {e}")
 
@@ -119,31 +119,31 @@ class MarketingAutomationAgent(AgentBase):
         try:
             shopify_token = os.getenv('SHOPIFY_ACCESS_TOKEN')
             shop_domain = os.getenv('SHOPIFY_STORE')
-            
+
             if not shopify_token or not shop_domain:
                 self.logger.error("Shopify credentials not configured. Set SHOPIFY_ACCESS_TOKEN and SHOPIFY_STORE environment variables.")
                 return []
-            
+
             async with httpx.AsyncClient() as client:
                 headers = {
                     'X-Shopify-Access-Token': shopify_token,
                     'Content-Type': 'application/json'
                 }
-                
+
                 response = await client.get(
                     f'https://{shop_domain}/admin/api/2023-10/customers.json',
                     headers=headers,
                     params={'limit': 250},
                     timeout=30
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     return data.get('customers', [])
                 else:
                     self.logger.error(f"Shopify API error: {response.status_code} - {response.text}")
                     return []
-                    
+
         except Exception as e:
             self.logger.error(f"Error fetching Shopify customers: {e}", exc_info=True)
             return []
@@ -154,7 +154,7 @@ class MarketingAutomationAgent(AgentBase):
             last_order_at = customer.get('last_order_date')
             if not last_order_at:
                 return 999  # No order data available
-            
+
             from dateutil import parser
             last_order_date = parser.parse(last_order_at)
             days = (datetime.now(timezone.utc) - last_order_date.replace(tzinfo=None)).days
@@ -167,16 +167,16 @@ class MarketingAutomationAgent(AgentBase):
         """Check for behavior-triggered campaigns."""
         try:
             self.logger.info("Checking for triggered campaigns")
-            
+
             # Check for abandoned carts
             await self._check_abandoned_carts()
-            
+
             # Check for welcome series triggers
             await self._check_welcome_series()
-            
+
             # Check for win-back campaigns
             await self._check_win_back_campaigns()
-            
+
         except Exception as e:
             self.logger.error(f"Error checking triggered campaigns: {e}")
 
@@ -185,14 +185,14 @@ class MarketingAutomationAgent(AgentBase):
         try:
             # Fetch abandoned carts from Shopify
             abandoned_carts = await self._fetch_abandoned_carts()
-            
+
             for cart in abandoned_carts:
                 cart_id = cart.get('id')
                 customer_email = cart.get('email')
-                
+
                 if customer_email and cart_id not in self.active_campaigns:
                     await self._send_abandoned_cart_email(customer_email, cart)
-                    
+
         except Exception as e:
             self.logger.error(f"Error checking abandoned carts: {e}")
 
@@ -201,17 +201,17 @@ class MarketingAutomationAgent(AgentBase):
         try:
             shopify_token = os.getenv('SHOPIFY_ACCESS_TOKEN')
             shop_domain = os.getenv('SHOPIFY_STORE')
-            
+
             if not shopify_token or not shop_domain:
                 self.logger.error("Shopify credentials not configured for abandoned cart retrieval")
                 return []
-            
+
             async with httpx.AsyncClient() as client:
                 headers = {
                     'X-Shopify-Access-Token': shopify_token,
                     'Content-Type': 'application/json'
                 }
-                
+
                 # Fetch checkouts (abandoned carts)
                 response = await client.get(
                     f'https://{shop_domain}/admin/api/2023-10/checkouts.json',
@@ -222,22 +222,22 @@ class MarketingAutomationAgent(AgentBase):
                     },
                     timeout=30
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     carts = data.get('checkouts', [])
-                    
+
                     # Filter for abandoned carts (no completed orders)
                     abandoned = [
                         cart for cart in carts
                         if cart.get('email') and not cart.get('completed_at')
                     ]
-                    
+
                     return abandoned
                 else:
                     self.logger.error(f"Shopify API error fetching checkouts: {response.status_code}")
                     return []
-                    
+
         except Exception as e:
             self.logger.error(f"Error fetching abandoned carts: {e}", exc_info=True)
             return []
@@ -246,7 +246,7 @@ class MarketingAutomationAgent(AgentBase):
         """Send abandoned cart recovery email."""
         try:
             subject = "Complete your purchase - Don't miss out!"
-            
+
             # Check for email service credentials
             klaviyo_key = os.getenv('KLAVIYO_API_KEY')
             if klaviyo_key:
@@ -258,10 +258,10 @@ class MarketingAutomationAgent(AgentBase):
                     subject=subject,
                     content=self._build_abandoned_cart_content(cart)
                 )
-                
+
                 if not success:
                     self.logger.warning(f"Failed to send abandoned cart email to {email}")
-                
+
             # Log campaign
             self.campaign_log.append({
                 'type': 'abandoned_cart',
@@ -269,7 +269,7 @@ class MarketingAutomationAgent(AgentBase):
                 'sent_at': datetime.now(timezone.utc).isoformat(),
                 'cart_id': cart.get('id')
             })
-            
+
         except Exception as e:
             self.logger.error(f"Error sending abandoned cart email: {e}")
 
@@ -279,13 +279,13 @@ class MarketingAutomationAgent(AgentBase):
             klaviyo_key = os.getenv('KLAVIYO_API_KEY')
             if not klaviyo_key:
                 return False
-                
+
             async with httpx.AsyncClient() as client:
                 headers = {
                     'Authorization': f'Klaviyo-API-Key {klaviyo_key}',
                     'Content-Type': 'application/json'
                 }
-                
+
                 payload = {
                     'type': 'email',
                     'attributes': {
@@ -294,21 +294,21 @@ class MarketingAutomationAgent(AgentBase):
                         'content': content
                     }
                 }
-                
+
                 response = await client.post(
                     'https://a.klaviyo.com/api/v1/email',
                     headers=headers,
                     json=payload,
                     timeout=30
                 )
-                
+
                 if response.status_code == 200:
                     self.logger.info(f"Klaviyo email sent to {email}")
                     return True
                 else:
                     self.logger.error(f"Klaviyo API error: {response.status_code}")
                     return False
-                    
+
         except Exception as e:
             self.logger.error(f"Error sending Klaviyo email: {e}")
             return False
@@ -319,7 +319,7 @@ class MarketingAutomationAgent(AgentBase):
         """Build abandoned cart email content."""
         items = cart.get('line_items', [])
         item_list = ', '.join([item.get('title', 'Item') for item in items])
-        
+
         return f"""
         Don't forget about your items!
         
@@ -367,15 +367,15 @@ class MarketingAutomationAgent(AgentBase):
         """Execute scheduled marketing campaigns."""
         try:
             current_day = datetime.now(timezone.utc).weekday()  # Monday=0
-            
-            # Newsletter on Tuesdays (1)  
+
+            # Newsletter on Tuesdays (1)
             if current_day == 1:
                 await self._send_newsletter_campaign()
-                
+
             # Product promotions on Fridays (4)
             if current_day == 4:
                 await self._send_promotion_campaign()
-                
+
         except Exception as e:
             self.logger.error(f"Error executing scheduled campaigns: {e}")
 
@@ -383,14 +383,14 @@ class MarketingAutomationAgent(AgentBase):
         """Send weekly newsletter campaign."""
         try:
             subject = "Weekly Deals & New Arrivals - Royal Equips"
-            
+
             # Get high-value and repeat customers
             target_emails = []
             if 'high_value' in self.customer_segments:
                 target_emails.extend(self.customer_segments['high_value'])
             if 'repeat_customers' in self.customer_segments:
                 target_emails.extend(self.customer_segments['repeat_customers'])
-            
+
             # Send to target segment (batch processing with rate limiting)
             sent_count = 0
             for email in target_emails[:100]:  # Limit to 100 emails per batch
@@ -402,14 +402,14 @@ class MarketingAutomationAgent(AgentBase):
                 if success:
                     sent_count += 1
                 await asyncio.sleep(0.1)  # Rate limiting between sends
-                
+
             self.campaign_log.append({
                 'type': 'newsletter',
                 'sent_at': datetime.now(timezone.utc).isoformat(),
                 'recipients': len(target_emails),
                 'subject': subject
             })
-            
+
         except Exception as e:
             self.logger.error(f"Error sending newsletter: {e}")
 
@@ -417,14 +417,14 @@ class MarketingAutomationAgent(AgentBase):
         """Send promotional campaign."""
         try:
             subject = "Weekend Sale - Up to 40% Off Car Accessories!"
-            
+
             # Target all active customers
             all_segments = []
             for segment_customers in self.customer_segments.values():
                 all_segments.extend(segment_customers)
-            
+
             unique_customers = list(set(all_segments))
-            
+
             # Send to target segment (batch processing with rate limiting)
             sent_count = 0
             for email in unique_customers[:200]:  # Limit to 200 emails per batch
@@ -436,14 +436,14 @@ class MarketingAutomationAgent(AgentBase):
                 if success:
                     sent_count += 1
                 await asyncio.sleep(0.1)  # Rate limiting between sends
-                
+
             self.campaign_log.append({
                 'type': 'promotion',
                 'sent_at': datetime.now(timezone.utc).isoformat(),
                 'recipients': len(unique_customers),
                 'subject': subject
             })
-            
+
         except Exception as e:
             self.logger.error(f"Error sending promotion: {e}")
 
@@ -452,17 +452,17 @@ class MarketingAutomationAgent(AgentBase):
         try:
             # Calculate basic performance metrics
             recent_campaigns = [c for c in self.campaign_log if self._is_recent_campaign(c)]
-            
+
             if recent_campaigns:
                 total_sent = sum(c.get('recipients', 1) for c in recent_campaigns)
                 campaign_types = len(set(c.get('type') for c in recent_campaigns))
-                
+
                 self.logger.info(
                     "Campaign performance: %d emails sent across %d campaign types",
                     total_sent,
                     campaign_types
                 )
-                
+
         except Exception as e:
             self.logger.error(f"Error monitoring campaign performance: {e}")
 
@@ -488,7 +488,7 @@ class MarketingAutomationAgent(AgentBase):
         """Get count of campaigns executed today."""
         today = datetime.now(timezone.utc).date()
         today_campaigns = [
-            c for c in self.campaign_log 
+            c for c in self.campaign_log
             if datetime.fromisoformat(c.get('sent_at', '')).date() == today
         ]
         return len(today_campaigns)
@@ -496,14 +496,14 @@ class MarketingAutomationAgent(AgentBase):
     async def _update_performance_metrics(self):
         """Update agent performance metrics."""
         await super()._update_performance_metrics()
-        
+
         # Calculate success rate based on campaign execution
         if self.campaign_log:
             recent_campaigns = len([c for c in self.campaign_log if self._is_recent_campaign(c)])
             self.success_rate = min(100, (recent_campaigns / max(1, len(self.campaign_log))) * 100)
         else:
             self.success_rate = 0.0
-        
+
         # Update performance score based on campaign volume and variety
         campaign_variety = len(set(c.get('type') for c in self.campaign_log))
         self.performance_score = min(100, (len(self.campaign_log) * 2) + (campaign_variety * 5))

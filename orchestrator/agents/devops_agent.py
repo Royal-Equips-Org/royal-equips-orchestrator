@@ -6,12 +6,9 @@ This provides a bridge between the standalone DevOps commander and the
 orchestrator's agent management system.
 """
 
-import asyncio
 import logging
-import json
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
-from dataclasses import asdict
+from typing import Any, Dict, Optional
 
 # Try to import BaseAgent from orchestrator framework, fallback to minimal stub if not available
 try:
@@ -44,20 +41,20 @@ class DevOpsAgent(BaseAgent):
     Provides autonomous Git operations, commit signing, and repository management
     integrated with the orchestrator's scheduling and monitoring system.
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__()
-        
+
         self.config = config or {}
         self.devops_service = None
         self.last_cycle_results = None
         self.initialization_error = None
-        
+
         # Agent metadata
         self.agent_name = "DevOps Agent"
         self.description = "Autonomous secure DevOps operations and Git management"
         self.version = "1.0.0"
-        
+
         # Initialize the DevOps service if available
         if DEVOPS_AVAILABLE:
             try:
@@ -68,7 +65,7 @@ class DevOpsAgent(BaseAgent):
                 logger.error(f"❌ Failed to initialize DevOps service: {e}")
         else:
             self.initialization_error = "DevOps service not available"
-    
+
     async def run(self) -> Dict[str, Any]:
         """
         Execute the DevOps agent cycle.
@@ -82,14 +79,14 @@ class DevOpsAgent(BaseAgent):
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "agent": self.agent_name
             }
-        
+
         try:
             logger.info("🔄 Running DevOps agent cycle")
-            
+
             # Run the autonomous DevOps cycle
             cycle_results = await self.devops_service.run_autonomous_cycle()
             self.last_cycle_results = cycle_results
-            
+
             # Transform results for orchestrator compatibility
             orchestrator_results = {
                 "status": "success" if cycle_results.get("status") == "completed" else "warning",
@@ -105,19 +102,19 @@ class DevOpsAgent(BaseAgent):
                 "execution_time": self._calculate_execution_time(cycle_results),
                 "errors": cycle_results.get("errors", [])
             }
-            
+
             # Log significant activities
             if cycle_results.get("commits_signed", 0) > 0:
                 logger.info(f"✅ Signed {cycle_results['commits_signed']} commits across {cycle_results['branches_processed']} branches")
-            
+
             if cycle_results.get("prs_created", 0) > 0:
                 logger.info(f"📝 Created {cycle_results['prs_created']} PRs with changelogs")
-            
+
             if cycle_results.get("status") == "no_action_needed":
                 logger.debug("ℹ️ No unsigned commits found - repository is compliant")
-            
+
             return orchestrator_results
-            
+
         except Exception as e:
             logger.error(f"❌ DevOps agent execution failed: {e}")
             return {
@@ -126,7 +123,7 @@ class DevOpsAgent(BaseAgent):
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "agent": self.agent_name
             }
-    
+
     def _calculate_execution_time(self, cycle_results: Dict[str, Any]) -> Optional[float]:
         """Calculate execution time from cycle results."""
         try:
@@ -135,7 +132,7 @@ class DevOpsAgent(BaseAgent):
             return (end_time - start_time).total_seconds()
         except (ValueError, TypeError):
             return None
-    
+
     async def health_check(self) -> Dict[str, Any]:
         """
         Perform health check for the DevOps agent.
@@ -151,7 +148,7 @@ class DevOpsAgent(BaseAgent):
             "metrics": {},
             "details": {}
         }
-        
+
         try:
             # Check service availability
             if not DEVOPS_AVAILABLE:
@@ -159,16 +156,16 @@ class DevOpsAgent(BaseAgent):
                 health_status["checks"]["service_available"] = False
                 health_status["details"]["error"] = "DevOps service not available"
                 return health_status
-            
+
             if not self.devops_service:
-                health_status["status"] = "unhealthy" 
+                health_status["status"] = "unhealthy"
                 health_status["checks"]["service_initialized"] = False
                 health_status["details"]["error"] = self.initialization_error
                 return health_status
-            
+
             health_status["checks"]["service_available"] = True
             health_status["checks"]["service_initialized"] = True
-            
+
             # Check Git repository
             try:
                 import subprocess
@@ -179,23 +176,23 @@ class DevOpsAgent(BaseAgent):
             except FileNotFoundError:
                 health_status["checks"]["git_repository"] = False
                 health_status["details"]["git_error"] = "Git not found in PATH"
-            
+
             # Check GPG availability
             try:
                 result = subprocess.run(["gpg", "--version"], capture_output=True, text=True)
                 health_status["checks"]["gpg_available"] = result.returncode == 0
             except FileNotFoundError:
                 health_status["checks"]["gpg_available"] = False
-            
+
             # Service metrics
             if self.devops_service:
                 operations_status = self.devops_service.get_operations_status()
                 audit_log = self.devops_service.get_audit_log(limit=1)
-                
+
                 health_status["metrics"]["total_operations"] = operations_status["total_operations"]
                 health_status["metrics"]["audit_entries"] = len(audit_log)
                 health_status["metrics"]["is_running"] = self.devops_service.is_running
-                
+
                 # Last execution info
                 if self.last_cycle_results:
                     health_status["details"]["last_execution"] = {
@@ -203,45 +200,45 @@ class DevOpsAgent(BaseAgent):
                         "time": self.last_cycle_results.get("start_time"),
                         "commits_signed": self.last_cycle_results.get("commits_signed", 0)
                     }
-            
+
             # Configuration validation
             config_issues = []
             if not self.config.get("github_token"):
                 config_issues.append("GitHub token not configured")
             if not self.config.get("gpg_key_id"):
                 config_issues.append("GPG key ID not configured")
-            
+
             health_status["checks"]["configuration_valid"] = len(config_issues) == 0
             if config_issues:
                 health_status["details"]["config_issues"] = config_issues
-            
+
             # Overall health determination
             critical_checks = ["service_available", "service_initialized", "git_repository"]
             unhealthy_checks = [check for check in critical_checks if not health_status["checks"].get(check, False)]
-            
+
             if unhealthy_checks:
                 health_status["status"] = "unhealthy"
                 health_status["details"]["failed_checks"] = unhealthy_checks
             elif not health_status["checks"].get("configuration_valid", True):
                 health_status["status"] = "degraded"
-            
+
         except Exception as e:
             health_status["status"] = "unhealthy"
             health_status["details"]["health_check_error"] = str(e)
             logger.error(f"Health check failed: {e}")
-        
+
         return health_status
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get detailed metrics for monitoring and dashboards."""
         if not self.devops_service:
             return {"error": "DevOps service not available"}
-        
+
         try:
             # Get operations status and audit log
             operations = self.devops_service.get_operations_status()
             recent_audit = self.devops_service.get_audit_log(limit=100)
-            
+
             # Calculate metrics
             metrics = {
                 "total_operations": operations["total_operations"],
@@ -253,20 +250,20 @@ class DevOpsAgent(BaseAgent):
                 "operations_by_status": {},
                 "recent_activity": []
             }
-            
+
             # Analyze operations
             for op_id, operation in operations["operations"].items():
                 op_type = operation["operation_type"]
                 op_status = operation["status"]
-                
+
                 if op_type not in metrics["operations_by_type"]:
                     metrics["operations_by_type"][op_type] = 0
                 metrics["operations_by_type"][op_type] += 1
-                
+
                 if op_status not in metrics["operations_by_status"]:
                     metrics["operations_by_status"][op_status] = 0
                 metrics["operations_by_status"][op_status] += 1
-            
+
             # Recent activity summary
             for entry in recent_audit[-10:]:  # Last 10 entries
                 metrics["recent_activity"].append({
@@ -275,23 +272,23 @@ class DevOpsAgent(BaseAgent):
                     "action": entry["action"],
                     "result": entry["result"]
                 })
-            
+
             return metrics
-            
+
         except Exception as e:
             logger.error(f"Failed to collect metrics: {e}")
             return {"error": str(e)}
-    
+
     def get_configuration(self) -> Dict[str, Any]:
         """Get current configuration (sanitized for security)."""
         safe_config = self.config.copy()
-        
+
         # Remove sensitive keys
         sensitive_keys = ["github_token", "openai_api_key", "vault_url"]
         for key in sensitive_keys:
             if key in safe_config:
                 safe_config[key] = "***configured***" if safe_config[key] else "not_configured"
-        
+
         return {
             "agent_name": self.agent_name,
             "version": self.version,
@@ -299,16 +296,16 @@ class DevOpsAgent(BaseAgent):
             "service_available": DEVOPS_AVAILABLE,
             "service_initialized": self.devops_service is not None
         }
-    
+
     async def stop(self):
         """Stop the DevOps agent and cleanup resources."""
         if self.devops_service:
             self.devops_service.stop_daemon()
             logger.info("DevOps agent stopped")
-    
+
     def __str__(self) -> str:
         return f"{self.agent_name} v{self.version}"
-    
+
     def __repr__(self) -> str:
         return f"DevOpsAgent(initialized={self.devops_service is not None})"
 

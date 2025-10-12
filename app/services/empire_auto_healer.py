@@ -9,15 +9,13 @@ The auto-healing system operates safely with approval mechanisms for
 critical changes and comprehensive logging of all actions taken.
 """
 
+import json
 import logging
-import os
 import re
-import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-import json
+from typing import Any, Dict, List, Optional
 
 from app.services.empire_scanner import get_empire_scanner
 from app.services.health_service import get_health_service
@@ -33,13 +31,13 @@ class EmpireAutoHealer:
     by the empire scanner, with configurable safety levels and
     comprehensive audit logging.
     """
-    
+
     def __init__(self, project_root: str = None, safety_level: str = 'CONSERVATIVE'):
         self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent.parent
         self.safety_level = safety_level  # CONSERVATIVE, MODERATE, AGGRESSIVE
         self.healing_results = {}
         self.last_healing_session = None
-        
+
         # Define safe auto-fixes by category
         self.safe_fixes = {
             'deprecated_imports': {
@@ -66,10 +64,10 @@ class EmpireAutoHealer:
                 ]
             }
         }
-        
+
         # Track healing sessions
         self.healing_log_file = self.project_root / 'empire_healing.log'
-        
+
     def run_auto_healing_session(self, force: bool = False) -> Dict[str, Any]:
         """
         Execute comprehensive auto-healing session.
@@ -82,7 +80,7 @@ class EmpireAutoHealer:
         """
         logger.info("🔧 Starting Empire Auto-Healing Session...")
         start_time = time.time()
-        
+
         session_id = f"healing_session_{int(time.time())}"
         session_results = {
             'session_id': session_id,
@@ -94,50 +92,50 @@ class EmpireAutoHealer:
             'recommendations': [],
             'summary': {}
         }
-        
+
         try:
             # Phase 1: System Analysis
             logger.info("📊 Phase 1: Analyzing System Health")
             analysis_results = self._analyze_healing_opportunities()
             session_results['phases']['analysis'] = analysis_results
-            
+
             # Phase 2: Safe Fixes Application
             logger.info("🔧 Phase 2: Applying Safe Fixes")
             fix_results = self._apply_safe_fixes(analysis_results)
             session_results['phases']['fixes'] = fix_results
             session_results['fixes_applied'] = fix_results.get('applied_fixes', [])
-            
+
             # Phase 3: Configuration Optimization
             logger.info("⚙️ Phase 3: Configuration Optimization")
             config_results = self._optimize_configurations()
             session_results['phases']['configuration'] = config_results
-            
+
             # Phase 4: Dependency Health
             logger.info("📦 Phase 4: Dependency Health Check")
             dependency_results = self._heal_dependencies()
             session_results['phases']['dependencies'] = dependency_results
-            
+
             # Phase 5: Performance Optimization
             logger.info("⚡ Phase 5: Performance Optimization")
             performance_results = self._optimize_performance()
             session_results['phases']['performance'] = performance_results
-            
+
             # Generate recommendations for manual fixes
             session_results['recommendations'] = self._generate_manual_recommendations(session_results)
-            
+
             # Calculate session summary
             session_duration = time.time() - start_time
             session_results['summary'] = self._generate_healing_summary(session_results, session_duration)
-            
+
             # Log healing session
             self._log_healing_session(session_results)
-            
+
             self.healing_results = session_results
             self.last_healing_session = datetime.now(timezone.utc)
-            
+
             logger.info(f"✅ Auto-Healing Session Complete in {session_duration:.2f}s")
             return session_results
-            
+
         except Exception as e:
             logger.error(f"Auto-healing session failed: {e}")
             session_results['error'] = str(e)
@@ -148,7 +146,7 @@ class EmpireAutoHealer:
                 'recommendations_count': 0
             }
             return session_results
-    
+
     def _analyze_healing_opportunities(self) -> Dict[str, Any]:
         """Analyze system for auto-healing opportunities."""
         analysis = {
@@ -157,19 +155,19 @@ class EmpireAutoHealer:
             'healing_opportunities': [],
             'risk_assessment': 'LOW'
         }
-        
+
         try:
             # Get latest empire scan results
             scanner = get_empire_scanner()
             health_service = get_health_service()
-            
+
             # Check if we need a fresh scan
             scan_results = health_service.get_empire_scan_results()
             if not scan_results:
                 logger.info("Triggering fresh empire scan for healing analysis...")
                 scan_results = scanner.run_full_empire_scan()
                 analysis['scan_triggered'] = True
-            
+
             # Analyze security vulnerabilities
             security_data = scan_results.get('phases', {}).get('security', {})
             for vuln in security_data.get('vulnerabilities_found', []):
@@ -182,7 +180,7 @@ class EmpireAutoHealer:
                         'category': vuln.get('category'),
                         'auto_fixable': self._is_auto_fixable_security_issue(vuln)
                     })
-            
+
             # Analyze legacy code patterns
             legacy_data = scan_results.get('phases', {}).get('legacy_assessment', {})
             for legacy_issue in legacy_data.get('legacy_patterns_found', []):
@@ -197,7 +195,7 @@ class EmpireAutoHealer:
                         'auto_fixable': True,
                         'safety_level': 'SAFE'
                     })
-            
+
             # Analyze performance issues
             performance_data = scan_results.get('phases', {}).get('performance', {})
             for opportunity in performance_data.get('optimization_opportunities', []):
@@ -207,7 +205,7 @@ class EmpireAutoHealer:
                     'auto_fixable': False,  # Performance fixes usually require manual review
                     'safety_level': 'MANUAL_REVIEW_REQUIRED'
                 })
-            
+
             # Assess overall risk
             critical_issues = len([issue for issue in analysis['issues_found'] if issue.get('severity') == 'CRITICAL'])
             if critical_issues > 0:
@@ -216,14 +214,14 @@ class EmpireAutoHealer:
                 analysis['risk_assessment'] = 'MEDIUM'
             else:
                 analysis['risk_assessment'] = 'LOW'
-            
+
             return analysis
-            
+
         except Exception as e:
             logger.error(f"Healing analysis failed: {e}")
             analysis['error'] = str(e)
             return analysis
-    
+
     def _apply_safe_fixes(self, analysis_results: Dict[str, Any]) -> Dict[str, Any]:
         """Apply safe, automated fixes to the codebase."""
         fix_results = {
@@ -232,10 +230,10 @@ class EmpireAutoHealer:
             'errors': [],
             'files_modified': []
         }
-        
+
         try:
             healing_opportunities = analysis_results.get('healing_opportunities', [])
-            
+
             for opportunity in healing_opportunities:
                 if not opportunity.get('auto_fixable', False):
                     fix_results['skipped_fixes'].append({
@@ -243,14 +241,14 @@ class EmpireAutoHealer:
                         'opportunity': opportunity
                     })
                     continue
-                
+
                 if opportunity.get('safety_level') != 'SAFE':
                     fix_results['skipped_fixes'].append({
                         'reason': 'Safety level not appropriate for auto-fix',
                         'opportunity': opportunity
                     })
                     continue
-                
+
                 # Apply the fix based on type
                 if opportunity.get('type') == 'LEGACY_CODE_FIX':
                     fix_result = self._apply_legacy_code_fix(opportunity)
@@ -260,9 +258,9 @@ class EmpireAutoHealer:
                             fix_results['files_modified'].append(fix_result.get('file_path'))
                     else:
                         fix_results['errors'].append(fix_result)
-            
+
             return fix_results
-            
+
         except Exception as e:
             logger.error(f"Safe fixes application failed: {e}")
             fix_results['errors'].append({
@@ -270,7 +268,7 @@ class EmpireAutoHealer:
                 'error': str(e)
             })
             return fix_results
-    
+
     def _apply_legacy_code_fix(self, opportunity: Dict[str, Any]) -> Dict[str, Any]:
         """Apply a specific legacy code fix."""
         fix_result = {
@@ -281,22 +279,22 @@ class EmpireAutoHealer:
             'changes_made': [],
             'error': None
         }
-        
+
         try:
             file_path = self.project_root / opportunity.get('file', '')
             if not file_path.exists():
                 fix_result['error'] = f"File not found: {file_path}"
                 return fix_result
-            
+
             fix_result['file_path'] = str(file_path)
-            
+
             # Read current file content
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 original_content = f.read()
-            
+
             modified_content = original_content
             changes_made = []
-            
+
             # Apply fixes based on category
             category = opportunity.get('category')
             if category in self.safe_fixes:
@@ -310,35 +308,35 @@ class EmpireAutoHealer:
                             'replacement': replacement,
                             'matches_found': len(matches)
                         })
-            
+
             # Only write if changes were made
             if modified_content != original_content:
                 # Create backup
                 backup_path = file_path.with_suffix(file_path.suffix + '.backup')
                 with open(backup_path, 'w', encoding='utf-8') as f:
                     f.write(original_content)
-                
+
                 # Write modified content
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(modified_content)
-                
+
                 fix_result['success'] = True
                 fix_result['changes_made'] = changes_made
                 fix_result['backup_created'] = str(backup_path)
-                
+
                 logger.info(f"Applied legacy code fixes to {file_path}: {len(changes_made)} changes")
             else:
                 fix_result['success'] = True
                 fix_result['changes_made'] = []
                 logger.debug(f"No changes needed for {file_path}")
-            
+
             return fix_result
-            
+
         except Exception as e:
             fix_result['error'] = str(e)
             logger.error(f"Failed to apply legacy code fix: {e}")
             return fix_result
-    
+
     def _optimize_configurations(self) -> Dict[str, Any]:
         """Optimize system configurations for better performance and security."""
         config_results = {
@@ -346,7 +344,7 @@ class EmpireAutoHealer:
             'recommendations': [],
             'config_files_checked': []
         }
-        
+
         try:
             # Check common configuration files
             config_files = [
@@ -356,12 +354,12 @@ class EmpireAutoHealer:
                 'docker-compose.yml',
                 '.env.example'
             ]
-            
+
             for config_file in config_files:
                 config_path = self.project_root / config_file
                 if config_path.exists():
                     config_results['config_files_checked'].append(config_file)
-                    
+
                     # Add configuration recommendations
                     if config_file == 'pyproject.toml':
                         config_results['recommendations'].append({
@@ -375,14 +373,14 @@ class EmpireAutoHealer:
                             'recommendation': 'Ensure multi-stage builds for optimal security and size',
                             'priority': 'MEDIUM'
                         })
-            
+
             return config_results
-            
+
         except Exception as e:
             logger.error(f"Configuration optimization failed: {e}")
             config_results['error'] = str(e)
             return config_results
-    
+
     def _heal_dependencies(self) -> Dict[str, Any]:
         """Check and heal dependency-related issues."""
         dependency_results = {
@@ -391,7 +389,7 @@ class EmpireAutoHealer:
             'security_advisories': [],
             'recommendations': []
         }
-        
+
         try:
             # For now, provide recommendations rather than auto-updating
             # as dependency updates can break compatibility
@@ -409,22 +407,22 @@ class EmpireAutoHealer:
                     'safety': 'MANUAL_REVIEW_REQUIRED'
                 }
             ])
-            
+
             dependency_results['dependencies_checked'] = True
             return dependency_results
-            
+
         except Exception as e:
             logger.error(f"Dependency healing failed: {e}")
             dependency_results['error'] = str(e)
             return dependency_results
-    
+
     def _optimize_performance(self) -> Dict[str, Any]:
         """Apply safe performance optimizations."""
         performance_results = {
             'optimizations_applied': [],
             'recommendations': []
         }
-        
+
         try:
             # Add performance optimization recommendations
             performance_results['recommendations'].extend([
@@ -447,25 +445,25 @@ class EmpireAutoHealer:
                     'safety': 'SAFE'
                 }
             ])
-            
+
             return performance_results
-            
+
         except Exception as e:
             logger.error(f"Performance optimization failed: {e}")
             performance_results['error'] = str(e)
             return performance_results
-    
+
     def _generate_manual_recommendations(self, session_results: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate recommendations for manual fixes that require human review."""
         recommendations = []
-        
+
         # Collect recommendations from all phases
         for phase_name, phase_data in session_results.get('phases', {}).items():
             phase_recommendations = phase_data.get('recommendations', [])
             for rec in phase_recommendations:
                 rec['phase'] = phase_name
                 recommendations.append(rec)
-        
+
         # Add empire-level strategic recommendations
         recommendations.extend([
             {
@@ -493,9 +491,9 @@ class EmpireAutoHealer:
                 'effort_estimate': 'MEDIUM'
             }
         ])
-        
+
         return recommendations
-    
+
     def _generate_healing_summary(self, session_results: Dict[str, Any], session_duration: float) -> Dict[str, Any]:
         """Generate summary of healing session results."""
         summary = {
@@ -507,12 +505,12 @@ class EmpireAutoHealer:
             'phases_completed': len(session_results.get('phases', {})),
             'healing_effectiveness': 'UNKNOWN'
         }
-        
+
         # Count modified files
         fix_results = session_results.get('phases', {}).get('fixes', {})
         files_modified = fix_results.get('files_modified', [])
         summary['files_modified_count'] = len(files_modified)
-        
+
         # Assess healing effectiveness
         fixes_applied = summary['fixes_applied_count']
         if fixes_applied >= 10:
@@ -523,19 +521,19 @@ class EmpireAutoHealer:
             summary['healing_effectiveness'] = 'LOW'
         else:
             summary['healing_effectiveness'] = 'MINIMAL'
-        
+
         # Check for errors
         errors_found = False
         for phase_data in session_results.get('phases', {}).values():
             if phase_data.get('errors') or phase_data.get('error'):
                 errors_found = True
                 break
-        
+
         if errors_found:
             summary['session_status'] = 'COMPLETED_WITH_ERRORS'
-        
+
         return summary
-    
+
     def _log_healing_session(self, session_results: Dict[str, Any]) -> None:
         """Log healing session results to file."""
         try:
@@ -546,26 +544,26 @@ class EmpireAutoHealer:
                 'fixes_applied_count': len(session_results.get('fixes_applied', [])),
                 'recommendations_count': len(session_results.get('recommendations', []))
             }
-            
+
             # Append to healing log file
             with open(self.healing_log_file, 'a') as f:
                 f.write(json.dumps(log_entry) + '\n')
-                
+
             logger.info(f"Healing session logged to {self.healing_log_file}")
-            
+
         except Exception as e:
             logger.error(f"Failed to log healing session: {e}")
-    
+
     def _is_auto_fixable_security_issue(self, vulnerability: Dict[str, Any]) -> bool:
         """Determine if a security vulnerability can be safely auto-fixed."""
         category = vulnerability.get('category', '')
-        
+
         # Only allow auto-fixing of low-risk security patterns
         safe_categories = []  # Start with empty list for safety
-        
+
         # For now, don't auto-fix security issues as they require manual review
         return False
-    
+
     def get_healing_status(self) -> Dict[str, Any]:
         """Get current auto-healing system status."""
         return {
@@ -574,7 +572,7 @@ class EmpireAutoHealer:
             'last_healing_session': self.last_healing_session.isoformat() if self.last_healing_session else None,
             'healing_log_file': str(self.healing_log_file),
             'safe_fixes_enabled': {
-                category: config['enabled'] 
+                category: config['enabled']
                 for category, config in self.safe_fixes.items()
             },
             'healing_capabilities': {
@@ -585,44 +583,44 @@ class EmpireAutoHealer:
                 'configuration_optimization': True
             }
         }
-    
+
     def get_latest_healing_results(self) -> Optional[Dict[str, Any]]:
         """Get the latest healing session results."""
         return self.healing_results
-    
+
     def trigger_emergency_healing(self) -> Dict[str, Any]:
         """Trigger emergency healing with aggressive safety level."""
         logger.info("🚨 Triggering emergency healing session")
-        
+
         original_safety = self.safety_level
         try:
             # Switch to aggressive mode for emergency
             self.safety_level = 'AGGRESSIVE'
-            
+
             # Run comprehensive healing
             results = self.run_auto_healing_session(force=True)
-            
+
             # Add emergency context
             results['emergency_mode'] = True
             results['trigger_reason'] = 'critical_empire_health'
-            
+
             return results
-            
+
         finally:
             # Restore original safety level
             self.safety_level = original_safety
-    
+
     def heal_security_issues(self) -> Dict[str, Any]:
         """Focus specifically on security-related healing."""
         logger.info("🛡️ Focusing on security issue healing")
-        
+
         # Get current scan results
         scanner = get_empire_scanner()
         scan_results = scanner.run_full_empire_scan()
-        
+
         security_phase = scan_results.get('phases', {}).get('security', {})
         vulnerabilities = security_phase.get('vulnerabilities_found', [])
-        
+
         healing_results = {
             'session_id': f"security_healing_{int(time.time())}",
             'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -630,7 +628,7 @@ class EmpireAutoHealer:
             'vulnerabilities_addressed': [],
             'fixes_applied': []
         }
-        
+
         # Address each vulnerability
         for vuln in vulnerabilities:
             try:
@@ -639,28 +637,28 @@ class EmpireAutoHealer:
                     'vulnerability': vuln,
                     'fix_result': fix_result
                 })
-                
+
                 if fix_result.get('success'):
                     healing_results['fixes_applied'].append(fix_result)
-                    
+
             except Exception as e:
                 logger.error(f"Failed to fix vulnerability {vuln}: {e}")
-        
+
         healing_results['fixes_count'] = len(healing_results['fixes_applied'])
-        
+
         return healing_results
-    
+
     def improve_code_quality(self) -> Dict[str, Any]:
         """Focus specifically on code quality improvements."""
         logger.info("🔧 Focusing on code quality improvements")
-        
+
         # Get current scan results
         scanner = get_empire_scanner()
         scan_results = scanner.run_full_empire_scan()
-        
+
         code_health = scan_results.get('phases', {}).get('code_health', {})
         legacy_assessment = scan_results.get('phases', {}).get('legacy_assessment', {})
-        
+
         healing_results = {
             'session_id': f"code_quality_{int(time.time())}",
             'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -668,7 +666,7 @@ class EmpireAutoHealer:
             'improvements_applied': [],
             'legacy_patterns_fixed': []
         }
-        
+
         # Apply code quality fixes
         legacy_patterns = legacy_assessment.get('patterns_found', {})
         for pattern_type, patterns in legacy_patterns.items():
@@ -678,18 +676,18 @@ class EmpireAutoHealer:
                         'type': pattern_type,
                         'pattern': pattern
                     })
-                    
+
                     if fix_result.get('success'):
                         healing_results['improvements_applied'].append(fix_result)
                         healing_results['legacy_patterns_fixed'].append(pattern)
-                        
+
                 except Exception as e:
                     logger.error(f"Failed to fix legacy pattern {pattern}: {e}")
-        
+
         healing_results['improvements_count'] = len(healing_results['improvements_applied'])
-        
+
         return healing_results
-    
+
     def _apply_security_fix(self, vulnerability: Dict[str, Any]) -> Dict[str, Any]:
         """Apply a specific security fix."""
         fix_result = {
@@ -698,33 +696,33 @@ class EmpireAutoHealer:
             'fix_applied': None,
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
-        
+
         try:
             vuln_type = vulnerability.get('type', 'unknown')
-            
+
             if vuln_type == 'hardcoded_secrets':
                 # Apply hardcoded secrets fix
                 fix_result['fix_applied'] = 'hardcoded_secrets_remediation'
                 fix_result['success'] = True
-                
+
             elif vuln_type == 'sql_injection_risk':
                 # Apply SQL injection fix
                 fix_result['fix_applied'] = 'sql_injection_protection'
                 fix_result['success'] = True
-                
+
             elif vuln_type == 'xss_risk':
                 # Apply XSS protection
                 fix_result['fix_applied'] = 'xss_protection'
                 fix_result['success'] = True
-                
+
             else:
                 fix_result['fix_applied'] = 'generic_security_hardening'
                 fix_result['success'] = True
-                
+
         except Exception as e:
             fix_result['error'] = str(e)
             logger.error(f"Security fix failed: {e}")
-        
+
         return fix_result
 
 

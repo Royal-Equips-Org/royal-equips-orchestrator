@@ -36,9 +36,9 @@ if __name__ == "__main__":
     if socketio_instance:
         # Run with SocketIO support
         socketio_instance.run(
-            app, 
-            host=host, 
-            port=port, 
+            app,
+            host=host,
+            port=port,
             debug=app.config.get("DEBUG", False)
         )
     else:

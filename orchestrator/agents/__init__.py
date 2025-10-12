@@ -31,7 +31,7 @@ __all__ = ["ProductResearchAgent"]
 
 if _SECURITY_AVAILABLE:
     __all__.append("SecurityAgent")
-    
+
 if _INVENTORY_PRICING_AVAILABLE:
     __all__.append("InventoryPricingAgent")
 

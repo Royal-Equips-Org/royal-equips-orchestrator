@@ -8,18 +8,17 @@ import asyncio
 import json
 import logging
 import time
-import numpy as np
-import pandas as pd
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
 import httpx
 import redis.asyncio as redis
-from decimal import Decimal, ROUND_HALF_UP
 
-from orchestrator.core.agent_base import AgentBase
 from core.secrets.secret_provider import UnifiedSecretResolver
+from orchestrator.core.agent_base import AgentBase
 
 logger = logging.getLogger(__name__)
 
@@ -136,15 +135,15 @@ class ProductionFinanceAgent(AgentBase):
     - Integration with accounting systems (QuickBooks, Xero)
     - Bank reconciliation and statement processing
     """
-    
+
     def __init__(self, agent_id: str = "production-finance"):
         super().__init__(agent_id)
-        
+
         # Services
         self.secrets = UnifiedSecretResolver()
         self.redis_cache = None
         self.payment_processors = {}
-        
+
         # Rate limiting configurations
         self.rate_limits = {
             'stripe_api': {'max_requests': 100, 'time_window': 60, 'burst_limit': 10},
@@ -153,7 +152,7 @@ class ProductionFinanceAgent(AgentBase):
             'accounting_api': {'max_requests': 30, 'time_window': 60, 'burst_limit': 5},
             'exchange_rate_api': {'max_requests': 100, 'time_window': 3600, 'burst_limit': 10},
         }
-        
+
         # Performance metrics
         self.performance_metrics = {
             'transactions_processed': 0,
@@ -169,7 +168,7 @@ class ProductionFinanceAgent(AgentBase):
             'avg_processing_time_ms': 0.0,
             'error_rate': 0.0
         }
-        
+
         # Configuration
         self.config = {
             'base_currency': 'USD',
@@ -192,28 +191,28 @@ class ProductionFinanceAgent(AgentBase):
         """Initialize financial services and integrations."""
         try:
             logger.info("Initializing Production Finance Agent")
-            
+
             # Initialize secret resolver
             await self._initialize_secrets()
-            
+
             # Initialize Redis cache
             await self._initialize_redis()
-            
+
             # Initialize payment processors
             await self._initialize_payment_processors()
-            
+
             # Initialize accounting integration
             await self._initialize_accounting()
-            
+
             # Test all financial service connections
             await self._test_financial_services()
-            
+
             logger.info("Finance agent initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize finance agent: {e}")
             raise
-    
+
     async def _initialize_secrets(self):
         """Initialize secret management system."""
         try:
@@ -222,22 +221,22 @@ class ProductionFinanceAgent(AgentBase):
             logger.info("Multi-provider secret management initialized")
         except Exception as e:
             logger.warning(f"Secret management initialization issue: {e}")
-    
+
     async def _initialize_redis(self):
         """Initialize Redis cache for financial data."""
         try:
             redis_url = await self.secrets.get_secret('REDIS_URL')
             if not redis_url:
                 redis_url = 'redis://localhost:6379'
-            
+
             self.redis_cache = redis.from_url(redis_url)
             await self.redis_cache.ping()
             logger.info("Redis financial cache initialized")
-            
+
         except Exception as e:
             logger.warning(f"Redis cache not available: {e}")
             self.redis_cache = None
-    
+
     async def _initialize_payment_processors(self):
         """Initialize payment processor integrations."""
         try:
@@ -248,7 +247,7 @@ class ProductionFinanceAgent(AgentBase):
                 stripe.api_key = stripe_key.value
                 self.payment_processors['stripe'] = stripe
                 logger.info("Stripe integration initialized")
-            
+
             # Initialize PayPal
             paypal_client_id = await self.secrets.get_secret('PAYPAL_CLIENT_ID')
             paypal_secret = await self.secrets.get_secret('PAYPAL_CLIENT_SECRET')
@@ -259,7 +258,7 @@ class ProductionFinanceAgent(AgentBase):
                     'base_url': 'https://api.paypal.com'
                 }
                 logger.info("PayPal integration initialized")
-            
+
             # Initialize Square
             square_token = await self.secrets.get_secret('SQUARE_ACCESS_TOKEN')
             if square_token:
@@ -268,10 +267,10 @@ class ProductionFinanceAgent(AgentBase):
                     'base_url': 'https://connect.squareup.com'
                 }
                 logger.info("Square integration initialized")
-                
+
         except Exception as e:
             logger.error(f"Payment processor initialization failed: {e}")
-    
+
     async def _initialize_accounting(self):
         """Initialize accounting system integrations."""
         try:
@@ -287,14 +286,14 @@ class ProductionFinanceAgent(AgentBase):
                     }
                 }
                 logger.info("QuickBooks integration initialized")
-                
+
         except Exception as e:
             logger.error(f"Accounting system initialization failed: {e}")
-    
+
     async def _test_financial_services(self):
         """Test all financial service connections."""
         service_status = {}
-        
+
         # Test Stripe
         if 'stripe' in self.payment_processors:
             try:
@@ -304,17 +303,17 @@ class ProductionFinanceAgent(AgentBase):
             except Exception as e:
                 logger.error(f"Stripe connection test failed: {e}")
                 service_status['stripe'] = False
-        
+
         # Test PayPal
         if 'paypal' in self.payment_processors:
             service_status['paypal'] = await self._test_paypal_connection()
-        
+
         # Test Redis cache
         service_status['redis'] = self.redis_cache is not None
-        
+
         logger.info(f"Financial service status: {service_status}")
         return service_status
-    
+
     async def _test_paypal_connection(self) -> bool:
         """Test PayPal API connection."""
         try:
@@ -333,36 +332,36 @@ class ProductionFinanceAgent(AgentBase):
     async def run(self) -> Dict[str, Any]:
         """Main agent execution - process financial operations."""
         start_time = time.time()
-        
+
         try:
             logger.info("Starting finance automation cycle")
-            
+
             # 1. Process pending transactions
             transaction_results = await self._process_transactions()
-            
+
             # 2. Update financial metrics and KPIs
             metrics_results = await self._calculate_financial_metrics()
-            
+
             # 3. Generate revenue reports
             revenue_results = await self._generate_revenue_reports()
-            
+
             # 4. Perform cash flow analysis
             cashflow_results = await self._analyze_cash_flow()
-            
+
             # 5. Execute fraud detection
             fraud_results = await self._detect_fraud()
-            
+
             # 6. Generate financial forecasts
             forecast_results = await self._generate_forecasts()
-            
+
             # 7. Reconcile accounts
             reconciliation_results = await self._reconcile_accounts()
-            
+
             # 8. Update performance metrics
             await self._update_performance_metrics()
-            
+
             execution_time = time.time() - start_time
-            
+
             result = {
                 'status': 'success',
                 'execution_time_seconds': execution_time,
@@ -376,10 +375,10 @@ class ProductionFinanceAgent(AgentBase):
                 'performance_metrics': self.performance_metrics,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-            
+
             logger.info(f"Finance automation completed in {execution_time:.2f}s")
             return result
-            
+
         except Exception as e:
             logger.error(f"Finance automation failed: {e}")
             return {
@@ -387,25 +386,25 @@ class ProductionFinanceAgent(AgentBase):
                 'error': str(e),
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-    
+
     async def _process_transactions(self) -> Dict[str, Any]:
         """Process and categorize financial transactions."""
         try:
             processed_transactions = []
-            
+
             # Process Stripe transactions
             if 'stripe' in self.payment_processors:
                 stripe_transactions = await self._fetch_stripe_transactions()
                 processed_transactions.extend(stripe_transactions)
-            
+
             # Process PayPal transactions
             if 'paypal' in self.payment_processors:
                 paypal_transactions = await self._fetch_paypal_transactions()
                 processed_transactions.extend(paypal_transactions)
-            
+
             # Categorize and analyze transactions
             categorized = await self._categorize_transactions(processed_transactions)
-            
+
             # Store in cache for real-time access
             if self.redis_cache:
                 await self.redis_cache.setex(
@@ -413,33 +412,33 @@ class ProductionFinanceAgent(AgentBase):
                     300,  # 5 minutes
                     json.dumps([asdict(t) for t in processed_transactions], default=str)
                 )
-            
+
             self.performance_metrics['transactions_processed'] += len(processed_transactions)
-            
+
             return {
                 'total_processed': len(processed_transactions),
                 'by_type': categorized,
                 'total_volume': sum(t.amount for t in processed_transactions),
                 'currencies': list(set(t.currency for t in processed_transactions))
             }
-            
+
         except Exception as e:
             logger.error(f"Transaction processing failed: {e}")
             return {'error': str(e)}
-    
+
     async def _fetch_stripe_transactions(self) -> List[Transaction]:
         """Fetch recent Stripe transactions."""
         try:
             await self._check_rate_limit('stripe_api')
-            
+
             import stripe
-            
+
             # Get charges from last 24 hours
             charges = stripe.Charge.list(
                 created={'gte': int((datetime.now(timezone.utc) - timedelta(days=1)).timestamp())},
                 limit=100
             )
-            
+
             transactions = []
             for charge in charges.data:
                 transaction = Transaction(
@@ -459,20 +458,20 @@ class ProductionFinanceAgent(AgentBase):
                     metadata=dict(charge.metadata)
                 )
                 transactions.append(transaction)
-            
+
             return transactions
-            
+
         except Exception as e:
             logger.error(f"Stripe transaction fetch failed: {e}")
             return []
-    
+
     async def _fetch_paypal_transactions(self) -> List[Transaction]:
         """Fetch recent PayPal transactions."""
         try:
             await self._check_rate_limit('paypal_api')
-            
+
             paypal_config = self.payment_processors['paypal']
-            
+
             # Get access token
             async with httpx.AsyncClient() as client:
                 token_response = await client.post(
@@ -480,16 +479,16 @@ class ProductionFinanceAgent(AgentBase):
                     auth=(paypal_config['client_id'], paypal_config['client_secret']),
                     data={'grant_type': 'client_credentials'}
                 )
-                
+
                 if token_response.status_code != 200:
                     return []
-                
+
                 access_token = token_response.json()['access_token']
-                
+
                 # Get transactions
                 end_time = datetime.now(timezone.utc)
                 start_time = end_time - timedelta(days=1)
-                
+
                 transactions_response = await client.get(
                     f"{paypal_config['base_url']}/v1/reporting/transactions",
                     headers={'Authorization': f'Bearer {access_token}'},
@@ -499,13 +498,13 @@ class ProductionFinanceAgent(AgentBase):
                         'fields': 'all'
                     }
                 )
-                
+
                 if transactions_response.status_code != 200:
                     return []
-                
+
                 paypal_data = transactions_response.json()
                 transactions = []
-                
+
                 for txn in paypal_data.get('transaction_details', []):
                     transaction = Transaction(
                         id=f"paypal_{txn['transaction_info']['transaction_id']}",
@@ -524,13 +523,13 @@ class ProductionFinanceAgent(AgentBase):
                         metadata={}
                     )
                     transactions.append(transaction)
-                
+
                 return transactions
-                
+
         except Exception as e:
             logger.error(f"PayPal transaction fetch failed: {e}")
             return []
-    
+
     async def _categorize_transactions(self, transactions: List[Transaction]) -> Dict[str, int]:
         """Categorize transactions by type."""
         categories = {}
@@ -538,43 +537,43 @@ class ProductionFinanceAgent(AgentBase):
             category = txn.type.value
             categories[category] = categories.get(category, 0) + 1
         return categories
-    
+
     async def _calculate_financial_metrics(self) -> Dict[str, Any]:
         """Calculate key financial metrics and KPIs."""
         try:
             metrics = {}
             current_date = datetime.now(timezone.utc)
-            
+
             # Calculate daily revenue
             daily_revenue = await self._calculate_revenue_for_period(
                 current_date.replace(hour=0, minute=0, second=0),
                 current_date
             )
-            
+
             # Calculate monthly revenue
             month_start = current_date.replace(day=1, hour=0, minute=0, second=0)
             monthly_revenue = await self._calculate_revenue_for_period(month_start, current_date)
-            
+
             # Calculate previous month for comparison
             prev_month_start = (month_start - timedelta(days=1)).replace(day=1)
             prev_month_end = month_start - timedelta(seconds=1)
             prev_monthly_revenue = await self._calculate_revenue_for_period(prev_month_start, prev_month_end)
-            
+
             # Calculate growth rate
             growth_rate = 0.0
             if prev_monthly_revenue > 0:
                 growth_rate = float((monthly_revenue - prev_monthly_revenue) / prev_monthly_revenue * 100)
-            
+
             # Calculate average transaction value
             recent_transactions = await self._get_recent_transactions()
             avg_transaction_value = Decimal('0.00')
             if recent_transactions:
                 total_value = sum(t.amount for t in recent_transactions)
                 avg_transaction_value = total_value / len(recent_transactions)
-            
+
             # Calculate total fees
             total_fees = sum(t.fees for t in recent_transactions)
-            
+
             metrics = {
                 'daily_revenue': {
                     'value': float(daily_revenue),
@@ -601,7 +600,7 @@ class ProductionFinanceAgent(AgentBase):
                 'transaction_count': len(recent_transactions),
                 'calculated_at': current_date.isoformat()
             }
-            
+
             # Cache metrics for real-time access
             if self.redis_cache:
                 await self.redis_cache.setex(
@@ -609,56 +608,56 @@ class ProductionFinanceAgent(AgentBase):
                     300,  # 5 minutes
                     json.dumps(metrics, default=str)
                 )
-            
+
             return metrics
-            
+
         except Exception as e:
             logger.error(f"Financial metrics calculation failed: {e}")
             return {'error': str(e)}
-    
+
     async def _generate_revenue_reports(self) -> Dict[str, Any]:
         """Generate comprehensive revenue analysis reports."""
         try:
             current_date = datetime.now(timezone.utc)
-            
+
             # Generate monthly revenue report
             month_start = current_date.replace(day=1, hour=0, minute=0, second=0)
             monthly_transactions = await self._get_transactions_for_period(month_start, current_date)
-            
+
             # Calculate revenue metrics
             total_revenue = sum(t.amount for t in monthly_transactions if t.type == TransactionType.REVENUE)
             total_fees = sum(t.fees for t in monthly_transactions)
             net_revenue = total_revenue - total_fees
-            
+
             # Revenue by channel (payment processor)
             revenue_by_channel = {}
             for txn in monthly_transactions:
                 if txn.type == TransactionType.REVENUE:
                     channel = txn.gateway
                     revenue_by_channel[channel] = revenue_by_channel.get(channel, Decimal('0.00')) + txn.amount
-            
+
             # Top customers by revenue
             customer_revenue = {}
             for txn in monthly_transactions:
                 if txn.type == TransactionType.REVENUE and txn.customer_id:
                     customer_id = txn.customer_id
                     customer_revenue[customer_id] = customer_revenue.get(customer_id, Decimal('0.00')) + txn.amount
-            
+
             top_customers = [
                 {'customer_id': cid, 'revenue': float(rev)}
                 for cid, rev in sorted(customer_revenue.items(), key=lambda x: x[1], reverse=True)[:10]
             ]
-            
+
             # Calculate previous month for growth comparison
             prev_month_start = (month_start - timedelta(days=1)).replace(day=1)
             prev_month_end = month_start - timedelta(seconds=1)
             prev_monthly_transactions = await self._get_transactions_for_period(prev_month_start, prev_month_end)
             prev_total_revenue = sum(t.amount for t in prev_monthly_transactions if t.type == TransactionType.REVENUE)
-            
+
             growth_rate = 0.0
             if prev_total_revenue > 0:
                 growth_rate = float((total_revenue - prev_total_revenue) / prev_total_revenue * 100)
-            
+
             report = RevenueReport(
                 period=f"{month_start.strftime('%Y-%m')}",
                 total_revenue=total_revenue,
@@ -672,7 +671,7 @@ class ProductionFinanceAgent(AgentBase):
                 currency=self.config['base_currency'],
                 generated_at=current_date
             )
-            
+
             # Cache report
             if self.redis_cache:
                 await self.redis_cache.setex(
@@ -680,55 +679,55 @@ class ProductionFinanceAgent(AgentBase):
                     3600,  # 1 hour
                     json.dumps(asdict(report), default=str)
                 )
-            
+
             return {
                 'monthly_report': asdict(report),
                 'status': 'generated',
                 'generated_at': current_date.isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Revenue report generation failed: {e}")
             return {'error': str(e)}
-    
+
     async def _analyze_cash_flow(self) -> Dict[str, Any]:
         """Analyze cash flow and generate projections."""
         try:
             current_date = datetime.now(timezone.utc)
-            
+
             # Get last 30 days of transactions for analysis
             analysis_start = current_date - timedelta(days=30)
             recent_transactions = await self._get_transactions_for_period(analysis_start, current_date)
-            
+
             # Calculate daily cash flow pattern
             daily_inflow = {}
             daily_outflow = {}
-            
+
             for txn in recent_transactions:
                 date_key = txn.processed_at.date()
-                
+
                 if txn.type == TransactionType.REVENUE:
                     daily_inflow[date_key] = daily_inflow.get(date_key, Decimal('0.00')) + txn.net_amount
                 elif txn.type in [TransactionType.EXPENSE, TransactionType.FEE, TransactionType.REFUND]:
                     daily_outflow[date_key] = daily_outflow.get(date_key, Decimal('0.00')) + txn.amount
-            
+
             # Calculate averages for forecasting
             avg_daily_inflow = Decimal('0.00')
             avg_daily_outflow = Decimal('0.00')
-            
+
             if daily_inflow:
                 avg_daily_inflow = sum(daily_inflow.values()) / len(daily_inflow)
             if daily_outflow:
                 avg_daily_outflow = sum(daily_outflow.values()) / len(daily_outflow)
-            
+
             # Generate 30-day forecast
             forecast_start = current_date
             forecast_end = current_date + timedelta(days=30)
-            
+
             projected_inflow = avg_daily_inflow * 30
             projected_outflow = avg_daily_outflow * 30
             net_cash_flow = projected_inflow - projected_outflow
-            
+
             # Calculate confidence interval (simplified)
             inflow_std = Decimal('0.00')
             if len(daily_inflow.values()) > 1:
@@ -736,10 +735,10 @@ class ProductionFinanceAgent(AgentBase):
                 mean = sum(values) / len(values)
                 variance = sum((x - mean) ** 2 for x in values) / len(values)
                 inflow_std = variance ** Decimal('0.5')
-            
+
             confidence_lower = net_cash_flow - (inflow_std * Decimal('1.96'))  # 95% confidence
             confidence_upper = net_cash_flow + (inflow_std * Decimal('1.96'))
-            
+
             forecast = CashFlowForecast(
                 period_start=forecast_start,
                 period_end=forecast_end,
@@ -759,7 +758,7 @@ class ProductionFinanceAgent(AgentBase):
                 ],
                 currency=self.config['base_currency']
             )
-            
+
             return {
                 'forecast': asdict(forecast),
                 'historical_data': {
@@ -769,44 +768,44 @@ class ProductionFinanceAgent(AgentBase):
                 },
                 'status': 'completed'
             }
-            
+
         except Exception as e:
             logger.error(f"Cash flow analysis failed: {e}")
             return {'error': str(e)}
-    
+
     async def _detect_fraud(self) -> Dict[str, Any]:
         """Detect potentially fraudulent transactions."""
         try:
             recent_transactions = await self._get_recent_transactions()
             fraud_alerts = []
-            
+
             for txn in recent_transactions:
                 risk_score = 0
                 risk_factors = []
-                
+
                 # High-value transaction check
                 if txn.amount > self.config['fraud_threshold']:
                     risk_score += 25
                     risk_factors.append(f"High value transaction: {txn.amount}")
-                
+
                 # Unusual payment method check
                 if txn.payment_method in ['prepaid_card', 'cryptocurrency']:
                     risk_score += 15
                     risk_factors.append(f"Unusual payment method: {txn.payment_method}")
-                
+
                 # Failed transaction followed by success
                 if txn.status == PaymentStatus.CAPTURED:
                     # Check for recent failed attempts from same customer
                     recent_failures = [
-                        t for t in recent_transactions 
-                        if t.customer_id == txn.customer_id 
+                        t for t in recent_transactions
+                        if t.customer_id == txn.customer_id
                         and t.status == PaymentStatus.FAILED
                         and t.processed_at > txn.processed_at - timedelta(hours=1)
                     ]
                     if len(recent_failures) > 2:
                         risk_score += 20
-                        risk_factors.append(f"Multiple failed attempts before success")
-                
+                        risk_factors.append("Multiple failed attempts before success")
+
                 # Velocity check - multiple transactions in short time
                 if txn.customer_id:
                     recent_customer_txns = [
@@ -817,7 +816,7 @@ class ProductionFinanceAgent(AgentBase):
                     if len(recent_customer_txns) > 3:
                         risk_score += 30
                         risk_factors.append("High transaction velocity")
-                
+
                 # Add to alerts if risk score is high
                 if risk_score >= 40:
                     fraud_alerts.append({
@@ -829,9 +828,9 @@ class ProductionFinanceAgent(AgentBase):
                         'processed_at': txn.processed_at.isoformat(),
                         'recommended_action': 'manual_review' if risk_score < 70 else 'immediate_investigation'
                     })
-            
+
             self.performance_metrics['fraud_alerts_issued'] += len(fraud_alerts)
-            
+
             # Cache fraud alerts
             if self.redis_cache and fraud_alerts:
                 await self.redis_cache.setex(
@@ -839,56 +838,56 @@ class ProductionFinanceAgent(AgentBase):
                     1800,  # 30 minutes
                     json.dumps(fraud_alerts, default=str)
                 )
-            
+
             return {
                 'alerts_generated': len(fraud_alerts),
                 'alerts': fraud_alerts,
                 'high_risk_count': len([a for a in fraud_alerts if a['risk_score'] >= 70]),
                 'medium_risk_count': len([a for a in fraud_alerts if 40 <= a['risk_score'] < 70])
             }
-            
+
         except Exception as e:
             logger.error(f"Fraud detection failed: {e}")
             return {'error': str(e)}
-    
+
     async def _generate_forecasts(self) -> Dict[str, Any]:
         """Generate financial forecasts using ML models."""
         try:
             # Get historical revenue data
             historical_data = await self._get_revenue_history(days=90)
-            
+
             if len(historical_data) < 30:
                 return {'error': 'Insufficient historical data for forecasting'}
-            
+
             # Simple linear regression forecast (in production, use more sophisticated models)
             import numpy as np
             from sklearn.linear_model import LinearRegression
-            
+
             # Prepare data
             dates = list(historical_data.keys())
             revenues = list(historical_data.values())
-            
+
             # Convert dates to days since start
             start_date = min(dates)
             X = np.array([(date - start_date).days for date in dates]).reshape(-1, 1)
             y = np.array([float(rev) for rev in revenues])
-            
+
             # Train model
             model = LinearRegression()
             model.fit(X, y)
-            
+
             # Generate forecast for next 30 days
             forecast_days = 30
             future_X = np.array(range(len(dates), len(dates) + forecast_days)).reshape(-1, 1)
             forecast_revenue = model.predict(future_X)
-            
+
             # Calculate confidence intervals (simplified)
             residuals = y - model.predict(X)
             mse = np.mean(residuals ** 2)
             std_error = np.sqrt(mse)
-            
+
             forecast_dates = [start_date + timedelta(days=int(x[0])) for x in future_X]
-            
+
             forecasts = []
             for i, (date, revenue) in enumerate(zip(forecast_dates, forecast_revenue)):
                 forecasts.append({
@@ -898,12 +897,12 @@ class ProductionFinanceAgent(AgentBase):
                     'upper_bound': revenue + 1.96 * std_error,
                     'confidence': 0.95
                 })
-            
+
             # Calculate total forecasted revenue
             total_forecast = sum(f['predicted_revenue'] for f in forecasts)
-            
+
             self.performance_metrics['forecasts_generated'] += 1
-            
+
             return {
                 'forecast_period_days': forecast_days,
                 'total_predicted_revenue': total_forecast,
@@ -914,39 +913,39 @@ class ProductionFinanceAgent(AgentBase):
                 },
                 'generated_at': datetime.now(timezone.utc).isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Forecast generation failed: {e}")
             return {'error': str(e)}
-    
+
     async def _reconcile_accounts(self) -> Dict[str, Any]:
         """Reconcile financial accounts and identify discrepancies."""
         try:
             reconciliation_results = {}
-            
+
             # Reconcile Stripe account
             if 'stripe' in self.payment_processors:
                 stripe_reconciliation = await self._reconcile_stripe_account()
                 reconciliation_results['stripe'] = stripe_reconciliation
-            
+
             # Reconcile PayPal account
             if 'paypal' in self.payment_processors:
                 paypal_reconciliation = await self._reconcile_paypal_account()
                 reconciliation_results['paypal'] = paypal_reconciliation
-            
+
             # Overall reconciliation summary
             total_discrepancies = sum(
-                result.get('discrepancies_count', 0) 
+                result.get('discrepancies_count', 0)
                 for result in reconciliation_results.values()
             )
-            
+
             total_discrepancy_amount = sum(
-                result.get('total_discrepancy_amount', 0) 
+                result.get('total_discrepancy_amount', 0)
                 for result in reconciliation_results.values()
             )
-            
+
             self.performance_metrics['payments_reconciled'] += len(reconciliation_results)
-            
+
             return {
                 'accounts_reconciled': list(reconciliation_results.keys()),
                 'total_discrepancies': total_discrepancies,
@@ -955,42 +954,42 @@ class ProductionFinanceAgent(AgentBase):
                 'reconciliation_status': 'completed',
                 'reconciled_at': datetime.now(timezone.utc).isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Account reconciliation failed: {e}")
             return {'error': str(e)}
-    
+
     # Helper methods
-    
+
     async def _check_rate_limit(self, service: str) -> bool:
         """Check and enforce rate limiting."""
         try:
             rate_limit = self.rate_limits.get(service)
             if not rate_limit or not self.redis_cache:
                 return True
-            
+
             current_time = int(time.time())
             window_start = current_time - rate_limit['time_window']
-            
+
             pipe = self.redis_cache.pipeline()
             key = f"rate_limit:{service}:{current_time // rate_limit['time_window']}"
-            
+
             pipe.incr(key)
             pipe.expire(key, rate_limit['time_window'])
-            
+
             results = await pipe.execute()
             current_count = results[0]
-            
+
             if current_count > rate_limit['max_requests']:
                 logger.warning(f"Rate limit exceeded for {service}")
                 await asyncio.sleep(min(60, rate_limit['time_window']))
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Rate limiting check failed: {e}")
             return True
-    
+
     def _map_stripe_status(self, stripe_status: str) -> PaymentStatus:
         """Map Stripe status to internal status."""
         mapping = {
@@ -999,7 +998,7 @@ class ProductionFinanceAgent(AgentBase):
             'failed': PaymentStatus.FAILED
         }
         return mapping.get(stripe_status, PaymentStatus.PENDING)
-    
+
     def _map_paypal_status(self, paypal_status: str) -> PaymentStatus:
         """Map PayPal status to internal status."""
         mapping = {
@@ -1009,7 +1008,7 @@ class ProductionFinanceAgent(AgentBase):
             'DENIED': PaymentStatus.FAILED
         }
         return mapping.get(paypal_status, PaymentStatus.PENDING)
-    
+
     def _map_paypal_transaction_type(self, event_code: str) -> TransactionType:
         """Map PayPal event codes to transaction types."""
         mapping = {
@@ -1018,16 +1017,16 @@ class ProductionFinanceAgent(AgentBase):
             'T0001': TransactionType.FEE       # Fee
         }
         return mapping.get(event_code, TransactionType.REVENUE)
-    
+
     async def _calculate_revenue_for_period(self, start: datetime, end: datetime) -> Decimal:
         """Calculate total revenue for a specific period."""
         transactions = await self._get_transactions_for_period(start, end)
         revenue = sum(
-            t.amount for t in transactions 
+            t.amount for t in transactions
             if t.type == TransactionType.REVENUE
         )
         return revenue
-    
+
     async def _get_recent_transactions(self) -> List[Transaction]:
         """Get recent transactions from cache or database."""
         try:
@@ -1036,20 +1035,20 @@ class ProductionFinanceAgent(AgentBase):
                 if cached:
                     data = json.loads(cached)
                     return [Transaction(**t) for t in data]
-            
+
             # Fallback: fetch from payment processors
             transactions = []
             if 'stripe' in self.payment_processors:
                 transactions.extend(await self._fetch_stripe_transactions())
             if 'paypal' in self.payment_processors:
                 transactions.extend(await self._fetch_paypal_transactions())
-            
+
             return transactions
-            
+
         except Exception as e:
             logger.error(f"Failed to get recent transactions: {e}")
             return []
-    
+
     async def _get_transactions_for_period(self, start: datetime, end: datetime) -> List[Transaction]:
         """Get transactions for a specific time period."""
         # In production, this would query the database
@@ -1059,44 +1058,44 @@ class ProductionFinanceAgent(AgentBase):
             t for t in recent_transactions
             if start <= t.processed_at <= end
         ]
-    
+
     async def _get_revenue_history(self, days: int) -> Dict[datetime, Decimal]:
         """Get historical daily revenue data."""
         end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
-        
+
         # Get transactions for the period
         transactions = await self._get_transactions_for_period(start_date, end_date)
-        
+
         # Group by date
         daily_revenue = {}
         for txn in transactions:
             if txn.type == TransactionType.REVENUE:
                 date_key = txn.processed_at.date()
                 daily_revenue[date_key] = daily_revenue.get(date_key, Decimal('0.00')) + txn.amount
-        
+
         # Fill in missing dates with zero
         current_date = start_date.date()
         while current_date <= end_date.date():
             if current_date not in daily_revenue:
                 daily_revenue[current_date] = Decimal('0.00')
             current_date += timedelta(days=1)
-        
+
         return daily_revenue
-    
+
     async def _reconcile_stripe_account(self) -> Dict[str, Any]:
         """Reconcile Stripe account balance and transactions."""
         try:
             import stripe
-            
+
             # Get account balance
             balance = stripe.Balance.retrieve()
             available_balance = sum(b['amount'] for b in balance['available']) / 100
             pending_balance = sum(b['amount'] for b in balance['pending']) / 100
-            
+
             # Get recent payouts
             payouts = stripe.Payout.list(limit=10)
-            
+
             return {
                 'available_balance': available_balance,
                 'pending_balance': pending_balance,
@@ -1105,11 +1104,11 @@ class ProductionFinanceAgent(AgentBase):
                 'total_discrepancy_amount': 0.0,
                 'last_reconciled': datetime.now(timezone.utc).isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Stripe reconciliation failed: {e}")
             return {'error': str(e)}
-    
+
     async def _reconcile_paypal_account(self) -> Dict[str, Any]:
         """Reconcile PayPal account balance and transactions."""
         try:
@@ -1121,17 +1120,17 @@ class ProductionFinanceAgent(AgentBase):
                 'total_discrepancy_amount': 0.0,
                 'last_reconciled': datetime.now(timezone.utc).isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"PayPal reconciliation failed: {e}")
             return {'error': str(e)}
-    
+
     async def _update_performance_metrics(self):
         """Update performance tracking metrics."""
         try:
             self.performance_metrics['api_calls_made'] += 1
             self.performance_metrics['last_updated'] = datetime.now(timezone.utc).isoformat()
-            
+
             # Store metrics in cache
             if self.redis_cache:
                 await self.redis_cache.setex(
@@ -1139,16 +1138,16 @@ class ProductionFinanceAgent(AgentBase):
                     86400,  # 24 hours
                     json.dumps(self.performance_metrics, default=str)
                 )
-                
+
         except Exception as e:
             logger.error(f"Failed to update performance metrics: {e}")
-    
+
     async def get_status(self) -> Dict[str, Any]:
         """Get current agent status and health."""
         try:
             # Test service connections
             service_status = await self._test_financial_services()
-            
+
             return {
                 'agent_id': self.agent_id,
                 'status': 'healthy',
@@ -1160,7 +1159,7 @@ class ProductionFinanceAgent(AgentBase):
                 'last_execution': getattr(self, 'last_execution_time', None),
                 'uptime_seconds': time.time() - getattr(self, 'start_time', time.time())
             }
-            
+
         except Exception as e:
             return {
                 'agent_id': self.agent_id,

@@ -8,21 +8,20 @@ import asyncio
 import json
 import logging
 import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
-from enum import Enum
-import httpx
+import plotly.express as px
+import plotly.graph_objects as go
 import redis.asyncio as redis
 from sqlalchemy import create_engine, text
-import plotly.graph_objects as go
-import plotly.express as px
 
-from orchestrator.core.agent_base import AgentBase
 from core.secrets.secret_provider import UnifiedSecretResolver
-
+from orchestrator.core.agent_base import AgentBase
 
 logger = logging.getLogger(__name__)
 
@@ -108,15 +107,15 @@ class ProductionAnalyticsAgent(AgentBase):
     - Rate limiting and caching for performance
     - Fallback mechanisms for data sources
     """
-    
+
     def __init__(self, agent_id: str = "production-analytics"):
         super().__init__(agent_id)
-        
+
         # Services
         self.secrets = UnifiedSecretResolver()
         self.redis_cache = None
         self.db_connections = {}
-        
+
         # Rate limiting configurations
         self.rate_limits = {
             'shopify_api': {'max_requests': 200, 'time_window': 60, 'burst_limit': 20},
@@ -124,7 +123,7 @@ class ProductionAnalyticsAgent(AgentBase):
             'visualization': {'max_renders': 100, 'time_window': 60, 'burst_limit': 15},
             'ml_processing': {'max_jobs': 10, 'time_window': 300, 'burst_limit': 3},
         }
-        
+
         # Performance metrics
         self.performance_metrics = {
             'queries_executed': 0,
@@ -140,7 +139,7 @@ class ProductionAnalyticsAgent(AgentBase):
             'api_calls_made': 0,
             'errors_count': 0
         }
-        
+
         # Configuration
         self.config = {
             'cache_ttl_seconds': 300,  # 5 minutes default
@@ -153,7 +152,7 @@ class ProductionAnalyticsAgent(AgentBase):
             'retry_attempts': 3,
             'fallback_enabled': False  # No fallback - production only
         }
-        
+
         # Predefined queries and metrics
         self.core_queries = self._initialize_core_queries()
         self.core_metrics = self._initialize_core_metrics()
@@ -163,28 +162,28 @@ class ProductionAnalyticsAgent(AgentBase):
         """Initialize all analytics services and connections."""
         try:
             logger.info("Initializing Production Analytics Agent")
-            
+
             # Initialize secret resolver
             await self._initialize_secrets()
-            
+
             # Initialize Redis cache
             await self._initialize_redis()
-            
+
             # Initialize database connections
             await self._initialize_databases()
-            
+
             # Test all data source connections
             await self._test_data_sources()
-            
+
             # Initialize ML models
             await self._initialize_ml_models()
-            
+
             logger.info("Analytics agent initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize analytics agent: {e}")
             raise
-    
+
     async def _initialize_secrets(self):
         """Initialize secret management system."""
         try:
@@ -193,22 +192,22 @@ class ProductionAnalyticsAgent(AgentBase):
             logger.info("Multi-provider secret management initialized")
         except Exception as e:
             logger.warning(f"Secret management initialization issue: {e}")
-    
+
     async def _initialize_redis(self):
         """Initialize Redis cache for performance optimization."""
         try:
             redis_url = await self.secrets.get_secret('REDIS_URL')
             if not redis_url:
                 redis_url = 'redis://localhost:6379'
-            
+
             self.redis_cache = redis.from_url(redis_url)
             await self.redis_cache.ping()
             logger.info("Redis cache initialized successfully")
-            
+
         except Exception as e:
             logger.warning(f"Redis cache not available: {e}")
             self.redis_cache = None
-    
+
     async def _initialize_databases(self):
         """Initialize database connections for analytics."""
         try:
@@ -217,20 +216,20 @@ class ProductionAnalyticsAgent(AgentBase):
             if main_db_url:
                 self.db_connections['main'] = create_engine(main_db_url)
                 logger.info("Main database connection established")
-            
+
             # Analytics warehouse (if different)
             warehouse_url = await self.secrets.get_secret('ANALYTICS_DB_URL')
             if warehouse_url:
                 self.db_connections['warehouse'] = create_engine(warehouse_url)
                 logger.info("Analytics warehouse connection established")
-                
+
         except Exception as e:
             logger.error(f"Database initialization failed: {e}")
-    
+
     async def _test_data_sources(self):
         """Test all data source connections."""
         data_source_status = {}
-        
+
         # Test databases
         for db_name, engine in self.db_connections.items():
             try:
@@ -240,50 +239,50 @@ class ProductionAnalyticsAgent(AgentBase):
             except Exception as e:
                 logger.error(f"Database {db_name} connection failed: {e}")
                 data_source_status[f'database_{db_name}'] = False
-        
+
         # Test Shopify API
         data_source_status['shopify'] = await self._test_shopify_connection()
-        
+
         # Test Redis cache
         data_source_status['redis'] = self.redis_cache is not None
-        
+
         logger.info(f"Data source status: {data_source_status}")
         return data_source_status
-    
+
     async def _test_shopify_connection(self) -> bool:
         """Test Shopify GraphQL API connection."""
         try:
             from app.services.shopify_graphql_service import ShopifyGraphQLService
-            
+
             shopify_service = ShopifyGraphQLService()
             await shopify_service.initialize()
             return True
-            
+
         except Exception as e:
             logger.error(f"Shopify connection test failed: {e}")
             return False
-    
+
     async def _initialize_ml_models(self):
         """Initialize ML models for forecasting and anomaly detection."""
         try:
             # Initialize time series forecasting model
             from sklearn.ensemble import IsolationForest
             from sklearn.preprocessing import StandardScaler
-            
+
             self.anomaly_detector = IsolationForest(
                 contamination=0.1,
                 random_state=42
             )
-            
+
             self.scaler = StandardScaler()
-            
+
             logger.info("ML models initialized successfully")
-            
+
         except ImportError:
             logger.warning("ML libraries not available - forecasting disabled")
             self.anomaly_detector = None
             self.scaler = None
-    
+
     def _initialize_core_queries(self) -> List[AnalyticsQuery]:
         """Initialize core analytics queries."""
         return [
@@ -397,7 +396,7 @@ class ProductionAnalyticsAgent(AgentBase):
                 refresh_frequency='0 0 */6 * *'  # Every 6 hours
             )
         ]
-    
+
     def _initialize_core_metrics(self) -> List[MetricDefinition]:
         """Initialize core business metrics."""
         return [
@@ -454,7 +453,7 @@ class ProductionAnalyticsAgent(AgentBase):
                 format_string='${:.2f}'
             )
         ]
-    
+
     def _initialize_core_reports(self) -> List[AnalyticsReport]:
         """Initialize core analytics reports."""
         return [
@@ -492,33 +491,33 @@ class ProductionAnalyticsAgent(AgentBase):
     async def run(self) -> Dict[str, Any]:
         """Main agent execution - generate analytics and insights."""
         start_time = time.time()
-        
+
         try:
             logger.info("Starting analytics cycle")
-            
+
             # 1. Execute core queries and update cache
             query_results = await self._execute_core_queries()
-            
+
             # 2. Calculate business metrics and KPIs
             metrics_results = await self._calculate_business_metrics()
-            
+
             # 3. Generate visualizations and charts
             visualization_results = await self._generate_visualizations()
-            
+
             # 4. Perform anomaly detection and alerting
             anomaly_results = await self._detect_anomalies()
-            
+
             # 5. Generate automated reports
             report_results = await self._generate_reports()
-            
+
             # 6. Update ML models and forecasts
             ml_results = await self._update_ml_models()
-            
+
             # 7. Update performance metrics
             await self._update_performance_metrics()
-            
+
             execution_time = time.time() - start_time
-            
+
             result = {
                 'status': 'success',
                 'execution_time_seconds': execution_time,
@@ -531,10 +530,10 @@ class ProductionAnalyticsAgent(AgentBase):
                 'performance_metrics': self.performance_metrics,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-            
+
             logger.info(f"Analytics cycle completed in {execution_time:.2f}s")
             return result
-            
+
         except Exception as e:
             logger.error(f"Analytics automation failed: {e}")
             return {
@@ -542,25 +541,25 @@ class ProductionAnalyticsAgent(AgentBase):
                 'error': str(e),
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-    
+
     async def _execute_core_queries(self) -> Dict[str, Any]:
         """Execute all core analytics queries."""
         try:
             query_results = {}
-            
+
             for query in self.core_queries:
                 # Check cache first
                 cached_result = await self._get_cached_result(f"query:{query.id}")
-                
+
                 if cached_result:
                     query_results[query.id] = cached_result
                     continue
-                
+
                 # Execute query
                 start_time = time.time()
                 result = await self._execute_query(query)
                 execution_time = time.time() - start_time
-                
+
                 if result:
                     # Cache result
                     await self._cache_result(f"query:{query.id}", result, query.cache_ttl_seconds)
@@ -570,52 +569,52 @@ class ProductionAnalyticsAgent(AgentBase):
                         'cached': False,
                         'rows': len(result) if isinstance(result, list) else 0
                     }
-                
+
                 self.performance_metrics['queries_executed'] += 1
-            
+
             return query_results
-            
+
         except Exception as e:
             logger.error(f"Failed to execute core queries: {e}")
             return {}
-    
+
     async def _execute_query(self, query: AnalyticsQuery) -> Optional[List[Dict[str, Any]]]:
         """Execute a single analytics query."""
         try:
             # Rate limiting
             await self._check_rate_limit('database')
-            
+
             # Get database connection
             db_engine = self.db_connections.get('main')
             if not db_engine:
                 return None
-            
+
             # Execute query with timeout
             with db_engine.connect() as conn:
                 result = conn.execute(text(query.sql_query))
                 rows = result.fetchall()
-                
+
                 # Convert to list of dictionaries
                 data = []
                 if rows:
                     columns = result.keys()
                     for row in rows:
                         data.append(dict(zip(columns, row)))
-                
+
                 return data
-                
+
         except Exception as e:
             logger.error(f"Query execution failed for {query.id}: {e}")
             return None
-    
+
     async def _calculate_business_metrics(self) -> Dict[str, Any]:
         """Calculate business metrics and KPIs."""
         try:
             metrics_results = {}
-            
+
             for metric in self.core_metrics:
                 value = await self._calculate_metric(metric)
-                
+
                 if value is not None:
                     # Determine status based on thresholds
                     status = 'healthy'
@@ -623,7 +622,7 @@ class ProductionAnalyticsAgent(AgentBase):
                         status = 'critical'
                     elif metric.warning_threshold and value <= metric.warning_threshold:
                         status = 'warning'
-                    
+
                     metrics_results[metric.id] = {
                         'value': value,
                         'formatted_value': metric.format_string.format(value),
@@ -632,81 +631,81 @@ class ProductionAnalyticsAgent(AgentBase):
                         'unit': metric.unit,
                         'timestamp': datetime.now(timezone.utc).isoformat()
                     }
-            
+
             return metrics_results
-            
+
         except Exception as e:
             logger.error(f"Failed to calculate business metrics: {e}")
             return {}
-    
+
     async def _calculate_metric(self, metric: MetricDefinition) -> Optional[float]:
         """Calculate a single business metric."""
         try:
             # Rate limiting
             await self._check_rate_limit('database')
-            
+
             # Get database connection
             db_engine = self.db_connections.get('main')
             if not db_engine:
                 return None
-            
+
             # Build query based on metric definition
             query = f"SELECT {metric.calculation} as value FROM {metric.data_source}"
-            
+
             with db_engine.connect() as conn:
                 result = conn.execute(text(query))
                 row = result.fetchone()
-                
+
                 if row and row[0] is not None:
                     return float(row[0])
-                
+
                 return None
-                
+
         except Exception as e:
             logger.error(f"Metric calculation failed for {metric.id}: {e}")
             return None
-    
+
     async def _generate_visualizations(self) -> Dict[str, Any]:
         """Generate charts and visualizations."""
         try:
             visualization_results = {}
-            
+
             for query in self.core_queries:
                 # Get query data
                 query_data = await self._get_cached_result(f"query:{query.id}")
-                
+
                 if not query_data:
                     continue
-                
+
                 # Rate limiting
                 await self._check_rate_limit('visualization')
-                
+
                 # Generate chart based on visualization type
                 chart = await self._create_chart(query, query_data)
-                
+
                 if chart:
                     visualization_results[query.id] = {
                         'chart_type': query.visualization_type.value,
                         'chart_data': chart,
                         'generated_at': datetime.now(timezone.utc).isoformat()
                     }
-                    
+
                     self.performance_metrics['charts_generated'] += 1
-            
+
             return visualization_results
-            
+
         except Exception as e:
             logger.error(f"Failed to generate visualizations: {e}")
             return {}
-    
+
     async def _create_chart(self, query: AnalyticsQuery, data: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Create a chart based on query data."""
         try:
             if not data:
                 return None
-            
+
             df = pd.DataFrame(data)
-            
+
             # Generate chart based on type
             if query.visualization_type == ChartType.LINE:
                 return self._create_line_chart(df, query)
@@ -718,40 +717,40 @@ class ProductionAnalyticsAgent(AgentBase):
                 return self._create_scatter_chart(df, query)
             elif query.visualization_type == ChartType.FUNNEL:
                 return self._create_funnel_chart(df, query)
-            
+
             return None
-            
+
         except Exception as e:
             logger.error(f"Chart creation failed: {e}")
             return None
-    
+
     def _create_line_chart(self, df: pd.DataFrame, query: AnalyticsQuery) -> Dict[str, Any]:
         """Create line chart visualization."""
         try:
             # Determine x and y columns
             x_col = df.columns[0]  # First column as x-axis
             y_col = df.columns[1]  # Second column as y-axis
-            
+
             fig = px.line(
-                df, 
-                x=x_col, 
+                df,
+                x=x_col,
                 y=y_col,
                 title=query.name,
                 template='plotly_dark'
             )
-            
+
             return fig.to_dict()
-            
+
         except Exception as e:
             logger.error(f"Line chart creation failed: {e}")
             return {}
-    
+
     def _create_bar_chart(self, df: pd.DataFrame, query: AnalyticsQuery) -> Dict[str, Any]:
         """Create bar chart visualization."""
         try:
             x_col = df.columns[0]
             y_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
-            
+
             fig = px.bar(
                 df.head(20),  # Limit to top 20 for readability
                 x=x_col,
@@ -759,19 +758,19 @@ class ProductionAnalyticsAgent(AgentBase):
                 title=query.name,
                 template='plotly_dark'
             )
-            
+
             return fig.to_dict()
-            
+
         except Exception as e:
             logger.error(f"Bar chart creation failed: {e}")
             return {}
-    
+
     def _create_pie_chart(self, df: pd.DataFrame, query: AnalyticsQuery) -> Dict[str, Any]:
         """Create pie chart visualization."""
         try:
             names_col = df.columns[0]
             values_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
-            
+
             fig = px.pie(
                 df,
                 names=names_col,
@@ -779,19 +778,19 @@ class ProductionAnalyticsAgent(AgentBase):
                 title=query.name,
                 template='plotly_dark'
             )
-            
+
             return fig.to_dict()
-            
+
         except Exception as e:
             logger.error(f"Pie chart creation failed: {e}")
             return {}
-    
+
     def _create_scatter_chart(self, df: pd.DataFrame, query: AnalyticsQuery) -> Dict[str, Any]:
         """Create scatter plot visualization."""
         try:
             x_col = df.columns[0]
             y_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
-            
+
             fig = px.scatter(
                 df,
                 x=x_col,
@@ -799,59 +798,59 @@ class ProductionAnalyticsAgent(AgentBase):
                 title=query.name,
                 template='plotly_dark'
             )
-            
+
             return fig.to_dict()
-            
+
         except Exception as e:
             logger.error(f"Scatter chart creation failed: {e}")
             return {}
-    
+
     def _create_funnel_chart(self, df: pd.DataFrame, query: AnalyticsQuery) -> Dict[str, Any]:
         """Create funnel chart visualization."""
         try:
             stage_col = df.columns[0]
             users_col = df.columns[1] if len(df.columns) > 1 else df.columns[0]
-            
+
             fig = go.Figure(go.Funnel(
                 y=df[stage_col],
                 x=df[users_col],
                 textinfo="value+percent initial"
             ))
-            
+
             fig.update_layout(
                 title=query.name,
                 template='plotly_dark'
             )
-            
+
             return fig.to_dict()
-            
+
         except Exception as e:
             logger.error(f"Funnel chart creation failed: {e}")
             return {}
-    
+
     async def _detect_anomalies(self) -> Dict[str, Any]:
         """Detect anomalies in business metrics."""
         try:
             if not self.anomaly_detector:
                 return {'anomalies': [], 'status': 'ml_not_available'}
-            
+
             anomalies_detected = []
-            
+
             # Get recent metric values for anomaly detection
             for metric in self.core_metrics:
                 recent_values = await self._get_metric_history(metric.id, days=30)
-                
+
                 if len(recent_values) < 10:  # Need minimum data points
                     continue
-                
+
                 # Prepare data for anomaly detection
                 data = np.array(recent_values).reshape(-1, 1)
                 scaled_data = self.scaler.fit_transform(data)
-                
+
                 # Detect anomalies
                 anomaly_scores = self.anomaly_detector.decision_function(scaled_data)
                 anomalies = self.anomaly_detector.predict(scaled_data)
-                
+
                 # Check latest value
                 if anomalies[-1] == -1:  # Anomaly detected
                     anomalies_detected.append({
@@ -862,32 +861,32 @@ class ProductionAnalyticsAgent(AgentBase):
                         'severity': 'high' if anomaly_scores[-1] < -0.5 else 'medium',
                         'detected_at': datetime.now(timezone.utc).isoformat()
                     })
-            
+
             self.performance_metrics['anomalies_detected'] += len(anomalies_detected)
-            
+
             return {
                 'anomalies': anomalies_detected,
                 'total_detected': len(anomalies_detected),
                 'status': 'completed'
             }
-            
+
         except Exception as e:
             logger.error(f"Anomaly detection failed: {e}")
             return {'anomalies': [], 'error': str(e)}
-    
+
     async def _generate_reports(self) -> Dict[str, Any]:
         """Generate automated analytics reports."""
         try:
             report_results = {}
-            
+
             for report in self.core_reports:
                 # Check if report is scheduled to run
                 if not await self._should_generate_report(report):
                     continue
-                
+
                 # Generate report
                 report_data = await self._create_report(report)
-                
+
                 if report_data:
                     report_results[report.id] = {
                         'title': report.title,
@@ -895,127 +894,127 @@ class ProductionAnalyticsAgent(AgentBase):
                         'format': 'json',
                         'size_kb': len(json.dumps(report_data)) / 1024
                     }
-                    
+
                     # Cache report
                     await self._cache_result(f"report:{report.id}", report_data, 3600)  # 1 hour cache
-                    
+
                     self.performance_metrics['reports_created'] += 1
-            
+
             return report_results
-            
+
         except Exception as e:
             logger.error(f"Report generation failed: {e}")
             return {}
-    
+
     async def _update_ml_models(self) -> Dict[str, Any]:
         """Update ML models and generate forecasts."""
         try:
             if not self.anomaly_detector:
                 return {'status': 'ml_not_available'}
-            
+
             # Rate limiting for ML operations
             await self._check_rate_limit('ml_processing')
-            
+
             # Update anomaly detection model with recent data
             recent_metrics = await self._get_recent_metrics_for_ml()
-            
+
             if len(recent_metrics) > 50:  # Minimum training data
                 # Retrain anomaly detector
                 scaled_data = self.scaler.fit_transform(recent_metrics)
                 self.anomaly_detector.fit(scaled_data)
-                
+
                 self.performance_metrics['ml_predictions_made'] += 1
-            
+
             return {
                 'status': 'completed',
                 'models_updated': ['anomaly_detector'],
                 'training_data_points': len(recent_metrics) if recent_metrics else 0
             }
-            
+
         except Exception as e:
             logger.error(f"ML model update failed: {e}")
             return {'status': 'error', 'error': str(e)}
-    
+
     # Helper and utility methods
-    
+
     async def _check_rate_limit(self, service: str) -> bool:
         """Check and enforce rate limiting for services."""
         try:
             rate_limit = self.rate_limits.get(service)
             if not rate_limit or not self.redis_cache:
                 return True
-            
+
             current_time = int(time.time())
             window_start = current_time - rate_limit['time_window']
-            
+
             # Use Redis for distributed rate limiting
             pipe = self.redis_cache.pipeline()
             key = f"rate_limit:{service}:{current_time // rate_limit['time_window']}"
-            
+
             # Increment counter
             pipe.incr(key)
             pipe.expire(key, rate_limit['time_window'])
-            
+
             results = await pipe.execute()
             current_count = results[0]
-            
+
             if current_count > rate_limit['max_requests']:
                 logger.warning(f"Rate limit exceeded for {service}: {current_count}/{rate_limit['max_requests']}")
                 # Wait until next window
                 sleep_time = rate_limit['time_window'] - (current_time % rate_limit['time_window'])
                 await asyncio.sleep(min(sleep_time, 60))  # Max 1 minute wait
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Rate limiting check failed for {service}: {e}")
             return True
-    
+
     async def _get_cached_result(self, key: str) -> Optional[Any]:
         """Get cached result from Redis."""
         try:
             if not self.redis_cache:
                 return None
-            
+
             cached = await self.redis_cache.get(f"analytics:{key}")
             if cached:
                 self.performance_metrics['cache_hits'] += 1
                 return json.loads(cached)
-            
+
             return None
-            
+
         except Exception as e:
             logger.error(f"Cache get failed for {key}: {e}")
             return None
-    
+
     async def _cache_result(self, key: str, data: Any, ttl_seconds: int):
         """Cache result in Redis."""
         try:
             if not self.redis_cache:
                 return
-            
+
             await self.redis_cache.setex(
                 f"analytics:{key}",
                 ttl_seconds,
                 json.dumps(data, default=str)
             )
-            
+
         except Exception as e:
             logger.error(f"Cache set failed for {key}: {e}")
-    
+
     async def _update_performance_metrics(self):
         """Update and store performance metrics."""
         try:
             self.performance_metrics['api_calls_made'] += 1
             self.performance_metrics['last_updated'] = datetime.now(timezone.utc).isoformat()
-            
+
             # Calculate cache hit rate
             total_requests = self.performance_metrics.get('total_requests', 0)
             if total_requests > 0:
                 self.performance_metrics['cache_hit_rate'] = (
                     self.performance_metrics['cache_hits'] / total_requests
                 )
-            
+
             # Store metrics in cache
             if self.redis_cache:
                 metrics_key = f"analytics_metrics:{self.agent_id}"
@@ -1024,16 +1023,16 @@ class ProductionAnalyticsAgent(AgentBase):
                     86400,  # 24 hours
                     json.dumps(self.performance_metrics)
                 )
-            
+
         except Exception as e:
             logger.error(f"Failed to update performance metrics: {e}")
-    
+
     async def get_status(self) -> Dict[str, Any]:
         """Get current agent status and health."""
         try:
             # Test data source connections
             data_source_status = await self._test_data_sources()
-            
+
             return {
                 'agent_id': self.agent_id,
                 'status': 'healthy',
@@ -1047,28 +1046,28 @@ class ProductionAnalyticsAgent(AgentBase):
                 'last_execution': getattr(self, 'last_execution_time', None),
                 'uptime_seconds': time.time() - getattr(self, 'start_time', time.time())
             }
-            
+
         except Exception as e:
             return {
                 'agent_id': self.agent_id,
                 'status': 'error',
                 'error': str(e)
             }
-    
+
     # Additional helper methods with placeholder implementations
     async def _get_metric_history(self, metric_id: str, days: int) -> List[float]:
         """Get historical values for a metric."""
         # Implementation would fetch from time series database
         return []
-    
+
     async def _should_generate_report(self, report: AnalyticsReport) -> bool:
         """Check if report should be generated based on schedule."""
         return True  # Simplified logic
-    
+
     async def _create_report(self, report: AnalyticsReport) -> Optional[Dict[str, Any]]:
         """Create a complete analytics report."""
         return {'report_id': report.id, 'status': 'generated'}
-    
+
     async def _get_recent_metrics_for_ml(self) -> List[List[float]]:
         """Get recent metrics data for ML training."""
         return []

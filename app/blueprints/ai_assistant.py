@@ -13,7 +13,7 @@ Provides API endpoints for:
 
 import asyncio
 import logging
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, Response, jsonify, request
 
@@ -457,7 +457,7 @@ def process_voice_command():
 
         # Read audio data
         audio_data = audio_file.read()
-        
+
         # Process voice command asynchronously
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

@@ -7,14 +7,13 @@ Provides REST API endpoints for the enhanced pricing system including:
 - Pricing approval workflow
 """
 
-from flask import Blueprint, request, jsonify, render_template
-from typing import Dict, List, Any
 import logging
 import os
 from datetime import datetime
 
+from flask import Blueprint, jsonify, render_template, request
+
 from orchestrator.agents.pricing_optimizer import PricingOptimizerAgent
-from orchestrator.services.price_alert_system import AlertRule
 from orchestrator.services.pricing_rules_engine import PricingRule, RuleAction
 
 # Create blueprint
@@ -39,7 +38,7 @@ def get_pricing_status():
     """Get pricing system status and configuration."""
     try:
         agent = get_pricing_agent()
-        
+
         status = {
             "pricing_system": "enhanced",
             "ai_enabled": agent.ai_service is not None,
@@ -52,9 +51,9 @@ def get_pricing_status():
             },
             "last_run": getattr(agent, '_last_run', None)
         }
-        
+
         return jsonify(status)
-        
+
     except Exception as e:
         logger.error(f"Error getting pricing status: {e}")
         return jsonify({"error": str(e)}), 500
@@ -67,16 +66,16 @@ async def get_ai_recommendation(product_id: str):
         current_price = request.args.get('current_price', type=float)
         if not current_price:
             return jsonify({"error": "current_price parameter required"}), 400
-        
+
         agent = get_pricing_agent()
         if not agent.ai_service:
             return jsonify({"error": "AI service not available"}), 503
-        
+
         recommendation = await agent.get_ai_recommendation(product_id, current_price)
-        
+
         if not recommendation:
             return jsonify({"error": "Unable to generate recommendation"}), 404
-        
+
         return jsonify({
             "product_id": recommendation.product_id,
             "current_price": recommendation.current_price,
@@ -88,7 +87,7 @@ async def get_ai_recommendation(product_id: str):
             "risk_level": recommendation.risk_level,
             "timestamp": datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         logger.error(f"Error getting AI recommendation for {product_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -100,7 +99,7 @@ def get_pending_approvals():
     try:
         agent = get_pricing_agent()
         pending_requests = agent.get_pending_approvals()
-        
+
         approvals = []
         for request in pending_requests:
             approvals.append({
@@ -115,12 +114,12 @@ def get_pending_approvals():
                 "applied_by_rule": request.applied_by_rule,
                 "approval_reason": request.approval_reason
             })
-        
+
         return jsonify({
             "pending_approvals": approvals,
             "count": len(approvals)
         })
-        
+
     except Exception as e:
         logger.error(f"Error getting pending approvals: {e}")
         return jsonify({"error": str(e)}), 500
@@ -133,19 +132,19 @@ async def approve_price_change(request_id: str):
         data = request.get_json()
         if not data:
             return jsonify({"error": "JSON payload required"}), 400
-        
+
         approved = data.get('approved')
         if approved is None:
             return jsonify({"error": "approved field required (true/false)"}), 400
-        
+
         approver = data.get('approver', 'api_user')
-        
+
         agent = get_pricing_agent()
         success = await agent.approve_price_change(request_id, approved, approver)
-        
+
         if not success:
             return jsonify({"error": "Request not found or already processed"}), 404
-        
+
         return jsonify({
             "success": True,
             "request_id": request_id,
@@ -153,7 +152,7 @@ async def approve_price_change(request_id: str):
             "approver": approver,
             "timestamp": datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         logger.error(f"Error approving price change {request_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -164,12 +163,12 @@ def get_alert_summary():
     """Get summary of recent price alerts."""
     try:
         hours = request.args.get('hours', 24, type=int)
-        
+
         agent = get_pricing_agent()
         summary = agent.get_alert_summary(hours)
-        
+
         return jsonify(summary)
-        
+
     except Exception as e:
         logger.error(f"Error getting alert summary: {e}")
         return jsonify({"error": str(e)}), 500
@@ -180,16 +179,16 @@ def get_pricing_history(product_id: str):
     """Get pricing history for a product."""
     try:
         days = request.args.get('days', 30, type=int)
-        
+
         agent = get_pricing_agent()
         history = agent.get_pricing_history(product_id, days)
-        
+
         return jsonify({
             "product_id": product_id,
             "history": history,
             "period_days": days
         })
-        
+
     except Exception as e:
         logger.error(f"Error getting pricing history for {product_id}: {e}")
         return jsonify({"error": str(e)}), 500
@@ -202,7 +201,7 @@ def get_pricing_rules():
         agent = get_pricing_agent()
         if not agent.pricing_engine:
             return jsonify({"error": "Pricing engine not available"}), 503
-        
+
         rules_data = []
         for rule_id, rule in agent.pricing_engine.rules.items():
             rules_data.append({
@@ -217,12 +216,12 @@ def get_pricing_rules():
                 "enabled": rule.enabled,
                 "priority": rule.priority
             })
-        
+
         return jsonify({
             "rules": rules_data,
             "count": len(rules_data)
         })
-        
+
     except Exception as e:
         logger.error(f"Error getting pricing rules: {e}")
         return jsonify({"error": str(e)}), 500
@@ -235,23 +234,23 @@ def create_pricing_rule():
         data = request.get_json()
         if not data:
             return jsonify({"error": "JSON payload required"}), 400
-        
+
         agent = get_pricing_agent()
         if not agent.pricing_engine:
             return jsonify({"error": "Pricing engine not available"}), 503
-        
+
         # Validate required fields
         required_fields = ['rule_id', 'name', 'description', 'min_confidence', 'action']
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
-        
+
         # Parse action
         try:
             action = RuleAction(data['action'])
         except ValueError:
             return jsonify({"error": "Invalid action value"}), 400
-        
+
         # Create rule
         rule = PricingRule(
             rule_id=data['rule_id'],
@@ -270,15 +269,15 @@ def create_pricing_rule():
             enabled=data.get('enabled', True),
             priority=data.get('priority', 100)
         )
-        
+
         agent.pricing_engine.add_rule(rule)
-        
+
         return jsonify({
             "success": True,
             "rule_id": rule.rule_id,
             "message": "Pricing rule created successfully"
         })
-        
+
     except Exception as e:
         logger.error(f"Error creating pricing rule: {e}")
         return jsonify({"error": str(e)}), 500
@@ -289,14 +288,14 @@ async def test_pricing_system():
     """Test the pricing system with sample data."""
     try:
         data = request.get_json() or {}
-        
+
         # Test parameters
         product_id = data.get('product_id', 'test_product')
         current_price = data.get('current_price', 50.0)
         competitor_prices = data.get('competitor_prices', {'amazon': 45.0, 'ebay': 48.0})
-        
+
         agent = get_pricing_agent()
-        
+
         # Test AI recommendation if available
         ai_recommendation = None
         if agent.ai_service:
@@ -304,11 +303,11 @@ async def test_pricing_system():
                 ai_recommendation = await agent.get_ai_recommendation(product_id, current_price)
             except Exception as e:
                 logger.warning(f"AI recommendation test failed: {e}")
-        
+
         # Test alert system
         test_price_changes = {product_id: competitor_prices}
         alerts = await agent.alert_system.check_price_changes(test_price_changes)
-        
+
         return jsonify({
             "test_results": {
                 "product_id": product_id,
@@ -334,7 +333,7 @@ async def test_pricing_system():
                 "alert_system_enabled": True
             }
         })
-        
+
     except Exception as e:
         logger.error(f"Error testing pricing system: {e}")
         return jsonify({"error": str(e)}), 500

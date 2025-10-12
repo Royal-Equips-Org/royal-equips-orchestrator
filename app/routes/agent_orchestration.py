@@ -5,19 +5,16 @@ Provides REST API endpoints for the Command Center to interact with the
 Agent Registry and AIRA Integration Layer for 100+ agents orchestration.
 """
 
-from flask import Blueprint, jsonify, request
-from datetime import datetime
 import logging
+from datetime import datetime
+
+from flask import Blueprint, jsonify, request
 
 from orchestrator.core.agent_registry import (
+    AgentCapability,
     get_agent_registry,
-    AgentStatus,
-    AgentCapability
 )
-from orchestrator.core.aira_integration import (
-    get_aira_integration,
-    TaskPriority
-)
+from orchestrator.core.aira_integration import TaskPriority, get_aira_integration
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +38,13 @@ def get_agent_details(agent_id: str):
     try:
         registry = get_agent_registry()
         agent = registry.get_agent(agent_id)
-        
+
         if not agent:
             return jsonify({'error': f'Agent {agent_id} not found'}), 404
-        
+
         integration = get_aira_integration()
         agent_tasks = integration.get_agent_tasks(agent_id)
-        
+
         return jsonify({
             'agent': {
                 'agent_id': agent.agent_id,
@@ -81,7 +78,7 @@ def get_agents_by_capability(capability: str):
     """Get all agents with a specific capability."""
     try:
         registry = get_agent_registry()
-        
+
         # Parse capability
         try:
             cap = AgentCapability(capability)
@@ -90,9 +87,9 @@ def get_agents_by_capability(capability: str):
                 'error': f'Invalid capability: {capability}',
                 'valid_capabilities': [c.value for c in AgentCapability]
             }), 400
-        
+
         agents = registry.get_agents_by_capability(cap)
-        
+
         return jsonify({
             'capability': capability,
             'count': len(agents),
@@ -118,7 +115,7 @@ def get_orchestration_stats():
     try:
         registry = get_agent_registry()
         integration = get_aira_integration()
-        
+
         return jsonify({
             'registry_stats': registry.get_registry_stats(),
             'task_stats': integration.get_statistics(),
@@ -145,16 +142,16 @@ def submit_task():
     """Submit a new task for agent execution."""
     try:
         data = request.get_json()
-        
+
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        
+
         # Validate required fields
         required = ['task_id', 'capability', 'parameters']
         missing = [f for f in required if f not in data]
         if missing:
             return jsonify({'error': f'Missing required fields: {missing}'}), 400
-        
+
         # Parse capability
         try:
             capability = AgentCapability(data['capability'])
@@ -163,7 +160,7 @@ def submit_task():
                 'error': f'Invalid capability: {data["capability"]}',
                 'valid_capabilities': [c.value for c in AgentCapability]
             }), 400
-        
+
         # Parse priority
         priority_str = data.get('priority', 'normal')
         try:
@@ -173,10 +170,10 @@ def submit_task():
                 'error': f'Invalid priority: {priority_str}',
                 'valid_priorities': [p.value for p in TaskPriority]
             }), 400
-        
+
         # Submit task
         integration = get_aira_integration()
-        
+
         # Run async function in sync context
         import asyncio
         loop = asyncio.new_event_loop()
@@ -190,7 +187,7 @@ def submit_task():
             )
         )
         loop.close()
-        
+
         return jsonify({
             'message': 'Task submitted successfully',
             'task': integration._task_to_dict(task)
@@ -206,10 +203,10 @@ def get_task_details(task_id: str):
     try:
         integration = get_aira_integration()
         task = integration.get_task(task_id)
-        
+
         if not task:
             return jsonify({'error': f'Task {task_id} not found'}), 404
-        
+
         return jsonify({
             'task': integration._task_to_dict(task)
         }), 200
@@ -223,17 +220,17 @@ def cancel_task(task_id: str):
     """Cancel a pending or active task."""
     try:
         integration = get_aira_integration()
-        
+
         # Run async function in sync context
         import asyncio
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         success = loop.run_until_complete(integration.cancel_task(task_id))
         loop.close()
-        
+
         if not success:
             return jsonify({'error': f'Task {task_id} not found or cannot be cancelled'}), 404
-        
+
         return jsonify({
             'message': f'Task {task_id} cancelled successfully'
         }), 200
@@ -249,12 +246,12 @@ def check_orchestration_health():
     try:
         registry = get_agent_registry()
         integration = get_aira_integration()
-        
+
         healthy_agents = registry.get_healthy_agents()
         total_agents = len(registry.get_all_agents())
-        
+
         health_percentage = (len(healthy_agents) / total_agents * 100) if total_agents > 0 else 0
-        
+
         return jsonify({
             'status': 'healthy' if health_percentage >= 80 else 'degraded' if health_percentage >= 50 else 'unhealthy',
             'health_percentage': round(health_percentage, 2),

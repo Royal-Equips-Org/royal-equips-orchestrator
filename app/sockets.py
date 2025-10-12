@@ -377,11 +377,11 @@ async def get_real_agent_status() -> Dict[str, Any]:
     """Get real agent status from production monitoring service."""
     try:
         from app.services.realtime_agent_monitor import get_agent_monitor
-        
+
         agent_monitor = await get_agent_monitor()
         agent_status = await agent_monitor.get_agent_status()
         system_health = await agent_monitor.get_system_health()
-        
+
         # Format for WebSocket emission
         agents_formatted = []
         for agent_type, metrics in agent_status.items():
@@ -401,7 +401,7 @@ async def get_real_agent_status() -> Dict[str, Any]:
                 'health_score': metrics['health_score'],
                 'last_activity': metrics['last_execution_time'].isoformat() if metrics['last_execution_time'] else None
             })
-        
+
         return {
             'agents': agents_formatted,
             'system_health': system_health,
@@ -410,7 +410,7 @@ async def get_real_agent_status() -> Dict[str, Any]:
             'active_agents': len([a for a in agents_formatted if a['status'] == 'active']),
             'error_agents': len([a for a in agents_formatted if a['status'] == 'error'])
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get real agent status: {e}")
         # Fallback to basic status
@@ -659,7 +659,7 @@ def emit_workspace_updates():
 
 def register_aria_handlers():
     """Register ARIA AI assistant namespace event handlers."""
-    
+
     @socketio.on('connect', namespace='/ws/aria')
     def handle_aria_connect():
         """Handle client connection to ARIA namespace."""
@@ -669,19 +669,19 @@ def register_aria_handlers():
             'status': 'operational',
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
-    
+
     @socketio.on('disconnect', namespace='/ws/aria')
     def handle_aria_disconnect():
         """Handle client disconnection from ARIA namespace."""
         logger.info("Client disconnected from ARIA namespace")
-    
+
     @socketio.on('aria_query', namespace='/ws/aria')
     def handle_aria_query(data):
         """Handle ARIA query requests."""
         try:
             query = data.get('query', '')
             session_id = data.get('session_id', 'default')
-            
+
             # Emit acknowledgment
             emit('aria_thinking', {
                 'query': query,
@@ -689,7 +689,7 @@ def register_aria_handlers():
                 'status': 'processing',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
             # In a real implementation, this would call the AI assistant
             # For now, emit a mock response
             emit('aria_response', {
@@ -699,27 +699,27 @@ def register_aria_handlers():
                 'confidence': 0.95,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
         except Exception as e:
             logger.error(f"ARIA query error: {e}")
             emit('aria_error', {
                 'error': str(e),
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-    
+
     @socketio.on('voice_command', namespace='/ws/aria')
     def handle_voice_command(data):
         """Handle voice command processing."""
         try:
             command_id = data.get('command_id', '')
-            
+
             # Emit processing status
             emit('voice_processing', {
                 'command_id': command_id,
                 'status': 'transcribing',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
             # Voice processing simulation (WebSocket demo)
             emit('voice_transcribed', {
                 'command_id': command_id,
@@ -727,14 +727,14 @@ def register_aria_handlers():
                 'confidence': 0.92,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
             emit('voice_response', {
                 'command_id': command_id,
                 'response': 'Voice command executed successfully',
                 'audio_available': True,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
         except Exception as e:
             logger.error(f"Voice command error: {e}")
             emit('voice_error', {
@@ -745,7 +745,7 @@ def register_aria_handlers():
 
 def register_empire_handlers():
     """Register Empire operations namespace event handlers."""
-    
+
     @socketio.on('connect', namespace='/ws/empire')
     def handle_empire_connect():
         """Handle client connection to Empire namespace."""
@@ -755,12 +755,12 @@ def register_empire_handlers():
             'status': 'ready_for_orders',
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
-    
+
     @socketio.on('disconnect', namespace='/ws/empire')
     def handle_empire_disconnect():
         """Handle client disconnection from Empire namespace."""
         logger.info("Client disconnected from Empire operations namespace")
-    
+
     @socketio.on('execute_command', namespace='/ws/empire')
     def handle_execute_command(data):
         """Handle empire command execution."""
@@ -768,9 +768,9 @@ def register_empire_handlers():
             command = data.get('command', '')
             parameters = data.get('parameters', {})
             execution_id = data.get('execution_id', '')
-            
+
             logger.info(f"Empire command execution requested: {command}")
-            
+
             # Emit command started
             emit('command_started', {
                 'command': command,
@@ -779,7 +779,7 @@ def register_empire_handlers():
                 'status': 'executing',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
             # Command execution progress (WebSocket demo)
             emit('command_progress', {
                 'execution_id': execution_id,
@@ -787,7 +787,7 @@ def register_empire_handlers():
                 'message': f'Executing {command}...',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
             # Command completion notification
             emit('command_completed', {
                 'execution_id': execution_id,
@@ -797,7 +797,7 @@ def register_empire_handlers():
                 'execution_time': '2.5s',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
         except Exception as e:
             logger.error(f"Empire command execution error: {e}")
             emit('command_error', {
@@ -805,7 +805,7 @@ def register_empire_handlers():
                 'error': str(e),
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-    
+
     @socketio.on('request_status', namespace='/ws/empire')
     def handle_status_request():
         """Handle empire status requests."""
@@ -820,7 +820,7 @@ def register_empire_handlers():
                 },
                 'operations': {
                     'shopify_sync': 'active',
-                    'inventory_forecasting': 'active', 
+                    'inventory_forecasting': 'active',
                     'pricing_optimization': 'active',
                     'marketing_automation': 'active',
                     'customer_support': 'active',
@@ -834,7 +834,7 @@ def register_empire_handlers():
                 },
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
         except Exception as e:
             logger.error(f"Empire status error: {e}")
             emit('status_error', {
@@ -877,7 +877,7 @@ def emit_aria_updates():
         try:
             if socketio:
                 from app.services.ai_assistant import control_center_assistant
-                
+
                 # Emit ARIA status
                 stats = control_center_assistant.get_conversation_stats()
                 socketio.emit('aria_status', {
@@ -897,15 +897,15 @@ def emit_aria_updates():
 async def get_real_empire_status() -> Dict[str, Any]:
     """Get real-time empire status from production services."""
     try:
-        from app.services.shopify_graphql_service import ShopifyGraphQLService
-        from app.services.realtime_agent_monitor import RealTimeAgentMonitor
         from app.services.production_agent_executor import get_agent_executor
-        
+        from app.services.realtime_agent_monitor import RealTimeAgentMonitor
+        from app.services.shopify_graphql_service import ShopifyGraphQLService
+
         # Initialize services
         shopify_service = ShopifyGraphQLService()
         agent_monitor = RealTimeAgentMonitor()
         agent_executor = await get_agent_executor()
-        
+
         # Initialize Shopify - no fallback data
         shopify_available = False
         orders_summary = None
@@ -928,7 +928,7 @@ async def get_real_empire_status() -> Dict[str, Any]:
                 },
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-        
+
         # Get agent metrics - no fallback data
         agents_available = False
         agent_metrics = None
@@ -940,7 +940,7 @@ async def get_real_empire_status() -> Dict[str, Any]:
             total_executions = sum(a.get('total_executions', 0) for a in agent_status_data.values())
             successful_executions = sum(a.get('successful_executions', 0) for a in agent_status_data.values())
             success_rate = (successful_executions / total_executions * 100) if total_executions > 0 else 0
-            
+
             agent_metrics = {
                 'active_agents': active_agents,
                 'healthy_agents': len([a for a in agent_status_data.values() if a.get('health_score', 0) > 80]),
@@ -958,7 +958,7 @@ async def get_real_empire_status() -> Dict[str, Any]:
                 'success_rate': 0
             }
             agents_available = False
-        
+
         # Calculate revenue metrics only if Shopify data available
         if shopify_available and orders_summary:
             today_revenue = orders_summary.get('total_revenue', 0) / 30  # Daily average
@@ -970,7 +970,7 @@ async def get_real_empire_status() -> Dict[str, Any]:
             current_hour_revenue = 0
             month_revenue = 0
             growth_rate = 0
-        
+
         # Format currency
         def format_currency(amount):
             if amount >= 1000000:
@@ -979,7 +979,7 @@ async def get_real_empire_status() -> Dict[str, Any]:
                 return f"${amount/1000:.1f}K"
             else:
                 return f"${amount:.0f}"
-        
+
         empire_data = {
             'revenue': {
                 'current_hour': format_currency(current_hour_revenue),
@@ -1011,9 +1011,9 @@ async def get_real_empire_status() -> Dict[str, Any]:
             },
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
-        
+
         return empire_data
-        
+
     except Exception as e:
         logger.error(f"Failed to get real empire status: {e}", exc_info=True)
         # Return error status instead of fake data
@@ -1069,7 +1069,7 @@ def emit_empire_updates():
 
 def register_marketing_handlers():
     """Register marketing automation WebSocket handlers."""
-    
+
     @socketio.on('connect', namespace='/ws/marketing')
     def on_marketing_connect():
         logger.info("Marketing automation WebSocket client connected")
@@ -1079,34 +1079,38 @@ def register_marketing_handlers():
             socketio.emit('marketing_status', initial_status, namespace='/ws/marketing')
         except Exception as e:
             logger.error(f"Failed to send initial marketing status: {e}")
-    
+
     @socketio.on('disconnect', namespace='/ws/marketing')
     def on_marketing_disconnect():
         logger.info("Marketing automation WebSocket client disconnected")
-    
+
     @socketio.on('marketing_metrics_request', namespace='/ws/marketing')
     def handle_marketing_metrics_request():
         """Handle request for real-time marketing metrics."""
         try:
             async def get_metrics():
-                from orchestrator.agents.production_marketing_automation import create_production_marketing_agent
+                from orchestrator.agents.production_marketing_automation import (
+                    create_production_marketing_agent,
+                )
                 agent = await create_production_marketing_agent()
                 performance_data = await agent._analyze_marketing_performance()
                 return performance_data
-            
+
             metrics = asyncio.run(get_metrics())
             socketio.emit('marketing_metrics_update', metrics, namespace='/ws/marketing')
-            
+
         except Exception as e:
             logger.error(f"WebSocket marketing metrics failed: {e}")
             socketio.emit('marketing_metrics_error', {'error': str(e)}, namespace='/ws/marketing')
-    
+
     @socketio.on('campaign_status_request', namespace='/ws/marketing')
     def handle_campaign_status_request():
         """Handle request for campaign status updates."""
         try:
             async def get_campaign_status():
-                from orchestrator.agents.production_marketing_automation import create_production_marketing_agent
+                from orchestrator.agents.production_marketing_automation import (
+                    create_production_marketing_agent,
+                )
                 agent = await create_production_marketing_agent()
                 email_data = await agent._get_email_marketing_data()
                 return {
@@ -1115,31 +1119,33 @@ def register_marketing_handlers():
                     'engagement_score': email_data.get('engagement_score', 0),
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 }
-            
+
             status = asyncio.run(get_campaign_status())
             socketio.emit('campaign_status_update', status, namespace='/ws/marketing')
-            
+
         except Exception as e:
             logger.error(f"WebSocket campaign status failed: {e}")
             socketio.emit('campaign_status_error', {'error': str(e)}, namespace='/ws/marketing')
-    
+
     @socketio.on('execute_marketing_automation', namespace='/ws/marketing')
     def handle_execute_marketing_automation(data):
         """Handle marketing automation execution request."""
         try:
             async def execute_automation():
-                from orchestrator.agents.production_marketing_automation import create_production_marketing_agent
+                from orchestrator.agents.production_marketing_automation import (
+                    create_production_marketing_agent,
+                )
                 agent = await create_production_marketing_agent()
                 result = await agent.run()
                 return result
-            
+
             result = asyncio.run(execute_automation())
             socketio.emit('marketing_automation_result', {
                 'status': 'success',
                 'result': result,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }, namespace='/ws/marketing')
-            
+
         except Exception as e:
             logger.error(f"Marketing automation execution failed: {e}")
             socketio.emit('marketing_automation_error', {'error': str(e)}, namespace='/ws/marketing')
@@ -1148,7 +1154,9 @@ def register_marketing_handlers():
 async def get_marketing_status():
     """Get current marketing automation status."""
     try:
-        from orchestrator.agents.production_marketing_automation import create_production_marketing_agent
+        from orchestrator.agents.production_marketing_automation import (
+            create_production_marketing_agent,
+        )
         agent = await create_production_marketing_agent()
         status = await agent.get_status()
         return status
@@ -1166,7 +1174,7 @@ async def get_marketing_status():
 
 def register_customer_support_handlers():
     """Register customer support namespace handlers."""
-    
+
     @socketio.on('connect', namespace='/ws/customer-support')
     def handle_customer_support_connect():
         """Handle client connection to customer support namespace."""
@@ -1199,7 +1207,7 @@ def register_customer_support_handlers():
         """Handle request for support metrics."""
         try:
             logger.info("Support metrics request received")
-            
+
             # Get current metrics
             metrics = {
                 'total_tickets': 245,
@@ -1212,9 +1220,9 @@ def register_customer_support_handlers():
                 'sentiment_score': 1.2,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-            
+
             socketio.emit('support_metrics_update', metrics, namespace='/ws/customer-support')
-            
+
         except Exception as e:
             logger.error(f"Support metrics request failed: {e}")
             socketio.emit('support_metrics_error', {'error': str(e)}, namespace='/ws/customer-support')
@@ -1225,7 +1233,7 @@ def register_customer_support_handlers():
         try:
             ticket_id = data.get('ticket_id')
             logger.info(f"Ticket status request for: {ticket_id}")
-            
+
             # In production, get from database
             ticket_status = {
                 'ticket_id': ticket_id,
@@ -1235,9 +1243,9 @@ def register_customer_support_handlers():
                 'agent_assigned': 'AI Assistant',
                 'customer_satisfaction': None
             }
-            
+
             emit('ticket_status_update', ticket_status)
-            
+
         except Exception as e:
             logger.error(f"Ticket status request failed: {e}")
             emit('support_error', {
@@ -1252,17 +1260,17 @@ def register_customer_support_handlers():
             ticket_id = data.get('ticket_id')
             response_options = data.get('options', {})
             logger.info(f"AI response request for ticket: {ticket_id}")
-            
+
             # Emit acknowledgment
             emit('ai_response_generating', {
                 'ticket_id': ticket_id,
                 'status': 'generating',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
             # Simulate AI response generation (in production, call actual agent)
             socketio.sleep(3)
-            
+
             # Generate response based on ticket content
             ai_response = {
                 'ticket_id': ticket_id,
@@ -1272,9 +1280,9 @@ def register_customer_support_handlers():
                 'length': 280,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-            
+
             emit('ai_response_generated', ai_response)
-            
+
         except Exception as e:
             logger.error(f"AI response generation failed: {e}")
             emit('support_error', {
@@ -1289,9 +1297,9 @@ def register_customer_support_handlers():
             ticket_id = data.get('ticket_id')
             reason = data.get('reason', 'Manual escalation')
             priority = data.get('priority', 'high')
-            
+
             logger.info(f"Escalating ticket {ticket_id}: {reason}")
-            
+
             # In production, update database and trigger notifications
             escalation_result = {
                 'ticket_id': ticket_id,
@@ -1301,12 +1309,12 @@ def register_customer_support_handlers():
                 'escalated_at': datetime.now(timezone.utc).isoformat(),
                 'assigned_to': 'Senior Support Agent'
             }
-            
+
             emit('ticket_escalated', escalation_result)
-            
+
             # Broadcast to support team
             socketio.emit('ticket_escalation_alert', escalation_result, namespace='/ws/customer-support')
-            
+
         except Exception as e:
             logger.error(f"Ticket escalation failed: {e}")
             emit('support_error', {
@@ -1321,9 +1329,9 @@ def register_customer_support_handlers():
             ticket_id = data.get('ticket_id')
             new_status = data.get('status')
             agent_response = data.get('agent_response')
-            
+
             logger.info(f"Updating ticket {ticket_id} status to: {new_status}")
-            
+
             # In production, update database
             update_result = {
                 'ticket_id': ticket_id,
@@ -1331,16 +1339,16 @@ def register_customer_support_handlers():
                 'updated_at': datetime.now(timezone.utc).isoformat(),
                 'agent_response': agent_response
             }
-            
+
             if new_status == 'resolved':
                 update_result['resolved_at'] = datetime.now(timezone.utc).isoformat()
                 update_result['resolution_time_hours'] = 4.2  # Calculate from creation time
-            
+
             emit('ticket_updated', update_result)
-            
+
             # Broadcast to other connected clients
             socketio.emit('ticket_status_changed', update_result, namespace='/ws/customer-support')
-            
+
         except Exception as e:
             logger.error(f"Ticket status update failed: {e}")
             emit('support_error', {
@@ -1354,7 +1362,9 @@ def register_customer_support_handlers():
 async def get_customer_support_status():
     """Get current customer support agent status."""
     try:
-        from orchestrator.agents.production_customer_support import create_production_customer_support_agent
+        from orchestrator.agents.production_customer_support import (
+            create_production_customer_support_agent,
+        )
         agent = await create_production_customer_support_agent()
         status = await agent.get_status()
         return status
@@ -1397,7 +1407,7 @@ def register_analytics_handlers():
         """Handle request for dashboard data update."""
         try:
             time_range = data.get('time_range', '30d')
-            
+
             # Generate updated analytics data
             dashboard_update = {
                 'kpis': {
@@ -1417,10 +1427,10 @@ def register_analytics_handlers():
                 'time_range': time_range,
                 'last_updated': datetime.now(timezone.utc).isoformat()
             }
-            
+
             emit('analytics_update', dashboard_update)
             logger.info(f"Sent analytics dashboard update for {time_range}")
-            
+
         except Exception as e:
             logger.error(f"Analytics dashboard update failed: {e}")
             emit('analytics_error', {
@@ -1434,7 +1444,7 @@ def register_analytics_handlers():
         try:
             report_type = data.get('report_type', 'executive_dashboard')
             format_type = data.get('format', 'pdf')
-            
+
             # Simulate report generation
             report_progress = {
                 'report_id': f"rpt_{int(datetime.now(timezone.utc).timestamp())}",
@@ -1444,9 +1454,9 @@ def register_analytics_handlers():
                 'status': 'generating',
                 'started_at': datetime.now(timezone.utc).isoformat()
             }
-            
+
             emit('report_generation_started', report_progress)
-            
+
             # Simulate progress updates
             for progress in [25, 50, 75, 100]:
                 time.sleep(0.5)  # Simulate processing time
@@ -1455,11 +1465,11 @@ def register_analytics_handlers():
                     report_progress['status'] = 'completed'
                     report_progress['download_url'] = f"/api/analytics/reports/{report_progress['report_id']}/download"
                     report_progress['completed_at'] = datetime.now(timezone.utc).isoformat()
-                
+
                 emit('report_generation_progress', report_progress)
-            
+
             logger.info(f"Report generation completed: {report_type}")
-            
+
         except Exception as e:
             logger.error(f"Report generation failed: {e}")
             emit('analytics_error', {
@@ -1473,10 +1483,10 @@ def register_analytics_handlers():
         try:
             query_id = data.get('query_id')
             parameters = data.get('parameters', {})
-            
+
             if not query_id:
                 raise ValueError("Query ID is required")
-            
+
             # Simulate query execution
             execution_result = {
                 'query_id': query_id,
@@ -1485,12 +1495,12 @@ def register_analytics_handlers():
                 'started_at': datetime.now(timezone.utc).isoformat(),
                 'parameters': parameters
             }
-            
+
             emit('query_execution_started', execution_result)
-            
+
             # Simulate execution time
             time.sleep(1)
-            
+
             execution_result.update({
                 'status': 'completed',
                 'rows_returned': 127,
@@ -1502,10 +1512,10 @@ def register_analytics_handlers():
                     {'date': '2024-01-13', 'revenue': 1690.75, 'orders': 22}
                 ]
             })
-            
+
             emit('query_execution_completed', execution_result)
             logger.info(f"Query execution completed: {query_id}")
-            
+
         except Exception as e:
             logger.error(f"Query execution failed: {e}")
             emit('analytics_error', {
@@ -1518,7 +1528,7 @@ def register_analytics_handlers():
         """Handle anomaly detection enable/disable."""
         try:
             enabled = data.get('enabled', True)
-            
+
             # Update anomaly detection status
             anomaly_status = {
                 'enabled': enabled,
@@ -1527,9 +1537,9 @@ def register_analytics_handlers():
                 'monitored_metrics': ['revenue', 'conversion_rate', 'order_volume'],
                 'active_alerts': 2 if enabled else 0
             }
-            
+
             emit('anomaly_detection_updated', anomaly_status)
-            
+
             if enabled:
                 # Simulate anomaly detection
                 anomaly_alert = {
@@ -1541,16 +1551,16 @@ def register_analytics_handlers():
                     'detected_at': datetime.now(timezone.utc).isoformat(),
                     'description': 'Conversion rate significantly below expected range'
                 }
-                
+
                 # Send after a delay to simulate detection
                 def send_anomaly_alert():
                     time.sleep(2)
                     socketio.emit('analytics_alert', anomaly_alert, namespace='/ws/analytics')
-                
+
                 threading.Thread(target=send_anomaly_alert).start()
-            
+
             logger.info(f"Anomaly detection {'enabled' if enabled else 'disabled'}")
-            
+
         except Exception as e:
             logger.error(f"Anomaly detection toggle failed: {e}")
             emit('analytics_error', {
@@ -1564,7 +1574,9 @@ def register_analytics_handlers():
 async def get_analytics_status():
     """Get current analytics agent status."""
     try:
-        from orchestrator.agents.production_analytics import create_production_analytics_agent
+        from orchestrator.agents.production_analytics import (
+            create_production_analytics_agent,
+        )
         agent = await create_production_analytics_agent()
         status = await agent.get_status()
         return status
@@ -1580,7 +1592,7 @@ async def get_analytics_status():
 
 def register_inventory_handlers():
     """Register inventory namespace event handlers for real-time inventory management."""
-    
+
     @socketio.on('connect', namespace='/ws/inventory')
     def handle_inventory_connect():
         """Handle client connection to inventory namespace."""
@@ -1591,7 +1603,7 @@ def register_inventory_handlers():
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'message': 'Connected to Royal Equips Inventory System'
         })
-        
+
         # Send initial inventory status
         try:
             orchestrator = get_orchestrator()
@@ -1619,11 +1631,11 @@ def register_inventory_handlers():
         try:
             orchestrator = get_orchestrator()
             inventory_agent = orchestrator.get_agent('production-inventory')
-            
+
             if not inventory_agent:
                 emit('error', {'message': 'Inventory agent not available'})
                 return
-            
+
             # Get dashboard data
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -1634,11 +1646,11 @@ def register_inventory_handlers():
                     inventory_agent._generate_inventory_analytics(),
                     inventory_agent._monitor_supplier_performance()
                 ]
-                
+
                 inventory_data, reorder_analysis, analytics, supplier_performance = loop.run_until_complete(
                     asyncio.gather(*tasks)
                 )
-                
+
                 dashboard_data = {
                     'inventory_overview': {
                         'total_skus': len(inventory_data),
@@ -1661,12 +1673,12 @@ def register_inventory_handlers():
                     },
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 }
-                
+
                 emit('dashboard_data', dashboard_data)
-                
+
             finally:
                 loop.close()
-                
+
         except Exception as e:
             logger.error(f"Failed to get inventory dashboard data: {e}")
             emit('error', {'message': str(e)})
@@ -1677,11 +1689,11 @@ def register_inventory_handlers():
         try:
             orchestrator = get_orchestrator()
             inventory_agent = orchestrator.get_agent('production-inventory')
-            
+
             if not inventory_agent:
                 emit('error', {'message': 'Inventory agent not available'})
                 return
-            
+
             # Analyze reorder requirements
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -1690,7 +1702,7 @@ def register_inventory_handlers():
                 emit('reorder_analysis', reorder_analysis)
             finally:
                 loop.close()
-                
+
         except Exception as e:
             logger.error(f"Failed to get reorder analysis: {e}")
             emit('error', {'message': str(e)})
@@ -1701,11 +1713,11 @@ def register_inventory_handlers():
         try:
             orchestrator = get_orchestrator()
             inventory_agent = orchestrator.get_agent('production-inventory')
-            
+
             if not inventory_agent:
                 emit('error', {'message': 'Inventory agent not available'})
                 return
-            
+
             # Monitor supplier performance
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -1714,7 +1726,7 @@ def register_inventory_handlers():
                 emit('supplier_performance', performance_report)
             finally:
                 loop.close()
-                
+
         except Exception as e:
             logger.error(f"Failed to get supplier performance: {e}")
             emit('error', {'message': str(e)})
@@ -1725,18 +1737,18 @@ def register_inventory_handlers():
         try:
             orchestrator = get_orchestrator()
             inventory_agent = orchestrator.get_agent('production-inventory')
-            
+
             if not inventory_agent:
                 emit('error', {'message': 'Inventory agent not available'})
                 return
-            
+
             # Execute procurement
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
                 procurement_results = loop.run_until_complete(inventory_agent._execute_automated_procurement())
                 emit('procurement_results', procurement_results)
-                
+
                 # Also send updated dashboard data
                 dashboard_data = loop.run_until_complete(inventory_agent._fetch_current_inventory())
                 emit('inventory_updated', {
@@ -1745,10 +1757,10 @@ def register_inventory_handlers():
                     'total_value': procurement_results.get('total_value', 0.0),
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 })
-                
+
             finally:
                 loop.close()
-                
+
         except Exception as e:
             logger.error(f"Failed to execute procurement: {e}")
             emit('error', {'message': str(e)})
@@ -1759,27 +1771,27 @@ def register_inventory_handlers():
         try:
             sku = data.get('sku') if data else None
             optimization_type = data.get('type', 'eoq') if data else 'eoq'
-            
+
             orchestrator = get_orchestrator()
             inventory_agent = orchestrator.get_agent('production-inventory')
-            
+
             if not inventory_agent:
                 emit('error', {'message': 'Inventory agent not available'})
                 return
-            
+
             # Get item data and optimize
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
                 inventory_data = loop.run_until_complete(inventory_agent._fetch_current_inventory())
-                
+
                 if sku:
                     # Optimize specific SKU
                     item = next((item for item in inventory_data if item.get('sku') == sku), None)
                     if not item:
                         emit('error', {'message': f'SKU {sku} not found'})
                         return
-                    
+
                     if optimization_type == 'eoq':
                         result = loop.run_until_complete(inventory_agent._optimize_eoq(item))
                     elif optimization_type == 'safety_stock':
@@ -1789,7 +1801,7 @@ def register_inventory_handlers():
                     else:
                         emit('error', {'message': f'Unknown optimization type: {optimization_type}'})
                         return
-                    
+
                     if result:
                         emit('optimization_result', {
                             'sku': sku,
@@ -1799,11 +1811,11 @@ def register_inventory_handlers():
                         })
                     else:
                         emit('error', {'message': 'Optimization failed - insufficient data'})
-                
+
                 else:
                     # Optimize all items
                     emit('optimization_progress', {'status': 'started', 'total_items': len(inventory_data)})
-                    
+
                     optimization_results = []
                     for i, item in enumerate(inventory_data[:10]):  # Limit to first 10 for performance
                         if optimization_type == 'eoq':
@@ -1812,27 +1824,27 @@ def register_inventory_handlers():
                             result = loop.run_until_complete(inventory_agent._optimize_safety_stock(item))
                         elif optimization_type == 'reorder_point':
                             result = loop.run_until_complete(inventory_agent._optimize_reorder_point(item))
-                        
+
                         if result:
                             optimization_results.append(result)
-                        
+
                         # Send progress update
                         emit('optimization_progress', {
                             'status': 'processing',
                             'completed': i + 1,
                             'total_items': min(len(inventory_data), 10)
                         })
-                    
+
                     emit('optimization_complete', {
                         'type': optimization_type,
                         'results': optimization_results,
                         'total_optimized': len(optimization_results),
                         'timestamp': datetime.now(timezone.utc).isoformat()
                     })
-                    
+
             finally:
                 loop.close()
-                
+
         except Exception as e:
             logger.error(f"Failed to optimize inventory: {e}")
             emit('error', {'message': str(e)})
@@ -1842,7 +1854,7 @@ def register_inventory_handlers():
 
 def register_security_handlers():
     """Register security monitoring WebSocket handlers for /ws/security namespace."""
-    
+
     @socketio.on('connect', namespace='/ws/security')
     def handle_security_connect():
         """Handle client connection to security monitoring."""
@@ -1859,26 +1871,26 @@ def register_security_handlers():
         """Handle request for current security status."""
         try:
             from app.orchestrator_bridge import get_orchestrator
-            
+
             orchestrator = get_orchestrator()
             security_agent = orchestrator.get_agent('security_fraud')
-            
+
             if not security_agent:
                 emit('security_error', {'error': 'Security agent not available'})
                 return
-            
+
             # Get security agent health status
             import asyncio
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             try:
                 health_status = loop.run_until_complete(security_agent.health_check())
-                
+
                 # Get recent alerts summary
                 fraud_alerts_count = len([alert for alert in security_agent.fraud_alerts[-24:]])
                 security_events_count = len([event for event in security_agent.security_events[-24:]])
-                
+
                 security_metrics = {
                     'agent_status': health_status.get('status', 'unknown'),
                     'fraud_alerts_24h': fraud_alerts_count,
@@ -1887,16 +1899,16 @@ def register_security_handlers():
                     'last_scan': health_status.get('last_run'),
                     'systems_operational': health_status.get('systems_status') == 'operational'
                 }
-                
+
                 emit('security_status_update', {
                     'type': 'status_update',
                     'security_metrics': security_metrics,
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 })
-                
+
             finally:
                 loop.close()
-                
+
         except Exception as e:
             logger.error(f"Failed to get security status: {e}")
             emit('security_error', {'error': str(e)})
@@ -1906,35 +1918,35 @@ def register_security_handlers():
         """Handle request to run fraud detection scan."""
         try:
             from app.orchestrator_bridge import get_orchestrator
-            
+
             orchestrator = get_orchestrator()
             security_agent = orchestrator.get_agent('security_fraud')
-            
+
             if not security_agent:
                 emit('security_error', {'error': 'Security agent not available'})
                 return
-            
+
             # Notify scan started
             emit('fraud_scan_progress', {
                 'status': 'running',
                 'message': 'Fraud detection scan in progress...',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             })
-            
+
             # Run fraud detection
             import asyncio
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             try:
                 suspicious_transactions = loop.run_until_complete(
                     security_agent._detect_fraudulent_transactions()
                 )
-                
+
                 # Process high-risk transactions
                 high_risk_count = 0
                 alerts_generated = []
-                
+
                 for transaction in suspicious_transactions:
                     if transaction.get('risk_score', 0) >= security_agent.risk_threshold:
                         high_risk_count += 1
@@ -1946,7 +1958,7 @@ def register_security_handlers():
                             'risk_score': transaction.get('risk_score'),
                             'action_taken': alert_result.get('action', 'reviewed')
                         })
-                
+
                 # Send scan results
                 scan_results = {
                     'status': 'completed',
@@ -1956,12 +1968,12 @@ def register_security_handlers():
                     'scan_duration': '2.3s',
                     'alerts_details': alerts_generated[-5:]
                 }
-                
+
                 emit('fraud_scan_completed', {
                     'results': scan_results,
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 })
-                
+
                 # If high-risk transactions found, send alert
                 if high_risk_count > 0:
                     emit('security_alert', {
@@ -1971,10 +1983,10 @@ def register_security_handlers():
                         'details': scan_results,
                         'timestamp': datetime.now(timezone.utc).isoformat()
                     })
-                
+
             finally:
                 loop.close()
-                
+
         except Exception as e:
             logger.error(f"Failed to run fraud scan: {e}")
             emit('fraud_scan_error', {
@@ -1986,11 +1998,11 @@ def register_security_handlers():
     def handle_join_security_monitoring():
         """Handle client joining security monitoring room."""
         logger.info("Client joined security monitoring room")
-        
+
         # Send initial security status
         handle_security_status_request()
 
-    @socketio.on('leave_security_monitoring', namespace='/ws/security')  
+    @socketio.on('leave_security_monitoring', namespace='/ws/security')
     def handle_leave_security_monitoring():
         """Handle client leaving security monitoring room."""
         logger.info("Client left security monitoring room")
@@ -2037,10 +2049,10 @@ def register_security_handlers():
                 'security_score': 96.8,
                 'last_updated': datetime.now(timezone.utc).isoformat()
             }
-            
+
             emit('finance_update', status)
             logger.info("Finance status sent to client")
-            
+
         except Exception as e:
             logger.error(f"Finance status request failed: {e}")
             emit('error', {'message': 'Failed to fetch finance status'})
@@ -2051,15 +2063,15 @@ def register_security_handlers():
         try:
             # Get stream parameters
             filters = data.get('filters', {}) if data else {}
-            
+
             # Simulate real-time transaction processing
             import random
-            
+
             transaction_types = ['revenue', 'expense', 'refund', 'fee']
             payment_methods = ['Credit Card', 'PayPal', 'Apple Pay', 'Bank Transfer']
             gateways = ['Stripe', 'PayPal', 'Square', 'Adyen']
             statuses = ['captured', 'pending', 'failed', 'processing']
-            
+
             # Generate realistic transaction
             transaction = {
                 'id': f'txn_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}_{random.randint(1000, 9999)}',
@@ -2077,13 +2089,13 @@ def register_security_handlers():
                 'net_amount': 0,  # Will be calculated
                 'risk_score': random.randint(10, 95)
             }
-            
+
             # Calculate net amount
             transaction['net_amount'] = transaction['amount'] - transaction['fees']
-            
+
             emit('transaction_processed', transaction)
             logger.info(f"Transaction stream data sent: {transaction['id']}")
-            
+
         except Exception as e:
             logger.error(f"Transaction stream request failed: {e}")
             emit('error', {'message': 'Failed to enable transaction stream'})
@@ -2093,21 +2105,21 @@ def register_security_handlers():
         """Subscribe client to fraud alerts."""
         try:
             import random
-            
+
             # Simulate potential fraud scenarios
             alert_types = [
                 'Velocity Check Failed',
-                'Unusual Geographic Pattern', 
+                'Unusual Geographic Pattern',
                 'High-Risk Card BIN',
                 'Suspicious Transaction Amount',
                 'Multiple Failed Attempts',
                 'Device Fingerprint Mismatch'
             ]
-            
+
             # Generate realistic fraud alert
             risk_score = random.randint(55, 95)
             alert_type = random.choice(alert_types)
-            
+
             alert = {
                 'id': f'fraud_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}',
                 'transaction_id': f'txn_suspicious_{random.randint(1000, 9999)}',
@@ -2125,10 +2137,10 @@ def register_security_handlers():
                     'device_fingerprint': f'fp_{random.randint(100000, 999999)}'
                 }
             }
-            
+
             emit('fraud_alert', alert)
             logger.info(f"Fraud alert sent: {alert['id']} (Risk: {risk_score}%)")
-            
+
         except Exception as e:
             logger.error(f"Fraud alert subscription failed: {e}")
             emit('error', {'message': 'Failed to subscribe to fraud alerts'})
@@ -2138,16 +2150,16 @@ def register_security_handlers():
         """Handle financial metrics requests."""
         try:
             import random
-            
+
             # Generate realistic financial metrics
             total_revenue = round(random.uniform(100000, 200000), 2)
             total_expenses = round(total_revenue * random.uniform(0.55, 0.75), 2)
             net_profit = total_revenue - total_expenses
             profit_margin = (net_profit / total_revenue) * 100
-            
+
             metrics = {
                 'total_revenue': total_revenue,
-                'total_expenses': total_expenses, 
+                'total_expenses': total_expenses,
                 'net_profit': net_profit,
                 'profit_margin': round(profit_margin, 2),
                 'transaction_count': random.randint(800, 1500),
@@ -2163,10 +2175,10 @@ def register_security_handlers():
                 'chargeback_rate': round(random.uniform(0.1, 0.8), 2),
                 'updated_at': datetime.now(timezone.utc).isoformat()
             }
-            
+
             emit('financial_metrics_update', metrics)
             logger.info("Financial metrics sent to client")
-            
+
         except Exception as e:
             logger.error(f"Financial metrics request failed: {e}")
             emit('error', {'message': 'Failed to fetch financial metrics'})
@@ -2176,7 +2188,7 @@ def register_security_handlers():
         """Handle payment method analytics requests."""
         try:
             import random
-            
+
             # Generate realistic payment method performance data
             payment_methods = {
                 'Credit Card': {
@@ -2191,7 +2203,7 @@ def register_security_handlers():
                 'PayPal': {
                     'total_transactions': random.randint(200, 300),
                     'successful_transactions': 0,
-                    'success_rate': round(random.uniform(97.8, 99.2), 1), 
+                    'success_rate': round(random.uniform(97.8, 99.2), 1),
                     'total_volume': round(random.uniform(25000, 35000), 2),
                     'avg_transaction_value': 0,
                     'processing_fees': round(random.uniform(750, 1100), 2),
@@ -2216,12 +2228,12 @@ def register_security_handlers():
                     'chargeback_rate': round(random.uniform(0.02, 0.08), 2)
                 }
             }
-            
+
             # Calculate derived metrics
             for method_name, data in payment_methods.items():
                 data['successful_transactions'] = int(data['total_transactions'] * (data['success_rate'] / 100))
                 data['avg_transaction_value'] = round(data['total_volume'] / data['total_transactions'], 2)
-            
+
             # Gateway performance data
             gateway_performance = {
                 'Stripe': {
@@ -2246,7 +2258,7 @@ def register_security_handlers():
                     'error_rate': round(random.uniform(0.3, 1.5), 2)
                 }
             }
-            
+
             analytics = {
                 'payment_methods': payment_methods,
                 'gateway_performance': gateway_performance,
@@ -2266,10 +2278,10 @@ def register_security_handlers():
                 },
                 'updated_at': datetime.now(timezone.utc).isoformat()
             }
-            
+
             emit('payment_analytics_update', analytics)
             logger.info("Payment analytics sent to client")
-            
+
         except Exception as e:
             logger.error(f"Payment analytics request failed: {e}")
             emit('error', {'message': 'Failed to fetch payment analytics'})
@@ -2280,15 +2292,15 @@ def register_security_handlers():
         try:
             import random
             from datetime import timedelta
-            
+
             # Generate cash flow projection data
             cash_inflows = []
             cash_outflows = []
-            
+
             # Generate 30 days of cash flow data
             for i in range(30):
                 date = (datetime.now(timezone.utc) + timedelta(days=i)).date().isoformat()
-                
+
                 # Inflows (revenue, collections)
                 daily_inflow = round(random.uniform(3000, 8000), 2)
                 cash_inflows.append({
@@ -2297,7 +2309,7 @@ def register_security_handlers():
                     'source': 'operations',
                     'confidence': round(random.uniform(85, 98), 1)
                 })
-                
+
                 # Outflows (expenses, payroll)
                 daily_outflow = round(random.uniform(2000, 5500), 2)
                 cash_outflows.append({
@@ -2306,11 +2318,11 @@ def register_security_handlers():
                     'category': 'operational_expenses',
                     'confidence': round(random.uniform(90, 99), 1)
                 })
-            
+
             # Calculate running balance
             current_balance = round(random.uniform(45000, 85000), 2)
             projected_balances = []
-            
+
             for i in range(30):
                 daily_net = cash_inflows[i]['amount'] - cash_outflows[i]['amount']
                 current_balance += daily_net
@@ -2319,7 +2331,7 @@ def register_security_handlers():
                     'balance': round(current_balance, 2),
                     'net_change': round(daily_net, 2)
                 })
-            
+
             analysis = {
                 'current_balance': projected_balances[0]['balance'] if projected_balances else current_balance,
                 'projected_balances': projected_balances[:7],  # Next 7 days
@@ -2329,7 +2341,7 @@ def register_security_handlers():
                     'avg_daily_inflow': round(sum(cf['amount'] for cf in cash_inflows[:7]) / 7, 2),
                     'avg_daily_outflow': round(sum(cf['amount'] for cf in cash_outflows[:7]) / 7, 2),
                     'net_weekly_flow': round(
-                        sum(cf['amount'] for cf in cash_inflows[:7]) - 
+                        sum(cf['amount'] for cf in cash_inflows[:7]) -
                         sum(cf['amount'] for cf in cash_outflows[:7]), 2
                     ),
                     'burn_rate': round(sum(cf['amount'] for cf in cash_outflows[:30]) / 30, 2),
@@ -2338,7 +2350,7 @@ def register_security_handlers():
                 'alerts': [],
                 'updated_at': datetime.now(timezone.utc).isoformat()
             }
-            
+
             # Add alerts if balance goes negative
             for balance in projected_balances:
                 if balance['balance'] < 0:
@@ -2352,15 +2364,15 @@ def register_security_handlers():
                 elif balance['balance'] < 10000:
                     analysis['alerts'].append({
                         'type': 'low_balance',
-                        'date': balance['date'], 
+                        'date': balance['date'],
                         'message': f'Low balance warning: ${balance["balance"]:,.2f}',
                         'severity': 'medium'
                     })
                     break
-            
+
             emit('cash_flow_analysis_update', analysis)
             logger.info("Cash flow analysis sent to client")
-            
+
         except Exception as e:
             logger.error(f"Cash flow analysis request failed: {e}")
             emit('error', {'message': 'Failed to fetch cash flow analysis'})
@@ -2371,9 +2383,9 @@ def register_security_handlers():
         try:
             # Get automation parameters
             automation_type = data.get('type', 'full_cycle') if data else 'full_cycle'
-            
+
             logger.info(f"Starting financial automation: {automation_type}")
-            
+
             # Simulate automation steps
             steps = [
                 {'step': 'transaction_processing', 'status': 'running', 'progress': 10},
@@ -2384,16 +2396,16 @@ def register_security_handlers():
                 {'step': 'reporting', 'status': 'running', 'progress': 95},
                 {'step': 'completion', 'status': 'completed', 'progress': 100}
             ]
-            
+
             import threading
             import time
-            
+
             def run_automation_steps():
                 """Execute automation steps with progress updates."""
                 try:
                     for i, step in enumerate(steps):
                         time.sleep(2)  # Simulate processing time
-                        
+
                         emit('financial_automation_progress', {
                             'step': step['step'],
                             'status': step['status'],
@@ -2402,14 +2414,14 @@ def register_security_handlers():
                             'total_steps': len(steps),
                             'timestamp': datetime.now(timezone.utc).isoformat()
                         })
-                        
+
                         if step['status'] == 'completed':
                             # Send final results
                             results = {
                                 'automation_type': automation_type,
                                 'execution_time': f"{len(steps) * 2} seconds",
                                 'transactions_processed': random.randint(450, 750),
-                                'fraud_alerts_generated': random.randint(0, 3), 
+                                'fraud_alerts_generated': random.randint(0, 3),
                                 'revenue_calculated': round(random.uniform(85000, 125000), 2),
                                 'expenses_categorized': random.randint(280, 420),
                                 'accounts_reconciled': random.randint(15, 25),
@@ -2417,11 +2429,11 @@ def register_security_handlers():
                                 'status': 'success',
                                 'completed_at': datetime.now(timezone.utc).isoformat()
                             }
-                            
+
                             emit('financial_automation_completed', results)
                             logger.info(f"Financial automation completed: {automation_type}")
                             break
-                            
+
                 except Exception as e:
                     logger.error(f"Automation execution failed: {e}")
                     emit('financial_automation_error', {
@@ -2429,19 +2441,19 @@ def register_security_handlers():
                         'details': str(e),
                         'timestamp': datetime.now(timezone.utc).isoformat()
                     })
-            
+
             # Start automation in background thread
             automation_thread = threading.Thread(target=run_automation_steps)
             automation_thread.daemon = True
             automation_thread.start()
-            
+
             # Send immediate acknowledgment
             emit('financial_automation_started', {
                 'automation_type': automation_type,
                 'estimated_duration': f"{len(steps) * 2} seconds",
                 'started_at': datetime.now(timezone.utc).isoformat()
             })
-            
+
         except Exception as e:
             logger.error(f"Financial automation start failed: {e}")
             emit('error', {'message': 'Failed to start financial automation'})
@@ -2450,14 +2462,14 @@ def register_security_handlers():
     def handle_join_finance_monitoring():
         """Handle client joining finance monitoring room."""
         logger.info("Client joined finance monitoring room")
-        
+
         # Send initial finance status
         handle_finance_status_request()
-        
+
         # Send initial metrics
         handle_financial_metrics_request()
 
-    @socketio.on('leave_finance_monitoring', namespace='/ws/finance')  
+    @socketio.on('leave_finance_monitoring', namespace='/ws/finance')
     def handle_leave_finance_monitoring():
         """Handle client leaving finance monitoring room."""
         logger.info("Client left finance monitoring room")

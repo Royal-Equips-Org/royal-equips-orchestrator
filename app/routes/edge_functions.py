@@ -9,9 +9,7 @@ import asyncio
 import json
 import logging
 import threading
-import time
-from datetime import timezone, datetime, timedelta
-from typing import Dict, List, Any, Optional
+from datetime import datetime, timedelta, timezone
 
 # Safe import of aiohttp with auto-fixing capabilities
 try:
@@ -30,7 +28,7 @@ except ImportError:
         logging.getLogger(__name__).warning("aiohttp not available - some edge function features will be limited")
 
 import requests
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request
 from flask_socketio import emit
 
 logger = logging.getLogger(__name__)
@@ -111,7 +109,7 @@ def get_edge_functions_status():
     try:
         # Trigger async health check
         asyncio.create_task(check_all_edge_functions_health())
-        
+
         return jsonify({
             'functions': EDGE_FUNCTIONS,
             'stats': edge_function_stats,
@@ -129,7 +127,7 @@ async def trigger_health_check():
     """Trigger immediate health check of all edge functions."""
     try:
         results = await check_all_edge_functions_health()
-        
+
         # Emit real-time update (if socketio is available)
         try:
             from app.sockets import socketio
@@ -140,7 +138,7 @@ async def trigger_health_check():
                 }, namespace='/edge-functions')
         except ImportError:
             logger.debug("SocketIO not available for health check updates")
-        
+
         return jsonify({
             'success': True,
             'results': results,
@@ -165,12 +163,12 @@ def get_edge_functions_metrics():
             'categories': {},
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
-        
+
         # Calculate metrics for each function
         for func_name, func_config in EDGE_FUNCTIONS.items():
             stats = edge_function_stats.get(func_name, {})
             health = last_health_check.get(func_name, {})
-            
+
             metrics['functions'][func_name] = {
                 'requests_24h': stats.get('requests_24h', 0),
                 'errors_24h': stats.get('errors_24h', 0),
@@ -181,11 +179,11 @@ def get_edge_functions_metrics():
                 'priority': func_config['priority'],
                 'status': health.get('status', 'unknown')
             }
-            
+
             # Aggregate metrics
             metrics['aggregate']['total_requests'] += stats.get('requests_24h', 0)
             metrics['aggregate']['total_errors'] += stats.get('errors_24h', 0)
-        
+
         # Calculate category metrics
         for func_name, func_data in metrics['functions'].items():
             category = func_data['category']
@@ -196,13 +194,13 @@ def get_edge_functions_metrics():
                     'total_requests': 0,
                     'total_errors': 0
                 }
-            
+
             metrics['categories'][category]['functions'] += 1
             if func_data['status'] == 'healthy':
                 metrics['categories'][category]['healthy'] += 1
             metrics['categories'][category]['total_requests'] += func_data['requests_24h']
             metrics['categories'][category]['total_errors'] += func_data['errors_24h']
-        
+
         return jsonify(metrics)
     except Exception as e:
         logger.error(f"Edge functions metrics error: {e}")
@@ -214,13 +212,13 @@ def deploy_edge_function():
     try:
         func_name = request.args.get('function')
         environment = request.args.get('environment', 'production')
-        
+
         if not func_name or func_name not in EDGE_FUNCTIONS:
             return jsonify({'error': 'Invalid function name'}), 400
-        
+
         # Trigger deployment (this would integrate with Wrangler CLI or API)
         deployment_result = trigger_edge_function_deployment(func_name, environment)
-        
+
         # Emit real-time update (if socketio is available)
         try:
             from app.sockets import socketio
@@ -233,7 +231,7 @@ def deploy_edge_function():
                 }, namespace='/edge-functions')
         except ImportError:
             logger.debug("SocketIO not available for deployment updates")
-        
+
         return jsonify({
             'success': True,
             'function': func_name,
@@ -252,13 +250,13 @@ def get_edge_function_logs():
         func_name = request.args.get('function')
         limit = int(request.args.get('limit', 100))
         since = request.args.get('since', '1h')
-        
+
         if not func_name or func_name not in EDGE_FUNCTIONS:
             return jsonify({'error': 'Invalid function name'}), 400
-        
+
         # Fetch logs from Cloudflare Workers API
         logs = fetch_edge_function_logs(func_name, limit, since)
-        
+
         return jsonify({
             'function': func_name,
             'logs': logs,
@@ -272,23 +270,23 @@ def get_edge_function_logs():
 async def check_all_edge_functions_health():
     """Asynchronously check health of all edge functions."""
     results = {}
-    
+
     # Check if aiohttp is available
     if aiohttp is None:
         logger.warning("aiohttp not available - using synchronous health checks")
         return check_all_edge_functions_health_sync()
-    
+
     try:
         async with aiohttp.ClientSession() as session:
             tasks = []
-            
+
             for func_name, func_config in EDGE_FUNCTIONS.items():
                 task = check_single_function_health(session, func_name, func_config)
                 tasks.append(task)
-            
+
             # Execute all health checks concurrently
             health_results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             for i, (func_name, _) in enumerate(EDGE_FUNCTIONS.items()):
                 result = health_results[i]
                 if isinstance(result, Exception):
@@ -303,35 +301,35 @@ async def check_all_edge_functions_health():
         logger.error(f"Error in async health check: {e}")
         # Fallback to sync health checks
         return check_all_edge_functions_health_sync()
-    
+
     # Update global state
     last_health_check.update(results)
-    
+
     return results
 
 def check_all_edge_functions_health_sync():
     """Synchronous fallback for health checks when aiohttp is not available."""
     results = {}
-    
+
     for func_name, func_config in EDGE_FUNCTIONS.items():
         try:
             start_time = datetime.now(timezone.utc)
-            
+
             # Use requests for synchronous health check
             response = requests.get(
                 f"{func_config['url']}/health",
                 timeout=10
             )
-            
+
             end_time = datetime.now(timezone.utc)
             response_time = (end_time - start_time).total_seconds() * 1000
-            
+
             if response.status_code == 200:
                 try:
                     health_data = response.json()
                 except json.JSONDecodeError:
                     health_data = {}
-                
+
                 results[func_name] = {
                     'status': 'healthy',
                     'response_time': response_time,
@@ -345,17 +343,17 @@ def check_all_edge_functions_health_sync():
                     'timestamp': end_time.isoformat(),
                     'status_code': response.status_code
                 }
-                
+
         except Exception as e:
             results[func_name] = {
                 'status': 'error',
                 'error': str(e),
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
-    
+
     # Update global state
     last_health_check.update(results)
-    
+
     return results
 
 async def check_single_function_health(session, func_name, func_config):
@@ -363,10 +361,10 @@ async def check_single_function_health(session, func_name, func_config):
     if aiohttp is None:
         logger.warning("aiohttp not available for async health check")
         return {'status': 'error', 'error': 'aiohttp not available'}
-    
+
     try:
         start_time = datetime.now(timezone.utc)
-        
+
         # Make health check request
         async with session.get(
             f"{func_config['url']}/health",
@@ -374,7 +372,7 @@ async def check_single_function_health(session, func_name, func_config):
         ) as response:
             end_time = datetime.now(timezone.utc)
             response_time = (end_time - start_time).total_seconds() * 1000
-            
+
             if response.status == 200:
                 health_data = await response.json()
                 return {
@@ -390,7 +388,7 @@ async def check_single_function_health(session, func_name, func_config):
                     'status_code': response.status,
                     'timestamp': end_time.isoformat()
                 }
-    
+
     except asyncio.TimeoutError:
         return {
             'status': 'timeout',
@@ -409,7 +407,7 @@ def trigger_edge_function_deployment(func_name, environment):
         # This would integrate with Wrangler CLI or Cloudflare API
         # For now, return a mock response
         deployment_id = f"deploy_{func_name}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
-        
+
         return {
             'deployment_id': deployment_id,
             'status': 'queued',
@@ -431,18 +429,18 @@ def fetch_edge_function_logs(func_name, limit, since):
         import os
         cf_api_token = os.getenv('CLOUDFLARE_API_TOKEN')
         cf_account_id = os.getenv('CLOUDFLARE_ACCOUNT_ID')
-        
+
         if not cf_api_token or not cf_account_id:
             error_msg = "Cloudflare credentials required (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID). No mock data in production."
             logger.error(error_msg)
             raise ValueError(error_msg)
-        
+
         # Integrate with Cloudflare Logs API
         headers = {
             'Authorization': f'Bearer {cf_api_token}',
             'Content-Type': 'application/json'
         }
-        
+
         response = requests.get(
             f'https://api.cloudflare.com/client/v4/accounts/{cf_account_id}/logs/received',
             headers=headers,
@@ -453,12 +451,12 @@ def fetch_edge_function_logs(func_name, limit, since):
             },
             timeout=30
         )
-        
+
         if response.status_code != 200:
             raise RuntimeError(f"Cloudflare API returned status {response.status_code}")
-        
+
         return response.json().get('result', [])
-        
+
     except Exception as e:
         logger.error(f"Log fetch error: {e}")
         raise
@@ -471,7 +469,7 @@ def start_edge_functions_monitoring():
             try:
                 # Check health every 30 seconds
                 asyncio.run(check_all_edge_functions_health())
-                
+
                 # Emit updates to connected clients (if socketio is available)
                 try:
                     from app.sockets import socketio
@@ -483,16 +481,16 @@ def start_edge_functions_monitoring():
                         }, namespace='/edge-functions')
                 except ImportError:
                     logger.debug("SocketIO not available for edge functions updates")
-                
+
                 # Sleep for 30 seconds
                 import time
                 time.sleep(30)
-                
+
             except Exception as e:
                 logger.error(f"Monitoring task error: {e}")
                 import time
                 time.sleep(60)  # Wait longer on error
-    
+
     # Start monitoring in background
     import threading
     thread = threading.Thread(target=monitoring_task)
@@ -502,11 +500,11 @@ def start_edge_functions_monitoring():
 def register_edge_functions_websocket_handlers():
     """Register WebSocket handlers for edge functions namespace."""
     from app.sockets import socketio
-    
+
     if socketio is None:
         logger.warning("SocketIO not initialized, skipping edge functions WebSocket handlers")
         return
-    
+
     @socketio.on('connect', namespace='/edge-functions')
     def handle_edge_functions_connect():
         """Handle client connection to edge functions namespace."""

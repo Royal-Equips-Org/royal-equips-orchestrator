@@ -24,6 +24,7 @@ sys.path.insert(0, str(repo_root))
 from fastapi import FastAPI, HTTPException, Response
 
 from orchestrator.agents import ProductResearchAgent
+
 # Note: Other agents temporarily disabled due to missing dependencies
 # from orchestrator.agents import (
 #     AnalyticsAgent,

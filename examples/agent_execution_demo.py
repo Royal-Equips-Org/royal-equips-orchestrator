@@ -12,9 +12,9 @@ Usage:
     python examples/agent_execution_demo.py
 """
 
+import json
 import sys
 import time
-import json
 from pathlib import Path
 
 # Add project root to path
@@ -50,11 +50,11 @@ def execute_product_research():
     print("\n" + "="*70)
     print("🏰 ROYAL EQUIPS - PRODUCT RESEARCH AGENT DEMONSTRATION")
     print("="*70)
-    
+
     # Create Flask app and test client
     app = create_app()
     client = app.test_client()
-    
+
     # Define search parameters
     params = {
         "parameters": {
@@ -63,12 +63,12 @@ def execute_product_research():
             "minMargin": 35
         }
     }
-    
+
     print("\n📋 Execution Parameters:")
     print(f"   Categories: {', '.join(params['parameters']['categories'])}")
     print(f"   Max Products: {params['parameters']['maxProducts']}")
     print(f"   Min Margin: {params['parameters']['minMargin']}%")
-    
+
     # Execute agent
     print("\n🚀 Initiating agent execution...")
     response = client.post(
@@ -76,124 +76,124 @@ def execute_product_research():
         data=json.dumps(params),
         content_type='application/json'
     )
-    
+
     if response.status_code != 200:
         print(f"❌ Execution failed: {response.status_code}")
         print(response.get_json())
         return False
-    
+
     result = response.get_json()
     execution_id = result['executionId']
-    
-    print(f"✅ Agent execution started")
+
+    print("✅ Agent execution started")
     print(f"   Execution ID: {execution_id}")
     print(f"   Agent: {result['agentId']}")
     print(f"   Status: {result['status']}")
-    
+
     # Wait for completion with progress updates
     print("\n⏳ Waiting for agent to complete...")
     max_wait = 10
     for i in range(max_wait):
         time.sleep(1)
-        
+
         response = client.get(f'/api/agents/executions/{execution_id}')
         if response.status_code != 200:
             print(f"❌ Status check failed: {response.status_code}")
             return False
-        
+
         status = response.get_json()
         progress = status.get('progress', 0)
-        
+
         # Show progress bar
         bar_length = 30
         filled = int(bar_length * progress / 100)
         bar = '█' * filled + '░' * (bar_length - filled)
         print(f"\r   Progress: [{bar}] {progress}%", end='', flush=True)
-        
+
         if status['status'] == 'completed':
             print()  # New line after progress
             break
         elif status['status'] == 'failed':
             print(f"\n❌ Agent execution failed: {status.get('error', 'Unknown error')}")
             return False
-    
+
     # Retrieve and display results
     print("\n\n📊 EXECUTION RESULTS")
     print("="*70)
-    
+
     result_data = status.get('result', {})
     if not result_data.get('success'):
         print("❌ Agent execution was not successful")
         return False
-    
+
     data = result_data.get('data', {})
     products = data.get('products', [])
-    
+
     print(f"\n✅ Successfully found {len(products)} profitable products!")
     print(f"   Categories searched: {', '.join(data.get('categories', []))}")
     print(f"   Total discoveries: {result_data.get('discoveries_count', 0)}")
-    
+
     if not products:
         print("\n⚠️  No products met the specified criteria")
         return True
-    
+
     # Display top 5 products
     print("\n" + "="*70)
     print("🏆 TOP PRODUCT OPPORTUNITIES")
     print("="*70)
-    
+
     for i, product in enumerate(products[:5], 1):
         print(format_product(product, i))
-    
+
     # Display summary statistics
     print("\n" + "="*70)
     print("📈 SUMMARY STATISTICS")
     print("="*70)
-    
+
     avg_margin = sum(p['margin_percent'] for p in products) / len(products)
     avg_score = sum(p['empire_score'] for p in products) / len(products)
     excellent_products = sum(1 for p in products if p['profit_potential'] == 'EXCELLENT')
     high_viability = sum(1 for p in products if p['market_viability'] == 'HIGH')
-    
+
     print(f"\n   Average Margin:        {avg_margin:.1f}%")
     print(f"   Average Empire Score:  {avg_score:.2f}/100")
     print(f"   Excellent Profit:      {excellent_products}/{len(products)} products")
     print(f"   High Viability:        {high_viability}/{len(products)} products")
-    
+
     # Category breakdown
     categories = {}
     for product in products:
         cat = product['category']
         categories[cat] = categories.get(cat, 0) + 1
-    
-    print(f"\n   Category Breakdown:")
+
+    print("\n   Category Breakdown:")
     for cat, count in categories.items():
         print(f"      {cat}: {count} products")
-    
+
     # Recommendations
     print("\n" + "="*70)
     print("💡 RECOMMENDATIONS")
     print("="*70)
-    
+
     top_product = products[0]
     print(f"\n   🥇 Top Opportunity: {top_product['title']}")
     print(f"      - Empire Score: {top_product['empire_score']:.2f}/100")
     print(f"      - Profit Margin: {top_product['margin_percent']:.1f}%")
     print(f"      - Estimated Profit: ${top_product['margin']:.2f} per unit")
-    print(f"      - Recommendation: Strong candidate for immediate listing")
-    
+    print("      - Recommendation: Strong candidate for immediate listing")
+
     if excellent_products >= 3:
         print(f"\n   ✨ {excellent_products} products have EXCELLENT profit potential")
-        print(f"      - Recommend adding top 3-5 to your store immediately")
-    
+        print("      - Recommend adding top 3-5 to your store immediately")
+
     if avg_margin > 60:
         print(f"\n   💰 Average margin ({avg_margin:.1f}%) is excellent")
-        print(f"      - Strong profit potential across the board")
-    
+        print("      - Strong profit potential across the board")
+
     print("\n" + "="*70)
     print("✅ Product research completed successfully!")
     print("="*70)
-    
+
     return True
 
 

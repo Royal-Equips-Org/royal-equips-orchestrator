@@ -5,8 +5,8 @@ Provides real-time agent health monitoring, availability tracking, and performan
 """
 
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +21,18 @@ def get_active_agent_count() -> Dict[str, Any]:
     try:
         # In a real implementation, this would query your agent registry/database
         # This provides monitoring metrics for demonstration purposes
-        
+
         # Agent monitoring data representing a typical enterprise deployment
         total_agents = 12
-        
+
         # Simulate agent health based on system state
         # In production, this would check actual agent heartbeats
         healthy_agents = 11  # 1 agent in maintenance
         active_agents = 10   # 1 healthy agent on standby
-        
+
         # Calculate availability percentage
         availability_percentage = (active_agents / total_agents) * 100
-        
+
         # Agent type breakdown
         agent_types = {
             "data_collectors": {"total": 3, "active": 3, "health": "excellent"},
@@ -43,14 +43,14 @@ def get_active_agent_count() -> Dict[str, Any]:
             "fraud_detectors": {"total": 1, "active": 1, "health": "excellent"},
             "financial_controllers": {"total": 1, "active": 0, "health": "maintenance"}  # Planned maintenance
         }
-        
+
         # Performance metrics
         avg_response_time = 150  # ms
         success_rate = 98.5      # percentage
-        
+
         # Recent activity simulation
         recent_activities = generate_recent_activities()
-        
+
         return {
             "total_agents": total_agents,
             "active_agents": active_agents,
@@ -67,7 +67,7 @@ def get_active_agent_count() -> Dict[str, Any]:
             "last_heartbeat_check": datetime.now(timezone.utc).isoformat(),
             "next_health_scan": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Agent monitoring failed: {e}")
         # Return safe fallback values
@@ -128,7 +128,7 @@ def generate_recent_activities() -> List[Dict[str, Any]]:
             "details": "Processed 456 transactions, no fraud detected"
         }
     ]
-    
+
     return activities
 
 
@@ -139,7 +139,7 @@ def get_agent_health_details(agent_id: Optional[str] = None) -> Dict[str, Any]:
             return get_single_agent_health(agent_id)
         else:
             return get_all_agents_health()
-            
+
     except Exception as e:
         logger.error(f"Failed to get agent health details: {e}")
         return {
@@ -177,11 +177,11 @@ def get_all_agents_health() -> Dict[str, Any]:
         "fraud_detector_01",
         "financial_controller_01"
     ]
-    
+
     agents_health = {}
     for agent_id in agent_ids:
         agents_health[agent_id] = get_single_agent_health(agent_id)
-    
+
     return {
         "agents": agents_health,
         "summary": get_active_agent_count(),
@@ -193,7 +193,7 @@ def check_agent_heartbeats() -> Dict[str, Any]:
     """Check all agent heartbeats and return status summary."""
     try:
         agent_stats = get_active_agent_count()
-        
+
         # Simulate heartbeat check results
         heartbeat_results = {
             "total_checked": agent_stats["total_agents"],
@@ -208,9 +208,9 @@ def check_agent_heartbeats() -> Dict[str, Any]:
             "check_timestamp": datetime.now(timezone.utc).isoformat(),
             "next_check": (datetime.now(timezone.utc) + timedelta(seconds=60)).isoformat()
         }
-        
+
         return heartbeat_results
-        
+
     except Exception as e:
         logger.error(f"Heartbeat check failed: {e}")
         return {

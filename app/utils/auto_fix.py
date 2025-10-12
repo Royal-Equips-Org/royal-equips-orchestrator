@@ -10,14 +10,14 @@ import logging
 import subprocess
 import sys
 import time
-from typing import Dict, List, Optional, Tuple, Any
 from functools import wraps
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
 class AutoFixer:
     """Automatic error detection and fixing system."""
-    
+
     def __init__(self):
         self.fix_attempts = {}
         self.max_retries = 3
@@ -33,7 +33,7 @@ class AutoFixer:
             'openai': 'openai>=1.0',
             'github': 'PyGithub>=1.59',
         }
-        
+
     def safe_import(self, module_name: str, package: Optional[str] = None) -> Tuple[bool, Optional[Any]]:
         """
         Safely import a module with auto-fixing capabilities.
@@ -50,7 +50,7 @@ class AutoFixer:
             return True, module
         except ImportError as e:
             logger.warning(f"Import failed for {module_name}: {e}")
-            
+
             # Try to auto-fix the import error
             if self._try_fix_import_error(module_name, str(e)):
                 try:
@@ -60,9 +60,9 @@ class AutoFixer:
                     return True, module
                 except ImportError as retry_error:
                     logger.error(f"Import still failed after auto-fix: {retry_error}")
-            
+
             return False, None
-    
+
     def _try_fix_import_error(self, module_name: str, error_msg: str) -> bool:
         """
         Attempt to fix an import error by installing missing dependencies.
@@ -76,19 +76,19 @@ class AutoFixer:
         """
         # Extract the actual missing module from error message
         missing_module = self._extract_missing_module(error_msg)
-        
+
         if missing_module in self.fix_attempts:
             if self.fix_attempts[missing_module] >= self.max_retries:
                 logger.warning(f"Max retries reached for {missing_module}")
                 return False
         else:
             self.fix_attempts[missing_module] = 0
-        
+
         # Try to install the missing dependency
         if missing_module in self.dependency_map:
             package_spec = self.dependency_map[missing_module]
             logger.info(f"Attempting to install missing dependency: {package_spec}")
-            
+
             try:
                 result = subprocess.run(
                     [sys.executable, '-m', 'pip', 'install', package_spec],
@@ -96,7 +96,7 @@ class AutoFixer:
                     text=True,
                     timeout=300  # 5 minute timeout
                 )
-                
+
                 if result.returncode == 0:
                     logger.info(f"Successfully installed {package_spec}")
                     self.fix_attempts[missing_module] += 1
@@ -107,10 +107,10 @@ class AutoFixer:
                 logger.error(f"Timeout installing {package_spec}")
             except Exception as e:
                 logger.error(f"Exception installing {package_spec}: {e}")
-        
+
         self.fix_attempts[missing_module] += 1
         return False
-    
+
     def _extract_missing_module(self, error_msg: str) -> str:
         """Extract the actual missing module name from error message."""
         if "No module named" in error_msg:
@@ -122,9 +122,9 @@ class AutoFixer:
                 module_part = module_part.strip("'\"")
                 # Take first part if it's a dotted module
                 return module_part.split('.')[0]
-        
+
         return error_msg
-    
+
     def resilient_blueprint_import(self, import_path: str) -> Optional[Any]:
         """
         Import a blueprint with error resilience.
@@ -145,7 +145,7 @@ class AutoFixer:
         except Exception as e:
             logger.error(f"Unexpected error importing {import_path}: {e}")
             return None
-    
+
     def create_graceful_import_wrapper(self, import_func):
         """
         Create a wrapper that gracefully handles import failures.
@@ -162,7 +162,7 @@ class AutoFixer:
                 return import_func(*args, **kwargs)
             except ImportError as e:
                 logger.warning(f"Import error in {import_func.__name__}: {e}")
-                
+
                 # Try to extract and fix the missing module
                 missing_module = self._extract_missing_module(str(e))
                 if self._try_fix_import_error(missing_module, str(e)):
@@ -171,15 +171,15 @@ class AutoFixer:
                         return import_func(*args, **kwargs)
                     except ImportError:
                         logger.error(f"Import still failed after auto-fix in {import_func.__name__}")
-                
+
                 # Return None or appropriate fallback
                 return None
             except Exception as e:
                 logger.error(f"Unexpected error in {import_func.__name__}: {e}")
                 return None
-        
+
         return wrapper
-    
+
     def check_and_fix_system_health(self) -> Dict[str, Any]:
         """
         Perform a comprehensive system health check and auto-fix issues.
@@ -194,39 +194,39 @@ class AutoFixer:
             'errors_detected': [],
             'overall_status': 'healthy'
         }
-        
+
         # Check critical dependencies
         critical_deps = ['flask', 'requests', 'aiohttp', 'eventlet']
         for dep in critical_deps:
             check_name = f"dependency_{dep}"
             health_report['checks_performed'].append(check_name)
-            
+
             success, _ = self.safe_import(dep)
             if not success:
                 health_report['errors_detected'].append(f"Missing dependency: {dep}")
                 health_report['overall_status'] = 'degraded'
-                
+
                 # Auto-fix attempt would have been made in safe_import
                 if dep in self.fix_attempts:
                     health_report['fixes_applied'].append(f"Attempted to install {dep}")
-        
+
         # Check if we can import critical modules
         critical_modules = [
             'app',
             'app.routes.health',
             'app.routes.main'
         ]
-        
+
         for module in critical_modules:
             check_name = f"module_{module.replace('.', '_')}"
             health_report['checks_performed'].append(check_name)
-            
+
             try:
                 importlib.import_module(module)
             except ImportError as e:
                 health_report['errors_detected'].append(f"Cannot import {module}: {e}")
                 health_report['overall_status'] = 'unhealthy'
-        
+
         return health_report
 
 

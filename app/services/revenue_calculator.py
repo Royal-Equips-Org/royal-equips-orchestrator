@@ -5,8 +5,8 @@ Provides real-time revenue calculations, profit margins, and financial KPIs.
 """
 
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -21,28 +21,28 @@ def calculate_revenue_metrics() -> Dict[str, Any]:
     try:
         # In a real implementation, this would query your sales/orders database
         # This calculator provides demo metrics based on business growth projections
-        
+
         # Revenue calculation based on system uptime and activity
         base_revenue = 2_450_000  # $2.45M base
         daily_growth = 15_000     # $15K daily growth
-        
+
         # Calculate days since launch (simulated start date for demo)
         start_date = datetime.now(timezone.utc) - timedelta(days=90)  # 90 days ago
         days_active = (datetime.now(timezone.utc) - start_date).days
-        
+
         # Revenue progression
         current_revenue = base_revenue + (daily_growth * days_active)
         target_revenue = 100_000_000  # $100M target
-        
+
         # Progress calculations
         progress_percentage = (current_revenue / target_revenue) * 100
-        
+
         # Profit margin calculation (realistic e-commerce margins)
         gross_margin = 0.35  # 35% gross margin
         net_margin = 0.12    # 12% net margin after all costs
-        
+
         profit_margin_avg = gross_margin * 100  # Convert to percentage
-        
+
         return {
             "current_revenue": current_revenue,
             "target_revenue": target_revenue,
@@ -56,7 +56,7 @@ def calculate_revenue_metrics() -> Dict[str, Any]:
             "projected_monthly": daily_growth * 30,
             "calculation_timestamp": datetime.now(timezone.utc).isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Revenue calculation failed: {e}")
         # Return safe fallback values
@@ -80,7 +80,7 @@ def get_revenue_breakdown() -> Dict[str, Any]:
     try:
         total_metrics = calculate_revenue_metrics()
         total_revenue = total_metrics["current_revenue"]
-        
+
         # Realistic channel distribution
         breakdown = {
             "by_channel": {
@@ -101,13 +101,13 @@ def get_revenue_breakdown() -> Dict[str, Any]:
                 "sports_outdoors": total_revenue * 0.15 # 15% sports
             }
         }
-        
+
         return {
             "breakdown": breakdown,
             "total_revenue": total_revenue,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Revenue breakdown calculation failed: {e}")
         return {

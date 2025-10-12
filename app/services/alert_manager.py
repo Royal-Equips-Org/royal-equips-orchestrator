@@ -6,11 +6,10 @@ and automated remediation triggers based on business and technical metrics.
 """
 
 import logging
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Callable
-from dataclasses import dataclass, asdict
 from enum import Enum
-import asyncio
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ class Alert:
     resolved_at: Optional[datetime] = None
 
 
-@dataclass 
+@dataclass
 class BurnRateAlert:
     """Specific burn rate alert for SLO monitoring."""
     window: str  # "1h", "6h", "24h"
@@ -65,23 +64,23 @@ class AlertManager:
     Comprehensive alert management system with intelligent thresholds,
     burn rate monitoring, and automated remediation capabilities.
     """
-    
+
     def __init__(self):
         self.active_alerts: Dict[str, Alert] = {}
         self.alert_history: List[Alert] = []
         self.remediation_actions: Dict[str, Callable] = {}
         self.alert_rules: List[Dict[str, Any]] = []
         self._setup_default_rules()
-        
+
         # SLO and burn rate tracking
         self.slo_target = 99.99  # 99.99% availability
         self.monthly_error_budget = 259.2  # seconds (4.32 minutes)
         self.current_error_budget_consumed = 0.0
-        
+
         # Anomaly detection state
         self.metric_baselines: Dict[str, Dict[str, float]] = {}
         self.outlier_detection_window = timedelta(minutes=30)
-    
+
     def _setup_default_rules(self):
         """Setup default alerting rules based on requirements."""
         self.alert_rules = [
@@ -98,7 +97,7 @@ class AlertManager:
             },
             {
                 "name": "revenue_drop_warning",
-                "metric": "revenue_progress", 
+                "metric": "revenue_progress",
                 "condition": "percentage_drop",
                 "threshold": 10,  # 10% drop
                 "window": "30min",
@@ -106,7 +105,7 @@ class AlertManager:
                 "category": AlertCategory.BUSINESS,
                 "actions": ["analyze_conversion_funnel", "check_payment_processor"]
             },
-            
+
             # Agent Availability Rules
             {
                 "name": "agent_availability_critical",
@@ -121,14 +120,14 @@ class AlertManager:
             {
                 "name": "agent_availability_warning",
                 "metric": "agent_availability_percentage",
-                "condition": "below_threshold", 
+                "condition": "below_threshold",
                 "threshold": 90,  # Below 90%
                 "window": "5min",
                 "severity": AlertSeverity.WARNING,
                 "category": AlertCategory.TECHNICAL,
                 "actions": ["check_agent_health", "verify_resource_allocation"]
             },
-            
+
             # Performance Rules
             {
                 "name": "response_time_critical",
@@ -150,7 +149,7 @@ class AlertManager:
                 "category": AlertCategory.PERFORMANCE,
                 "actions": ["rollback_latest_deployment", "isolate_failing_services"]
             },
-            
+
             # Circuit Breaker Rules
             {
                 "name": "circuit_breakers_multiple_open",
@@ -162,20 +161,20 @@ class AlertManager:
                 "category": AlertCategory.TECHNICAL,
                 "actions": ["emergency_service_isolation", "activate_degraded_mode", "notify_incident_commander"]
             },
-            
+
             # Campaign Performance Rules
             {
                 "name": "campaign_performance_degraded",
                 "metric": "campaign_load_failures_per_minute",
                 "condition": "above_threshold",
                 "threshold": 5,  # 5 failures per minute
-                "window": "5min", 
+                "window": "5min",
                 "severity": AlertSeverity.WARNING,
                 "category": AlertCategory.BUSINESS,
                 "actions": ["rollback_marketing_service", "pause_underperforming_campaigns"]
             }
         ]
-    
+
     def evaluate_metrics(self, metrics: Dict[str, Any]) -> List[Alert]:
         """
         Evaluate current metrics against alerting rules.
@@ -188,7 +187,7 @@ class AlertManager:
         """
         new_alerts = []
         current_time = datetime.now()
-        
+
         for rule in self.alert_rules:
             try:
                 alert = self._evaluate_single_rule(rule, metrics, current_time)
@@ -203,25 +202,25 @@ class AlertManager:
                         "current_value": alert.current_value,
                         "threshold": alert.threshold_value
                     })
-                    
+
             except Exception as e:
                 logger.error(f"Failed to evaluate rule {rule['name']}: {e}")
-        
+
         return new_alerts
-    
+
     def _evaluate_single_rule(self, rule: Dict[str, Any], metrics: Dict[str, Any], current_time: datetime) -> Optional[Alert]:
         """Evaluate a single alerting rule against current metrics."""
         metric_name = rule["metric"]
-        
+
         if metric_name not in metrics:
             return None
-        
+
         current_value = metrics[metric_name]
         threshold = rule["threshold"]
         condition = rule["condition"]
-        
+
         triggered = False
-        
+
         if condition == "above_threshold" and current_value > threshold:
             triggered = True
         elif condition == "below_threshold" and current_value < threshold:
@@ -233,18 +232,18 @@ class AlertManager:
                 drop_percentage = ((baseline - current_value) / baseline) * 100
                 if drop_percentage > threshold:
                     triggered = True
-        
+
         if not triggered:
             return None
-        
+
         # Check if this alert is not already active (avoid spam)
         alert_key = f"{rule['name']}_{metric_name}"
         if alert_key in self.active_alerts and not self.active_alerts[alert_key].resolved:
             return None
-        
+
         # Create new alert
         alert_id = f"alert_{current_time.strftime('%Y%m%d_%H%M%S')}_{rule['name']}"
-        
+
         return Alert(
             id=alert_id,
             title=f"{rule['name'].replace('_', ' ').title()}",
@@ -258,7 +257,7 @@ class AlertManager:
             resolution_actions=rule["actions"],
             source_service="alert_manager"
         )
-    
+
     def _get_baseline_value(self, metric_name: str, current_value: float) -> float:
         """Get baseline value for percentage-based alerting."""
         if metric_name not in self.metric_baselines:
@@ -268,16 +267,16 @@ class AlertManager:
                 "last_updated": datetime.now()
             }
             return current_value
-        
+
         baseline_data = self.metric_baselines[metric_name]
-        
+
         # Update baseline using exponential moving average
         alpha = 0.1  # Smoothing factor
         baseline_data["value"] = (alpha * current_value) + ((1 - alpha) * baseline_data["value"])
         baseline_data["last_updated"] = datetime.now()
-        
+
         return baseline_data["value"]
-    
+
     def check_burn_rate(self, error_rate: float, duration_minutes: int) -> Optional[BurnRateAlert]:
         """
         Check error budget burn rate and trigger alerts if thresholds are exceeded.
@@ -292,13 +291,13 @@ class AlertManager:
         # Calculate error budget consumption for this period
         availability = (100 - error_rate) / 100
         consumed_budget = (1 - availability) * duration_minutes * 60  # in seconds
-        
+
         # Calculate burn rate (how fast we're consuming monthly budget)
         minutes_in_month = 30 * 24 * 60  # 43,200 minutes
         burn_rate = (consumed_budget / self.monthly_error_budget) * (minutes_in_month / duration_minutes)
-        
+
         current_time = datetime.now()
-        
+
         # Fast burn alert: >10% budget consumed in 1 hour
         if duration_minutes <= 60 and burn_rate > 0.1:
             return BurnRateAlert(
@@ -308,19 +307,19 @@ class AlertManager:
                 alert_type="fast_burn",
                 triggered_at=current_time
             )
-        
-        # Slow burn alert: >20% budget consumed in 6 hours  
+
+        # Slow burn alert: >20% budget consumed in 6 hours
         if duration_minutes <= 360 and burn_rate > 0.2:
             return BurnRateAlert(
-                window="6h", 
+                window="6h",
                 error_budget_consumed=burn_rate * 100,
                 rate=burn_rate,
                 alert_type="slow_burn",
                 triggered_at=current_time
             )
-        
+
         return None
-    
+
     def detect_outliers(self, metric_name: str, current_value: float) -> bool:
         """
         Detect outliers using statistical analysis.
@@ -337,32 +336,32 @@ class AlertManager:
             if metric_name not in self.metric_baselines:
                 self.metric_baselines[metric_name] = {"values": [], "median": current_value}
                 return False
-            
+
             baseline_data = self.metric_baselines[metric_name]
             values = baseline_data.get("values", [])
-            
+
             # Keep rolling window of last 50 values
             values.append(current_value)
             if len(values) > 50:
                 values.pop(0)
-            
+
             if len(values) < 10:  # Need minimum samples
                 return False
-            
+
             # Calculate median and variance
             sorted_values = sorted(values)
             median = sorted_values[len(sorted_values) // 2]
-            
+
             # Calculate variance from median
             variance = sum(abs(v - median) for v in values) / len(values)
-            
+
             # Flag as outlier if current value varies >3x median variance
             if abs(current_value - median) > 3 * variance:
                 logger.warning(f"Outlier detected for {metric_name}: {current_value} (median: {median}, variance: {variance})")
                 return True
-        
+
         return False
-    
+
     async def execute_remediation_actions(self, alert: Alert) -> Dict[str, Any]:
         """
         Execute automated remediation actions for an alert.
@@ -379,7 +378,7 @@ class AlertManager:
             "actions_failed": [],
             "execution_timestamp": datetime.now().isoformat()
         }
-        
+
         for action in alert.resolution_actions:
             try:
                 if action in self.remediation_actions:
@@ -390,22 +389,22 @@ class AlertManager:
                     # Log action that would be executed
                     logger.info(f"Would execute remediation action: {action} for alert {alert.id}")
                     results["actions_executed"].append(f"{action} (simulated)")
-                    
+
             except Exception as e:
                 logger.error(f"Failed to execute remediation action {action}: {e}")
                 results["actions_failed"].append({"action": action, "error": str(e)})
-        
+
         return results
-    
+
     def get_active_alerts(self, severity: Optional[AlertSeverity] = None) -> List[Dict[str, Any]]:
         """Get currently active alerts, optionally filtered by severity."""
         alerts = [alert for alert in self.active_alerts.values() if not alert.resolved]
-        
+
         if severity:
             alerts = [alert for alert in alerts if alert.severity == severity]
-        
+
         return [asdict(alert) for alert in alerts]
-    
+
     def resolve_alert(self, alert_id: str, resolution_note: str = "") -> bool:
         """Mark an alert as resolved."""
         if alert_id in self.active_alerts:
@@ -414,11 +413,11 @@ class AlertManager:
             logger.info(f"Alert resolved: {alert_id} - {resolution_note}")
             return True
         return False
-    
+
     def get_alert_summary(self) -> Dict[str, Any]:
         """Get summary of alert status."""
         active_alerts = [alert for alert in self.active_alerts.values() if not alert.resolved]
-        
+
         summary = {
             "total_active": len(active_alerts),
             "by_severity": {
@@ -435,7 +434,7 @@ class AlertManager:
             },
             "timestamp": datetime.now().isoformat()
         }
-        
+
         return summary
 
 

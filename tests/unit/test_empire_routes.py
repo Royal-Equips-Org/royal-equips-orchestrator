@@ -3,9 +3,10 @@ Unit tests for Empire API routes
 Tests the async OpenAI integration in the chat endpoint
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-import asyncio
-from unittest.mock import patch, AsyncMock, MagicMock
+
 from app import create_app
 
 

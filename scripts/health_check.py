@@ -6,13 +6,13 @@ This script performs comprehensive health checks on the running application,
 including HTTP endpoint checks, process monitoring, and system resource validation.
 """
 
-import sys
-import time
 import json
 import subprocess
-from typing import Dict, List, Optional, Tuple
+import sys
+import time
+from typing import Dict, Optional, Tuple
+from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
-from urllib.error import URLError, HTTPError
 
 
 def log(message: str) -> None:
@@ -48,21 +48,21 @@ def check_process_health() -> Dict[str, any]:
     """Check system process health."""
     try:
         # Check system load
-        with open('/proc/loadavg', 'r') as f:
+        with open('/proc/loadavg') as f:
             load_avg = f.read().strip().split()
             load_1m = float(load_avg[0])
-        
+
         # Check memory usage
-        with open('/proc/meminfo', 'r') as f:
+        with open('/proc/meminfo') as f:
             lines = f.readlines()
             mem_info = {}
             for line in lines:
                 if line.startswith(('MemTotal:', 'MemAvailable:', 'MemFree:')):
                     key, value = line.split(':')
                     mem_info[key.strip()] = int(value.strip().split()[0]) * 1024  # Convert to bytes
-        
+
         memory_usage = (mem_info['MemTotal'] - mem_info['MemAvailable']) / mem_info['MemTotal'] * 100
-        
+
         return {
             'load_1m': load_1m,
             'memory_usage_percent': round(memory_usage, 2),
@@ -76,7 +76,7 @@ def check_process_health() -> Dict[str, any]:
 def find_application_port() -> Optional[int]:
     """Try to find the port the application is running on."""
     common_ports = [8000, 8080, 8501, 3000, 5000, 9000]
-    
+
     try:
         # Try to use netstat to find listening ports
         result = subprocess.run(['netstat', '-tlnp'], capture_output=True, text=True)
@@ -94,7 +94,7 @@ def find_application_port() -> Optional[int]:
                                 continue
     except FileNotFoundError:
         pass
-    
+
     # Fallback: check common ports
     import socket
     for port in common_ports:
@@ -103,42 +103,42 @@ def find_application_port() -> Optional[int]:
             result = s.connect_ex(('localhost', port))
             if result == 0:
                 return port
-    
+
     return None
 
 
 def main():
     """Main health check routine."""
     log("🏥 Starting Royal Equips Orchestrator Health Check")
-    
+
     # Get configuration
     import os
     port = int(os.getenv('PORT', '8000'))
     host = os.getenv('HOST', 'localhost')
     check_interval = int(os.getenv('HEALTH_CHECK_INTERVAL', '30'))
     max_checks = int(os.getenv('HEALTH_CHECK_MAX_CHECKS', '1'))
-    
+
     log(f"Configuration: host={host}, port={port}, interval={check_interval}s, max_checks={max_checks}")
-    
+
     # Try to auto-detect port if the configured one isn't working
     auto_port = find_application_port()
     if auto_port and auto_port != port:
         log(f"🔍 Auto-detected application running on port {auto_port}")
         port = auto_port
-    
+
     health_endpoints = [
         f"http://{host}:{port}/health",
         f"http://{host}:{port}/",
         f"http://{host}:{port}/api/health",
     ]
-    
+
     checks_performed = 0
     success_count = 0
-    
+
     while checks_performed < max_checks:
         checks_performed += 1
         log(f"🔍 Health check {checks_performed}/{max_checks}")
-        
+
         # Check system health
         system_health = check_process_health()
         if 'error' not in system_health:
@@ -147,7 +147,7 @@ def main():
                 log("⚠️  High system load detected")
             if system_health['memory_usage_percent'] > 90:
                 log("⚠️  High memory usage detected")
-        
+
         # Check HTTP endpoints
         endpoint_healthy = False
         for endpoint in health_endpoints:
@@ -158,21 +158,21 @@ def main():
                 break
             else:
                 log(f"❌ {endpoint}: {message}")
-        
+
         if endpoint_healthy:
             success_count += 1
             log("✅ Health check passed")
         else:
             log("❌ Health check failed - no endpoints responding")
-        
+
         # Sleep between checks (except for the last one)
         if checks_performed < max_checks and check_interval > 0:
             time.sleep(check_interval)
-    
+
     # Summary
     success_rate = (success_count / checks_performed) * 100
     log(f"📈 Health check summary: {success_count}/{checks_performed} checks passed ({success_rate:.1f}%)")
-    
+
     if success_rate >= 50:  # At least half the checks should pass
         log("✅ Overall health: HEALTHY")
         sys.exit(0)

@@ -6,15 +6,13 @@ significantly, enabling rapid response to market movements.
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
 import smtplib
-from datetime import datetime, timezone, timedelta
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Dict, List, Optional, Callable, Any
-from dataclasses import dataclass
+from typing import Any, Callable, Dict, List
 
 import requests
 
@@ -48,7 +46,7 @@ class AlertRule:
 
 class PriceAlertSystem:
     """Real-time price monitoring and alert system."""
-    
+
     def __init__(self, config: Dict[str, Any] = None):
         """Initialize the alert system.
         
@@ -61,26 +59,26 @@ class PriceAlertSystem:
         self.recent_alerts: Dict[str, datetime] = {}  # Alert cooldown tracking
         self.price_history: Dict[str, Dict[str, float]] = {}  # Historical prices
         self.alert_callbacks: List[Callable] = []
-        
+
         # Setup notification channels
         self._setup_email_config()
         self._setup_webhook_config()
-    
+
     def add_alert_rule(self, rule: AlertRule) -> None:
         """Add a new alert rule."""
         self.alert_rules[rule.rule_id] = rule
         self.logger.info(f"Added alert rule: {rule.rule_id}")
-    
+
     def remove_alert_rule(self, rule_id: str) -> None:
         """Remove an alert rule."""
         if rule_id in self.alert_rules:
             del self.alert_rules[rule_id]
             self.logger.info(f"Removed alert rule: {rule_id}")
-    
+
     def add_alert_callback(self, callback: Callable[[PriceAlert], None]) -> None:
         """Add a callback function to be called when alerts trigger."""
         self.alert_callbacks.append(callback)
-    
+
     async def check_price_changes(self, current_prices: Dict[str, Dict[str, float]]) -> List[PriceAlert]:
         """Check for price changes and trigger alerts.
         
@@ -91,86 +89,86 @@ class PriceAlertSystem:
             List of triggered alerts
         """
         alerts = []
-        
+
         for product_id, competitor_prices in current_prices.items():
             # Update price history
             if product_id not in self.price_history:
                 self.price_history[product_id] = {}
-            
+
             for competitor, current_price in competitor_prices.items():
                 previous_price = self.price_history[product_id].get(competitor)
-                
+
                 if previous_price is not None:
                     # Calculate price change
                     change_percentage = ((current_price - previous_price) / previous_price) * 100
-                    
+
                     # Check if change meets alert criteria
                     price_alerts = self._evaluate_price_change(
                         product_id, competitor, current_price, previous_price, change_percentage
                     )
                     alerts.extend(price_alerts)
-                
+
                 # Update price history
                 self.price_history[product_id][competitor] = current_price
-        
+
         # Send notifications for triggered alerts
         for alert in alerts:
             await self._send_alert_notifications(alert)
-            
+
             # Call registered callbacks
             for callback in self.alert_callbacks:
                 try:
                     callback(alert)
                 except Exception as e:
                     self.logger.error(f"Error in alert callback: {e}")
-        
+
         return alerts
-    
+
     def _evaluate_price_change(
-        self, 
-        product_id: str, 
-        competitor: str, 
-        current_price: float, 
-        previous_price: float, 
+        self,
+        product_id: str,
+        competitor: str,
+        current_price: float,
+        previous_price: float,
         change_percentage: float
     ) -> List[PriceAlert]:
         """Evaluate if price change should trigger alerts."""
         alerts = []
-        
+
         for rule in self.alert_rules.values():
             if not rule.enabled:
                 continue
-            
+
             # Check if rule applies to this product/competitor
             if rule.product_ids and product_id not in rule.product_ids:
                 continue
             if rule.competitors and competitor not in rule.competitors:
                 continue
-            
+
             # Check if change meets threshold
             abs_change = abs(change_percentage)
             if abs_change < rule.threshold:
                 continue
-            
+
             # Check cooldown
             alert_key = f"{rule.rule_id}:{product_id}:{competitor}"
             if self._is_in_cooldown(alert_key, rule.cooldown_minutes):
                 continue
-            
+
             # Determine alert type
             alert_type = "significant_change"
             if change_percentage > 0:
                 alert_type = "price_increase"
             elif change_percentage < 0:
                 alert_type = "price_drop"
-            
+
             # Check if this alert type is enabled for the rule
             if rule.alert_types and alert_type not in rule.alert_types:
                 continue
-            
+
             # Determine severity
             severity = self._calculate_alert_severity(abs_change, rule.threshold)
-            
+
             alert = PriceAlert(
                 product_id=product_id,
                 alert_type=alert_type,
@@ -182,26 +180,26 @@ class PriceAlertSystem:
                 timestamp=datetime.now(timezone.utc),
                 severity=severity
             )
-            
+
             alerts.append(alert)
-            
+
             # Update cooldown tracking
             self.recent_alerts[alert_key] = datetime.now(timezone.utc)
-            
+
             self.logger.info(f"Price alert triggered: {product_id} - {competitor} changed {change_percentage:.1f}%")
-        
+
         return alerts
-    
+
     def _is_in_cooldown(self, alert_key: str, cooldown_minutes: int) -> bool:
         """Check if alert is in cooldown period."""
         if alert_key not in self.recent_alerts:
             return False
-        
+
         last_alert_time = self.recent_alerts[alert_key]
         cooldown_period = timedelta(minutes=cooldown_minutes)
-        
+
         return (datetime.now(timezone.utc) - last_alert_time) < cooldown_period
-    
+
     def _calculate_alert_severity(self, change_percentage: float, threshold: float) -> str:
         """Calculate alert severity based on change magnitude."""
         if change_percentage >= threshold * 3:
@@ -212,63 +210,63 @@ class PriceAlertSystem:
             return "medium"
         else:
             return "low"
-    
+
     async def _send_alert_notifications(self, alert: PriceAlert) -> None:
         """Send alert notifications through configured channels."""
         try:
             # Send email notification
             if self.config.get('email_enabled', False):
                 await self._send_email_alert(alert)
-            
+
             # Send webhook notification
             if self.config.get('webhook_enabled', False):
                 await self._send_webhook_alert(alert)
-            
+
             # Log alert
             self.logger.warning(
                 f"PRICE ALERT [{alert.severity.upper()}]: {alert.product_id} - "
                 f"{alert.competitor} price {alert.alert_type} by {alert.change_percentage:.1f}% "
                 f"(${alert.previous_price:.2f} → ${alert.current_price:.2f})"
             )
-            
+
         except Exception as e:
             self.logger.error(f"Error sending alert notifications: {e}")
-    
+
     async def _send_email_alert(self, alert: PriceAlert) -> None:
         """Send email alert notification."""
         try:
             smtp_config = self.config.get('email', {})
             if not smtp_config:
                 return
-            
+
             msg = MIMEMultipart()
             msg['From'] = smtp_config.get('from_address')
             msg['To'] = smtp_config.get('to_address')
             msg['Subject'] = f"🚨 Price Alert: {alert.product_id} - {alert.severity.upper()}"
-            
+
             # Create email body
             body = self._create_email_body(alert)
             msg.attach(MIMEText(body, 'html'))
-            
+
             # Send email
             server = smtplib.SMTP(smtp_config.get('smtp_server'), smtp_config.get('smtp_port', 587))
             server.starttls()
             server.login(smtp_config.get('username'), smtp_config.get('password'))
             server.send_message(msg)
             server.quit()
-            
+
             self.logger.info(f"Email alert sent for {alert.product_id}")
-            
+
         except Exception as e:
             self.logger.error(f"Error sending email alert: {e}")
-    
+
     async def _send_webhook_alert(self, alert: PriceAlert) -> None:
         """Send webhook alert notification."""
         try:
             webhook_config = self.config.get('webhook', {})
             if not webhook_config:
                 return
-            
+
             payload = {
                 "alert_type": "price_alert",
                 "product_id": alert.product_id,
@@ -283,16 +281,16 @@ class PriceAlertSystem:
                     "alert_category": alert.alert_type
                 }
             }
-            
+
             headers = {
                 'Content-Type': 'application/json',
                 'User-Agent': 'Royal-Equips-Price-Monitor/1.0'
             }
-            
+
             # Add custom headers if configured
             if webhook_config.get('headers'):
                 headers.update(webhook_config['headers'])
-            
+
             response = requests.post(
                 webhook_config['url'],
                 json=payload,
@@ -300,23 +298,23 @@ class PriceAlertSystem:
                 timeout=10
             )
             response.raise_for_status()
-            
+
             self.logger.info(f"Webhook alert sent for {alert.product_id}")
-            
+
         except Exception as e:
             self.logger.error(f"Error sending webhook alert: {e}")
-    
+
     def _create_email_body(self, alert: PriceAlert) -> str:
         """Create HTML email body for alert."""
         severity_colors = {
             "low": "#28a745",
-            "medium": "#ffc107", 
+            "medium": "#ffc107",
             "high": "#fd7e14",
             "critical": "#dc3545"
         }
-        
+
         color = severity_colors.get(alert.severity, "#6c757d")
-        
+
         return f"""
         <html>
         <body>
@@ -345,21 +343,21 @@ class PriceAlertSystem:
         </body>
         </html>
         """
-    
+
     def _setup_email_config(self) -> None:
         """Setup email configuration from environment or config."""
         # This would typically read from environment variables or config files
         pass
-    
+
     def _setup_webhook_config(self) -> None:
         """Setup webhook configuration."""
         # This would typically read from environment variables or config files
         pass
-    
+
     def get_alert_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get summary of recent alerts."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-        
+
         # This would typically query from a database
         # For now, return a simple summary structure
         return {

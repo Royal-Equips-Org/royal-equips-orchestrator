@@ -6,7 +6,6 @@ Provides fallback template generation when templates are missing or corrupted.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -97,30 +96,30 @@ def ensure_template_exists(template_path: Path, app_name: str) -> bool:
     try:
         if template_path.exists() and template_path.stat().st_size > 0:
             return True
-            
+
         # Only log warning if we're not in the expected production container path pattern
         # to reduce noise during normal container operations
         if "/app/templates/" not in str(template_path):
             logger.warning(f"Template missing or empty: {template_path}")
         else:
             logger.debug(f"Template missing or empty (normal during container init): {template_path}")
-        
+
         # Create fallback template
         if template_path.name == "index.html":
             fallback_content = create_fallback_index_template(app_name)
-            
+
             # Ensure parent directory exists
             template_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Write fallback template
             template_path.write_text(fallback_content, encoding='utf-8')
             logger.info(f"Created fallback template: {template_path}")
             return True
-            
+
     except Exception as e:
         logger.error(f"Failed to ensure template exists: {e}")
         return False
-        
+
     return False
 
 
@@ -137,45 +136,45 @@ def validate_template_directory(template_dir: Path, app_name: str) -> dict:
         'templates_created': 0,
         'errors': []
     }
-    
+
     try:
         # Check main index template
         index_path = template_dir / "index.html"
         status['templates_checked'] += 1
-        
+
         if not ensure_template_exists(index_path, app_name):
             status['valid'] = False
-            status['errors'].append(f"Failed to ensure index.html template")
+            status['errors'].append("Failed to ensure index.html template")
         else:
             if not index_path.exists():
                 status['templates_created'] += 1
-                
+
         # Check error templates directory
         error_dir = template_dir / "errors"
         if not error_dir.exists():
             error_dir.mkdir(parents=True, exist_ok=True)
             logger.info(f"Created error templates directory: {error_dir}")
-            
+
         # Ensure basic error templates exist
         error_templates = {
             "404.html": create_404_template(app_name),
             "500.html": create_500_template(app_name)
         }
-        
+
         for template_name, template_content in error_templates.items():
             template_path = error_dir / template_name
             status['templates_checked'] += 1
-            
+
             if not template_path.exists():
                 template_path.write_text(template_content, encoding='utf-8')
                 status['templates_created'] += 1
                 logger.info(f"Created error template: {template_path}")
-                
+
     except Exception as e:
         status['valid'] = False
         status['errors'].append(str(e))
         logger.error(f"Template directory validation failed: {e}")
-        
+
     return status
 
 

@@ -5,7 +5,7 @@ from typing import Generator
 
 from sqlalchemy.orm import Session
 
-from .base import SessionLocal, engine, Base
+from .base import Base, SessionLocal, engine
 
 
 def init_db() -> None:

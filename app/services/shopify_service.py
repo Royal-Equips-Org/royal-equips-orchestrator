@@ -74,7 +74,7 @@ class ShopifyService:
     def __init__(self):
         if self._initialized:
             return
-            
+
         self.api_key = os.getenv('SHOPIFY_API_KEY')
         self.api_secret = os.getenv('SHOPIFY_API_SECRET')
         self.shop_name = os.getenv('SHOP_NAME')
@@ -96,7 +96,7 @@ class ShopifyService:
         self._rate_limit_used = 0
         self._rate_limit_bucket = 40  # Default Shopify bucket size
         self._last_rate_limit_check = datetime.now()
-        
+
         self._initialized = True
 
     def is_configured(self) -> bool:

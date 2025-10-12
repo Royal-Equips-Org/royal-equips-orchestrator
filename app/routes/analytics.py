@@ -4,15 +4,13 @@ Real-time analytics, metrics, visualizations, and reporting system
 Integrates with ProductionAnalyticsAgent for enterprise analytics
 """
 
-from flask import Blueprint, request, jsonify, Response, send_file
-from datetime import datetime, timezone, timedelta
-import json
-import io
-import base64
-from typing import Dict, List, Any, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List
 
-from core.health_service import HealthService
+from flask import Blueprint, jsonify, request
+
 from app.orchestrator_bridge import get_orchestrator
+from core.health_service import HealthService
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 
@@ -23,14 +21,14 @@ def health():
     try:
         health_service = HealthService()
         health_status = health_service.check_health()
-        
+
         return jsonify({
             'status': 'healthy',
             'service': 'analytics',
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'health_checks': health_status
         }), 200
-        
+
     except Exception as e:
         return jsonify({
             'status': 'unhealthy',
@@ -45,25 +43,25 @@ def get_business_metrics():
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({
                 'error': 'Analytics agent not available',
                 'status': 'agent_not_found'
             }), 404
-        
+
         # Get current metrics
         metrics_data = analytics_agent.performance_metrics
-        
+
         # Add timestamp
         response_data = {
             'metrics': metrics_data,
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'status': 'success'
         }
-        
+
         return jsonify(response_data), 200
-        
+
     except Exception as e:
         return jsonify({
             'error': str(e),
@@ -78,14 +76,14 @@ def get_dashboard_data():
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         # Get query parameters
         time_range = request.args.get('time_range', '30d')
         refresh = request.args.get('refresh', 'false').lower() == 'true'
-        
+
         # Get cached dashboard data or generate new
         dashboard_data = {
             'kpis': {
@@ -146,9 +144,9 @@ def get_dashboard_data():
             'time_range': time_range,
             'last_updated': datetime.now(timezone.utc).isoformat()
         }
-        
+
         return jsonify(dashboard_data), 200
-        
+
     except Exception as e:
         return jsonify({
             'error': str(e),
@@ -162,10 +160,10 @@ def list_analytics_queries():
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         queries = []
         for query in analytics_agent.core_queries:
             queries.append({
@@ -177,13 +175,13 @@ def list_analytics_queries():
                 'cache_ttl_seconds': query.cache_ttl_seconds,
                 'refresh_frequency': query.refresh_frequency
             })
-        
+
         return jsonify({
             'queries': queries,
             'total_count': len(queries),
             'timestamp': datetime.now(timezone.utc).isoformat()
         }), 200
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -194,25 +192,25 @@ def execute_query(query_id: str):
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         # Get query parameters
         request_data = request.get_json() or {}
         use_cache = request_data.get('use_cache', True)
         parameters = request_data.get('parameters', {})
-        
+
         # Find the query
         target_query = None
         for query in analytics_agent.core_queries:
             if query.id == query_id:
                 target_query = query
                 break
-        
+
         if not target_query:
             return jsonify({'error': f'Query {query_id} not found'}), 404
-        
+
         # Execute query (would integrate with actual agent method)
         # For now, return sample data structure
         result = {
@@ -225,9 +223,9 @@ def execute_query(query_id: str):
             'parameters_used': parameters,
             'executed_at': datetime.now(timezone.utc).isoformat()
         }
-        
+
         return jsonify(result), 200
-        
+
     except Exception as e:
         return jsonify({
             'error': str(e),
@@ -242,15 +240,15 @@ def generate_chart(chart_type: str, query_id: str):
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         # Get chart parameters
         width = request.args.get('width', 800, type=int)
         height = request.args.get('height', 400, type=int)
         format_type = request.args.get('format', 'json')  # json, png, svg
-        
+
         # Generate chart data
         chart_data = {
             'type': chart_type,
@@ -264,7 +262,7 @@ def generate_chart(chart_type: str, query_id: str):
             },
             'generated_at': datetime.now(timezone.utc).isoformat()
         }
-        
+
         if format_type == 'png':
             # Generate PNG chart (placeholder - would use Plotly in real implementation)
             return jsonify({
@@ -272,9 +270,9 @@ def generate_chart(chart_type: str, query_id: str):
                 'format': 'png',
                 'size': {'width': width, 'height': height}
             }), 200
-        
+
         return jsonify(chart_data), 200
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -285,10 +283,10 @@ def list_reports():
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         reports = []
         for report in analytics_agent.core_reports:
             reports.append({
@@ -302,13 +300,13 @@ def list_reports():
                 'schedule': report.schedule,
                 'last_generated': None  # Would be populated from cache/db
             })
-        
+
         return jsonify({
             'reports': reports,
             'total_count': len(reports),
             'timestamp': datetime.now(timezone.utc).isoformat()
         }), 200
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -319,25 +317,25 @@ def generate_report(report_id: str):
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         # Get generation parameters
         request_data = request.get_json() or {}
         export_format = request_data.get('format', 'json')
         filters = request_data.get('filters', {})
-        
+
         # Find the report
         target_report = None
         for report in analytics_agent.core_reports:
             if report.id == report_id:
                 target_report = report
                 break
-        
+
         if not target_report:
             return jsonify({'error': f'Report {report_id} not found'}), 404
-        
+
         # Generate report data
         report_data = {
             'report_id': report_id,
@@ -370,9 +368,9 @@ def generate_report(report_id: str):
             'generated_at': datetime.now(timezone.utc).isoformat(),
             'generation_time_ms': 245.7
         }
-        
+
         return jsonify(report_data), 200
-        
+
     except Exception as e:
         return jsonify({
             'error': str(e),
@@ -387,14 +385,14 @@ def get_anomalies():
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         # Get query parameters
         severity = request.args.get('severity', 'all')
         limit = request.args.get('limit', 50, type=int)
-        
+
         # Sample anomaly data
         anomalies = [
             {
@@ -422,21 +420,21 @@ def get_anomalies():
                 'status': 'active'
             }
         ]
-        
+
         # Filter by severity if specified
         if severity != 'all':
             anomalies = [a for a in anomalies if a['severity'] == severity]
-        
+
         # Limit results
         anomalies = anomalies[:limit]
-        
+
         return jsonify({
             'anomalies': anomalies,
             'total_count': len(anomalies),
             'severity_filter': severity,
             'timestamp': datetime.now(timezone.utc).isoformat()
         }), 200
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -447,14 +445,14 @@ def get_forecasts():
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         # Get forecast parameters
         metric = request.args.get('metric', 'revenue')
         horizon_days = request.args.get('horizon', 30, type=int)
-        
+
         # Generate forecast data
         forecast_data = {
             'metric': metric,
@@ -469,9 +467,9 @@ def get_forecasts():
             },
             'generated_at': datetime.now(timezone.utc).isoformat()
         }
-        
+
         return jsonify(forecast_data), 200
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -482,10 +480,10 @@ def get_performance_stats():
     try:
         orchestrator = get_orchestrator()
         analytics_agent = orchestrator.get_agent('production-analytics')
-        
+
         if not analytics_agent:
             return jsonify({'error': 'Analytics agent not available'}), 404
-        
+
         # Get performance metrics from agent
         performance_data = {
             'agent_status': 'active',
@@ -510,9 +508,9 @@ def get_performance_stats():
             },
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
-        
+
         return jsonify(performance_data), 200
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -523,21 +521,21 @@ def _generate_revenue_trend_data(time_range: str) -> List[Dict[str, Any]]:
     """Generate sample revenue trend data."""
     days = 30 if time_range == '30d' else 7
     data = []
-    
+
     base_date = datetime.now(timezone.utc) - timedelta(days=days)
     base_revenue = 1500.0
-    
+
     for i in range(days):
         date = base_date + timedelta(days=i)
         revenue = base_revenue + (i * 50) + (i % 7 * 200)  # Trend with weekly pattern
-        
+
         data.append({
             'date': date.strftime('%Y-%m-%d'),
             'revenue': revenue,
             'orders': int(revenue / 75),  # Avg order value ~$75
             'avg_order_value': 75.0 + (i % 5 * 2)
         })
-    
+
     return data
 
 
@@ -668,15 +666,15 @@ def _generate_forecast_data(metric: str, horizon_days: int) -> List[Dict[str, An
     """Generate forecast data for a metric."""
     forecast = []
     base_date = datetime.now(timezone.utc)
-    
+
     if metric == 'revenue':
         base_value = 1500.0
         trend = 25.0  # Daily growth
-        
+
         for i in range(horizon_days):
             date = base_date + timedelta(days=i)
             predicted_value = base_value + (i * trend) + (i % 7 * 100)  # Weekly seasonality
-            
+
             forecast.append({
                 'date': date.strftime('%Y-%m-%d'),
                 'predicted_value': predicted_value,
@@ -685,5 +683,5 @@ def _generate_forecast_data(metric: str, horizon_days: int) -> List[Dict[str, An
                 'lower_bound_95': predicted_value * 0.85,
                 'upper_bound_95': predicted_value * 1.15
             })
-    
+
     return forecast

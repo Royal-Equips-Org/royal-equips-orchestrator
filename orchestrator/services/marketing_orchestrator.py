@@ -4,16 +4,13 @@ Handles email campaigns, social ads, and content creation with real API integrat
 """
 
 import asyncio
-import aiohttp
-import json
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
 import openai
-from PIL import Image, ImageDraw, ImageFont
-import io
-import base64
+
 from ..core.agent_base import AgentBase
 
 # Configure logging
@@ -55,22 +52,22 @@ class MarketingOrchestrator(AgentBase):
         self.google_ads_client = None
         self.setup_api_clients()
         self.load_templates()
-    
+
     async def _execute_task(self):
         """Execute marketing automation tasks"""
         self.current_task = "Managing marketing campaigns and content creation"
-        
+
         # Run campaign optimization
         optimizations = await self.optimize_campaigns()
-        
+
         # Generate daily content for active products
         await self.generate_daily_content()
-        
+
         # Update campaign metrics
         await self.update_all_campaign_metrics()
-        
+
         await asyncio.sleep(1)
-    
+
     def setup_api_clients(self):
         """Initialize API clients for marketing platforms"""
         try:
@@ -78,17 +75,17 @@ class MarketingOrchestrator(AgentBase):
             import os
             openai.api_key = os.getenv('OPENAI_API_KEY')
             self.openai_client = openai
-            
+
             # Facebook Marketing API
             self.facebook_api_token = os.getenv('FACEBOOK_ACCESS_TOKEN')
-            
+
             # Google Ads API
             self.google_ads_customer_id = os.getenv('GOOGLE_ADS_CUSTOMER_ID')
-            
+
             logger.info("Marketing API clients initialized")
         except Exception as e:
             logger.error(f"Failed to initialize marketing APIs: {e}")
-    
+
     def load_templates(self):
         """Load high-performing content templates"""
         self.templates = [
@@ -120,7 +117,7 @@ class MarketingOrchestrator(AgentBase):
                 variables=["product_name", "main_benefit", "detailed_description", "social_proof"]
             )
         ]
-    
+
     async def generate_ai_content(self, product_data: Dict[str, Any], platform: str, format: str) -> Dict[str, Any]:
         """Generate AI-powered marketing content"""
         try:
@@ -145,16 +142,16 @@ class MarketingOrchestrator(AgentBase):
             
             Style: Professional, persuasive, benefit-focused
             """
-            
+
             if self.openai_client:
                 response = await self.openai_client.ChatCompletion.acreate(
                     model="gpt-4",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=500
                 )
-                
+
                 ai_content = response.choices[0].message.content
-                
+
                 # Parse AI response into structured content
                 content = {
                     "headline": self.extract_section(ai_content, "headline"),
@@ -164,17 +161,17 @@ class MarketingOrchestrator(AgentBase):
                     "keywords": self.extract_section(ai_content, "keywords"),
                     "generated_at": datetime.now(timezone.utc).isoformat()
                 }
-                
+
                 logger.info(f"AI content generated for {product_data.get('title')}")
                 return content
             else:
                 # Fallback template-based content
                 return self.generate_template_content(product_data, platform)
-                
+
         except Exception as e:
             logger.error(f"AI content generation failed: {e}")
             return self.generate_template_content(product_data, platform)
-    
+
     def extract_section(self, text: str, section: str) -> str:
         """Extract specific section from AI-generated content"""
         lines = text.split('\n')
@@ -183,11 +180,11 @@ class MarketingOrchestrator(AgentBase):
                 if i + 1 < len(lines):
                     return lines[i + 1].strip()
         return f"Generated {section}"
-    
+
     def generate_template_content(self, product_data: Dict[str, Any], platform: str) -> Dict[str, Any]:
         """Generate content using high-performing templates"""
         template = next((t for t in self.templates if t.platform == platform), self.templates[0])
-        
+
         # Fill template variables
         content_text = template.template.format(
             product_name=product_data.get('title', 'Amazing Product'),
@@ -202,7 +199,7 @@ class MarketingOrchestrator(AgentBase):
             detailed_description=product_data.get('description', 'High-quality product with amazing features'),
             social_proof='Trusted by thousands of customers'
         )
-        
+
         return {
             "headline": content_text.split('\n')[0],
             "description": content_text,
@@ -210,13 +207,13 @@ class MarketingOrchestrator(AgentBase):
             "template_id": template.id,
             "performance_score": template.performance_score
         }
-    
+
     async def create_campaign(self, product_data: Dict[str, Any], platform: str, format: str, budget: float) -> Campaign:
         """Create a new marketing campaign with real API integration"""
         try:
             # Generate content
             content = await self.generate_ai_content(product_data, platform, format)
-            
+
             # Create campaign object
             campaign = Campaign(
                 id=f"camp_{int(datetime.now(timezone.utc).timestamp())}",
@@ -238,10 +235,10 @@ class MarketingOrchestrator(AgentBase):
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc)
             )
-            
+
             # Store campaign
             self.campaigns.append(campaign)
-            
+
             # Create campaign on platform
             if platform == 'facebook':
                 campaign_id = await self.create_facebook_campaign(campaign)
@@ -249,21 +246,21 @@ class MarketingOrchestrator(AgentBase):
             elif platform == 'google':
                 campaign_id = await self.create_google_campaign(campaign)
                 campaign.id = campaign_id or campaign.id
-            
+
             campaign.status = 'active' if campaign_id else 'draft'
-            
+
             logger.info(f"Campaign created: {campaign.id} for {product_data.get('title')}")
             return campaign
-            
+
         except Exception as e:
             logger.error(f"Campaign creation failed: {e}")
             raise
-    
+
     def generate_target_audience(self, product_data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate target audience based on product data"""
         category = product_data.get('category', '').lower()
         price = float(product_data.get('price', 50))
-        
+
         # Basic audience targeting rules
         audience = {
             'age_min': 18,
@@ -272,7 +269,7 @@ class MarketingOrchestrator(AgentBase):
             'behaviors': [],
             'demographics': {}
         }
-        
+
         # Category-based targeting
         if 'fitness' in category or 'health' in category:
             audience['interests'] = ['Fitness', 'Health', 'Wellness']
@@ -284,21 +281,21 @@ class MarketingOrchestrator(AgentBase):
         elif 'home' in category or 'kitchen' in category:
             audience['interests'] = ['Home improvement', 'Cooking', 'Interior design']
             audience['demographics']['life_events'] = ['Recently moved']
-        
+
         # Price-based targeting
         if price > 100:
             audience['demographics']['income'] = 'Top 25%'
         elif price < 25:
             audience['demographics']['income'] = 'Broad'
-        
+
         return audience
-    
+
     async def create_facebook_campaign(self, campaign: Campaign) -> Optional[str]:
         """Create campaign on Facebook Ads API"""
         if not self.facebook_api_token:
             logger.warning("Facebook API token not configured")
             return None
-        
+
         try:
             # Facebook Marketing API implementation
             campaign_data = {
@@ -308,20 +305,20 @@ class MarketingOrchestrator(AgentBase):
                 'budget_amount': int(campaign.budget * 100),  # Facebook uses cents
                 'budget_type': 'DAILY'
             }
-            
+
             # This would be a real API call
             # fb_campaign_id = await self.facebook_api.create_campaign(campaign_data)
-            
+
             # Mock response for demonstration
             fb_campaign_id = f"fb_camp_{int(datetime.now(timezone.utc).timestamp())}"
-            
+
             logger.info(f"Facebook campaign created: {fb_campaign_id}")
             return fb_campaign_id
-            
+
         except Exception as e:
             logger.error(f"Facebook campaign creation failed: {e}")
             return None
-    
+
     async def create_google_campaign(self, campaign: Campaign) -> Optional[str]:
         """Create campaign on Google Ads API"""
         try:
@@ -335,35 +332,35 @@ class MarketingOrchestrator(AgentBase):
                     'delivery_method': 'STANDARD'
                 }
             }
-            
-            # Mock response for demonstration  
+
+            # Mock response for demonstration
             google_campaign_id = f"google_camp_{int(datetime.now(timezone.utc).timestamp())}"
-            
+
             logger.info(f"Google campaign created: {google_campaign_id}")
             return google_campaign_id
-            
+
         except Exception as e:
             logger.error(f"Google campaign creation failed: {e}")
             return None
-    
+
     async def optimize_campaigns(self) -> List[Dict[str, Any]]:
         """Optimize existing campaigns based on performance data"""
         optimizations = []
-        
+
         for campaign in self.campaigns:
             if campaign.status != 'active':
                 continue
-            
+
             # Get performance metrics
             metrics = await self.get_campaign_metrics(campaign.id)
             campaign.metrics.update(metrics)
-            
+
             optimization = {
                 'campaign_id': campaign.id,
                 'current_roas': metrics.get('roas', 0),
                 'recommendations': []
             }
-            
+
             # Performance-based optimizations
             if metrics.get('roas', 0) < 2.0:
                 optimization['recommendations'].append({
@@ -371,25 +368,25 @@ class MarketingOrchestrator(AgentBase):
                     'action': 'Reduce budget by 25%',
                     'reason': 'Low ROAS performance'
                 })
-            
+
             if metrics.get('ctr', 0) < 1.0:
                 optimization['recommendations'].append({
                     'type': 'creative_refresh',
                     'action': 'Generate new ad creative',
                     'reason': 'Low click-through rate'
                 })
-            
+
             if metrics.get('roas', 0) > 4.0:
                 optimization['recommendations'].append({
                     'type': 'budget_increase',
                     'action': 'Increase budget by 50%',
                     'reason': 'High ROAS performance'
                 })
-            
+
             optimizations.append(optimization)
-        
+
         return optimizations
-    
+
     async def get_campaign_metrics(self, campaign_id: str) -> Dict[str, float]:
         """Fetch real-time campaign metrics from platforms"""
         try:
@@ -404,26 +401,26 @@ class MarketingOrchestrator(AgentBase):
                 'ctr': 5.34,
                 'roas': 6.42
             }
-            
+
             return metrics
-            
+
         except Exception as e:
             logger.error(f"Failed to fetch metrics for campaign {campaign_id}: {e}")
             return {}
-    
+
     async def generate_daily_content(self):
         """Generate daily content for social media and campaigns"""
         try:
             # Generate content for trending products
             trending_products = await self.get_trending_products()
-            
+
             for product in trending_products:
                 content = await self.generate_ai_content(product, 'instagram', 'story')
                 logger.info(f"Daily content generated for {product.get('title')}")
-            
+
         except Exception as e:
             logger.error(f"Daily content generation failed: {e}")
-    
+
     async def get_trending_products(self) -> List[Dict[str, Any]]:
         """Get trending products for content generation"""
         # Mock trending products
@@ -437,7 +434,7 @@ class MarketingOrchestrator(AgentBase):
                 'main_benefit': 'Track Your Health 24/7'
             }
         ]
-    
+
     async def update_all_campaign_metrics(self):
         """Update metrics for all active campaigns"""
         for campaign in self.campaigns:
@@ -445,13 +442,13 @@ class MarketingOrchestrator(AgentBase):
                 metrics = await self.get_campaign_metrics(campaign.id)
                 campaign.metrics.update(metrics)
                 campaign.updated_at = datetime.now(timezone.utc)
-    
+
     def get_campaign_stats(self) -> Dict[str, Any]:
         """Get overall marketing statistics"""
         active_campaigns = [c for c in self.campaigns if c.status == 'active']
         total_budget = sum(c.budget for c in active_campaigns)
         total_roas = sum(c.metrics.get('roas', 0) for c in active_campaigns) / len(active_campaigns) if active_campaigns else 0
-        
+
         return {
             'total_campaigns': len(self.campaigns),
             'active_campaigns': len(active_campaigns),

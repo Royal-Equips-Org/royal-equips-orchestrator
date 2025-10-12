@@ -5,8 +5,10 @@ Provides endpoints for monitoring auto-fix activities and system health.
 """
 
 import logging
+
 from flask import Blueprint, jsonify, request
-from app.utils.auto_fix import health_check, auto_fixer
+
+from app.utils.auto_fix import auto_fixer, health_check
 
 logger = logging.getLogger(__name__)
 
@@ -17,14 +19,14 @@ def get_auto_fix_health():
     """Get comprehensive system health status with auto-fix information."""
     try:
         health_report = health_check()
-        
+
         # Add auto-fixer specific information
         health_report['auto_fixer'] = {
             'fix_attempts': auto_fixer.fix_attempts,
             'max_retries': auto_fixer.max_retries,
             'available_fixes': list(auto_fixer.dependency_map.keys())
         }
-        
+
         return jsonify(health_report)
     except Exception as e:
         logger.error(f"Auto-fix health check error: {e}")
@@ -54,10 +56,10 @@ def test_import():
         module_name = request.args.get('module')
         if not module_name:
             return jsonify({'error': 'module parameter required'}), 400
-        
+
         from app.utils.auto_fix import safe_import
         success, module = safe_import(module_name)
-        
+
         return jsonify({
             'module': module_name,
             'success': success,

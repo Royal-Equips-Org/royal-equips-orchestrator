@@ -6,20 +6,20 @@ the current state and environment of the system.
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class ContextAwarenessEngine:
     """Engine for understanding and tracking system context."""
-    
+
     def __init__(self):
         """Initialize context awareness engine."""
         self.logger = logger
         self.current_context = {}
-    
+
     async def update_context(self, key: str, value: Any) -> None:
         """Update a context value.
         
@@ -32,7 +32,7 @@ class ContextAwarenessEngine:
             'updated_at': datetime.now(timezone.utc).isoformat()
         }
         self.logger.debug(f"Updated context: {key}")
-    
+
     async def get_context(self, key: Optional[str] = None) -> Any:
         """Get context value(s).
         
@@ -44,10 +44,10 @@ class ContextAwarenessEngine:
         """
         if key is None:
             return self.current_context.copy()
-        
+
         entry = self.current_context.get(key)
         return entry['value'] if entry else None
-    
+
     async def analyze_context(self) -> Dict[str, Any]:
         """Analyze current context to derive insights.
         
@@ -55,13 +55,13 @@ class ContextAwarenessEngine:
             Context analysis results
         """
         self.logger.info("Analyzing current context")
-        
+
         return {
             'context_size': len(self.current_context),
             'key_factors': list(self.current_context.keys()),
             'analysis_time': datetime.now(timezone.utc).isoformat()
         }
-    
+
     async def is_context_suitable(self, requirements: Dict[str, Any]) -> bool:
         """Check if current context meets requirements.
         
@@ -75,5 +75,5 @@ class ContextAwarenessEngine:
             current = await self.get_context(key)
             if current != required_value:
                 return False
-        
+
         return True

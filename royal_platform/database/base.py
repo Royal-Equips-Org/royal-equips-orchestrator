@@ -1,15 +1,16 @@
 """Database base configuration."""
 
+import os
+import sys
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-import sys
 
 # Determine environment
 ENV = os.getenv("ENV", "development").lower()
 
-# Database URL from environment  
+# Database URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
@@ -40,5 +41,5 @@ else:
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base class for all models  
+# Base class for all models
 Base = declarative_base()

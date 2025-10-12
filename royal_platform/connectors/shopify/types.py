@@ -3,8 +3,9 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Optional, List, Dict, Any, Union
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel
 
 
 # Enums
@@ -36,7 +37,7 @@ class FulfillmentStatus(str, Enum):
 class ShopifyNode(BaseModel):
     """Base class for Shopify GraphQL nodes."""
     id: str
-    
+
 
 class ShopifyEdge(BaseModel):
     """Base class for Shopify GraphQL edges."""
@@ -96,14 +97,14 @@ class Product(ShopifyNode):
     created_at: datetime
     updated_at: datetime
     published_at: Optional[datetime] = None
-    
+
     # Relationships
     variants: List[ProductVariant] = []
     images: List[ProductImage] = []
-    
+
     # SEO
     seo: Optional[Dict[str, Any]] = None
-    
+
     # Options (size, color, etc.)
     options: List[Dict[str, Any]] = []
 
@@ -118,7 +119,7 @@ class ProductEdge(ShopifyEdge):
     node: Product
 
 
-# Customer models  
+# Customer models
 class Customer(ShopifyNode):
     """Customer from GraphQL API."""
     email: Optional[str] = None
@@ -128,16 +129,16 @@ class Customer(ShopifyNode):
     accepts_marketing: bool = False
     created_at: datetime
     updated_at: datetime
-    
+
     # Analytics
     total_spent: Decimal = Decimal("0")
     orders_count: int = 0
     average_order_amount: Optional[Decimal] = None
-    
+
     # Addresses
     default_address: Optional[Dict[str, Any]] = None
     addresses: List[Dict[str, Any]] = []
-    
+
     # Tags and notes
     tags: List[str] = []
     note: Optional[str] = None
@@ -160,19 +161,19 @@ class OrderLineItem(ShopifyNode):
     quantity: int
     current_quantity: int
     fulfillable_quantity: int
-    
+
     # Pricing
     original_unit_price: Decimal
     discounted_unit_price: Decimal
     original_total_set: Dict[str, Any]
     discounted_total_set: Dict[str, Any]
-    
+
     # Product references
     product: Optional[Product] = None
     variant: Optional[ProductVariant] = None
     sku: Optional[str] = None
     variant_title: Optional[str] = None
-    
+
     # Fulfillment
     fulfillment_service: Optional[str] = None
     fulfillment_status: Optional[FulfillmentStatus] = None
@@ -198,44 +199,44 @@ class Order(ShopifyNode):
     order_number: int
     email: Optional[str] = None
     phone: Optional[str] = None
-    
+
     # Financial
     current_total_price: Decimal
     current_subtotal_price: Decimal
     current_total_tax: Decimal
     current_total_discounts: Decimal
     currency_code: str = "EUR"
-    
+
     # Status
     financial_status: FinancialStatus
     fulfillment_status: FulfillmentStatus
-    
+
     # Timestamps
     created_at: datetime
     updated_at: datetime
     processed_at: Optional[datetime] = None
-    
+
     # Customer and shipping
     customer: Optional[Customer] = None
     shipping_address: Optional[ShippingAddress] = None
     billing_address: Optional[ShippingAddress] = None
-    
+
     # Line items
     line_items: List[OrderLineItem] = []
-    
+
     # Tags and notes
     tags: List[str] = []
     note: Optional[str] = None
-    
+
     # Risk assessment
     risks: List[Dict[str, Any]] = []
-    
+
     # Fulfillments
     fulfillments: List[Dict[str, Any]] = []
 
 
 class OrderConnection(ShopifyConnection):
-    """Order connection with typed edges."""  
+    """Order connection with typed edges."""
     edges: List["OrderEdge"]
 
 
@@ -260,12 +261,12 @@ class InventoryItem(ShopifyNode):
     harmonized_system_code: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    
+
     # Cost and measurement
     cost: Optional[Decimal] = None
     unit_cost: Optional[Dict[str, Any]] = None
     measurement: Optional[Dict[str, Any]] = None
-    
+
     # Inventory levels across locations
     inventory_levels: List[InventoryLevel] = []
 
@@ -276,7 +277,7 @@ class WebhookPayload(BaseModel):
     id: str
     created_at: datetime
     updated_at: datetime
-    
+
 
 class ProductWebhookPayload(WebhookPayload):
     """Product webhook payload."""
@@ -318,7 +319,7 @@ class ProductCreatePayload(BaseModel):
 
 class ProductUpdatePayload(BaseModel):
     """Product update mutation response."""
-    product: Optional[Product] = None  
+    product: Optional[Product] = None
     user_errors: List[MutationError] = []
 
 

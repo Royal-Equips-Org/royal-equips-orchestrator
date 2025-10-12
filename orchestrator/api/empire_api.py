@@ -3,32 +3,40 @@ Royal Equips Empire API - Real Business Logic Implementation
 FastAPI backend with real Shopify, market intelligence, and marketing automation
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any, Union
 import asyncio
 import json
 import logging
 import os
-from datetime import timezone, datetime, timedelta
-import aiohttp
-import pandas as pd
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from datetime import datetime, timezone
+from typing import Any, Dict, List
+
 import redis
 from celery import Celery
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, sessionmaker
+
+from ..services.action_execution_layer import ActionExecutionLayer
+from ..services.decision_approval_engine import DecisionApprovalEngine
 
 # Import empire services
 from ..services.empire_orchestrator import EmpireOrchestrator
-from ..services.multi_platform_collector import MultiPlatformCollector
+from ..services.financial_controller import FinancialController
 from ..services.market_intelligence_hub import MarketIntelligenceHub
 from ..services.marketing_orchestrator import MarketingOrchestrator
-from ..services.decision_approval_engine import DecisionApprovalEngine
-from ..services.action_execution_layer import ActionExecutionLayer
-from ..services.financial_controller import FinancialController
+from ..services.multi_platform_collector import MultiPlatformCollector
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -52,7 +60,7 @@ security = HTTPBearer()
 # Initialize FastAPI app
 app = FastAPI(
     title="Royal Equips Empire API",
-    description="Autonomous E-commerce Empire Management System with Real Business Logic", 
+    description="Autonomous E-commerce Empire Management System with Real Business Logic",
     version="3.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -79,7 +87,7 @@ financial_controller = FinancialController()
 # Database Models
 class ProductOpportunity(Base):
     __tablename__ = "product_opportunities"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(Text)
@@ -95,7 +103,7 @@ class ProductOpportunity(Base):
 
 class Agent(Base):
     __tablename__ = "agents"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     type = Column(String)
@@ -107,7 +115,7 @@ class Agent(Base):
 
 class Campaign(Base):
     __tablename__ = "marketing_campaigns"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(String, index=True)
     platform = Column(String)
@@ -169,7 +177,7 @@ async def root():
     """API root endpoint"""
     return {
         "message": "Royal Equips Empire API - Autonomous E-commerce Management System",
-        "version": "3.0.0", 
+        "version": "3.0.0",
         "status": "operational",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "empire_status": await empire_orchestrator.get_empire_status(),
@@ -182,20 +190,20 @@ async def get_empire_status(token: str = Depends(verify_token)):
     try:
         # Get live empire metrics
         status = await empire_orchestrator.get_empire_status()
-        
+
         # Get real-time agent data
         agents = await empire_orchestrator.get_all_agents_status()
-        
+
         # Get financial data
         financial_data = await financial_controller.get_financial_overview()
-        
+
         # Cache in Redis for performance
         redis_client.setex(
-            "empire_status", 
+            "empire_status",
             300,  # 5 minutes cache
             json.dumps(status, default=str)
         )
-        
+
         return {
             "status": "operational",
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -204,7 +212,7 @@ async def get_empire_status(token: str = Depends(verify_token)):
             "financial_overview": financial_data,
             "system_health": await empire_orchestrator.get_system_health()
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting empire status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -214,13 +222,13 @@ async def get_empire_metrics(token: str = Depends(verify_token)):
     """Get comprehensive empire performance metrics"""
     try:
         metrics = await empire_orchestrator.get_performance_metrics()
-        
+
         # Real-time revenue tracking
         revenue_data = await financial_controller.get_revenue_metrics()
-        
+
         # Agent performance data
         agent_metrics = await empire_orchestrator.get_agent_performance_summary()
-        
+
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "revenue": revenue_data,
@@ -229,40 +237,40 @@ async def get_empire_metrics(token: str = Depends(verify_token)):
             "automation_level": metrics.get("automation_level", 0),
             "system_efficiency": metrics.get("efficiency", 0)
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting empire metrics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/empire/command")
 async def execute_empire_command(
-    command: EmpireCommand, 
+    command: EmpireCommand,
     background_tasks: BackgroundTasks,
     token: str = Depends(verify_token)
 ):
     """Execute empire-wide commands (autopilot, emergency stop, etc.)"""
     try:
         logger.info(f"Executing empire command: {command.command}")
-        
+
         if command.command == "autopilot_enable":
             background_tasks.add_task(empire_orchestrator.enable_autopilot, command.parameters)
             return {"status": "success", "message": "Autopilot enabled", "command_id": f"cmd_{datetime.now(timezone.utc).timestamp()}"}
-            
+
         elif command.command == "autopilot_disable":
             background_tasks.add_task(empire_orchestrator.disable_autopilot)
             return {"status": "success", "message": "Autopilot disabled"}
-            
+
         elif command.command == "emergency_stop":
             background_tasks.add_task(empire_orchestrator.emergency_stop)
             return {"status": "success", "message": "Emergency stop initiated"}
-            
+
         elif command.command == "start_discovery":
             background_tasks.add_task(data_collector.start_product_discovery, command.parameters)
             return {"status": "success", "message": "Product discovery started"}
-            
+
         else:
             raise HTTPException(status_code=400, detail=f"Unknown command: {command.command}")
-            
+
     except Exception as e:
         logger.error(f"Error executing command {command.command}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -273,10 +281,10 @@ async def get_agents_status(token: str = Depends(verify_token), db: Session = De
     try:
         # Get agents from database
         agents = db.query(Agent).all()
-        
+
         # Get real-time status from empire orchestrator
         live_status = await empire_orchestrator.get_all_agents_status()
-        
+
         agents_data = []
         for agent in agents:
             live_data = live_status.get(agent.name, {})
@@ -291,14 +299,14 @@ async def get_agents_status(token: str = Depends(verify_token), db: Session = De
                 "last_execution": agent.last_execution,
                 "health": live_data.get("health", "unknown")
             })
-        
+
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "total_agents": len(agents_data),
             "active_agents": len([a for a in agents_data if a["status"] == "active"]),
             "agents": agents_data
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting agents status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -314,17 +322,17 @@ async def get_market_opportunities(
     try:
         # Get opportunities from database
         query = db.query(ProductOpportunity)
-        
+
         if status != "all":
             query = query.filter(ProductOpportunity.status == status)
-            
+
         opportunities = query.order_by(ProductOpportunity.confidence_score.desc()).limit(limit).all()
-        
+
         # Enhance with real-time market data
         enhanced_opportunities = []
         for opp in opportunities:
             market_data = await market_intelligence.get_product_market_data(opp.title)
-            
+
             enhanced_opportunities.append({
                 "id": opp.id,
                 "title": opp.title,
@@ -339,13 +347,13 @@ async def get_market_opportunities(
                 "created_at": opp.created_at,
                 "supplier_leads": await data_collector.find_suppliers(opp.title)
             })
-        
+
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "total_opportunities": len(enhanced_opportunities),
             "opportunities": enhanced_opportunities
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting market opportunities: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -370,24 +378,24 @@ async def create_opportunity(
             confidence_score=0.0,
             profit_potential="unknown"
         )
-        
+
         db.add(db_opportunity)
         db.commit()
         db.refresh(db_opportunity)
-        
+
         # Trigger background analysis
         background_tasks.add_task(
             market_intelligence.analyze_product_opportunity,
             db_opportunity.id,
             opportunity.title
         )
-        
+
         return {
             "status": "success",
             "message": "Product opportunity created and analysis started",
             "opportunity_id": db_opportunity.id
         }
-        
+
     except Exception as e:
         logger.error(f"Error creating opportunity: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -404,25 +412,25 @@ async def approve_product(
         opportunity = db.query(ProductOpportunity).filter(ProductOpportunity.id == opportunity_id).first()
         if not opportunity:
             raise HTTPException(status_code=404, detail="Opportunity not found")
-        
+
         # Update status
         opportunity.status = "approved"
         opportunity.approved_at = datetime.now(timezone.utc)
         db.commit()
-        
+
         # Execute approved action
         background_tasks.add_task(
             action_executor.execute_product_deployment,
             opportunity_id,
             opportunity.title
         )
-        
+
         return {
             "status": "success",
             "message": f"Product '{opportunity.title}' approved and deployment started",
             "opportunity_id": opportunity_id
         }
-        
+
     except Exception as e:
         logger.error(f"Error approving product {opportunity_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -439,20 +447,20 @@ async def reject_product(
         opportunity = db.query(ProductOpportunity).filter(ProductOpportunity.id == opportunity_id).first()
         if not opportunity:
             raise HTTPException(status_code=404, detail="Opportunity not found")
-        
+
         # Update status
         opportunity.status = "rejected"
         db.commit()
-        
+
         # Learn from rejection
         await decision_engine.learn_from_rejection(opportunity_id, reason)
-        
+
         return {
             "status": "success",
             "message": f"Product '{opportunity.title}' rejected. System learning updated.",
             "opportunity_id": opportunity_id
         }
-        
+
     except Exception as e:
         logger.error(f"Error rejecting product {opportunity_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -466,17 +474,17 @@ async def get_marketing_campaigns(
     """Get marketing campaigns with real performance data"""
     try:
         query = db.query(Campaign)
-        
+
         if status != "all":
             query = query.filter(Campaign.status == status)
-            
+
         campaigns = query.order_by(Campaign.created_at.desc()).all()
-        
+
         # Enhance with real-time performance data
         enhanced_campaigns = []
         for campaign in campaigns:
             performance_data = await marketing_orchestrator.get_campaign_performance(campaign.id)
-            
+
             enhanced_campaigns.append({
                 "id": campaign.id,
                 "product_id": campaign.product_id,
@@ -492,14 +500,14 @@ async def get_marketing_campaigns(
                 "created_at": campaign.created_at,
                 "performance_trend": performance_data.get("trend", "stable")
             })
-        
+
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "total_campaigns": len(enhanced_campaigns),
             "active_campaigns": len([c for c in enhanced_campaigns if c["status"] == "active"]),
             "campaigns": enhanced_campaigns
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting marketing campaigns: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -521,11 +529,11 @@ async def create_marketing_campaign(
             budget=campaign.budget,
             status="draft"
         )
-        
+
         db.add(db_campaign)
         db.commit()
         db.refresh(db_campaign)
-        
+
         # Generate campaign content and launch
         background_tasks.add_task(
             marketing_orchestrator.create_and_launch_campaign,
@@ -535,13 +543,13 @@ async def create_marketing_campaign(
             campaign.format,
             campaign.target_audience
         )
-        
+
         return {
             "status": "success",
             "message": "Marketing campaign created and content generation started",
             "campaign_id": db_campaign.id
         }
-        
+
     except Exception as e:
         logger.error(f"Error creating marketing campaign: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -562,13 +570,13 @@ async def generate_marketing_content(
             platform=platform,
             format=format
         )
-        
+
         return {
             "status": "success",
             "content": content_result,
             "generated_at": datetime.now(timezone.utc).isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Error generating marketing content: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -581,7 +589,7 @@ async def get_market_intelligence(
     """Get comprehensive market intelligence data"""
     try:
         intelligence_data = await market_intelligence.get_market_overview(category)
-        
+
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "category": category,
@@ -591,7 +599,7 @@ async def get_market_intelligence(
             "consumer_sentiment": intelligence_data.get("sentiment", {}),
             "opportunities": intelligence_data.get("opportunities", [])
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting market intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -611,13 +619,13 @@ async def analyze_market_intelligence(
             request.competitors,
             request.analysis_depth
         )
-        
+
         return {
             "status": "success",
             "message": f"Market intelligence analysis started for {request.product_category}",
             "analysis_id": f"analysis_{datetime.now(timezone.utc).timestamp()}"
         }
-        
+
     except Exception as e:
         logger.error(f"Error starting market intelligence analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -627,7 +635,7 @@ async def get_financial_overview(token: str = Depends(verify_token)):
     """Get comprehensive financial overview and revenue tracking"""
     try:
         financial_data = await financial_controller.get_comprehensive_overview()
-        
+
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "revenue": financial_data.get("revenue", {}),
@@ -637,7 +645,7 @@ async def get_financial_overview(token: str = Depends(verify_token)):
             "financial_health": financial_data.get("health_score", 0),
             "projections": financial_data.get("projections", {})
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting financial overview: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -650,13 +658,13 @@ async def health_check():
         db = SessionLocal()
         db.execute("SELECT 1")
         db.close()
-        
+
         # Check Redis connection
         redis_client.ping()
-        
+
         # Check empire services
         empire_health = await empire_orchestrator.get_system_health()
-        
+
         return {
             "status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -664,7 +672,7 @@ async def health_check():
             "redis": "connected",
             "empire_services": empire_health
         }
-        
+
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return {
@@ -697,7 +705,7 @@ async def get_empire_status():
             "system_health": 99.2,
             "uptime": "99.2%"
         }
-        
+
         return {
             "status": "success",
             "data": status,
@@ -707,7 +715,7 @@ async def get_empire_status():
         logger.error(f"Failed to get empire status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/agents/status")  
+@app.get("/agents/status")
 async def get_agents_status():
     """Get status of all empire agents"""
     try:
@@ -715,7 +723,7 @@ async def get_agents_status():
             {
                 "id": "product_research_agent",
                 "name": "Product Research Agent",
-                "type": "research", 
+                "type": "research",
                 "status": "active",
                 "performance_score": 94,
                 "discoveries_count": 127,
@@ -723,7 +731,7 @@ async def get_agents_status():
                 "last_execution": datetime.now(timezone.utc).isoformat()
             },
             {
-                "id": "supplier_intelligence_agent", 
+                "id": "supplier_intelligence_agent",
                 "name": "Supplier Intelligence Agent",
                 "type": "supplier",
                 "status": "active",
@@ -744,7 +752,7 @@ async def get_agents_status():
             },
             {
                 "id": "market_analysis_agent",
-                "name": "Market Analysis Agent", 
+                "name": "Market Analysis Agent",
                 "type": "analytics",
                 "status": "deploying",
                 "performance_score": 0,
@@ -755,7 +763,7 @@ async def get_agents_status():
             {
                 "id": "pricing_strategy_agent",
                 "name": "Pricing Strategy Agent",
-                "type": "analytics", 
+                "type": "analytics",
                 "status": "inactive",
                 "performance_score": 76,
                 "discoveries_count": 23,
@@ -773,7 +781,7 @@ async def get_agents_status():
                 "last_execution": "2024-01-12T15:20:00Z"
             }
         ]
-        
+
         return {
             "status": "success",
             "data": agents_status,
@@ -803,7 +811,7 @@ async def get_product_opportunities():
             },
             {
                 "id": "opp_2",
-                "title": "Smart Fitness Tracker with Heart Monitor", 
+                "title": "Smart Fitness Tracker with Heart Monitor",
                 "price_range": "$45-$65",
                 "trend_score": 92,
                 "profit_potential": "High",
@@ -818,7 +826,7 @@ async def get_product_opportunities():
                 "title": "LED Gaming Mouse Pad RGB",
                 "price_range": "$15-$25",
                 "trend_score": 74,
-                "profit_potential": "Medium", 
+                "profit_potential": "Medium",
                 "source_platform": "DHgate",
                 "search_volume": 23000,
                 "competition_level": "Low",
@@ -826,7 +834,7 @@ async def get_product_opportunities():
                 "market_insights": "Gaming accessories steady growth"
             }
         ]
-        
+
         return {
             "status": "success",
             "data": opportunities,
@@ -866,7 +874,7 @@ async def get_marketing_campaigns():
                 "id": "camp_2",
                 "product_title": "Smart Fitness Tracker",
                 "platform": "instagram",
-                "format": "video", 
+                "format": "video",
                 "status": "active",
                 "budget": 750,
                 "metrics": {
@@ -883,7 +891,7 @@ async def get_marketing_campaigns():
                 "created_at": "2024-01-16T14:20:00Z"
             }
         ]
-        
+
         return {
             "status": "success",
             "data": campaigns,
@@ -908,7 +916,7 @@ async def execute_empire_command(command: EmpireCommand):
             result = {"message": "Operations resumed", "status": "operational"}
         else:
             raise HTTPException(status_code=400, detail=f"Unknown command: {command.command}")
-        
+
         return {
             "status": "success",
             "data": result,
@@ -955,7 +963,7 @@ async def health_check():
         "status": "healthy",
         "services": {
             "orchestrator": True,
-            "data_collector": True, 
+            "data_collector": True,
             "market_intelligence": True,
             "decision_engine": True,
             "action_executor": True,
