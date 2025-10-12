@@ -63,13 +63,19 @@ Bundle size: ~1.3MB (compressed ~366KB)
 
 ## 📋 Cloudflare Pages Configuration
 
-### Build Settings
+### Build Settings (Configure in Cloudflare Dashboard or CLI)
 ```yaml
-Build command: pnpm run build
-Build output directory: dist
-Root directory: apps/command-center-ui
+Build command: pnpm install --frozen-lockfile && pnpm --filter @royal-equips/command-center-ui build
+Build output directory: apps/command-center-ui/dist
+Root directory: (leave empty - use repository root)
 Node.js version: 20.17.0
 ```
+
+**Important Notes:**
+- The build command MUST be configured in Cloudflare Pages dashboard or via `wrangler pages deploy` CLI
+- Do NOT put build commands in `wrangler.toml` `[build]` section (that's for Workers, not Pages)
+- The `wrangler.toml` should only contain `pages_build_output_dir` for Pages deployments
+- Use `--frozen-lockfile` to ensure reproducible builds
 
 ### Environment Variables (Optional)
 ```bash
@@ -77,15 +83,23 @@ NODE_ENV=production
 VITE_API_BASE_URL=https://your-backend-url.com
 ```
 
-### Build Process Verification
+### Build Process Verification (Local Testing)
 ```bash
 # Install dependencies
-pnpm install
+pnpm install --frozen-lockfile
 
 # Build production bundle
 pnpm --filter="@royal-equips/command-center-ui" build
 
-# Output: dist/ directory with optimized production build
+# Output: apps/command-center-ui/dist/ directory with optimized production build
+```
+
+### Deployment via Wrangler CLI
+```bash
+# Deploy directly to Cloudflare Pages (after building)
+cd apps/command-center-ui
+pnpm run build
+npx wrangler pages deploy dist --project-name=royal-equips-orchestrator-ui
 ```
 
 ## 🚀 Deployment Status
