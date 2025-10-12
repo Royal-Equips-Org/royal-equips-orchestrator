@@ -106,25 +106,22 @@ class ShopifyGraphQLService:
         end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         
-        # Build query filter string in Shopify format: created_at:>=YYYY-MM-DD
-        query_filter = f"created_at:>={start_date.strftime('%Y-%m-%d')}"
-        
         query = """
-        query($first: Int!, $query: String) {
-            orders(first: $first, query: $query) {
+        query($first: Int!, $createdAtMin: DateTime) {
+            orders(first: $first, query: $createdAtMin) {
                 edges {
                     node {
                         id
                         name
                         processedAt
-                        currentTotalPriceSet {
+                        totalPriceSet {
                             shopMoney {
                                 amount
                                 currencyCode
                             }
                         }
-                        displayFinancialStatus
-                        displayFulfillmentStatus
+                        financialStatus
+                        fulfillmentStatus
                         lineItems(first: 10) {
                             edges {
                                 node {
@@ -148,7 +145,7 @@ class ShopifyGraphQLService:
         
         variables = {
             'first': 250,
-            'query': query_filter
+            'createdAtMin': start_date.isoformat()
         }
         
         result = await self._execute_query(query, variables)
@@ -162,13 +159,11 @@ class ShopifyGraphQLService:
         
         for edge in orders:
             order = edge['node']
-            total_revenue += float(order['currentTotalPriceSet']['shopMoney']['amount'])
+            total_revenue += float(order['totalPriceSet']['shopMoney']['amount'])
             
-            # displayFulfillmentStatus returns values like "FULFILLED", "UNFULFILLED", "PARTIALLY_FULFILLED"
-            fulfillment_status = order.get('displayFulfillmentStatus', '').upper()
-            if fulfillment_status == 'FULFILLED':
+            if order['fulfillmentStatus'] == 'fulfilled':
                 fulfilled_orders += 1
-            elif fulfillment_status in ['UNFULFILLED', 'PARTIALLY_FULFILLED']:
+            elif order['fulfillmentStatus'] in ['pending', 'partial']:
                 pending_orders += 1
         
         return {

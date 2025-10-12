@@ -43,7 +43,7 @@ jobs:
       # JS/TS dependency graph without running project scripts
       - name: Setup Node (JS/TS only)
         if: ${{ matrix.language == 'javascript-typescript' }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -86,7 +86,7 @@ jobs:
       # Optional Python resolution without running project scripts
       - name: Setup Python (Python only)
         if: ${{ matrix.language == 'python' }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -101,13 +101,13 @@ jobs:
           fi
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix['build-mode'] }}
           # queries: security-extended,security-and-quality
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
