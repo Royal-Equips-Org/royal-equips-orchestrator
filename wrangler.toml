@@ -24,7 +24,7 @@ NODE_VERSION = "20"
 [build]
 # Build only the UI workspace. Avoid recursive -r builds to keep CI fast and isolated.
 # Use --filter syntax to target the package by name (workspace protocol).
-command = "pnpm --filter @royal-equips/command-center-ui install --no-frozen-lockfile && pnpm --filter @royal-equips/command-center-ui build"
+command = "pnpm install --frozen-lockfile && pnpm --filter @royal-equips/command-center-ui build"
 
 [env.production.vars]
 APP_ENV = "production"
