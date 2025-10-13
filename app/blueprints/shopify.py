@@ -734,8 +734,8 @@ def get_orders():
                     "id": f"gid://shopify/Order/{order.get('id')}",
                     "orderNumber": str(order.get('order_number', order.get('name', ''))),
                     "totalPrice": order.get('total_price', '0'),
-                    "financialStatus": order.get('financial_status', 'pending').upper(),
-                    "fulfillmentStatus": (order.get('fulfillment_status') or 'unfulfilled').upper(),
+                    "displayFinancialStatus": order.get('financial_status', 'pending').upper(),
+                    "displayFulfillmentStatus": (order.get('fulfillment_status') or 'unfulfilled').upper(),
                     "customerEmail": order.get('email', order.get('customer', {}).get('email', '')),
                     "createdAt": order.get('created_at', datetime.now(timezone.utc).isoformat()),
                     "lineItems": line_items
@@ -906,7 +906,7 @@ def get_shopify_metrics_old():
                     'customerName': f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip() or 'Guest',
                     'totalPrice': order.get('total_price', '0'),
                     'createdAt': order.get('created_at', datetime.now(timezone.utc).isoformat()),
-                    'fulfillmentStatus': order.get('fulfillment_status', 'unfulfilled')
+                    'displayFulfillmentStatus': order.get('fulfillment_status', 'unfulfilled')
                 })
 
             # Estimate metrics (simplified calculations)

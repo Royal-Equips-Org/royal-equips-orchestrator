@@ -50,8 +50,8 @@ export interface ShopifyOrder {
   name: string;
   email?: string;
   totalPrice: string;
-  financialStatus: string;
-  fulfillmentStatus: string;
+  displayFinancialStatus: string;
+  displayFulfillmentStatus: string;
   createdAt: string;
 }
 
@@ -90,7 +90,7 @@ export interface ShopifyMetrics {
     customerName: string;
     totalPrice: string;
     createdAt: string;
-    fulfillmentStatus: string;
+    displayFulfillmentStatus: string;
   }>;
   source: ShopifyDataSource;
   lastUpdated: string;
