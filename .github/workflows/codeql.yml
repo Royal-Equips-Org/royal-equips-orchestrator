@@ -86,7 +86,7 @@ jobs:
       # Optional Python resolution without running project scripts
       - name: Setup Python (Python only)
         if: ${{ matrix.language == 'python' }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
