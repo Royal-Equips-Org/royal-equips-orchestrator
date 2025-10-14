@@ -404,7 +404,7 @@ class ProductResearchAgent(AgentBase):
     def _extract_price_from_text(self, price_text: str) -> float:
         """Extract numeric price from text like '$25.99' or '€30.50'."""
         # Remove currency symbols and extract numbers
-        match = re.search(r'[\d,]+\.?\d*', price_text.replace(',', ''))
+        match = re.search(r'[\d,]*\.?\d+', price_text.replace(',', ''))
         if match:
             return float(match.group())
         return 25.0  # Default price
