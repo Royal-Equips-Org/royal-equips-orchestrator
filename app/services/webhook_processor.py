@@ -144,13 +144,13 @@ class WebhookProcessor:
             return f"wh_error_{int(datetime.now(timezone.utc).timestamp())}"
     
     async def _get_agent_registry(self):
-        """Get agent registry for routing webhooks to agents."""
+        """Get AIRA integration for routing webhooks to agents."""
         if self._agent_registry is None:
             try:
-                from orchestrator.core.agent_registry import get_agent_registry
-                self._agent_registry = get_agent_registry()
+                from orchestrator.core.aira_integration import get_aira_integration
+                self._agent_registry = get_aira_integration()
             except Exception as e:
-                self.logger.error(f"Failed to get agent registry: {e}")
+                self.logger.error(f"Failed to get AIRA integration: {e}")
         return self._agent_registry
     
     async def _route_to_order_agent(
@@ -161,25 +161,35 @@ class WebhookProcessor:
     ) -> Dict[str, Any]:
         """Route order webhook to order fulfillment agent."""
         try:
-            registry = await self._get_agent_registry()
-            if not registry:
-                return {"agent": "order_fulfillment", "status": "registry_unavailable"}
+            aira = await self._get_agent_registry()
+            if not aira:
+                return {"agent": "order_fulfillment", "status": "aira_unavailable"}
             
-            # Queue task for order agent
+            # Import required types
+            from orchestrator.core.aira_integration import AgentCapability, TaskPriority
+            
+            # Queue task for order agent via AIRA
             task_data = {
                 "type": "shopify_webhook",
                 "webhook_id": webhook_id,
                 "topic": topic,
-                "order_data": data,
-                "priority": "high" if topic == "orders/create" else "normal"
+                "order_data": data
             }
             
-            # Submit task to order fulfillment agent
-            agent_id = "production_order_fulfillment_agent"
-            result = await registry.submit_task(agent_id, task_data)
+            # Generate unique task ID
+            task_id = f"{webhook_id}_order"
+            priority = TaskPriority.HIGH if topic == "orders/create" else TaskPriority.NORMAL
+            
+            # Submit task through AIRA integration
+            result = await aira.submit_task(
+                task_id=task_id,
+                capability=AgentCapability.ORDER_FULFILLMENT,
+                parameters=task_data,
+                priority=priority
+            )
             
             self.logger.info(f"Routed {topic} to order fulfillment agent: {result}")
-            return {"agent": "order_fulfillment", "status": "queued", "task_id": result.get("task_id")}
+            return {"agent": "order_fulfillment", "status": "queued", "task_id": result.task_id}
             
         except Exception as e:
             self.logger.error(f"Failed to route to order agent: {e}")
@@ -193,23 +203,29 @@ class WebhookProcessor:
     ) -> Dict[str, Any]:
         """Route inventory/product webhook to inventory agent."""
         try:
-            registry = await self._get_agent_registry()
-            if not registry:
-                return {"agent": "inventory", "status": "registry_unavailable"}
+            aira = await self._get_agent_registry()
+            if not aira:
+                return {"agent": "inventory", "status": "aira_unavailable"}
+            
+            from orchestrator.core.aira_integration import AgentCapability, TaskPriority
             
             task_data = {
                 "type": "shopify_webhook",
                 "webhook_id": webhook_id,
                 "topic": topic,
-                "product_data": data,
-                "priority": "normal"
+                "product_data": data
             }
             
-            agent_id = "production_inventory_agent"
-            result = await registry.submit_task(agent_id, task_data)
+            task_id = f"{webhook_id}_inventory"
+            result = await aira.submit_task(
+                task_id=task_id,
+                capability=AgentCapability.INVENTORY_MANAGEMENT,
+                parameters=task_data,
+                priority=TaskPriority.NORMAL
+            )
             
             self.logger.info(f"Routed {topic} to inventory agent: {result}")
-            return {"agent": "inventory", "status": "queued", "task_id": result.get("task_id")}
+            return {"agent": "inventory", "status": "queued", "task_id": result.task_id}
             
         except Exception as e:
             self.logger.error(f"Failed to route to inventory agent: {e}")
@@ -223,9 +239,11 @@ class WebhookProcessor:
     ) -> Dict[str, Any]:
         """Route product webhook to product research agent for market analysis."""
         try:
-            registry = await self._get_agent_registry()
-            if not registry:
-                return {"agent": "product_research", "status": "registry_unavailable"}
+            aira = await self._get_agent_registry()
+            if not aira:
+                return {"agent": "product_research", "status": "aira_unavailable"}
+            
+            from orchestrator.core.aira_integration import AgentCapability, TaskPriority
             
             task_data = {
                 "type": "shopify_webhook",
@@ -235,11 +253,16 @@ class WebhookProcessor:
                 "action": "analyze_market_opportunity"
             }
             
-            agent_id = "product_research_agent"
-            result = await registry.submit_task(agent_id, task_data)
+            task_id = f"{webhook_id}_research"
+            result = await aira.submit_task(
+                task_id=task_id,
+                capability=AgentCapability.PRODUCT_RESEARCH,
+                parameters=task_data,
+                priority=TaskPriority.NORMAL
+            )
             
             self.logger.info(f"Routed {topic} to product research agent: {result}")
-            return {"agent": "product_research", "status": "queued", "task_id": result.get("task_id")}
+            return {"agent": "product_research", "status": "queued", "task_id": result.task_id}
             
         except Exception as e:
             self.logger.error(f"Failed to route to product research agent: {e}")
@@ -253,23 +276,29 @@ class WebhookProcessor:
     ) -> Dict[str, Any]:
         """Route customer webhook to customer support agent."""
         try:
-            registry = await self._get_agent_registry()
-            if not registry:
-                return {"agent": "customer_support", "status": "registry_unavailable"}
+            aira = await self._get_agent_registry()
+            if not aira:
+                return {"agent": "customer_support", "status": "aira_unavailable"}
+            
+            from orchestrator.core.aira_integration import AgentCapability, TaskPriority
             
             task_data = {
                 "type": "shopify_webhook",
                 "webhook_id": webhook_id,
                 "topic": topic,
-                "customer_data": data,
-                "priority": "normal"
+                "customer_data": data
             }
             
-            agent_id = "production_customer_support_agent"
-            result = await registry.submit_task(agent_id, task_data)
+            task_id = f"{webhook_id}_support"
+            result = await aira.submit_task(
+                task_id=task_id,
+                capability=AgentCapability.CUSTOMER_SUPPORT,
+                parameters=task_data,
+                priority=TaskPriority.NORMAL
+            )
             
             self.logger.info(f"Routed {topic} to customer support agent: {result}")
-            return {"agent": "customer_support", "status": "queued", "task_id": result.get("task_id")}
+            return {"agent": "customer_support", "status": "queued", "task_id": result.task_id}
             
         except Exception as e:
             self.logger.error(f"Failed to route to customer support agent: {e}")
@@ -283,23 +312,29 @@ class WebhookProcessor:
     ) -> Dict[str, Any]:
         """Route customer webhook to marketing automation agent."""
         try:
-            registry = await self._get_agent_registry()
-            if not registry:
-                return {"agent": "marketing", "status": "registry_unavailable"}
+            aira = await self._get_agent_registry()
+            if not aira:
+                return {"agent": "marketing", "status": "aira_unavailable"}
+            
+            from orchestrator.core.aira_integration import AgentCapability, TaskPriority
             
             task_data = {
                 "type": "shopify_webhook",
                 "webhook_id": webhook_id,
                 "topic": topic,
-                "customer_data": data,
-                "priority": "low"
+                "customer_data": data
             }
             
-            agent_id = "production_marketing_agent"
-            result = await registry.submit_task(agent_id, task_data)
+            task_id = f"{webhook_id}_marketing"
+            result = await aira.submit_task(
+                task_id=task_id,
+                capability=AgentCapability.MARKETING_AUTOMATION,
+                parameters=task_data,
+                priority=TaskPriority.LOW
+            )
             
             self.logger.info(f"Routed {topic} to marketing agent: {result}")
-            return {"agent": "marketing", "status": "queued", "task_id": result.get("task_id")}
+            return {"agent": "marketing", "status": "queued", "task_id": result.task_id}
             
         except Exception as e:
             self.logger.error(f"Failed to route to marketing agent: {e}")

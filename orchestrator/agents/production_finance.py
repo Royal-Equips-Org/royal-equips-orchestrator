@@ -253,21 +253,26 @@ class ProductionFinanceAgent(AgentBase):
                 logger.info("Stripe integration initialized")
 
             # Initialize PayPal
-            paypal_client_id = await self.secrets.get_secret('PAYPAL_CLIENT_ID')
-            paypal_secret = await self.secrets.get_secret('PAYPAL_CLIENT_SECRET')
+            paypal_client_id_result = await self.secrets.get_secret('PAYPAL_CLIENT_ID')
+            paypal_secret_result = await self.secrets.get_secret('PAYPAL_CLIENT_SECRET')
+            # Extract string values from SecretResult objects
+            paypal_client_id = paypal_client_id_result.value if hasattr(paypal_client_id_result, 'value') else str(paypal_client_id_result) if paypal_client_id_result else None
+            paypal_secret = paypal_secret_result.value if hasattr(paypal_secret_result, 'value') else str(paypal_secret_result) if paypal_secret_result else None
             if paypal_client_id and paypal_secret:
                 self.payment_processors['paypal'] = {
-                    'client_id': paypal_client_id.value,
-                    'client_secret': paypal_secret.value,
+                    'client_id': paypal_client_id,
+                    'client_secret': paypal_secret,
                     'base_url': 'https://api.paypal.com'
                 }
                 logger.info("PayPal integration initialized")
 
             # Initialize Square
-            square_token = await self.secrets.get_secret('SQUARE_ACCESS_TOKEN')
+            square_token_result = await self.secrets.get_secret('SQUARE_ACCESS_TOKEN')
+            # Extract string value from SecretResult object
+            square_token = square_token_result.value if hasattr(square_token_result, 'value') else str(square_token_result) if square_token_result else None
             if square_token:
                 self.payment_processors['square'] = {
-                    'access_token': square_token.value,
+                    'access_token': square_token,
                     'base_url': 'https://connect.squareup.com'
                 }
                 logger.info("Square integration initialized")
@@ -279,13 +284,16 @@ class ProductionFinanceAgent(AgentBase):
         """Initialize accounting system integrations."""
         try:
             # Initialize QuickBooks
-            qb_client_id = await self.secrets.get_secret('QUICKBOOKS_CLIENT_ID')
-            qb_client_secret = await self.secrets.get_secret('QUICKBOOKS_CLIENT_SECRET')
+            qb_client_id_result = await self.secrets.get_secret('QUICKBOOKS_CLIENT_ID')
+            qb_client_secret_result = await self.secrets.get_secret('QUICKBOOKS_CLIENT_SECRET')
+            # Extract string values from SecretResult objects
+            qb_client_id = qb_client_id_result.value if hasattr(qb_client_id_result, 'value') else str(qb_client_id_result) if qb_client_id_result else None
+            qb_client_secret = qb_client_secret_result.value if hasattr(qb_client_secret_result, 'value') else str(qb_client_secret_result) if qb_client_secret_result else None
             if qb_client_id and qb_client_secret:
                 self.accounting_systems = {
                     'quickbooks': {
-                        'client_id': qb_client_id.value,
-                        'client_secret': qb_client_secret.value,
+                        'client_id': qb_client_id,
+                        'client_secret': qb_client_secret,
                         'base_url': 'https://sandbox-quickbooks.api.intuit.com'
                     }
                 }
