@@ -90,8 +90,8 @@ interface Order {
   id: string;
   orderNumber: string;
   totalPrice: string;
-  financialStatus: string;
-  fulfillmentStatus: string;
+  displayFinancialStatus: string;
+  displayFulfillmentStatus: string;
   customerEmail: string;
   createdAt: string;
   lineItems: OrderLineItem[];

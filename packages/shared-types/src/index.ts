@@ -28,8 +28,8 @@ export const OrderSchema = z.object({
   name: z.string(),
   email: z.string().email(),
   totalPrice: z.number(),
-  financialStatus: z.string(),
-  fulfillmentStatus: z.string(),
+  displayFinancialStatus: z.string(),
+  displayFulfillmentStatus: z.string(),
   createdAt: z.string(),
   updatedAt: z.string()
 });

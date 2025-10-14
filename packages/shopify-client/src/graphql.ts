@@ -67,8 +67,8 @@ export const GQL_ORDERS = `
           name
           email
           totalPrice
-          financialStatus
-          fulfillmentStatus
+          displayFinancialStatus
+          displayFulfillmentStatus
           createdAt
           updatedAt
           customer {
