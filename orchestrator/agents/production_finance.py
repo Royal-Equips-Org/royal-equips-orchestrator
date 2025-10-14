@@ -225,7 +225,9 @@ class ProductionFinanceAgent(AgentBase):
     async def _initialize_redis(self):
         """Initialize Redis cache for financial data."""
         try:
-            redis_url = await self.secrets.get_secret('REDIS_URL')
+            redis_url_result = await self.secrets.get_secret('REDIS_URL')
+            # Extract string value from SecretResult object
+            redis_url = redis_url_result.value if hasattr(redis_url_result, 'value') else str(redis_url_result) if redis_url_result else None
             if not redis_url:
                 redis_url = 'redis://localhost:6379'
 
@@ -241,29 +243,36 @@ class ProductionFinanceAgent(AgentBase):
         """Initialize payment processor integrations."""
         try:
             # Initialize Stripe
-            stripe_key = await self.secrets.get_secret('STRIPE_SECRET_KEY')
+            stripe_key_result = await self.secrets.get_secret('STRIPE_SECRET_KEY')
+            # Extract string value from SecretResult object
+            stripe_key = stripe_key_result.value if hasattr(stripe_key_result, 'value') else str(stripe_key_result) if stripe_key_result else None
             if stripe_key:
                 import stripe
-                stripe.api_key = stripe_key.value
+                stripe.api_key = stripe_key
                 self.payment_processors['stripe'] = stripe
                 logger.info("Stripe integration initialized")
 
             # Initialize PayPal
-            paypal_client_id = await self.secrets.get_secret('PAYPAL_CLIENT_ID')
-            paypal_secret = await self.secrets.get_secret('PAYPAL_CLIENT_SECRET')
+            paypal_client_id_result = await self.secrets.get_secret('PAYPAL_CLIENT_ID')
+            paypal_secret_result = await self.secrets.get_secret('PAYPAL_CLIENT_SECRET')
+            # Extract string values from SecretResult objects
+            paypal_client_id = paypal_client_id_result.value if hasattr(paypal_client_id_result, 'value') else str(paypal_client_id_result) if paypal_client_id_result else None
+            paypal_secret = paypal_secret_result.value if hasattr(paypal_secret_result, 'value') else str(paypal_secret_result) if paypal_secret_result else None
             if paypal_client_id and paypal_secret:
                 self.payment_processors['paypal'] = {
-                    'client_id': paypal_client_id.value,
-                    'client_secret': paypal_secret.value,
+                    'client_id': paypal_client_id,
+                    'client_secret': paypal_secret,
                     'base_url': 'https://api.paypal.com'
                 }
                 logger.info("PayPal integration initialized")
 
             # Initialize Square
-            square_token = await self.secrets.get_secret('SQUARE_ACCESS_TOKEN')
+            square_token_result = await self.secrets.get_secret('SQUARE_ACCESS_TOKEN')
+            # Extract string value from SecretResult object
+            square_token = square_token_result.value if hasattr(square_token_result, 'value') else str(square_token_result) if square_token_result else None
             if square_token:
                 self.payment_processors['square'] = {
-                    'access_token': square_token.value,
+                    'access_token': square_token,
                     'base_url': 'https://connect.squareup.com'
                 }
                 logger.info("Square integration initialized")
@@ -275,13 +284,16 @@ class ProductionFinanceAgent(AgentBase):
         """Initialize accounting system integrations."""
         try:
             # Initialize QuickBooks
-            qb_client_id = await self.secrets.get_secret('QUICKBOOKS_CLIENT_ID')
-            qb_client_secret = await self.secrets.get_secret('QUICKBOOKS_CLIENT_SECRET')
+            qb_client_id_result = await self.secrets.get_secret('QUICKBOOKS_CLIENT_ID')
+            qb_client_secret_result = await self.secrets.get_secret('QUICKBOOKS_CLIENT_SECRET')
+            # Extract string values from SecretResult objects
+            qb_client_id = qb_client_id_result.value if hasattr(qb_client_id_result, 'value') else str(qb_client_id_result) if qb_client_id_result else None
+            qb_client_secret = qb_client_secret_result.value if hasattr(qb_client_secret_result, 'value') else str(qb_client_secret_result) if qb_client_secret_result else None
             if qb_client_id and qb_client_secret:
                 self.accounting_systems = {
                     'quickbooks': {
-                        'client_id': qb_client_id.value,
-                        'client_secret': qb_client_secret.value,
+                        'client_id': qb_client_id,
+                        'client_secret': qb_client_secret,
                         'base_url': 'https://sandbox-quickbooks.api.intuit.com'
                     }
                 }

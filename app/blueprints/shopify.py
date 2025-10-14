@@ -1048,8 +1048,8 @@ def handle_webhook(topic: str):
         except BadRequest:
             webhook_data = {}
 
-        # Process webhook
-        {
+        # Process webhook - Store and route to agents for real-time business logic
+        webhook_info = {
             'topic': topic,
             'shop_domain': shop_domain,
             'data': webhook_data,
@@ -1058,7 +1058,24 @@ def handle_webhook(topic: str):
             'verified': True
         }
 
-        # Emit webhook event via WebSocket
+        # Route webhook to appropriate agents for processing
+        processing_result = None
+        try:
+            from app.services.webhook_processor import get_webhook_processor
+            import asyncio
+            
+            processor = get_webhook_processor()
+            
+            # Process webhook asynchronously - routes to agents
+            processing_result = asyncio.run(
+                processor.process_shopify_webhook(topic, webhook_data, shop_domain)
+            )
+            logger.info(f"Webhook routed to {processing_result.get('agents_notified', 0)} agents")
+        except Exception as e:
+            logger.error(f"Failed to route webhook to agents: {e}")
+            processing_result = {"error": str(e), "agents_notified": 0}
+
+        # Emit webhook event via WebSocket for real-time command center updates
         try:
             from app.sockets import socketio
             if socketio:
@@ -1066,22 +1083,30 @@ def handle_webhook(topic: str):
                     'topic': topic,
                     'shop_domain': shop_domain,
                     'id': webhook_data.get('id') if webhook_data else None,
-                    'timestamp': datetime.now(timezone.utc).isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'agents_notified': processing_result.get('agents_notified', 0) if processing_result else 0
                 }, namespace='/ws/shopify')
         except:
             pass
 
         safe_topic = topic.replace('\n', '').replace('\r', '')[:50]
         safe_shop_domain = shop_domain.replace('\n', '').replace('\r', '')[:100]
-        logger.info(f"Processed webhook {safe_topic} from {safe_shop_domain}")
+        logger.info(f"Processed webhook {safe_topic} from {safe_shop_domain} - routed to agents")
 
-        return jsonify({
+        response_data = {
             "status": "received",
             "topic": topic,
             "shop_domain": shop_domain,
             "verified": True,
             "timestamp": datetime.now(timezone.utc).isoformat()
-        }), 202
+        }
+        
+        # Include agent routing info if available
+        if processing_result:
+            response_data["agents_notified"] = processing_result.get("agents_notified", 0)
+            response_data["webhook_id"] = processing_result.get("webhook_id")
+
+        return jsonify(response_data), 202
 
     except Exception as e:
         safe_topic = topic.replace('\n', '').replace('\r', '')[:50]

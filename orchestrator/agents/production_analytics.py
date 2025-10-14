@@ -196,7 +196,9 @@ class ProductionAnalyticsAgent(AgentBase):
     async def _initialize_redis(self):
         """Initialize Redis cache for performance optimization."""
         try:
-            redis_url = await self.secrets.get_secret('REDIS_URL')
+            redis_url_result = await self.secrets.get_secret('REDIS_URL')
+            # Extract string value from SecretResult object
+            redis_url = redis_url_result.value if hasattr(redis_url_result, 'value') else str(redis_url_result) if redis_url_result else None
             if not redis_url:
                 redis_url = 'redis://localhost:6379'
 
@@ -212,13 +214,17 @@ class ProductionAnalyticsAgent(AgentBase):
         """Initialize database connections for analytics."""
         try:
             # Main application database
-            main_db_url = await self.secrets.get_secret('DATABASE_URL')
+            main_db_url_result = await self.secrets.get_secret('DATABASE_URL')
+            # Extract string value from SecretResult object
+            main_db_url = main_db_url_result.value if hasattr(main_db_url_result, 'value') else str(main_db_url_result) if main_db_url_result else None
             if main_db_url:
                 self.db_connections['main'] = create_engine(main_db_url)
                 logger.info("Main database connection established")
 
             # Analytics warehouse (if different)
-            warehouse_url = await self.secrets.get_secret('ANALYTICS_DB_URL')
+            warehouse_url_result = await self.secrets.get_secret('ANALYTICS_DB_URL')
+            # Extract string value from SecretResult object
+            warehouse_url = warehouse_url_result.value if hasattr(warehouse_url_result, 'value') else str(warehouse_url_result) if warehouse_url_result else None
             if warehouse_url:
                 self.db_connections['warehouse'] = create_engine(warehouse_url)
                 logger.info("Analytics warehouse connection established")

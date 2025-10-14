@@ -24,6 +24,10 @@ class ShopifyGraphQLService:
         self._api_version = "2024-07"
         self._base_url = None
 
+    def is_configured(self) -> bool:
+        """Check if Shopify credentials are configured."""
+        return bool(self._shop_name and self._access_token and self._base_url)
+
     async def initialize(self):
         """Initialize Shopify connection with real credentials."""
         try:

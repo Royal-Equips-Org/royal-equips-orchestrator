@@ -170,6 +170,43 @@ class SimpleOrchestrator:
         """Get information about a specific execution."""
         return active_executions.get(execution_id)
 
+    def get_all_agents_health(self) -> Dict[str, Dict[str, Any]]:
+        """Get health status for all registered agents.
+        
+        Returns:
+            Dict mapping agent_id to health data including status, uptime, etc.
+        """
+        # List of known agents
+        known_agents = [
+            'product_research',
+            'inventory_pricing',
+            'marketing_automation',
+            'customer_support',
+            'order_management',
+            'production-analytics',
+            'security_fraud',
+        ]
+        
+        health_data = {}
+        for agent_id in known_agents:
+            status = self.get_agent_status(agent_id)
+            
+            # Count recent executions
+            recent_executions = [
+                exec_record for exec_record in active_executions.values()
+                if exec_record['agent_id'] == agent_id
+            ]
+            
+            health_data[agent_id] = {
+                'status': status,
+                'health_score': 100.0 if status != 'error' else 0.0,
+                'total_executions': len(recent_executions),
+                'active_executions': len([e for e in recent_executions if e['status'] == 'running']),
+                'last_activity': datetime.now(timezone.utc).isoformat(),
+            }
+        
+        return health_data
+
     def _execute_agent(self, execution_id: str, agent_id: str) -> None:
         """Execute an agent in the background."""
         try:

@@ -7,6 +7,7 @@ including session management, messaging, and streaming responses.
 
 import json
 import logging
+import os
 import time
 import uuid
 from datetime import datetime
@@ -20,11 +21,9 @@ logger = logging.getLogger(__name__)
 # Production storage with Redis backend
 import redis
 
-from core.secrets.secret_provider import UnifiedSecretResolver
-
 try:
-    secrets = UnifiedSecretResolver()
-    redis_url = secrets.get_secret('REDIS_URL') or 'redis://localhost:6379'
+    # Use environment variable directly for module-level initialization
+    redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379')
     redis_client = redis.from_url(redis_url, decode_responses=True)
     redis_client.ping()  # Test connection
     logger.info("Connected to Redis for agent session storage")
