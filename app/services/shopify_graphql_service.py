@@ -104,7 +104,8 @@ class ShopifyGraphQLService:
         end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
 
-        # Build query filter string in Shopify format: created_at:>=YYYY-MM-DD
+        # Build query filter string in Shopify's required format: created_at:>=YYYY-MM-DD
+        # See Shopify's query filter documentation: https://shopify.dev/docs/api/usage/search-filters
         query_filter = f"created_at:>={start_date.strftime('%Y-%m-%d')}"
 
         query = """
