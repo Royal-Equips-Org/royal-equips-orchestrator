@@ -107,10 +107,10 @@ export default function AuditComplianceModule() {
     try {
       setLoading(true);
       const [logsResponse, complianceResponse, policiesResponse, metricsResponse] = await Promise.all([
-        apiClient.get('/api/audit/logs'),
-        apiClient.get('/api/compliance/checks'),
-        apiClient.get('/api/audit/retention-policies'),
-        apiClient.get('/api/audit/metrics')
+        apiClient.get('/audit/logs'),
+        apiClient.get('/compliance/checks'),
+        apiClient.get('/audit/retention-policies'),
+        apiClient.get('/audit/metrics')
       ]);
       
       setAuditLogs(logsResponse.data);
@@ -127,7 +127,7 @@ export default function AuditComplianceModule() {
   const exportAuditReport = async (format: 'pdf' | 'csv' | 'json') => {
     try {
       setExporting(true);
-      const response = await apiClient.post('/api/audit/export', {
+      const response = await apiClient.post('/audit/export', {
         format,
         filters: {
           dateRange,
