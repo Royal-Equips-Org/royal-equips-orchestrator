@@ -50,21 +50,15 @@ function isDevelopment(): boolean {
  * Get the appropriate API base URL based on environment
  */
 function getApiBaseUrl(config: any): string {
-  // Always target Fastify API base /v1 (reverse-proxied in prod)
+  // Use the configured API base without modification
+  // Backend routes are at /api/empire/, /api/v2/, etc.
   if (isDevelopment()) {
-    return config.development?.apiRelativeBase || 'http://localhost:10000/v1';
+    return config.development?.apiRelativeBase || 'http://localhost:10000';
   }
   if (config.apiRelativeBase) {
-    // If apiRelativeBase is absolute, use URL constructor
-    try {
-      const url = new URL('/v1', config.apiRelativeBase);
-      return url.toString();
-    } catch {
-      // If apiRelativeBase is relative, fallback to safe string concatenation
-      return config.apiRelativeBase.replace(/\/$/, '') + '/v1';
-    }
+    return config.apiRelativeBase;
   }
-  return '/v1';
+  return '/api';
 }
 
 /**

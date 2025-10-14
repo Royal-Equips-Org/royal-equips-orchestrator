@@ -106,7 +106,7 @@ export default function EnterpriseApp() {
 
   const fetchSystemHealth = async () => {
     try {
-      const response = await apiClient.get('/api/system/health/comprehensive');
+      const response = await apiClient.get('/system/health/comprehensive');
       setAppState(prev => ({
         ...prev,
         systemHealth: response.data
@@ -118,7 +118,7 @@ export default function EnterpriseApp() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await apiClient.get('/api/notifications/active');
+      const response = await apiClient.get('/notifications/active');
       setAppState(prev => ({
         ...prev,
         notifications: response.data.alerts || []
@@ -130,7 +130,7 @@ export default function EnterpriseApp() {
 
   const checkAuthentication = async () => {
     try {
-      await apiClient.get('/api/auth/validate');
+      await apiClient.get('/auth/validate');
     } catch (error) {
       // Handle authentication failure
       console.error('Authentication validation failed:', error);
