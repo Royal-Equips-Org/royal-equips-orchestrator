@@ -1067,15 +1067,10 @@ def handle_webhook(topic: str):
             processor = get_webhook_processor()
             
             # Process webhook asynchronously - routes to agents
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                processing_result = loop.run_until_complete(
-                    processor.process_shopify_webhook(topic, webhook_data, shop_domain)
-                )
-                logger.info(f"Webhook routed to {processing_result.get('agents_notified', 0)} agents")
-            finally:
-                loop.close()
+            processing_result = asyncio.run(
+                processor.process_shopify_webhook(topic, webhook_data, shop_domain)
+            )
+            logger.info(f"Webhook routed to {processing_result.get('agents_notified', 0)} agents")
         except Exception as e:
             logger.error(f"Failed to route webhook to agents: {e}")
             processing_result = {"error": str(e), "agents_notified": 0}
