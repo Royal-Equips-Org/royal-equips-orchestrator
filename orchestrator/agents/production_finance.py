@@ -248,7 +248,7 @@ class ProductionFinanceAgent(AgentBase):
             stripe_key = stripe_key_result.value if hasattr(stripe_key_result, 'value') else str(stripe_key_result) if stripe_key_result else None
             if stripe_key:
                 import stripe
-                stripe.api_key = stripe_key.value
+                stripe.api_key = stripe_key
                 self.payment_processors['stripe'] = stripe
                 logger.info("Stripe integration initialized")
 
