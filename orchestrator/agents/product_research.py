@@ -15,8 +15,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import re
 import time
+import re
 from typing import Any, Dict, List, Optional
 
 import httpx
