@@ -225,7 +225,9 @@ class ProductionFinanceAgent(AgentBase):
     async def _initialize_redis(self):
         """Initialize Redis cache for financial data."""
         try:
-            redis_url = await self.secrets.get_secret('REDIS_URL')
+            redis_url_result = await self.secrets.get_secret('REDIS_URL')
+            # Extract string value from SecretResult object
+            redis_url = redis_url_result.value if hasattr(redis_url_result, 'value') else str(redis_url_result) if redis_url_result else None
             if not redis_url:
                 redis_url = 'redis://localhost:6379'
 
@@ -241,7 +243,9 @@ class ProductionFinanceAgent(AgentBase):
         """Initialize payment processor integrations."""
         try:
             # Initialize Stripe
-            stripe_key = await self.secrets.get_secret('STRIPE_SECRET_KEY')
+            stripe_key_result = await self.secrets.get_secret('STRIPE_SECRET_KEY')
+            # Extract string value from SecretResult object
+            stripe_key = stripe_key_result.value if hasattr(stripe_key_result, 'value') else str(stripe_key_result) if stripe_key_result else None
             if stripe_key:
                 import stripe
                 stripe.api_key = stripe_key.value

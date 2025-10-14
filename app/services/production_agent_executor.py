@@ -99,7 +99,9 @@ class ProductionAgentExecutor:
         try:
             # Get database URL from secrets (optional)
             try:
-                database_url = await self.secrets.get_secret('DATABASE_URL')
+                database_url_result = await self.secrets.get_secret('DATABASE_URL')
+                # Extract string value from SecretResult object
+                database_url = database_url_result.value if hasattr(database_url_result, 'value') else str(database_url_result)
             except Exception:
                 # Fallback to SQLite for development (not a critical error)
                 database_url = "sqlite:///./royal_equips.db"
