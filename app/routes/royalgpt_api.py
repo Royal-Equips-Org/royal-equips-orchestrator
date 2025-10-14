@@ -741,37 +741,6 @@ def get_intelligence_report():
     return jsonify(report)
 
 
-## NOTE: Duplicate /v2/products route definitions removed. The canonical implementations
-## are the earlier list_products_v2 (GET) at line ~381 and analyse_product_v2 (POST) at ~432.
-## This block previously contained shadow definitions that caused inconsistent behavior.
-                })
-            else:
-                agents_status.append({
-                    "id": agent_id,
-                    "name": agent_id,
-                    "status": "unavailable",
-                    "lastRun": None,
-                    "metrics": {},
-                })
-        except Exception as exc:  # pragma: no cover
-            logger.warning(f"Failed to get status for agent {agent_id}: {exc}")
-            agents_status.append({
-                "id": agent_id,
-                "name": agent_id,
-                "status": "error",
-                "lastRun": None,
-                "metrics": {},
-                "error": str(exc),
-            })
-
-    return jsonify({
-        "agents": agents_status,
-        "totalAgents": len(agents_status),
-        "activeAgents": len([a for a in agents_status if a["status"] == "active"]),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
-
-
 @royalgpt_bp.route("/agents/<agent_id>/execute", methods=["POST"])
 def execute_agent(agent_id: str):
     """Trigger on-demand execution of a specific agent with optional parameters.
