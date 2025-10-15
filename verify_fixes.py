@@ -25,15 +25,18 @@ def test_eventlet_import():
     other_imports_found = False
     
     for line in lines:
-        if 'eventlet.monkey_patch()' in line:
+        stripped = line.strip()
+        if 'eventlet.monkey_patch()' in stripped:
             eventlet_found = True
             if other_imports_found:
                 print("  ✗ FAIL: eventlet.monkey_patch() appears after other imports")
                 return False
-        elif line.startswith('import ') or line.startswith('from '):
-            if 'eventlet' not in line:
-                other_imports_found = True
-    
+        elif stripped.startswith('import ') or stripped.startswith('from '):
+            # Ignore only the exact 'import eventlet' line
+            if stripped == 'import eventlet':
+                continue
+            # Treat 'from eventlet import ...' and 'import eventlet.submodule' as other imports
+            other_imports_found = True
     if eventlet_found:
         print("  ✓ PASS: eventlet.monkey_patch() appears before other imports")
         return True
