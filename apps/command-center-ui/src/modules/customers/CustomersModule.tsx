@@ -215,7 +215,7 @@ export default function CustomersModule() {
                 </div>
                 <Award className="w-8 h-8 text-purple-400" />
               </div>
-              <div className="mt-4 text-sm text-gray-400">${'>'}1,000 spent</div>
+              <div className="mt-4 text-sm text-gray-400">&gt;1,000 spent</div>
             </motion.div>
 
             <motion.div
