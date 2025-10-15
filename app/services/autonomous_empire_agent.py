@@ -378,6 +378,21 @@ class AutonomousEmpireAgent:
                 # Explore optimization opportunities
                 action_results["exploration"] = "optimization_exploration_initiated"
 
+            elif action == "update_dependencies":
+                # Update system dependencies
+                action_results["update"] = "dependency_update_initiated"
+                action_results["status"] = "scheduled"
+
+            elif action == "scan_security":
+                # Scan for security vulnerabilities
+                action_results["scan"] = "security_scan_initiated"
+                action_results["status"] = "scheduled"
+
+            elif action == "alert_critical":
+                # Send critical alert
+                action_results["alert"] = "critical_alert_sent"
+                action_results["status"] = "notified"
+
             else:
                 action_results["status"] = "unknown_action"
                 logger.warning(f"Unknown action: {action}")

@@ -60,6 +60,7 @@ class GitHubService:
         self._circuit_breaker_open = False
         self._failure_count = 0
         self._last_failure_time = None
+        self._last_rate_limit_warning = None  # Timestamp of last rate limit warning for 5-minute throttling
 
     def is_authenticated(self) -> bool:
         """Check if GitHub service is properly authenticated."""
@@ -92,7 +93,12 @@ class GitHubService:
                 logger.error("GitHub authentication failed - check token")
                 raise GitHubServiceError("GitHub authentication failed")
             elif response.status_code == 403:
-                logger.warning("GitHub rate limit exceeded")
+                # Only log rate limit warning once per 5 minutes to reduce spam
+                now = datetime.now(timezone.utc)
+                if self._last_rate_limit_warning is None or \
+                   (now - self._last_rate_limit_warning).total_seconds() > 300:
+                    logger.warning("GitHub rate limit exceeded - will retry after cooldown")
+                    self._last_rate_limit_warning = now
                 raise GitHubServiceError("GitHub rate limit exceeded")
             elif response.status_code >= 500:
                 raise GitHubServiceError(f"GitHub API server error: {response.status_code}")
