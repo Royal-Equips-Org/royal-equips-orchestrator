@@ -30,6 +30,8 @@ const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AI
 const ShopifyModule = lazy(() => import('./modules/shopify/ShopifyModule'));
 const AgentOrchestrationModule = lazy(() => import('./modules/agent-orchestration/AgentOrchestrationModule'));
 const ProductsModule = lazy(() => import('./modules/products/ProductsModule'));
+const OrdersModule = lazy(() => import('./modules/orders/OrdersModule'));
+const CustomersModule = lazy(() => import('./modules/customers/CustomersModule'));
 const ErrorTest = lazy(() => import('./test/ErrorTest'));
 
 function AppContent() {
@@ -156,65 +158,13 @@ function AppContent() {
       case 'orders':
         return (
           <Suspense fallback={loadingFallback('Orders')}>
-            <div className="min-h-screen bg-black text-white p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="flex items-center space-x-4 mb-8">
-                  <svg className="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
-                  </svg>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Order Management
-                  </h1>
-                </div>
-                <p className="text-gray-300 mb-6">Complete order lifecycle management and fulfillment automation</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-blue-400 mb-4">Order Processing</h3>
-                    <p className="text-gray-400">Automated order processing and workflow management</p>
-                  </div>
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-blue-400 mb-4">Fulfillment Center</h3>
-                    <p className="text-gray-400">Real-time fulfillment tracking and logistics coordination</p>
-                  </div>
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-blue-400 mb-4">Customer Communication</h3>
-                    <p className="text-gray-400">Automated notifications and delivery updates</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <OrdersModule />
           </Suspense>
         );
       case 'customers':
         return (
           <Suspense fallback={loadingFallback('Customers')}>
-            <div className="min-h-screen bg-black text-white p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="flex items-center space-x-4 mb-8">
-                  <svg className="w-8 h-8 text-pink-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                  </svg>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-                    Customer Management
-                  </h1>
-                </div>
-                <p className="text-gray-300 mb-6">Advanced customer relationship management and analytics</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-pink-400 mb-4">Customer Profiles</h3>
-                    <p className="text-gray-400">Comprehensive customer data and behavior analysis</p>
-                  </div>
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-pink-400 mb-4">Segmentation</h3>
-                    <p className="text-gray-400">AI-powered customer segmentation and targeting</p>
-                  </div>
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-pink-400 mb-4">Lifetime Value</h3>
-                    <p className="text-gray-400">Customer lifetime value prediction and optimization</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <CustomersModule />
           </Suspense>
         );
       case 'monitoring':
