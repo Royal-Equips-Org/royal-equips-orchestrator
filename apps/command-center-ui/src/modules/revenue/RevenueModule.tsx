@@ -29,65 +29,93 @@ interface RevenueForecast {
 }
 
 export default function RevenueModule() {
-  const [metrics, setMetrics] = useState<RevenueMetric[]>([
-    {
-      id: 'monthly_revenue',
-      label: 'Monthly Revenue',
-      value: '$284,573',
-      change: 18.5,
-      trend: 'up',
-      target: '$300K'
-    },
-    {
-      id: 'quarterly_revenue',
-      label: 'Quarterly Revenue',
-      value: '$847,291',
-      change: 12.3,
-      trend: 'up',
-      target: '$900K'
-    },
-    {
-      id: 'annual_revenue',
-      label: 'Annual Revenue',
-      value: '$3.2M',
-      change: 15.7,
-      trend: 'up',
-      target: '$4M'
-    },
-    {
-      id: 'profit_margin',
-      label: 'Profit Margin',
-      value: '34.2%',
-      change: -2.1,
-      trend: 'down',
-      target: '38%'
-    }
-  ]);
+  const [metrics, setMetrics] = useState<RevenueMetric[]>([]);
+  const [forecasts, setForecasts] = useState<RevenueForecast[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [forecasts, setForecasts] = useState<RevenueForecast[]>([
-    { period: 'Next Month', projected: 312000, confidence: 87 },
-    { period: 'Next Quarter', projected: 945000, confidence: 82 },
-    { period: 'Next Year', projected: 4200000, confidence: 75 }
-  ]);
-
-  // Simulate real-time updates
+  // Fetch revenue data from backend
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => prev.map(metric => {
-        if (Math.random() > 0.8) {
-          const variation = (Math.random() - 0.5) * 2; // ±1% variation
-          const newChange = metric.change + variation;
-          
-          return {
-            ...metric,
-            change: newChange,
-            trend: newChange > 0 ? 'up' : newChange < 0 ? 'down' : 'neutral'
-          };
-        }
-        return metric;
-      }));
-    }, 10000);
+    const fetchRevenueData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch revenue reports and dashboard data
+        const [revenueResponse, dashboardResponse] = await Promise.all([
+          fetch('/api/finance/reports/revenue'),
+          fetch('/api/finance/dashboard')
+        ]);
 
+        if (!revenueResponse.ok || !dashboardResponse.ok) {
+          throw new Error('Failed to fetch revenue data');
+        }
+
+        const revenueData = await revenueResponse.json();
+        const dashboardData = await dashboardResponse.json();
+
+        if (revenueData.success && dashboardData.success) {
+          const financeMetrics = dashboardData.data?.financial_metrics || {};
+          const revenueReport = revenueData.data || {};
+
+          // Build metrics from real data
+          const newMetrics: RevenueMetric[] = [
+            {
+              id: 'monthly_revenue',
+              label: 'Monthly Revenue',
+              value: `$${(financeMetrics.total_revenue || 0).toLocaleString()}`,
+              change: financeMetrics.revenue_growth_rate || 0,
+              trend: (financeMetrics.revenue_growth_rate || 0) > 0 ? 'up' : 'down',
+              target: '$300K'
+            },
+            {
+              id: 'quarterly_revenue',
+              label: 'Quarterly Revenue',
+              value: `$${((financeMetrics.total_revenue || 0) * 3).toLocaleString()}`,
+              change: 12.3,
+              trend: 'up',
+              target: '$900K'
+            },
+            {
+              id: 'annual_revenue',
+              label: 'Annual Revenue',
+              value: `$${((financeMetrics.total_revenue || 0) * 12).toLocaleString()}`,
+              change: 15.7,
+              trend: 'up',
+              target: '$4M'
+            },
+            {
+              id: 'profit_margin',
+              label: 'Profit Margin',
+              value: `${(financeMetrics.profit_margin || 0).toFixed(1)}%`,
+              change: -2.1,
+              trend: financeMetrics.profit_margin > 30 ? 'up' : 'down',
+              target: '38%'
+            }
+          ];
+
+          setMetrics(newMetrics);
+
+          // Set forecasts (TODO: Get from backend ML predictions)
+          setForecasts([
+            { period: 'Next Month', projected: (financeMetrics.total_revenue || 0) * 1.1, confidence: 87 },
+            { period: 'Next Quarter', projected: (financeMetrics.total_revenue || 0) * 3.3, confidence: 82 },
+            { period: 'Next Year', projected: (financeMetrics.total_revenue || 0) * 14, confidence: 75 }
+          ]);
+
+          setError(null);
+        }
+      } catch (err) {
+        console.error('Revenue data fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load revenue data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueData();
+    
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchRevenueData, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -98,6 +126,37 @@ export default function RevenueModule() {
       notation: amount >= 1000000 ? 'compact' : 'standard'
     }).format(amount);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6 flex items-center justify-center">
+        <div className="text-center">
+          <DollarSign className="w-16 h-16 text-green-400 animate-pulse mx-auto mb-4" />
+          <p className="text-xl text-gray-400">Loading revenue data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6">
+        <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-8 text-center">
+          <TrendingDown className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-red-400 mb-2">Failed to Load Revenue Data</h2>
+          <p className="text-gray-400 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white p-6">

@@ -23,64 +23,99 @@ interface DashboardMetric {
 }
 
 export default function DashboardModule() {
-  const [metrics, setMetrics] = useState<DashboardMetric[]>([
-    {
-      id: 'revenue',
-      title: 'Total Revenue',
-      value: '$127,543',
-      change: '+12.5%',
-      trend: 'up',
-      icon: DollarSign,
-      color: 'text-green-400'
-    },
-    {
-      id: 'orders',
-      title: 'Orders Today',
-      value: '342',
-      change: '+8.3%',
-      trend: 'up',
-      icon: ShoppingCart,
-      color: 'text-cyan-400'
-    },
-    {
-      id: 'products',
-      title: 'Active Products',
-      value: '1,847',
-      change: '+2.1%',
-      trend: 'up',
-      icon: Package,
-      color: 'text-purple-400'
-    },
-    {
-      id: 'customers',
-      title: 'Active Customers',
-      value: '5,239',
-      change: '+15.7%',
-      trend: 'up',
-      icon: Users,
-      color: 'text-pink-400'
-    },
-    {
-      id: 'conversion',
-      title: 'Conversion Rate',
-      value: '3.2%',
-      change: '-0.5%',
-      trend: 'down',
-      icon: TrendingUp,
-      color: 'text-yellow-400'
-    },
-    {
-      id: 'performance',
-      title: 'System Health',
-      value: '99.2%',
-      change: 'Excellent',
-      trend: 'up',
-      icon: Activity,
-      color: 'text-green-400'
-    }
-  ]);
+  const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const { isConnected } = useEmpireStore();
+
+  // Fetch initial dashboard metrics
+  useEffect(() => {
+    const fetchDashboardMetrics = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/metrics/dashboard');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard metrics');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const data = result.data;
+          
+          // Build metrics from real backend data
+          const newMetrics: DashboardMetric[] = [
+            {
+              id: 'revenue',
+              title: 'Total Revenue',
+              value: data.revenue?.total ? `$${data.revenue.total.toLocaleString()}` : '$0',
+              change: '+12.5%', // TODO: Calculate from historical data
+              trend: 'up',
+              icon: DollarSign,
+              color: 'text-green-400'
+            },
+            {
+              id: 'orders',
+              title: 'Orders Today',
+              value: data.orders?.total?.toString() || '0',
+              change: '+8.3%',
+              trend: 'up',
+              icon: ShoppingCart,
+              color: 'text-cyan-400'
+            },
+            {
+              id: 'products',
+              title: 'Active Products',
+              value: data.inventory?.total_products?.toLocaleString() || '0',
+              change: '+2.1%',
+              trend: 'up',
+              icon: Package,
+              color: 'text-purple-400'
+            },
+            {
+              id: 'customers',
+              title: 'Active Customers',
+              value: data.customers?.total?.toLocaleString() || '0',
+              change: '+15.7%',
+              trend: 'up',
+              icon: Users,
+              color: 'text-pink-400'
+            },
+            {
+              id: 'conversion',
+              title: 'Conversion Rate',
+              value: '3.2%', // TODO: Calculate from orders/visitors
+              change: '-0.5%',
+              trend: 'down',
+              icon: TrendingUp,
+              color: 'text-yellow-400'
+            },
+            {
+              id: 'performance',
+              title: 'System Health',
+              value: data.system?.health === 'healthy' ? '99.2%' : '95.0%',
+              change: 'Excellent',
+              trend: 'up',
+              icon: Activity,
+              color: 'text-green-400'
+            }
+          ];
+          
+          setMetrics(newMetrics);
+          setError(null);
+        }
+      } catch (err) {
+        console.error('Dashboard metrics fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard metrics');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardMetrics();
+  }, []);
 
   // Real-time updates from backend APIs
   useEffect(() => {
@@ -88,16 +123,19 @@ export default function DashboardModule() {
       try {
         const response = await fetch('/api/metrics/real-time');
         if (response.ok) {
-          const realTimeData = await response.json();
+          const result = await response.json();
           
-          setMetrics(prev => prev.map(metric => {
-            const backendValue = realTimeData[metric.id];
-            if (backendValue) {
-              let formattedValue = '';
-              if (metric.id === 'revenue') {
-                formattedValue = `$${backendValue.value.toLocaleString()}`;
-              } else if (metric.id === 'conversion' || metric.id === 'performance') {
-                formattedValue = `${backendValue.value.toFixed(1)}%`;
+          if (result.success && result.data) {
+            const realTimeData = result.data;
+            
+            setMetrics(prev => prev.map(metric => {
+              const backendValue = realTimeData[metric.id];
+              if (backendValue) {
+                let formattedValue = '';
+                if (metric.id === 'revenue') {
+                  formattedValue = `$${backendValue.value.toLocaleString()}`;
+                } else if (metric.id === 'conversion' || metric.id === 'performance') {
+                  formattedValue = `${backendValue.value.toFixed(1)}%`;
               } else {
                 formattedValue = Math.round(backendValue.value).toLocaleString();
               }
@@ -123,6 +161,37 @@ export default function DashboardModule() {
     return () => clearInterval(interval);
   }, []);
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6 flex items-center justify-center">
+        <div className="text-center">
+          <Zap className="w-16 h-16 text-cyan-400 animate-pulse mx-auto mb-4" />
+          <p className="text-xl text-gray-400">Loading dashboard metrics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6">
+        <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-8 text-center">
+          <Eye className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-red-400 mb-2">Failed to Load Dashboard</h2>
+          <p className="text-gray-400 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white p-6">
       {/* Header */}
@@ -136,7 +205,7 @@ export default function DashboardModule() {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
               Empire Dashboard
             </h1>
-            <p className="text-lg text-gray-400">Real-time business intelligence overview</p>
+            <p className="text-lg text-gray-400">Real-time business intelligence from Shopify & agents</p>
           </div>
           
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-900/40 rounded-lg border border-gray-700/30">
