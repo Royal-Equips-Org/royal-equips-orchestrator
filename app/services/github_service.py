@@ -60,7 +60,7 @@ class GitHubService:
         self._circuit_breaker_open = False
         self._failure_count = 0
         self._last_failure_time = None
-        self._last_rate_limit_warning = None  # Track last rate limit warning to reduce log spam
+        self._last_rate_limit_warning = None  # Timestamp of last rate limit warning for 5-minute throttling
 
     def is_authenticated(self) -> bool:
         """Check if GitHub service is properly authenticated."""
