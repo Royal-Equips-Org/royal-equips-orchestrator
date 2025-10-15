@@ -165,9 +165,9 @@ def get_dashboard_metrics():
             
             # Inventory metrics
             try:
-                products_response = shopify.get_products(limit=250)
-                if products_response and 'products' in products_response:
-                    products = products_response['products']
+                products, pagination = shopify.list_products(limit=250)
+                if products:
+                    # products is already a list
                     
                     # Calculate inventory stats
                     all_variants = []
