@@ -136,9 +136,8 @@ def get_dashboard_metrics():
             
             # Revenue metrics
             try:
-                orders_response = shopify.get_orders(limit=250, status='any', financial_status='paid')
-                if orders_response and 'orders' in orders_response:
-                    orders = orders_response['orders']
+                orders, pagination = shopify.list_orders(limit=250, status='any', financial_status='paid')
+                if orders:
                     
                     # Calculate revenue
                     total_revenue = sum(
