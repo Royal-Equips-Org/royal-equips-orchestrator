@@ -136,19 +136,20 @@ export default function DashboardModule() {
                   formattedValue = `$${backendValue.value.toLocaleString()}`;
                 } else if (metric.id === 'conversion' || metric.id === 'performance') {
                   formattedValue = `${backendValue.value.toFixed(1)}%`;
-              } else {
-                formattedValue = Math.round(backendValue.value).toLocaleString();
-              }
+                } else {
+                  formattedValue = Math.round(backendValue.value).toLocaleString();
+                }
 
-              return {
-                ...metric,
-                value: formattedValue,
-                change: backendValue.change,
-                trend: backendValue.trend
-              };
-            }
-            return metric;
-          }));
+                return {
+                  ...metric,
+                  value: formattedValue,
+                  change: backendValue.change,
+                  trend: backendValue.trend
+                };
+              }
+              return metric;
+            }));
+          }
         }
       } catch (error) {
         console.error('Failed to fetch real-time metrics:', error);
