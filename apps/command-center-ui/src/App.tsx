@@ -29,6 +29,7 @@ const FinanceModule = lazy(() => import('./modules/finance/FinanceModule'));
 const AIRAIntelligenceModule = lazy(() => import('./modules/aira-intelligence/AIRAIntelligenceModule'));
 const ShopifyModule = lazy(() => import('./modules/shopify/ShopifyModule'));
 const AgentOrchestrationModule = lazy(() => import('./modules/agent-orchestration/AgentOrchestrationModule'));
+const ProductsModule = lazy(() => import('./modules/products/ProductsModule'));
 const ErrorTest = lazy(() => import('./test/ErrorTest'));
 
 function AppContent() {
@@ -149,33 +150,7 @@ function AppContent() {
       case 'products':
         return (
           <Suspense fallback={loadingFallback('Products')}>
-            <div className="min-h-screen bg-black text-white p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="flex items-center space-x-4 mb-8">
-                  <svg className="w-8 h-8 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                  </svg>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
-                    Product Management
-                  </h1>
-                </div>
-                <p className="text-gray-300 mb-6">Comprehensive product catalog and inventory management</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-orange-400 mb-4">Product Catalog</h3>
-                    <p className="text-gray-400">Manage your complete product catalog with real-time inventory sync</p>
-                  </div>
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-orange-400 mb-4">Inventory Management</h3>
-                    <p className="text-gray-400">Track stock levels, reorder points, and inventory optimization</p>
-                  </div>
-                  <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold text-orange-400 mb-4">Pricing Engine</h3>
-                    <p className="text-gray-400">AI-powered dynamic pricing and profit optimization</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ProductsModule />
           </Suspense>
         );
       case 'orders':
