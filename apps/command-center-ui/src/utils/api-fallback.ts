@@ -101,7 +101,7 @@ export function createPoller<T>(
   maxInterval = 60000
 ) {
   let currentInterval = baseInterval;
-  let timeoutId: NodeJS.Timeout | null = null;
+  let timeoutId: number | null = null;
   let isRunning = false;
 
   const poll = async () => {
