@@ -277,7 +277,7 @@ async def get_realtime_metrics():
             shopify = ShopifyService()
             
             # Get today's orders for revenue
-            orders_response = await shopify.get_orders(
+            orders_response = shopify.get_orders(
                 limit=50, 
                 status='any',
                 created_at_min=datetime.now().strftime('%Y-%m-%dT00:00:00Z')
