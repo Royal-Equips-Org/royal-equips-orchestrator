@@ -261,7 +261,7 @@ def get_dashboard_metrics():
 
 
 @metrics_bp.route("/metrics/real-time", methods=['GET'])
-async def get_realtime_metrics():
+def get_realtime_metrics():
     """
     Get real-time metrics for live dashboard updates.
     Optimized for frequent polling (every 5-10 seconds).
