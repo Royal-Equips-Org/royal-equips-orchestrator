@@ -166,7 +166,7 @@ async def get_dashboard_metrics():
             
             # Inventory metrics
             try:
-                products_response = await shopify.get_products(limit=250)
+                products_response = shopify.get_products(limit=250)
                 if products_response and 'products' in products_response:
                     products = products_response['products']
                     
