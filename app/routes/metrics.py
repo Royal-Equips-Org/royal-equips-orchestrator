@@ -219,7 +219,7 @@ async def get_dashboard_metrics():
             
             # Customers metrics  
             try:
-                customers_response = await shopify.get_customers(limit=250)
+                customers_response = shopify.get_customers(limit=250)
                 if customers_response and 'customers' in customers_response:
                     customers = customers_response['customers']
                     
