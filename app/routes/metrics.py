@@ -94,7 +94,7 @@ def handle_error(error):
 
 
 @metrics_bp.route("/metrics/dashboard", methods=['GET'])
-async def get_dashboard_metrics():
+def get_dashboard_metrics():
     """
     Get comprehensive dashboard metrics from all systems.
     Real-time data aggregation for command center dashboard.
