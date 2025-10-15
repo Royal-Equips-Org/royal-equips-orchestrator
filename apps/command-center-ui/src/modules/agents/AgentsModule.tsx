@@ -163,7 +163,7 @@ export default function AgentsModule() {
 
       // Fetch from real agents endpoint with timeout
       const agentsResponse = await Promise.race([
-        fetch('/v1/agents'),
+        fetch('/api/empire/agents'),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('Fetch timeout')), 10000)
         )
