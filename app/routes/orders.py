@@ -81,8 +81,11 @@ def get_orders():
             params['created_at_max'] = created_at_max
         
         # Get orders from Shopify
-        orders_response = service.get_orders(params=params)
-        orders = orders_response.get('orders', [])
+        orders, pagination = service.list_orders(
+            limit=limit,
+            status=status,
+            financial_status=financial_status
+        )
         
         # Enrich order data
         enriched_orders = []
@@ -155,8 +158,9 @@ def get_order(order_id: str):
                 'error': 'Shopify not configured'
             }), 503
         
-        # Get order from Shopify
-        order = service.get_order(order_id)
+        # Get order from Shopify - fetch all and filter by ID
+        orders, pagination = service.list_orders(limit=250, status='any')
+        order = next((o for o in orders if str(o.get('id')) == str(order_id)), None)
         
         if not order:
             return jsonify({
@@ -279,12 +283,7 @@ def get_order_stats():
         
         # Get recent orders (last 30 days)
         thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat()
-        orders_response = service.get_orders(params={
-            'limit': 250,
-            'status': 'any',
-            'created_at_min': thirty_days_ago
-        })
-        orders = orders_response.get('orders', [])
+        orders, pagination = service.list_orders(limit=250, status='any')
         
         # Calculate statistics
         total_orders = len(orders)
@@ -362,12 +361,7 @@ def get_recent_orders():
         
         # Get orders from last 24 hours
         yesterday = (datetime.now() - timedelta(days=1)).isoformat()
-        orders_response = service.get_orders(params={
-            'limit': 50,
-            'status': 'any',
-            'created_at_min': yesterday
-        })
-        orders = orders_response.get('orders', [])
+        orders, pagination = service.list_orders(limit=50, status='any')
         
         # Sort by created_at descending
         orders.sort(key=lambda o: o.get('created_at', ''), reverse=True)

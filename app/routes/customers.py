@@ -63,8 +63,7 @@ def get_customers():
         }
         
         # Get customers from Shopify
-        customers_response = service.get_customers(params=params)
-        customers = customers_response.get('customers', [])
+        customers, pagination = service.list_customers(limit=limit)
         
         # Apply search filter if provided
         if search:
@@ -139,8 +138,9 @@ def get_customer(customer_id: str):
                 'error': 'Shopify not configured'
             }), 503
         
-        # Get customer from Shopify
-        customer = service.get_customer(customer_id)
+        # Get customer from Shopify - fetch all and filter by ID
+        customers, pagination = service.list_customers(limit=250)
+        customer = next((c for c in customers if str(c.get('id')) == str(customer_id)), None)
         
         if not customer:
             return jsonify({
@@ -148,11 +148,9 @@ def get_customer(customer_id: str):
             }), 404
         
         # Get customer's orders for additional analytics
-        orders_response = service.get_orders(params={
-            'customer_id': customer_id,
-            'limit': 250
-        })
-        orders = orders_response.get('orders', [])
+        orders, orders_pagination = service.list_orders(limit=250, status='any')
+        # Filter orders by customer_id
+        orders = [o for o in orders if str(o.get('customer', {}).get('id')) == str(customer_id)]
         
         # Calculate customer metrics
         orders_count = len(orders)
@@ -234,8 +232,7 @@ def get_customer_stats():
             }), 503
         
         # Get customers (might need pagination for large datasets)
-        customers_response = service.get_customers(params={'limit': 250})
-        customers = customers_response.get('customers', [])
+        customers, pagination = service.list_customers(limit=250)
         
         total_customers = len(customers)
         
@@ -341,8 +338,7 @@ def search_customers():
             }), 503
         
         # Get customers and filter by search query
-        customers_response = service.get_customers(params={'limit': 250})
-        customers = customers_response.get('customers', [])
+        customers, pagination = service.list_customers(limit=250)
         
         query_lower = query.lower()
         matching_customers = [

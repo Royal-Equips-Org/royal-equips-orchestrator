@@ -225,6 +225,26 @@ class ShopifyService:
 
         return response.get('orders', []), self._extract_pagination_info(response)
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(ShopifyRateLimitError)
+    )
+    def list_customers(self, limit: int = 50) -> Tuple[List[Dict], Dict]:
+        """
+        List customers from Shopify.
+
+        Args:
+            limit: Number of customers to retrieve (max 250)
+
+        Returns:
+            Tuple of (customers_list, pagination_info)
+        """
+        params = {'limit': min(limit, 250)}
+        response = self._make_request('GET', '/customers.json', params=params)
+
+        return response.get('customers', []), self._extract_pagination_info(response)
+
     def _make_request(self, method: str, endpoint: str, params: Optional[Dict] = None, json_data: Optional[Dict] = None) -> Dict[str, Any]:
         """
         Make authenticated request to Shopify API with rate limit handling.

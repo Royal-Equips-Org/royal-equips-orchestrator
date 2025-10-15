@@ -82,8 +82,8 @@ def get_products():
             params['collection_id'] = collection_id
         
         # Get products from Shopify
-        products_response = service.get_products(params=params)
-        products = products_response.get('products', [])
+        products, pagination = service.list_products(limit=limit, fields=None)
+        products_response = {'products': products}
         
         # Apply search filter if provided (Shopify API doesn't support search param directly)
         if search:
@@ -164,8 +164,9 @@ def get_product(product_id: str):
                 'error': 'Shopify not configured'
             }), 503
         
-        # Get product from Shopify
-        product = service.get_product(product_id)
+        # Get product from Shopify - fetch all and filter by ID
+        products, pagination = service.list_products(limit=250, fields=None)
+        product = next((p for p in products if str(p.get('id')) == str(product_id)), None)
         
         if not product:
             return jsonify({
@@ -267,8 +268,7 @@ def get_product_stats():
             }), 503
         
         # Get all products (this might need pagination for large catalogs)
-        products_response = service.get_products(params={'limit': 250})
-        products = products_response.get('products', [])
+        products, pagination = service.list_products(limit=250, fields=None)
         
         # Calculate statistics
         total_products = len(products)
@@ -361,8 +361,7 @@ def search_products():
             }), 503
         
         # Get products and filter by search query
-        products_response = service.get_products(params={'limit': 250})
-        products = products_response.get('products', [])
+        products, pagination = service.list_products(limit=250, fields=None)
         
         query_lower = query.lower()
         matching_products = [
