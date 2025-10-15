@@ -219,6 +219,9 @@ def register_blueprints(app: Flask) -> None:
         ('app.routes.finance', 'finance_bp', None),  # Production Finance with Payment Intelligence
         ('app.routes.aira_intelligence', 'aira_intelligence_bp', None),  # Enhanced AIRA Intelligence System
         ('app.routes.agent_orchestration', 'agent_orchestration_bp', None),  # Agent Orchestration for 100+ Agents
+        ('app.routes.products', 'products_bp', None),  # Product catalog and management
+        ('app.routes.orders', 'orders_bp', None),  # Order management and fulfillment
+        ('app.routes.customers', 'customers_bp', None),  # Customer relationship management
     ]
 
     registered_count = 0
