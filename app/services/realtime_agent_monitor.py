@@ -76,8 +76,8 @@ class RealTimeAgentMonitor:
             from app.services.production_agent_executor import get_agent_executor
             agent_executor = await get_agent_executor()
 
-            # Validate executor is available and callable
-            if agent_executor is None or not callable(getattr(agent_executor, 'get_agent_executions', None)):
+            # Validate executor is available and has get_agent_executions method
+            if agent_executor is None or not hasattr(agent_executor, 'get_agent_executions'):
                 logger.debug("Agent executor not initialized yet, skipping metrics collection")
                 return
 
