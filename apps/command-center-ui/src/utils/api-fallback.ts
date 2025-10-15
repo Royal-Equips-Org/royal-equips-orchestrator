@@ -194,7 +194,7 @@ export function createBatchedFetcher<T>(
   debounceMs = 50
 ) {
   let queue: string[] = [];
-  let timeoutId: NodeJS.Timeout | null = null;
+  let timeoutId: number | null = null;
   const pendingPromises = new Map<string, {
     resolve: (value: T) => void;
     reject: (error: Error) => void;
