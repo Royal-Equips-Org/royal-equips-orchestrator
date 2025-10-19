@@ -23,47 +23,60 @@ jobs:
       actions: read
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: microsoft/ossar-action@v1.0.12
-   
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # OSSAR scan with Microsoft maintained action
+      - name: OSSAR Static Analysis (Microsoft)
+        uses: microsoft/ossar-action@v1.0.12
+        continue-on-error: true # Self-healing
+
+      # Setup .NET for OSSAR if needed (for legacy .NET codebases)
       - name: Install .NET
-       uses: actions/setup-dotnet@v4.0.0
-       with:
-         dotnet-version: '3.1.x'
+        uses: actions/setup-dotnet@v4.0.0
+        with:
+          dotnet-version: '3.1.x'
 
-    - name: OSSAR Static Analysis
-      uses: github/ossar-action@v1.0.12
-      id: ossar
-      continue-on-error: true # Self-healing: don't fail workflow, log
+      # OSSAR scan with GitHub maintained action (for latest updates)
+      - name: OSSAR Static Analysis (GitHub)
+        uses: github/ossar-action@v1.0.12
+        id: ossar
+        continue-on-error: true # Self-healing: don't fail workflow, log
 
-    - name: Upload SARIF Results
-      uses: github/codeql-action/upload-sarif@v3.25.4
-      with:
-        sarif_file: ${{ steps.ossar.outputs.sarifFile }}
-      continue-on-error: true # Self-healing
+      # Upload SARIF results for security dashboard
+      - name: Upload SARIF Results
+        uses: github/codeql-action/upload-sarif@v3.25.4
+        with:
+          sarif_file: ${{ steps.ossar.outputs.sarifFile }}
+        continue-on-error: true # Self-healing
 
-    - name: Secret Scanning & Audit
-      uses: github/secret-scanning-action@v1.0.2 # Example, pin version
-      with:
-        fail_on_secrets: true
+      # Secret scanning for compliance (fail on secret detection)
+      - name: Secret Scanning & Audit
+        uses: github/secret-scanning-action@v1.0.2 # Example, pin version
+        with:
+          fail_on_secrets: true
 
-    - name: Structured Logging
-      run: |
-        echo "::notice::OSSAR scan completed for ${{ github.sha }}"
-        echo "OSSAR job run at $(date)" | tee -a ossar-job.log
+      # Structured logging for audit
+      - name: Structured Logging
+        run: |
+          echo "::notice::OSSAR scan completed for ${{ github.sha }}"
+          echo "OSSAR job run at $(date)" | tee -a ossar-job.log
 
-    - name: Health Check & Notification
-      if: failure()
-      run: |
-        echo "::error::OSSAR scan failed on ${{ github.sha }}"
-        curl -X POST -H "Content-Type: application/json" \
-          -d '{"text":"OSSAR scan failure detected"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+      # Health check & Slack notification on failure
+      - name: Health Check & Notification
+        if: failure()
+        run: |
+          echo "::error::OSSAR scan failed on ${{ github.sha }}"
+          curl -X POST -H "Content-Type: application/json" \
+            -d '{"text":"OSSAR scan failure detected"}' ${{ secrets.SLACK_WEBHOOK_URL }}
 
-    - name: Central Audit Logging
-      run: |
-        echo "OSSAR scan for ${{ github.repository }} at ${{ github.sha }} by ${{ github.actor }}" \
-          | tee -a /tmp/org-audit.log
+      # Central audit logging for compliance
+      - name: Central Audit Logging
+        run: |
+          echo "OSSAR scan for ${{ github.repository }} at ${{ github.sha }} by ${{ github.actor }}" \
+            | tee -a /tmp/org-audit.log
 
-    # Security/Compliance: Add RBAC, secret push protection, code scanning, etc. as reusable workflows
+      # Security/Compliance: Add RBAC, secret push protection, code scanning, etc. as reusable workflows
+      # Use reusable workflows from your central security-playbook in future enhancement
 
 # Advanced Security: Enable in repo settings for full supply chain protection
