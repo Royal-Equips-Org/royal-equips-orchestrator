@@ -15,53 +15,46 @@ permissions:
   contents: read
 
 jobs:
-  OSSAR-Scan:
+  CodeQL-Scan:
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
       security-events: write
-      actions: read
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install .NET
-        uses: actions/setup-dotnet@v4.0.0
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          dotnet-version: '3.1.x'
+          languages: python, javascript, typescript, shell
 
-      - name: OSSAR Static Analysis
-        uses: microsoft/ossar-action@v1.0.12
-        id: ossar
-        continue-on-error: true # Self-healing
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
-      - name: Upload SARIF Results
-        uses: github/codeql-action/upload-sarif@v3.25.4
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
         with:
-          sarif_file: ${{ steps.ossar.outputs.sarifFile }}
-        continue-on-error: true # Self-healing
-
-      # NOTE: GitHub Secret Scanning is handled natively for public repos and via Advanced Security for private repos.
-      # To enable secret scanning, activate GitHub Advanced Security in repo settings.
+          category: security
 
       - name: Structured Logging
         run: |
-          echo "::notice::OSSAR scan completed for ${{ github.sha }}"
-          echo "OSSAR job run at $(date)" | tee -a ossar-job.log
+          echo "::notice::CodeQL scan completed for ${{ github.sha }}"
+          echo "CodeQL job run at $(date)" | tee -a codeql-job.log
 
       - name: Health Check & Notification
         if: failure()
         run: |
-          echo "::error::OSSAR scan failed on ${{ github.sha }}"
+          echo "::error::CodeQL scan failed on ${{ github.sha }}"
           curl -X POST -H "Content-Type: application/json" \
-            -d '{"text":"OSSAR scan failure detected"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+            -d '{"text":"CodeQL scan failure detected"}' ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Central Audit Logging
         run: |
-          echo "OSSAR scan for ${{ github.repository }} at ${{ github.sha }} by ${{ github.actor }}" \
+          echo "CodeQL scan for ${{ github.repository }} at ${{ github.sha }} by ${{ github.actor }}" \
             | tee -a /tmp/org-audit.log
-
       # Security/Compliance: Add RBAC, secret push protection, code scanning, etc. as reusable workflows
       # Use reusable workflows from your central security-playbook in future enhancement
 
