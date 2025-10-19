@@ -84,13 +84,14 @@ def readiness():
             return jsonify(result), 503
 
     except Exception as e:
-        logger.error(f"Readiness check failed with error: {e}")
+        logger.error(f"Readiness check failed with error: {e}", exc_info=True)
+        # Don't expose internal error details to external users
         return (
             jsonify(
                 {
                     "ready": False,
                     "status": "error",
-                    "error": str(e),
+                    "error": "Service readiness check failed",
                     "timestamp": datetime.now().isoformat(),
                 }
             ),
@@ -149,9 +150,10 @@ def validate_production():
         
     except Exception as e:
         logger.error(f"Production validation endpoint failed: {e}", exc_info=True)
+        # Don't expose internal error details to external users
         return jsonify({
             "passed": False,
-            "error": str(e),
+            "error": "Validation service temporarily unavailable",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }), 500
 
