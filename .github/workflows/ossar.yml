@@ -23,17 +23,16 @@ jobs:
       actions: read
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.1.1 # Pin exact version
-
-    # (Optional) Install .NET for self-hosted runners
-    # - name: Install .NET
-    #   uses: actions/setup-dotnet@v4.0.0
-    #   with:
-    #     dotnet-version: '3.1.x'
+      - uses: actions/checkout@v4
+      - uses: microsoft/ossar-action@v1.0.12
+   
+      - name: Install .NET
+       uses: actions/setup-dotnet@v4.0.0
+       with:
+         dotnet-version: '3.1.x'
 
     - name: OSSAR Static Analysis
-      uses: github/ossar-action@v1.0.11
+      uses: github/ossar-action@v1.0.12
       id: ossar
       continue-on-error: true # Self-healing: don't fail workflow, log
 
