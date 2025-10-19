@@ -33,6 +33,8 @@ except ImportError:
     _PYTRENDS_AVAILABLE = False
 
 from orchestrator.core.agent_base import AgentBase
+from core.resilience import get_circuit_breaker, get_dead_letter_queue, CircuitBreakerConfig
+from core.structured_logging import get_structured_logger, set_agent_context
 
 
 class ProductResearchAgent(AgentBase):
@@ -41,6 +43,32 @@ class ProductResearchAgent(AgentBase):
     def __init__(self, name: str = "product_research") -> None:
         super().__init__(name, agent_type="product_research", description="Discovers trending products via multiple APIs")
         self.logger = logging.getLogger(self.name)
+        
+        # Initialize structured logging
+        self.structured_logger = get_structured_logger(self.name)
+        set_agent_context(self.name)
+        
+        # Initialize circuit breakers for external APIs
+        self.autods_breaker = get_circuit_breaker(
+            "autods_api",
+            config=CircuitBreakerConfig(
+                failure_threshold=3,
+                timeout_seconds=60,
+                max_requests_per_second=5.0
+            )
+        )
+        self.spocket_breaker = get_circuit_breaker(
+            "spocket_api",
+            config=CircuitBreakerConfig(
+                failure_threshold=3,
+                timeout_seconds=60,
+                max_requests_per_second=5.0
+            )
+        )
+        
+        # Initialize dead letter queue for failed operations
+        self.dlq = get_dead_letter_queue("product_research_failures")
+        
         self.trending_products: List[Dict[str, Any]] = []
         self.execution_params: Dict[str, Any] = {}
         self.last_result: Optional[Dict[str, Any]] = None  # Stores the results of the most recent execution
@@ -67,9 +95,12 @@ class ProductResearchAgent(AgentBase):
         max_products = self.execution_params.get("maxProducts", 20)
         min_margin = self.execution_params.get("minMargin", 30)
 
-        self.logger.info(
-            f"🔍 PRODUCTION MODE: Running product research agent with categories={categories}, "
-            f"maxProducts={max_products}, minMargin={min_margin}%"
+        self.structured_logger.info(
+            "🔍 PRODUCTION MODE: Running product research agent",
+            categories=categories,
+            max_products=max_products,
+            min_margin=min_margin,
+            execution_mode="production"
         )
 
         all_products = []
@@ -80,16 +111,46 @@ class ProductResearchAgent(AgentBase):
             try:
                 autods_products = await self._fetch_autods_products(category=category)
                 all_products.extend(autods_products)
+                self.structured_logger.info(
+                    "✅ AutoDS API success",
+                    category=category,
+                    products_fetched=len(autods_products)
+                )
             except Exception as e:
-                self.logger.error(f"❌ AutoDS API failed for category {category}: {e}")
-                # Continue to try other sources
+                self.structured_logger.error(
+                    "❌ AutoDS API failed",
+                    exc_info=True,
+                    category=category,
+                    error_type=type(e).__name__
+                )
+                # Add to dead letter queue for investigation
+                await self.dlq.add(
+                    operation="fetch_autods_products",
+                    error=e,
+                    context={"category": category}
+                )
             
             try:
                 spocket_products = await self._fetch_spocket_products(category=category)
                 all_products.extend(spocket_products)
+                self.structured_logger.info(
+                    "✅ Spocket API success",
+                    category=category,
+                    products_fetched=len(spocket_products)
+                )
             except Exception as e:
-                self.logger.error(f"❌ Spocket API failed for category {category}: {e}")
-                # Continue to try other sources
+                self.structured_logger.error(
+                    "❌ Spocket API failed",
+                    exc_info=True,
+                    category=category,
+                    error_type=type(e).__name__
+                )
+                # Add to dead letter queue for investigation
+                await self.dlq.add(
+                    operation="fetch_spocket_products",
+                    error=e,
+                    context={"category": category}
+                )
 
         # PRODUCTION: Fail if no products retrieved from real APIs
         if not all_products:
@@ -197,61 +258,83 @@ class ProductResearchAgent(AgentBase):
         }
         autods_category = category_mapping.get(category.lower(), category)
 
-        # Real AutoDS API implementation with proper error handling
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            headers = {
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json',
-                'User-Agent': 'RoyalEquipsOrchestrator/2.0'
-            }
-
-            # AutoDS trending products endpoint
-            response = await client.get(
-                'https://app.autods.com/api/v1/products/trending',
-                headers=headers,
-                params={
-                    'category': autods_category,
-                    'limit': 20,
-                    'min_margin': 30
+        # Real AutoDS API implementation with proper error handling and circuit breaker
+        import time
+        start_time = time.time()
+        
+        async def _make_autods_call():
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                headers = {
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'RoyalEquipsOrchestrator/2.0'
                 }
+
+                # AutoDS trending products endpoint
+                response = await client.get(
+                    'https://app.autods.com/api/v1/products/trending',
+                    headers=headers,
+                    params={
+                        'category': autods_category,
+                        'limit': 20,
+                        'min_margin': 30
+                    }
+                )
+                return response
+        
+        # Call through circuit breaker
+        response = await self.autods_breaker.call(_make_autods_call)
+
+        if response.status_code == 200:
+            duration_ms = (time.time() - start_time) * 1000
+            data = response.json()
+            products = []
+
+            for item in data.get('products', []):
+                products.append({
+                    'id': f"autods_{item.get('id')}",
+                    'title': item.get('title'),
+                    'source': 'AutoDS',
+                    'supplier_price': float(item.get('supplier_price', 0)),
+                    'suggested_price': float(item.get('suggested_retail_price', 0)),
+                    'category': item.get('category', category),
+                    'trend_score': item.get('trend_score', 50),
+                    'image_url': item.get('main_image'),
+                    'supplier_name': item.get('supplier_name'),
+                    'shipping_time': item.get('shipping_time'),
+                    'rating': item.get('rating', 0)
+                })
+
+            # Log performance metrics
+            self.structured_logger.performance(
+                "autods_api_fetch",
+                duration_ms,
+                category=category,
+                products_count=len(products),
+                status_code=200
             )
-
-            if response.status_code == 200:
-                data = response.json()
-                products = []
-
-                for item in data.get('products', []):
-                    products.append({
-                        'id': f"autods_{item.get('id')}",
-                        'title': item.get('title'),
-                        'source': 'AutoDS',
-                        'supplier_price': float(item.get('supplier_price', 0)),
-                        'suggested_price': float(item.get('suggested_retail_price', 0)),
-                        'category': item.get('category', category),
-                        'trend_score': item.get('trend_score', 50),
-                        'image_url': item.get('main_image'),
-                        'supplier_name': item.get('supplier_name'),
-                        'shipping_time': item.get('shipping_time'),
-                        'rating': item.get('rating', 0)
-                    })
-
-                self.logger.info(f"✅ Successfully fetched {len(products)} products from AutoDS API for {category}")
-                return products
-            
-            elif response.status_code == 401:
-                error_msg = f"❌ AutoDS API authentication failed. Check AUTO_DS_API_KEY validity."
-                self.logger.error(error_msg)
-                raise ValueError(error_msg)
-            
-            elif response.status_code == 429:
-                error_msg = f"❌ AutoDS API rate limit exceeded. Retry will be attempted."
-                self.logger.warning(error_msg)
-                raise httpx.HTTPError(error_msg)
-            
-            else:
-                error_msg = f"❌ AutoDS API error: {response.status_code} - {response.text}"
-                self.logger.error(error_msg)
-                raise httpx.HTTPError(error_msg)
+            return products
+        
+        elif response.status_code == 401:
+            error_msg = f"❌ AutoDS API authentication failed. Check AUTO_DS_API_KEY validity."
+            self.structured_logger.error(error_msg, status_code=401, category=category)
+            raise ValueError(error_msg)
+        
+        elif response.status_code == 429:
+            error_msg = f"❌ AutoDS API rate limit exceeded. Retry will be attempted."
+            self.structured_logger.warning(error_msg, status_code=429, category=category)
+            raise httpx.HTTPError(error_msg)
+        
+        else:
+            error_msg = f"❌ AutoDS API error: {response.status_code}"
+            duration_ms = (time.time() - start_time) * 1000
+            self.structured_logger.error(
+                error_msg,
+                status_code=response.status_code,
+                category=category,
+                duration_ms=duration_ms
+            )
+            raise httpx.HTTPError(error_msg)
 
 
     # PRODUCTION MODE: All fallback/stub methods removed
