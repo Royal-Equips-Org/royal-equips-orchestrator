@@ -15,9 +15,9 @@ name: 🏰 Royal Equips Multi-Agent Security Orchestrator
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
   schedule:
     - cron: '23 2 * * 3'  # Weekly Wednesday 02:23 UTC
   workflow_dispatch:
