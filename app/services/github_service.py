@@ -99,7 +99,6 @@ class GitHubService:
                    (now - self._last_rate_limit_warning).total_seconds() > 300:
                     logger.warning("GitHub rate limit exceeded - will retry after cooldown")
                     self._last_rate_limit_warning = now
-                    self._last_rate_limit_warning = now
                 raise GitHubServiceError("GitHub rate limit exceeded")
             elif response.status_code >= 500:
                 raise GitHubServiceError(f"GitHub API server error: {response.status_code}")
