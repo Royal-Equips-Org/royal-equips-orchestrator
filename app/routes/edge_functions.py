@@ -107,9 +107,9 @@ last_health_check = {}
 def get_edge_functions_status():
     """Get comprehensive status of all edge functions."""
     try:
-        # Trigger async health check
-        asyncio.create_task(check_all_edge_functions_health())
-
+        # Use synchronous health check from Flask route (cannot use asyncio.create_task in sync context)
+        # Background monitoring thread handles async checks periodically
+        
         return jsonify({
             'functions': EDGE_FUNCTIONS,
             'stats': edge_function_stats,
@@ -465,10 +465,14 @@ def fetch_edge_function_logs(func_name, limit, since):
 def start_edge_functions_monitoring():
     """Start background monitoring of edge functions."""
     def monitoring_task():
+        # Create a new event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
         while True:
             try:
-                # Check health every 30 seconds
-                asyncio.run(check_all_edge_functions_health())
+                # Check health every 30 seconds using the thread's own event loop
+                loop.run_until_complete(check_all_edge_functions_health())
 
                 # Emit updates to connected clients (if socketio is available)
                 try:
