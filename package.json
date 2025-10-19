@@ -16,13 +16,15 @@
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^17.7.0",
-    "@eslint/js": "9.35.0",
+    "eslint": "9.38.0", // UPDATED: latest 9.x release
+    "eslint-config-prettier": "9.1.2",
+    "eslint-plugin-import": "2.32.0",
+    "typescript-eslint": "8.43.0", // Ensure ONLY one version and match plugins below
+    "@typescript-eslint/eslint-plugin": "8.43.0", // ADD: official plugin
+    "@typescript-eslint/parser": "8.43.0", // ADD: official parser
     "@types/jest": "29",
     "chokidar": "^4.0.3",
     "diff": "^8.0.2",
-    "eslint": "9.35.0",
-    "eslint-config-prettier": "9.1.2",
-    "eslint-plugin-import": "2.32.0",
     "execa": "^9.6.0",
     "fs-extra": "^11.3.1",
     "globals": "15.15.0",
@@ -33,8 +35,8 @@
     "prettier": "3.6.2",
     "tsx": "^4.20.5",
     "typescript": "5.6.3",
-    "typescript-eslint": "8.43.0",
     "yaml": "^2.8.1"
+    // REMOVED: "@eslint/js" (deprecated if not explicitly used)
   },
   "engines": {
     "node": "20"

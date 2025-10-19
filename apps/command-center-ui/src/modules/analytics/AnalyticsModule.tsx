@@ -80,7 +80,7 @@ export default function AnalyticsModule() {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/analytics/dashboard', {
+      const response = await apiClient.get('/analytics/dashboard', {
         params: {
           time_range: timeRange,
           refresh: true

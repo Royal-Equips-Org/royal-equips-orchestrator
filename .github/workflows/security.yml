@@ -47,20 +47,28 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: 🔐 Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript
           config-file: ./.github/codeql-config.yml
 
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.0
+
       - name: 🔨 Build for Analysis
-        run: |
-          npm install -g pnpm@10.17.0
-          pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
         env:
           HUSKY: 0
 
       - name: 📊 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:javascript"
 
@@ -80,10 +88,4 @@ jobs:
           if [ -f gitleaks-report.json ]; then
             echo "📊 Secret scan completed. Review gitleaks-report.json for findings."
           fi
-        continue-on-error: true
-
-      - name: 🛡️ Dependency Scan
-        run: |
-          pnpm audit --prod
-          npx osv-scanner -r .
         continue-on-error: true

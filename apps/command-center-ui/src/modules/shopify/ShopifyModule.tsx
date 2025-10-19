@@ -90,8 +90,8 @@ interface Order {
   id: string;
   orderNumber: string;
   totalPrice: string;
-  financialStatus: string;
-  fulfillmentStatus: string;
+  displayFinancialStatus: string;
+  displayFulfillmentStatus: string;
   customerEmail: string;
   createdAt: string;
   lineItems: OrderLineItem[];
@@ -157,7 +157,7 @@ export default function ShopifyModule() {
 
   const fetchStoreInfo = async () => {
     try {
-      const response = await apiClient.get('/api/shopify/status');
+      const response = await apiClient.get('/shopify/status');
       setStore(response.data.store);
     } catch (error) {
       console.error('Failed to fetch store info:', error);
@@ -168,9 +168,9 @@ export default function ShopifyModule() {
   const fetchShopifyData = async () => {
     try {
       const [metricsResponse, productsResponse, ordersResponse] = await Promise.all([
-        apiClient.get('/api/shopify/metrics'),
-        apiClient.get('/api/shopify/products', { params: { limit: 50 } }),
-        apiClient.get('/api/shopify/orders', { params: { limit: 20 } })
+        apiClient.get('/shopify/metrics'),
+        apiClient.get('/shopify/products', { params: { limit: 50 } }),
+        apiClient.get('/shopify/orders', { params: { limit: 20 } })
       ]);
 
       setMetrics(metricsResponse.data);
@@ -183,7 +183,7 @@ export default function ShopifyModule() {
 
   const fetchAutomationAgents = async () => {
     try {
-      const response = await apiClient.get('/api/agents/shopify');
+      const response = await apiClient.get('/agents/shopify');
       setAgents(ensureArray(response.data?.agents));
     } catch (error) {
       console.error('Failed to fetch automation agents:', error);
@@ -194,7 +194,7 @@ export default function ShopifyModule() {
   const syncShopifyData = async () => {
     try {
       setSyncing(true);
-      await apiClient.post('/api/shopify/sync');
+      await apiClient.post('/shopify/sync');
       await fetchShopifyData();
     } catch (error) {
       console.error('Failed to sync Shopify data:', error);
@@ -205,7 +205,7 @@ export default function ShopifyModule() {
 
   const toggleAgent = async (agentId: string) => {
     try {
-      await apiClient.post(`/api/agents/shopify/${agentId}/toggle`);
+      await apiClient.post(`/agents/shopify/${agentId}/toggle`);
       await fetchAutomationAgents();
     } catch (error) {
       console.error('Failed to toggle agent:', error);

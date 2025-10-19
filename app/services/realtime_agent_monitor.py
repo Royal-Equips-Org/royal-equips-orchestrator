@@ -76,9 +76,9 @@ class RealTimeAgentMonitor:
             from app.services.production_agent_executor import get_agent_executor
             agent_executor = await get_agent_executor()
 
-            # Validate executor is available
-            if agent_executor is None:
-                logger.warning("Agent executor not initialized, skipping metrics collection")
+            # Validate executor is available and has callable get_agent_executions method
+            if agent_executor is None or not callable(getattr(agent_executor, 'get_agent_executions', None)):
+                logger.debug("Agent executor not initialized yet, skipping metrics collection")
                 return
 
             # Get recent executions for analysis
@@ -271,9 +271,9 @@ class RealTimeAgentMonitor:
             from app.services.production_agent_executor import get_agent_executor
             agent_executor = await get_agent_executor()
 
-            # Validate executor is available
-            if agent_executor is None:
-                logger.warning("Agent executor not initialized, returning empty performance history")
+            # Validate executor is available and callable
+            if agent_executor is None or not callable(getattr(agent_executor, 'get_agent_executions', None)):
+                logger.debug("Agent executor not initialized yet, returning empty performance history")
                 return []
 
             # Get executions from the specified time period

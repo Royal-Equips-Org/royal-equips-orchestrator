@@ -183,7 +183,9 @@ class ProductionCustomerSupportAgent(AgentBase):
     async def _initialize_openai(self):
         """Initialize OpenAI client for AI-powered support."""
         try:
-            openai_key = await self.secrets.get_secret('OPENAI_API_KEY')
+            openai_key_result = await self.secrets.get_secret('OPENAI_API_KEY')
+            # Extract string value from SecretResult object
+            openai_key = openai_key_result.value if hasattr(openai_key_result, 'value') else str(openai_key_result)
             self.openai_client = AsyncOpenAI(api_key=openai_key)
 
             # Test connection
@@ -197,7 +199,9 @@ class ProductionCustomerSupportAgent(AgentBase):
     async def _initialize_redis(self):
         """Initialize Redis cache for performance optimization."""
         try:
-            redis_url = await self.secrets.get_secret('REDIS_URL')
+            redis_url_result = await self.secrets.get_secret('REDIS_URL')
+            # Extract string value from SecretResult object
+            redis_url = redis_url_result.value if hasattr(redis_url_result, 'value') else str(redis_url_result) if redis_url_result else None
             if not redis_url:
                 redis_url = 'redis://localhost:6379'
 

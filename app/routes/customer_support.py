@@ -41,10 +41,10 @@ class TicketCreateSchema(Schema):
     customer_email = fields.Email(required=True)
     subject = fields.Str(required=True, validate=lambda x: 5 <= len(x) <= 200)
     description = fields.Str(required=True, validate=lambda x: 10 <= len(x) <= 5000)
-    priority = fields.Str(missing='medium', validate=lambda x: x in ['low', 'medium', 'high', 'critical', 'urgent'])
-    category = fields.Str(missing='general', validate=lambda x: x in ['billing', 'shipping', 'product', 'technical', 'refund', 'general'])
-    order_id = fields.Str(missing=None)
-    customer_phone = fields.Str(missing=None)
+    priority = fields.Str(load_default='medium', validate=lambda x: x in ['low', 'medium', 'high', 'critical', 'urgent'])
+    category = fields.Str(load_default='general', validate=lambda x: x in ['billing', 'shipping', 'product', 'technical', 'refund', 'general'])
+    order_id = fields.Str(load_default=None)
+    customer_phone = fields.Str(load_default=None)
 
 
 class TicketUpdateSchema(Schema):
@@ -59,9 +59,9 @@ class TicketUpdateSchema(Schema):
 class AIResponseSchema(Schema):
     """Schema for AI response generation."""
     ticket_id = fields.Str(required=True)
-    context = fields.Dict(missing={})
-    response_tone = fields.Str(missing='professional', validate=lambda x: x in ['professional', 'friendly', 'empathetic', 'formal'])
-    max_length = fields.Int(missing=500, validate=lambda x: 50 <= x <= 1000)
+    context = fields.Dict(load_default={})
+    response_tone = fields.Str(load_default='professional', validate=lambda x: x in ['professional', 'friendly', 'empathetic', 'formal'])
+    max_length = fields.Int(load_default=500, validate=lambda x: 50 <= x <= 1000)
 
 
 async def get_agent() -> ProductionCustomerSupportAgent:

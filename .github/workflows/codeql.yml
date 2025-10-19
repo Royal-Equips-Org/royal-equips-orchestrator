@@ -8,7 +8,7 @@ on:
   merge_group:
     branches: [ master ]
   schedule:
-    - cron: '29 17 * * 6'
+    - cron: '9 16 * * 2'
 
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
@@ -23,7 +23,7 @@ permissions:
 jobs:
   analyze:
     name: CodeQL (${{ matrix.language }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -43,35 +43,26 @@ jobs:
       # JS/TS dependency graph without running project scripts
       - name: Setup Node (JS/TS only)
         if: ${{ matrix.language == 'javascript-typescript' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
-          cache: 'pnpm'
-          cache-dependency-path: |
-            **/pnpm-lock.yaml
 
-      # Robust pnpm install with PATH fix and fallback
-      - name: Ensure pnpm (JS/TS only)
+      # Reliable pnpm installation & PATH configuration
+      - name: Setup pnpm (JS/TS only)
         if: ${{ matrix.language == 'javascript-typescript' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          export NPM_CONFIG_PREFIX="$HOME/.npm-global"
-          mkdir -p "$NPM_CONFIG_PREFIX/bin"
-          export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
-          # Try corepack first, then fallback to npm -g
-          (corepack enable && corepack prepare pnpm@9.9.0 --activate) || true
-          if ! command -v pnpm >/dev/null 2>&1; then
-            npm i -g pnpm@9.9.0
-          fi
-          pnpm -v
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0   # Exact version for consistency
+
+      - name: Verify pnpm install (JS/TS only)
+        if: ${{ matrix.language == 'javascript-typescript' }}
+        run: pnpm --version
 
       - name: Install JS deps (JS/TS only)
         if: ${{ matrix.language == 'javascript-typescript' }}
         env:
           HUSKY: '0'
           CI: 'true'
-          PATH: $HOME/.npm-global/bin:${{ env.PATH }}
         run: |
           if [ -f pnpm-lock.yaml ]; then
             pnpm install --frozen-lockfile --ignore-scripts
@@ -86,7 +77,7 @@ jobs:
       # Optional Python resolution without running project scripts
       - name: Setup Python (Python only)
         if: ${{ matrix.language == 'python' }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -101,13 +92,13 @@ jobs:
           fi
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix['build-mode'] }}
           # queries: security-extended,security-and-quality
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"

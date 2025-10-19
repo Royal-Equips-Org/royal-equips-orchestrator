@@ -7,6 +7,15 @@ with Gunicorn or other WSGI servers, including WebSocket support.
 Sentry error monitoring is automatically initialized when creating the app.
 """
 
+# CRITICAL: Apply eventlet monkey patching BEFORE any other imports
+# This must be the first thing to prevent "Working outside of request context" errors
+try:
+    import eventlet
+    eventlet.monkey_patch()
+except ImportError:
+    # eventlet not available - fallback to standard threading
+    pass
+
 import os
 import sys
 from pathlib import Path

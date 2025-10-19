@@ -24,6 +24,10 @@ class ShopifyGraphQLService:
         self._api_version = "2024-07"
         self._base_url = None
 
+    def is_configured(self) -> bool:
+        """Check if Shopify credentials are configured."""
+        return bool(self._shop_name and self._access_token and self._base_url)
+
     async def initialize(self):
         """Initialize Shopify connection with real credentials."""
         try:
@@ -104,22 +108,26 @@ class ShopifyGraphQLService:
         end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
 
+        # Build query filter string in Shopify's required format: created_at:>=YYYY-MM-DD
+        # See Shopify's query filter documentation: https://shopify.dev/docs/api/usage/search-filters
+        query_filter = f"created_at:>={start_date.strftime('%Y-%m-%d')}"
+
         query = """
-        query($first: Int!, $createdAtMin: DateTime) {
-            orders(first: $first, query: $createdAtMin) {
+        query($first: Int!, $query: String) {
+            orders(first: $first, query: $query) {
                 edges {
                     node {
                         id
                         name
                         processedAt
-                        totalPriceSet {
+                        currentTotalPriceSet {
                             shopMoney {
                                 amount
                                 currencyCode
                             }
                         }
-                        financialStatus
-                        fulfillmentStatus
+                        displayFinancialStatus
+                        displayFulfillmentStatus
                         lineItems(first: 10) {
                             edges {
                                 node {
@@ -143,7 +151,7 @@ class ShopifyGraphQLService:
 
         variables = {
             'first': 250,
-            'createdAtMin': start_date.isoformat()
+            'query': query_filter
         }
 
         result = await self._execute_query(query, variables)
@@ -157,11 +165,13 @@ class ShopifyGraphQLService:
 
         for edge in orders:
             order = edge['node']
-            total_revenue += float(order['totalPriceSet']['shopMoney']['amount'])
+            total_revenue += float(order['currentTotalPriceSet']['shopMoney']['amount'])
 
-            if order['fulfillmentStatus'] == 'fulfilled':
+            # Note: displayFulfillmentStatus returns values like "FULFILLED", "UNFULFILLED", "PARTIALLY_FULFILLED"
+            fulfillment_status = order['displayFulfillmentStatus']
+            if fulfillment_status == 'FULFILLED':
                 fulfilled_orders += 1
-            elif order['fulfillmentStatus'] in ['pending', 'partial']:
+            elif fulfillment_status in ['UNFULFILLED', 'PARTIALLY_FULFILLED']:
                 pending_orders += 1
 
         return {

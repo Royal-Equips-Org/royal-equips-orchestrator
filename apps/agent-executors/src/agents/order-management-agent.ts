@@ -20,8 +20,8 @@ interface OrderWithRisk {
   orderNumber: number;
   email: string;
   totalPrice: string;
-  financialStatus: string;
-  fulfillmentStatus: string | null;
+  displayFinancialStatus: string;
+  displayFulfillmentStatus: string | null;
   riskLevel: 'low' | 'medium' | 'high';
   riskScore: number;
   lineItems: OrderLineItem[];
@@ -392,8 +392,8 @@ export class OrderManagementAgent extends BaseAgent {
       orderNumber: order.order_number,
       email: order.email || '',
       totalPrice: order.total_price,
-      financialStatus: order.financial_status,
-      fulfillmentStatus: order.fulfillment_status || null,
+      displayFinancialStatus: order.financial_status,
+      displayFulfillmentStatus: order.fulfillment_status || null,
       riskLevel,
       riskScore,
       lineItems: order.line_items.map((item: any) => ({

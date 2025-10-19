@@ -87,6 +87,59 @@ async def get_agents_status():
         logger.error(f"Failed to get agent status: {e}")
         return jsonify({'error': 'Failed to retrieve agent status'}), 500
 
+@empire_bp.route('/agents/health', methods=['GET'])
+async def get_agents_health():
+    """Get comprehensive health status of all agents."""
+    try:
+        empire_service = await get_empire_service()
+        agents = await empire_service.get_agents()
+
+        health_summary = {
+            'overall_health': 'healthy',
+            'agents': [],
+            'statistics': {
+                'total': len(agents),
+                'healthy': 0,
+                'degraded': 0,
+                'unhealthy': 0,
+                'offline': 0
+            },
+            'timestamp': datetime.now().isoformat()
+        }
+
+        for agent in agents:
+            agent_health = 'healthy'
+            if agent.health < 50:
+                agent_health = 'unhealthy'
+                health_summary['statistics']['unhealthy'] += 1
+            elif agent.health < 80:
+                agent_health = 'degraded'
+                health_summary['statistics']['degraded'] += 1
+            else:
+                health_summary['statistics']['healthy'] += 1
+
+            health_summary['agents'].append({
+                'id': agent.id,
+                'name': agent.name,
+                'health': agent.health,
+                'status': agent.status.value,
+                'health_level': agent_health,
+                'last_activity': agent.last_activity.isoformat(),
+                'error_rate': agent.error_count / max(agent.total_tasks, 1) * 100
+            })
+
+        # Determine overall health
+        if health_summary['statistics']['unhealthy'] > 0:
+            health_summary['overall_health'] = 'unhealthy'
+        elif health_summary['statistics']['degraded'] > 2:
+            health_summary['overall_health'] = 'degraded'
+
+        return jsonify(health_summary)
+
+    except Exception as e:
+        logger.error(f"Failed to get agents health: {e}")
+        return jsonify({'error': 'Failed to retrieve agents health'}), 500
+
 @empire_bp.route('/agents/<agent_id>', methods=['GET'])
 async def get_agent_details(agent_id: str):
     """Get detailed information about a specific agent."""

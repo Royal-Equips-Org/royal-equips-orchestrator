@@ -89,8 +89,8 @@ const GQL_ORDERS = `
           name
           email
           totalPrice
-          financialStatus
-          fulfillmentStatus
+          displayFinancialStatus
+          displayFulfillmentStatus
           createdAt
           updatedAt
         }
@@ -258,7 +258,7 @@ const shopifyRoutes: FastifyPluginAsync = async (app) => {
                     acc.today_orders += 1;
                   }
                   acc.total_revenue += parseFloat(edge.node.totalPrice || '0');
-                  if (edge.node.fulfillmentStatus === 'UNFULFILLED') {
+                  if (edge.node.displayFulfillmentStatus === 'UNFULFILLED') {
                     acc.pending_orders += 1;
                   }
                   return acc;

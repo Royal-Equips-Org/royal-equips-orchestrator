@@ -66,3 +66,4 @@ pytest-flask>=1.3
 
 # Error Monitoring & Tracking
 sentry-sdk[flask]>=1.40
+beautifulsoup4>=4.12.0

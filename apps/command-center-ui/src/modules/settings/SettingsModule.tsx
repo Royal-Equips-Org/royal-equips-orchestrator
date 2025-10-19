@@ -128,7 +128,7 @@ export default function SettingsModule() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/settings/system');
+      const response = await apiClient.get('/settings/system');
       setSettings(response.data);
     } catch (error) {
       console.error('Failed to fetch settings:', error);
@@ -142,10 +142,10 @@ export default function SettingsModule() {
     
     try {
       setSaving(true);
-      await apiClient.put('/api/settings/system', settings);
+      await apiClient.put('/settings/system', settings);
       
       // Refresh system configuration
-      await apiClient.post('/api/system/reload-config');
+      await apiClient.post('/system/reload-config');
       
     } catch (error) {
       console.error('Failed to save settings:', error);

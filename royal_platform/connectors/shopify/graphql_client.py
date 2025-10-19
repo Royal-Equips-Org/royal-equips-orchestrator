@@ -536,8 +536,8 @@ class ShopifyGraphQLClient:
                         currentTotalTax
                         currentTotalDiscounts
                         currencyCode
-                        financialStatus
-                        fulfillmentStatus
+                        displayFinancialStatus
+                        displayFulfillmentStatus
                         createdAt
                         updatedAt
                         processedAt
