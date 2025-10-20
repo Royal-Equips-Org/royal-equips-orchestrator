@@ -84,18 +84,78 @@ def readiness():
             return jsonify(result), 503
 
     except Exception as e:
-        logger.error(f"Readiness check failed with error: {e}")
+        logger.error(f"Readiness check failed with error: {e}", exc_info=True)
+        # Don't expose internal error details to external users
         return (
             jsonify(
                 {
                     "ready": False,
                     "status": "error",
-                    "error": str(e),
+                    "error": "Service readiness check failed",
                     "timestamp": datetime.now().isoformat(),
                 }
             ),
             503,
         )
+
+
+@health_bp.route("/validate")
+def validate_production():
+    """
+    Production validation endpoint - checks all required credentials and configuration.
+    
+    This endpoint runs the full production validator and returns detailed results.
+    Useful for deployment verification and troubleshooting.
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: All validations passed
+        schema:
+          type: object
+          properties:
+            passed:
+              type: boolean
+            total_checks:
+              type: integer
+            passed_checks:
+              type: integer
+            critical_failures:
+              type: integer
+            warnings:
+              type: integer
+            results:
+              type: array
+              items:
+                type: object
+      503:
+        description: Validation failed
+    """
+    try:
+        from core.production_validator import ProductionValidator
+        
+        # Run validator (non-strict mode for status endpoint)
+        validator = ProductionValidator(strict_mode=False)
+        validation_passed = validator.validate_all()
+        
+        # Get detailed report
+        report = validator.get_validation_report()
+        report['timestamp'] = datetime.now(timezone.utc).isoformat()
+        
+        # Return appropriate status code
+        status_code = 200 if validation_passed else 503
+        
+        return jsonify(report), status_code
+        
+    except Exception as e:
+        logger.error(f"Production validation endpoint failed: {e}", exc_info=True)
+        # Don't expose internal error details to external users
+        return jsonify({
+            "passed": False,
+            "error": "Validation service temporarily unavailable",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }), 500
 
 
 @health_bp.route("/health")

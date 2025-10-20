@@ -277,7 +277,41 @@ def register_error_handlers(app: Flask) -> None:
 
 
 def init_autonomous_empire(app: Flask) -> None:
-    """Initialize the autonomous empire management system."""
+    """Initialize the autonomous empire management system.
+    
+    PRODUCTION MODE: Validates all required credentials before starting.
+    Implements fail-fast behavior if critical credentials are missing.
+    """
+    # PRODUCTION VALIDATION - Run before any agent initialization
+    try:
+        from core.production_validator import validate_production_environment
+        
+        # Check if we should run in strict mode (default: True for production)
+        strict_mode = os.getenv('FLASK_ENV', 'production') == 'production'
+        
+        # Validate environment
+        validation_passed = validate_production_environment(strict_mode=strict_mode)
+        
+        if not validation_passed:
+            error_msg = (
+                "❌ PRODUCTION VALIDATION FAILED: Critical credentials missing. "
+                "Cannot start autonomous agents without required API keys. "
+                "See logs above for details."
+            )
+            app.logger.error(error_msg)
+            if strict_mode:
+                # In strict mode, raise exception to prevent startup
+                raise RuntimeError(error_msg)
+            else:
+                app.logger.warning("⚠️ Continuing anyway (strict_mode=False)")
+    
+    except ImportError as e:
+        app.logger.error(f"❌ Failed to import production validator: {e}")
+        # Continue without validation in development mode
+        if os.getenv('FLASK_ENV') == 'production':
+            raise
+    
+    # Continue with autonomous empire initialization
     try:
         from app.services.empire_startup import auto_start_autonomous_empire
 

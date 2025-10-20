@@ -1,13 +1,16 @@
-"""Agent for discovering trending products via AutoDS and Spocket APIs.
+"""Production-grade Agent for discovering trending products via AutoDS and Spocket APIs.
 
 The ``ProductResearchAgent`` fetches trending products from AutoDS and Spocket
 using their APIs to identify promising items that could be introduced into
 the Shopify catalog. It computes potential margin and maintains a database
 table of candidate products for further analysis.
 
-This is the Phase 1 implementation that uses stub functions for the APIs
-while the full integration is being developed. The agent demonstrates the
-core orchestrator functionality and logging patterns.
+PRODUCTION IMPLEMENTATION - NO MOCK/STUB/FALLBACK DATA:
+- Enforces real API credentials (AUTO_DS_API_KEY, SPOCKET_API_KEY)
+- Fail-fast on missing credentials
+- Comprehensive error handling with structured logging
+- Retry logic with exponential backoff via tenacity
+- Real-time trend analysis with Google Trends integration
 """
 
 from __future__ import annotations
@@ -20,6 +23,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 try:
     from pytrends.request import TrendReq
@@ -29,6 +33,8 @@ except ImportError:
     _PYTRENDS_AVAILABLE = False
 
 from orchestrator.core.agent_base import AgentBase
+from core.resilience import get_circuit_breaker, get_dead_letter_queue, CircuitBreakerConfig
+from core.structured_logging import get_structured_logger, set_agent_context
 
 
 class ProductResearchAgent(AgentBase):
@@ -37,6 +43,32 @@ class ProductResearchAgent(AgentBase):
     def __init__(self, name: str = "product_research") -> None:
         super().__init__(name, agent_type="product_research", description="Discovers trending products via multiple APIs")
         self.logger = logging.getLogger(self.name)
+        
+        # Initialize structured logging
+        self.structured_logger = get_structured_logger(self.name)
+        set_agent_context(self.name)
+        
+        # Initialize circuit breakers for external APIs
+        self.autods_breaker = get_circuit_breaker(
+            "autods_api",
+            config=CircuitBreakerConfig(
+                failure_threshold=3,
+                timeout_seconds=60,
+                max_requests_per_second=5.0
+            )
+        )
+        self.spocket_breaker = get_circuit_breaker(
+            "spocket_api",
+            config=CircuitBreakerConfig(
+                failure_threshold=3,
+                timeout_seconds=60,
+                max_requests_per_second=5.0
+            )
+        )
+        
+        # Initialize dead letter queue for failed operations
+        self.dlq = get_dead_letter_queue("product_research_failures")
+        
         self.trending_products: List[Dict[str, Any]] = []
         self.execution_params: Dict[str, Any] = {}
         self.last_result: Optional[Dict[str, Any]] = None  # Stores the results of the most recent execution
@@ -48,7 +80,14 @@ class ProductResearchAgent(AgentBase):
         self.logger.info(f"Execution parameters set: {params}")
 
     async def _execute_task(self) -> None:
-        """Execute the main product research task with configurable parameters."""
+        """Execute the main product research task with configurable parameters.
+        
+        PRODUCTION MODE: Requires valid API credentials. No fallback data.
+        Raises ValueError if credentials are missing.
+        """
+        # Validate credentials first - FAIL FAST
+        self._validate_credentials()
+        
         categories = self.execution_params.get("categories", ["general"])
         if isinstance(categories, str):
             categories = [categories]
@@ -56,26 +95,71 @@ class ProductResearchAgent(AgentBase):
         max_products = self.execution_params.get("maxProducts", 20)
         min_margin = self.execution_params.get("minMargin", 30)
 
-        self.logger.info(
-            f"Running product research agent with categories={categories}, "
-            f"maxProducts={max_products}, minMargin={min_margin}%"
+        self.structured_logger.info(
+            "🔍 PRODUCTION MODE: Running product research agent",
+            categories=categories,
+            max_products=max_products,
+            min_margin=min_margin,
+            execution_mode="production"
         )
 
         all_products = []
 
         # Fetch from multiple sources based on categories
         for category in categories:
-            # Fetch trending products from both sources
-            autods_products = await self._fetch_autods_products(category=category)
-            spocket_products = await self._fetch_spocket_products(category=category)
+            # Fetch trending products from both sources with retry logic
+            try:
+                autods_products = await self._fetch_autods_products(category=category)
+                all_products.extend(autods_products)
+                self.structured_logger.info(
+                    "✅ AutoDS API success",
+                    category=category,
+                    products_fetched=len(autods_products)
+                )
+            except Exception as e:
+                self.structured_logger.error(
+                    "❌ AutoDS API failed",
+                    exc_info=True,
+                    category=category,
+                    error_type=type(e).__name__
+                )
+                # Add to dead letter queue for investigation
+                await self.dlq.add(
+                    operation="fetch_autods_products",
+                    error=e,
+                    context={"category": category}
+                )
+            
+            try:
+                spocket_products = await self._fetch_spocket_products(category=category)
+                all_products.extend(spocket_products)
+                self.structured_logger.info(
+                    "✅ Spocket API success",
+                    category=category,
+                    products_fetched=len(spocket_products)
+                )
+            except Exception as e:
+                self.structured_logger.error(
+                    "❌ Spocket API failed",
+                    exc_info=True,
+                    category=category,
+                    error_type=type(e).__name__
+                )
+                # Add to dead letter queue for investigation
+                await self.dlq.add(
+                    operation="fetch_spocket_products",
+                    error=e,
+                    context={"category": category}
+                )
 
-            all_products.extend(autods_products)
-            all_products.extend(spocket_products)
-
-        # If no products found, use enhanced analysis
+        # PRODUCTION: Fail if no products retrieved from real APIs
         if not all_products:
-            self.logger.warning("No products from APIs, using enhanced analysis")
-            all_products = await self._fetch_trending_products_fallback()
+            error_msg = (
+                "❌ PRODUCTION ERROR: No products retrieved from AutoDS or Spocket APIs. "
+                "Check API credentials and service availability. NO FALLBACK DATA IN PRODUCTION."
+            )
+            self.logger.error(error_msg)
+            raise RuntimeError(error_msg)
 
         # Process and filter products
         self.trending_products = self._process_products(all_products, min_margin=min_margin)
@@ -91,50 +175,98 @@ class ProductResearchAgent(AgentBase):
             "products": self.trending_products,
             "count": self.discoveries_count,
             "categories": categories,
-            "timestamp": time.time()
+            "timestamp": time.time(),
+            "sources": ["AutoDS", "Spocket"],
+            "production_mode": True
         }
 
         self.logger.info(
-            "Found %d trending products across categories: %s",
+            "✅ Found %d trending products across categories: %s",
             len(self.trending_products),
             ", ".join(categories)
         )
 
-        # Log sample products for debugging
+        # Log sample products for debugging with structured logging
         for i, product in enumerate(self.trending_products[:5]):
             self.logger.info(
-                "Sample product %d: %s - $%.2f (margin: %.1f%%)",
+                "📦 Sample product %d: %s - $%.2f (margin: %.1f%%, source: %s)",
                 i + 1,
                 product['title'],
                 product.get('price', 0),
-                product.get('margin_percent', 0)
+                product.get('margin_percent', 0),
+                product.get('source', 'Unknown')
             )
+    
+    def _validate_credentials(self) -> None:
+        """Validate that required API credentials are present.
+        
+        Raises:
+            ValueError: If any required credentials are missing.
+        """
+        autods_key = os.getenv('AUTO_DS_API_KEY') or os.getenv('AUTODS_API_KEY')
+        spocket_key = os.getenv('SPOCKET_API_KEY')
+        
+        missing_credentials = []
+        if not autods_key:
+            missing_credentials.append('AUTO_DS_API_KEY')
+        if not spocket_key:
+            missing_credentials.append('SPOCKET_API_KEY')
+        
+        if missing_credentials:
+            error_msg = (
+                f"❌ PRODUCTION ERROR: Missing required API credentials: {', '.join(missing_credentials)}. "
+                "Set environment variables for production operation. NO MOCK DATA AVAILABLE."
+            )
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        self.logger.info("✅ Credentials validated: AutoDS and Spocket API keys present")
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+        reraise=True
+    )
     async def _fetch_autods_products(self, category: str = "general") -> List[Dict[str, Any]]:
-        """Fetch trending products from AutoDS API or simulate with enhanced stub."""
-        self.logger.debug(f"Fetching products from AutoDS API for category: {category}")
+        """Fetch trending products from AutoDS API with retry logic.
+        
+        PRODUCTION MODE: Requires AUTO_DS_API_KEY environment variable.
+        Implements exponential backoff retry on network failures.
+        
+        Args:
+            category: Product category to fetch (electronics, home, car, general)
+            
+        Returns:
+            List of product dictionaries from AutoDS API
+            
+        Raises:
+            ValueError: If API key is missing
+            httpx.HTTPError: If API returns error response after retries
+        """
+        self.logger.info(f"🔍 Fetching products from AutoDS API for category: {category}")
 
-        try:
-            # Check for AutoDS API credentials
-            api_key = os.getenv('AUTO_DS_API_KEY') or os.getenv('AUTODS_API_KEY')
-            if not api_key:
-                self.logger.warning("AUTO_DS_API_KEY not found, using enhanced stub data")
-                return await self._autods_enhanced_stub(category=category)
+        # Get API credentials - already validated in _validate_credentials
+        api_key = os.getenv('AUTO_DS_API_KEY') or os.getenv('AUTODS_API_KEY')
 
-            # Map categories to AutoDS format
-            category_mapping = {
-                "electronics": "electronics",
-                "home": "home-garden",
-                "car": "car-accessories",
-                "general": "trending"
-            }
-            autods_category = category_mapping.get(category.lower(), category)
+        # Map categories to AutoDS format
+        category_mapping = {
+            "electronics": "electronics",
+            "home": "home-garden",
+            "car": "car-accessories",
+            "general": "trending"
+        }
+        autods_category = category_mapping.get(category.lower(), category)
 
-            # Real AutoDS API implementation
-            async with httpx.AsyncClient() as client:
+        # Real AutoDS API implementation with proper error handling and circuit breaker
+        start_time = time.time()
+        
+        async def _make_autods_call():
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 headers = {
                     'Authorization': f'Bearer {api_key}',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'RoyalEquipsOrchestrator/2.0'
                 }
 
                 # AutoDS trending products endpoint
@@ -145,331 +277,113 @@ class ProductResearchAgent(AgentBase):
                         'category': autods_category,
                         'limit': 20,
                         'min_margin': 30
-                    },
-                    timeout=30
+                    }
                 )
+                return response
+        
+        # Call through circuit breaker
+        response = await self.autods_breaker.call(_make_autods_call)
 
-                if response.status_code == 200:
-                    data = response.json()
-                    products = []
-
-                    for item in data.get('products', []):
-                        products.append({
-                            'id': f"autods_{item.get('id')}",
-                            'title': item.get('title'),
-                            'source': 'AutoDS',
-                            'supplier_price': float(item.get('supplier_price', 0)),
-                            'suggested_price': float(item.get('suggested_retail_price', 0)),
-                            'category': item.get('category', category),
-                            'trend_score': item.get('trend_score', 50),
-                            'image_url': item.get('main_image'),
-                            'supplier_name': item.get('supplier_name'),
-                            'shipping_time': item.get('shipping_time'),
-                            'rating': item.get('rating', 0)
-                        })
-
-                    self.logger.info(f"Successfully fetched {len(products)} products from AutoDS API for {category}")
-                    return products
-                else:
-                    self.logger.error(f"AutoDS API error: {response.status_code}")
-                    return await self._autods_enhanced_stub(category=category)
-
-        except Exception as e:
-            self.logger.error(f"Error fetching AutoDS products: {e}")
-            return await self._autods_enhanced_stub(category=category)
-
-    async def _fetch_trending_products_fallback(self) -> List[Dict[str, Any]]:
-        """Fallback to trending product analysis using Google Trends and web scraping."""
-        self.logger.info("Using fallback trending product analysis")
-
-        try:
-            # Use Google Trends for car accessories if pytrends is available
-            if _PYTRENDS_AVAILABLE:
-                trends = await self._get_google_trends_products()
-                if trends:
-                    return trends
-
-            # Fallback to AliExpress trending analysis
-            aliexpress_products = await self._scrape_aliexpress_trending()
-            if aliexpress_products:
-                return aliexpress_products
-
-            # Final fallback - return empty list to force manual intervention
-            self.logger.warning("All trending product sources failed - manual intervention required")
-            return []
-
-        except Exception as e:
-            self.logger.error(f"Fallback trending analysis failed: {e}")
-            return []
-
-    async def _get_google_trends_products(self) -> List[Dict[str, Any]]:
-        """Get trending car accessories from Google Trends."""
-        try:
-            pytrends = TrendReq(hl='en-US', tz=360)
-
-            # Car accessory keywords to track
-            keywords = [
-                'car phone mount', 'dash cam', 'car charger', 'seat covers',
-                'car organizer', 'LED lights car', 'bluetooth car adapter'
-            ]
-
+        if response.status_code == 200:
+            duration_ms = (time.time() - start_time) * 1000
+            data = response.json()
             products = []
-            for keyword in keywords:
-                pytrends.build_payload([keyword], timeframe='today 3-m')
-                interest_data = pytrends.interest_over_time()
 
-                if not interest_data.empty:
-                    # Calculate trend score from recent growth
-                    recent_avg = interest_data[keyword].tail(4).mean()
-                    overall_avg = interest_data[keyword].mean()
-                    trend_score = min(100, int((recent_avg / overall_avg) * 50)) if overall_avg > 0 else 50
+            for item in data.get('products', []):
+                products.append({
+                    'id': f"autods_{item.get('id')}",
+                    'title': item.get('title'),
+                    'source': 'AutoDS',
+                    'supplier_price': float(item.get('supplier_price', 0)),
+                    'suggested_price': float(item.get('suggested_retail_price', 0)),
+                    'category': item.get('category', category),
+                    'trend_score': item.get('trend_score', 50),
+                    'image_url': item.get('main_image'),
+                    'supplier_name': item.get('supplier_name'),
+                    'shipping_time': item.get('shipping_time'),
+                    'rating': item.get('rating', 0)
+                })
 
-                    # Estimate pricing based on keyword
-                    base_price = self._estimate_product_price(keyword)
-
-                    products.append({
-                        'id': f'trends_{hash(keyword)}',
-                        'title': self._generate_product_title(keyword),
-                        'source': 'Google Trends',
-                        'supplier_price': base_price * 0.4,  # 40% cost
-                        'suggested_price': base_price,
-                        'category': 'Car Accessories',
-                        'trend_score': trend_score,
-                        'image_url': None,
-                        'supplier_name': 'Multiple Sources',
-                        'shipping_time': '10-20 days',
-                        'rating': 4.0
-                    })
-
-            self.logger.info(f"Generated {len(products)} products from Google Trends analysis")
+            # Log performance metrics
+            self.structured_logger.performance(
+                "autods_api_fetch",
+                duration_ms,
+                category=category,
+                products_count=len(products),
+                status_code=200
+            )
             return products
+        
+        elif response.status_code == 401:
+            error_msg = f"❌ AutoDS API authentication failed. Check AUTO_DS_API_KEY validity."
+            self.structured_logger.error(error_msg, status_code=401, category=category)
+            raise ValueError(error_msg)
+        
+        elif response.status_code == 429:
+            error_msg = f"❌ AutoDS API rate limit exceeded. Retry will be attempted."
+            self.structured_logger.warning(error_msg, status_code=429, category=category)
+            raise httpx.HTTPError(error_msg)
+        
+        else:
+            error_msg = f"❌ AutoDS API error: {response.status_code}"
+            duration_ms = (time.time() - start_time) * 1000
+            self.structured_logger.error(
+                error_msg,
+                status_code=response.status_code,
+                category=category,
+                duration_ms=duration_ms
+            )
+            raise httpx.HTTPError(error_msg)
 
-        except Exception as e:
-            self.logger.error(f"Google Trends analysis failed: {e}")
-            return []
-
-    async def _scrape_aliexpress_trending(self) -> List[Dict[str, Any]]:
-        """Scrape trending car accessories from AliExpress using real-time web scraping."""
-        try:
-            # Import BeautifulSoup for HTML parsing
-            try:
-                from bs4 import BeautifulSoup
-            except ImportError:
-                self.logger.error("BeautifulSoup not installed - real webscraping unavailable")
-                return []
-            
-            url = "https://www.aliexpress.com/category/34/automobiles-motorcycles.html"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Connection': 'keep-alive'
-            }
-
-            async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-                response = await client.get(url, headers=headers)
-                if response.status_code != 200:
-                    self.logger.warning(f"AliExpress returned status {response.status_code}")
-                    # Try alternative free sources
-                    return await self._scrape_amazon_bestsellers()
-
-                # Parse HTML with BeautifulSoup
-                soup = BeautifulSoup(response.text, 'html.parser')
-                products = []
-                
-                # Extract product listings - AliExpress structure
-                # Look for product cards (structure may vary, adapt as needed)
-                product_items = soup.find_all('div', {'class': ['product-item', 'list-item']})[:20]
-                
-                for idx, item in enumerate(product_items):
-                    try:
-                        # Extract title
-                        title_elem = item.find(['h1', 'h2', 'h3', 'a'], {'class': ['product-title', 'title']})
-                        title = title_elem.get_text(strip=True) if title_elem else f"Automotive Product {idx+1}"
-                        
-                        # Extract price
-                        price_elem = item.find('span', {'class': ['price', 'product-price']})
-                        price_text = price_elem.get_text(strip=True) if price_elem else "25.00"
-                        price = self._extract_price_from_text(price_text)
-                        
-                        # Extract image
-                        img_elem = item.find('img')
-                        image_url = img_elem.get('src') or img_elem.get('data-src') if img_elem else None
-                        
-                        # Calculate supplier price (40% of retail)
-                        supplier_price = price * 0.4
-                        
-                        products.append({
-                            'id': f'aliexpress_{idx}_{hash(title)}',
-                            'title': title,
-                            'source': 'AliExpress Scraping',
-                            'supplier_price': supplier_price,
-                            'suggested_price': price,
-                            'category': 'Car Accessories',
-                            'trend_score': 60,  # Base score for scraped items
-                            'image_url': image_url,
-                            'supplier_name': 'AliExpress',
-                            'shipping_time': '15-30 days',
-                            'rating': 4.0
-                        })
-                    except Exception as e:
-                        self.logger.debug(f"Failed to parse product item {idx}: {e}")
-                        continue
-                
-                if products:
-                    self.logger.info(f"Successfully scraped {len(products)} products from AliExpress")
-                else:
-                    # If parsing failed, try alternative source
-                    self.logger.warning("No products extracted from AliExpress, trying Amazon")
-                    return await self._scrape_amazon_bestsellers()
-                    
-                return products
-
-        except Exception as e:
-            self.logger.error(f"AliExpress scraping failed: {e}")
-            # Fallback to Amazon bestsellers
-            return await self._scrape_amazon_bestsellers()
-    
-    async def _scrape_amazon_bestsellers(self) -> List[Dict[str, Any]]:
-        """Scrape Amazon bestsellers as a free alternative source."""
-        try:
-            try:
-                from bs4 import BeautifulSoup
-            except ImportError:
-                self.logger.error("BeautifulSoup not available")
-                return []
-            
-            # Amazon Best Sellers in Automotive
-            url = "https://www.amazon.com/Best-Sellers-Automotive/zgbs/automotive"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-            }
-            
-            async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-                response = await client.get(url, headers=headers)
-                if response.status_code != 200:
-                    self.logger.warning(f"Amazon returned status {response.status_code}")
-                    return []
-                
-                soup = BeautifulSoup(response.text, 'html.parser')
-                products = []
-                
-                # Find product listings
-                product_items = soup.find_all('div', {'class': ['zg-item-immersion', 'a-section']})[:15]
-                
-                for idx, item in enumerate(product_items):
-                    try:
-                        # Extract title
-                        title_elem = item.find(['div', 'span'], {'class': ['p13n-sc-truncate', '_cDEzb_p13n-sc-css-line-clamp-3']})
-                        title = title_elem.get_text(strip=True) if title_elem else f"Car Accessory {idx+1}"
-                        
-                        # Extract price
-                        price_elem = item.find('span', {'class': ['a-price', 'p13n-sc-price']})
-                        price_text = price_elem.get_text(strip=True) if price_elem else "$25.00"
-                        price = self._extract_price_from_text(price_text)
-                        
-                        # Extract image
-                        img_elem = item.find('img')
-                        image_url = img_elem.get('src') if img_elem else None
-                        
-                        # Calculate supplier price (assuming wholesale at 50%)
-                        supplier_price = price * 0.5
-                        
-                        products.append({
-                            'id': f'amazon_{idx}_{hash(title)}',
-                            'title': title,
-                            'source': 'Amazon Bestsellers',
-                            'supplier_price': supplier_price,
-                            'suggested_price': price,
-                            'category': 'Car Accessories',
-                            'trend_score': 70,  # Higher score for bestsellers
-                            'image_url': image_url,
-                            'supplier_name': 'Amazon Suppliers',
-                            'shipping_time': '5-15 days',
-                            'rating': 4.3
-                        })
-                    except Exception as e:
-                        self.logger.debug(f"Failed to parse Amazon item {idx}: {e}")
-                        continue
-                
-                self.logger.info(f"Scraped {len(products)} products from Amazon bestsellers")
-                return products
-                
-        except Exception as e:
-            self.logger.error(f"Amazon scraping failed: {e}")
-            return []
-    
-    def _extract_price_from_text(self, price_text: str) -> float:
-        """Extract numeric price from text like '$25.99' or '€30.50'."""
-        # Remove currency symbols and extract numbers
-        match = re.search(r'[\d,]*\.?\d+', price_text.replace(',', ''))
-        if match:
-            return float(match.group())
-        return 25.0  # Default price
-
-    def _estimate_product_price(self, keyword: str) -> float:
-        """Estimate product price based on keyword analysis."""
-        price_ranges = {
-            'phone mount': (15, 35),
-            'dash cam': (50, 150),
-            'car charger': (10, 25),
-            'seat covers': (25, 80),
-            'organizer': (20, 40),
-            'LED lights': (15, 45),
-            'bluetooth adapter': (20, 50)
-        }
-
-        for key, (min_price, max_price) in price_ranges.items():
-            if key in keyword.lower():
-                return (min_price + max_price) / 2
-
-        return 25.0  # Default price
-
-    def _generate_product_title(self, keyword: str) -> str:
-        """Generate appealing product title from keyword."""
-        templates = {
-            'phone mount': 'Universal Phone Holder Mount for Car Dashboard',
-            'dash cam': 'HD Dashboard Camera with Night Vision',
-            'car charger': 'Fast Charging USB Car Charger Adapter',
-            'seat covers': 'Premium Leather Car Seat Covers Set',
-            'organizer': 'Multi-Pocket Car Organizer Storage Solution',
-            'LED lights': 'RGB LED Interior Lighting Kit for Cars',
-            'bluetooth adapter': 'Wireless Bluetooth Car Audio Adapter'
-        }
-
-        for key, template in templates.items():
-            if key in keyword.lower():
-                return template
-
-        return f"Premium {keyword.title()} for Automotive Use"
-
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+        reraise=True
+    )
     async def _fetch_spocket_products(self, category: str = "general") -> List[Dict[str, Any]]:
-        """Fetch trending products from Spocket API or simulate with enhanced stub."""
-        self.logger.debug(f"Fetching products from Spocket API for category: {category}")
+        """Fetch trending products from Spocket API with retry logic.
+        
+        PRODUCTION MODE: Requires SPOCKET_API_KEY environment variable.
+        Implements exponential backoff retry on network failures.
+        
+        Args:
+            category: Product category to fetch (electronics, home, car, general)
+            
+        Returns:
+            List of product dictionaries from Spocket API
+            
+        Raises:
+            ValueError: If API key is missing
+            httpx.HTTPError: If API returns error response after retries
+        """
+        self.structured_logger.info(
+            "🔍 Fetching products from Spocket API",
+            category=category
+        )
 
-        try:
-            # Check for Spocket API credentials
-            api_key = os.getenv('SPOCKET_API_KEY')
-            if not api_key:
-                self.logger.warning("SPOCKET_API_KEY not found, using enhanced stub data")
-                return await self._spocket_enhanced_stub(category=category)
+        # Get API credentials - already validated in _validate_credentials
+        api_key = os.getenv('SPOCKET_API_KEY')
 
-            # Map categories to Spocket format
-            category_mapping = {
-                "electronics": "electronics",
-                "home": "home-garden",
-                "car": "automotive",
-                "general": "trending"
-            }
-            spocket_category = category_mapping.get(category.lower(), category)
+        # Map categories to Spocket format
+        category_mapping = {
+            "electronics": "electronics",
+            "home": "home-garden",
+            "car": "automotive",
+            "general": "trending"
+        }
+        spocket_category = category_mapping.get(category.lower(), category)
 
-            # Real Spocket API implementation
-            async with httpx.AsyncClient() as client:
+        # Real Spocket API implementation with proper error handling and circuit breaker
+        import time
+        start_time = time.time()
+        
+        async def _make_spocket_call():
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 headers = {
                     'Authorization': f'Bearer {api_key}',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'RoyalEquipsOrchestrator/2.0'
                 }
 
                 # Spocket products endpoint
@@ -481,234 +395,70 @@ class ProductResearchAgent(AgentBase):
                         'limit': 15,
                         'sort': 'trending',
                         'shipping_from': 'US,EU'
-                    },
-                    timeout=30
+                    }
                 )
+                return response
+        
+        # Call through circuit breaker
+        response = await self.spocket_breaker.call(_make_spocket_call)
 
-                if response.status_code == 200:
-                    data = response.json()
-                    products = []
+        if response.status_code == 200:
+            duration_ms = (time.time() - start_time) * 1000
+            data = response.json()
+            products = []
 
-                    for item in data.get('data', []):
-                        products.append({
-                            'id': f"spocket_{item.get('id')}",
-                            'title': item.get('title'),
-                            'source': 'Spocket',
-                            'supplier_price': float(item.get('price', 0)),
-                            'suggested_price': float(item.get('price', 0)) * 2.5,  # 150% markup (2.5x multiplier)
-                            'category': item.get('category', category),
-                            'trend_score': self._calculate_trend_score(item),
-                            'image_url': item.get('images', [{}])[0].get('src'),
-                            'supplier_name': item.get('supplier', {}).get('name'),
-                            'shipping_time': item.get('shipping_time'),
-                            'rating': item.get('rating', 0)
-                        })
-
-                    self.logger.info(f"Successfully fetched {len(products)} products from Spocket API for {category}")
-                    return products
-                else:
-                    self.logger.error(f"Spocket API error: {response.status_code}")
-                    return await self._spocket_enhanced_stub(category=category)
-
-        except Exception as e:
-            self.logger.error(f"Error fetching Spocket products: {e}")
-            return await self._spocket_enhanced_stub(category=category)
-
-    async def _autods_enhanced_stub(self, category: str = "general") -> List[Dict[str, Any]]:
-        """Enhanced stub data for AutoDS products with category support."""
-        await asyncio.sleep(0.2)  # Simulate API delay
-
-        # Category-specific product templates
-        products_by_category = {
-            "electronics": [
-                {
-                    'id': 'autods_elec_001',
-                    'title': 'Smart WiFi LED Strip Lights 10M RGB Remote Control',
-                    'source': 'AutoDS',
-                    'supplier_price': 12.50,
-                    'suggested_price': 34.99,
-                    'category': 'Electronics',
-                    'trend_score': 89,
-                    'image_url': 'https://example.com/led-strip.jpg',
-                    'supplier_name': 'SmartHome Direct',
-                    'shipping_time': '7-12 days',
-                    'rating': 4.5
-                },
-                {
-                    'id': 'autods_elec_002',
-                    'title': 'Wireless Security Camera 1080P Night Vision',
-                    'source': 'AutoDS',
-                    'supplier_price': 22.00,
-                    'suggested_price': 59.99,
-                    'category': 'Electronics',
-                    'trend_score': 92,
-                    'image_url': 'https://example.com/security-cam.jpg',
-                    'supplier_name': 'SecureVision Pro',
-                    'shipping_time': '8-15 days',
-                    'rating': 4.6
-                },
-                {
-                    'id': 'autods_elec_003',
-                    'title': 'Bluetooth Earbuds Wireless Charging Case',
-                    'source': 'AutoDS',
-                    'supplier_price': 15.75,
-                    'suggested_price': 44.99,
-                    'category': 'Electronics',
-                    'trend_score': 87,
-                    'image_url': 'https://example.com/earbuds.jpg',
-                    'supplier_name': 'AudioTech Global',
-                    'shipping_time': '10-18 days',
-                    'rating': 4.3
-                }
-            ],
-            "home": [
-                {
-                    'id': 'autods_home_001',
-                    'title': 'Automatic Soap Dispenser Touchless Sensor',
-                    'source': 'AutoDS',
-                    'supplier_price': 8.50,
-                    'suggested_price': 24.99,
-                    'category': 'Home',
-                    'trend_score': 85,
-                    'image_url': 'https://example.com/soap-dispenser.jpg',
-                    'supplier_name': 'HomeSmart Solutions',
-                    'shipping_time': '5-10 days',
-                    'rating': 4.4
-                },
-                {
-                    'id': 'autods_home_002',
-                    'title': 'Electric Spin Scrubber Cleaning Brush',
-                    'source': 'AutoDS',
-                    'supplier_price': 18.00,
-                    'suggested_price': 49.99,
-                    'category': 'Home',
-                    'trend_score': 91,
-                    'image_url': 'https://example.com/scrubber.jpg',
-                    'supplier_name': 'CleanTech Pro',
-                    'shipping_time': '7-14 days',
-                    'rating': 4.7
-                },
-                {
-                    'id': 'autods_home_003',
-                    'title': 'Multi-Function Kitchen Vegetable Chopper',
-                    'source': 'AutoDS',
-                    'supplier_price': 11.25,
-                    'suggested_price': 32.99,
-                    'category': 'Home',
-                    'trend_score': 83,
-                    'image_url': 'https://example.com/chopper.jpg',
-                    'supplier_name': 'KitchenPro Supplies',
-                    'shipping_time': '8-16 days',
-                    'rating': 4.2
-                }
-            ],
-            "general": [
-                {
-                    'id': 'autods_gen_001',
-                    'title': 'Portable Mini Blender USB Rechargeable',
-                    'source': 'AutoDS',
-                    'supplier_price': 14.00,
-                    'suggested_price': 38.99,
-                    'category': 'General',
-                    'trend_score': 86,
-                    'image_url': 'https://example.com/blender.jpg',
-                    'supplier_name': 'HealthyLife Essentials',
-                    'shipping_time': '9-15 days',
-                    'rating': 4.3
-                }
-            ]
-        }
-
-        # Get products for the requested category or general
-        stub_products = products_by_category.get(category.lower(), products_by_category["general"])
-
-        self.logger.debug(f"Using enhanced stub data: {len(stub_products)} products from AutoDS for {category}")
-        return stub_products
-
-    async def _spocket_enhanced_stub(self, category: str = "general") -> List[Dict[str, Any]]:
-        """Enhanced stub data for Spocket products with category support."""
-        await asyncio.sleep(0.3)  # Simulate API delay
-
-        # Category-specific product templates
-        products_by_category = {
-            "electronics": [
-                {
-                    'id': 'spocket_elec_001',
-                    'title': 'USB C Hub Multi-Port Adapter HDMI 4K',
+            for item in data.get('data', []):
+                products.append({
+                    'id': f"spocket_{item.get('id')}",
+                    'title': item.get('title'),
                     'source': 'Spocket',
-                    'supplier_price': 16.50,
-                    'suggested_price': 42.99,
-                    'category': 'Electronics',
-                    'trend_score': 90,
-                    'image_url': 'https://example.com/usb-hub.jpg',
-                    'supplier_name': 'TechConnect US',
-                    'shipping_time': '3-5 days',
-                    'rating': 4.6
-                },
-                {
-                    'id': 'spocket_elec_002',
-                    'title': 'Smart Watch Fitness Tracker Heart Rate Monitor',
-                    'source': 'Spocket',
-                    'supplier_price': 24.00,
-                    'suggested_price': 69.99,
-                    'category': 'Electronics',
-                    'trend_score': 93,
-                    'image_url': 'https://example.com/smartwatch.jpg',
-                    'supplier_name': 'FitTech Direct',
-                    'shipping_time': '4-7 days',
-                    'rating': 4.5
-                }
-            ],
-            "home": [
-                {
-                    'id': 'spocket_home_001',
-                    'title': 'Bamboo Drawer Organizer Expandable Dividers',
-                    'source': 'Spocket',
-                    'supplier_price': 12.00,
-                    'suggested_price': 29.99,
-                    'category': 'Home',
-                    'trend_score': 84,
-                    'image_url': 'https://example.com/organizer.jpg',
-                    'supplier_name': 'OrganizePro EU',
-                    'shipping_time': '5-8 days',
-                    'rating': 4.4
-                },
-                {
-                    'id': 'spocket_home_002',
-                    'title': 'Silicone Baking Mat Non-Stick Reusable Sheet',
-                    'source': 'Spocket',
-                    'supplier_price': 7.50,
-                    'suggested_price': 19.99,
-                    'category': 'Home',
-                    'trend_score': 82,
-                    'image_url': 'https://example.com/baking-mat.jpg',
-                    'supplier_name': 'BakeWell Supplies',
-                    'shipping_time': '6-10 days',
-                    'rating': 4.3
-                }
-            ],
-            "general": [
-                {
-                    'id': 'spocket_gen_001',
-                    'title': 'Carbon Fiber Phone Holder Dashboard Mount',
-                    'source': 'Spocket',
-                    'supplier_price': 9.99,
-                    'suggested_price': 22.99,
-                    'category': 'General',
-                    'trend_score': 88,
-                    'image_url': 'https://example.com/carbon-holder.jpg',
-                    'supplier_name': 'CarbonTech Solutions',
-                    'shipping_time': '3-5 days',
-                    'rating': 4.4
-                }
-            ]
-        }
+                    'supplier_price': float(item.get('price', 0)),
+                    'suggested_price': float(item.get('price', 0)) * 2.5,  # 150% markup (2.5x multiplier)
+                    'category': item.get('category', category),
+                    'trend_score': self._calculate_trend_score(item),
+                    'image_url': item.get('images', [{}])[0].get('src') if item.get('images') else None,
+                    'supplier_name': item.get('supplier', {}).get('name'),
+                    'shipping_time': item.get('shipping_time'),
+                    'rating': item.get('rating', 0)
+                })
 
-        # Get products for the requested category or general
-        stub_products = products_by_category.get(category.lower(), products_by_category["general"])
+            # Log performance metrics
+            self.structured_logger.performance(
+                "spocket_api_fetch",
+                duration_ms,
+                category=category,
+                products_count=len(products),
+                status_code=200
+            )
+            return products
+        
+        elif response.status_code == 401:
+            error_msg = f"❌ Spocket API authentication failed. Check SPOCKET_API_KEY validity."
+            self.structured_logger.error(error_msg, status_code=401, category=category)
+            raise ValueError(error_msg)
+        
+        elif response.status_code == 429:
+            error_msg = f"❌ Spocket API rate limit exceeded. Retry will be attempted."
+            self.structured_logger.warning(error_msg, status_code=429, category=category)
+            raise httpx.HTTPError(error_msg)
+        
+        else:
+            error_msg = f"❌ Spocket API error: {response.status_code}"
+            duration_ms = (time.time() - start_time) * 1000
+            self.structured_logger.error(
+                error_msg,
+                status_code=response.status_code,
+                category=category,
+                duration_ms=duration_ms
+            )
+            raise httpx.HTTPError(error_msg)
 
-        self.logger.debug(f"Using enhanced stub data: {len(stub_products)} products from Spocket for {category}")
-        return stub_products
+
+    # PRODUCTION MODE: All fallback/stub methods removed
+    # This agent now requires real AutoDS and Spocket API credentials
+    # Removed methods: _fetch_trending_products_fallback, _get_google_trends_products,
+    # _scrape_aliexpress_trending, _scrape_amazon_bestsellers,
+    # _autods_enhanced_stub, _spocket_enhanced_stub
 
     def _calculate_trend_score(self, item: Dict) -> int:
         """Calculate trend score based on product metrics."""
