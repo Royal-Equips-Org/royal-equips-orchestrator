@@ -29,11 +29,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js & pnpm
+      - name: Set up Node.js & pnpm cache
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
+
+      # Install pnpm at an exact version for reproducibility and supply chain security
+      - name: Install pnpm
+        run: npm install -g pnpm@8.15.4
 
       - name: Install dependencies with pnpm
         run: pnpm install --frozen-lockfile
