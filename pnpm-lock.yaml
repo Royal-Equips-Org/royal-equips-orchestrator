@@ -5427,7 +5427,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 8.43.0(typescript@5.6.3)
       '@typescript-eslint/visitor-keys': 8.43.0
       debug: 4.4.3
-      eslint: 8.57.1
+      eslint: 9.0.0
       typescript: 5.6.3
     transitivePeerDependencies:
       - supports-color
