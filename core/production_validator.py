@@ -86,7 +86,7 @@ class ProductionValidator:
                     f"⚠️ VALIDATION WARNINGS: {len(critical_failures)} critical error(s) found. "
                     "Starting anyway (strict_mode=False)."
                 )
-                return True
+                return False
         
         if warnings:
             logger.warning(
