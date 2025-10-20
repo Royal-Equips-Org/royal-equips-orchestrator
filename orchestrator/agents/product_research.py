@@ -259,7 +259,6 @@ class ProductResearchAgent(AgentBase):
         autods_category = category_mapping.get(category.lower(), category)
 
         # Real AutoDS API implementation with proper error handling and circuit breaker
-        import time
         start_time = time.time()
         
         async def _make_autods_call():
