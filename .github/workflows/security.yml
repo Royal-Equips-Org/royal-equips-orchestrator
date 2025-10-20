@@ -89,9 +89,3 @@ jobs:
             echo "📊 Secret scan completed. Review gitleaks-report.json for findings."
           fi
         continue-on-error: true
-
-      - name: 🛡️ Dependency Scan
-        run: |
-          pnpm audit --prod
-          npx osv-scanner -r .
-        continue-on-error: true

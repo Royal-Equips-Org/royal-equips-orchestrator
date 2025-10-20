@@ -15,14 +15,15 @@
     "dev:api": "pnpm --filter @royal-equips/orchestrator-api dev"
   },
   "devDependencies": {
-    "@commitlint/config-conventional": "^17.7.0",
-    "@eslint/js": "9.35.0",
+  "eslint": "8.58.0",
+  "@typescript-eslint/eslint-plugin": "8.43.0",
+  "@typescript-eslint/parser": "8.43.0",
+  "typescript-eslint": "8.43.0",
+    "@typescript-eslint/eslint-plugin": "8.43.0",
+    "@typescript-eslint/parser": "8.43.0",
     "@types/jest": "29",
     "chokidar": "^4.0.3",
     "diff": "^8.0.2",
-    "eslint": "9.35.0",
-    "eslint-config-prettier": "9.1.2",
-    "eslint-plugin-import": "2.32.0",
     "execa": "^9.6.0",
     "fs-extra": "^11.3.1",
     "globals": "15.15.0",
@@ -33,7 +34,6 @@
     "prettier": "3.6.2",
     "tsx": "^4.20.5",
     "typescript": "5.6.3",
-    "typescript-eslint": "8.43.0",
     "yaml": "^2.8.1"
   },
   "engines": {
