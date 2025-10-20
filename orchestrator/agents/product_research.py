@@ -335,6 +335,124 @@ class ProductResearchAgent(AgentBase):
             )
             raise httpx.HTTPError(error_msg)
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+        reraise=True
+    )
+    async def _fetch_spocket_products(self, category: str = "general") -> List[Dict[str, Any]]:
+        """Fetch trending products from Spocket API with retry logic.
+        
+        PRODUCTION MODE: Requires SPOCKET_API_KEY environment variable.
+        Implements exponential backoff retry on network failures.
+        
+        Args:
+            category: Product category to fetch (electronics, home, car, general)
+            
+        Returns:
+            List of product dictionaries from Spocket API
+            
+        Raises:
+            ValueError: If API key is missing
+            httpx.HTTPError: If API returns error response after retries
+        """
+        self.structured_logger.info(
+            "🔍 Fetching products from Spocket API",
+            category=category
+        )
+
+        # Get API credentials - already validated in _validate_credentials
+        api_key = os.getenv('SPOCKET_API_KEY')
+
+        # Map categories to Spocket format
+        category_mapping = {
+            "electronics": "electronics",
+            "home": "home-garden",
+            "car": "automotive",
+            "general": "trending"
+        }
+        spocket_category = category_mapping.get(category.lower(), category)
+
+        # Real Spocket API implementation with proper error handling and circuit breaker
+        import time
+        start_time = time.time()
+        
+        async def _make_spocket_call():
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                headers = {
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'RoyalEquipsOrchestrator/2.0'
+                }
+
+                # Spocket products endpoint
+                response = await client.get(
+                    'https://api.spocket.co/api/v1/dropshipping/search/products',
+                    headers=headers,
+                    params={
+                        'category': spocket_category,
+                        'limit': 15,
+                        'sort': 'trending',
+                        'shipping_from': 'US,EU'
+                    }
+                )
+                return response
+        
+        # Call through circuit breaker
+        response = await self.spocket_breaker.call(_make_spocket_call)
+
+        if response.status_code == 200:
+            duration_ms = (time.time() - start_time) * 1000
+            data = response.json()
+            products = []
+
+            for item in data.get('data', []):
+                products.append({
+                    'id': f"spocket_{item.get('id')}",
+                    'title': item.get('title'),
+                    'source': 'Spocket',
+                    'supplier_price': float(item.get('price', 0)),
+                    'suggested_price': float(item.get('price', 0)) * 2.5,  # 150% markup (2.5x multiplier)
+                    'category': item.get('category', category),
+                    'trend_score': self._calculate_trend_score(item),
+                    'image_url': item.get('images', [{}])[0].get('src') if item.get('images') else None,
+                    'supplier_name': item.get('supplier', {}).get('name'),
+                    'shipping_time': item.get('shipping_time'),
+                    'rating': item.get('rating', 0)
+                })
+
+            # Log performance metrics
+            self.structured_logger.performance(
+                "spocket_api_fetch",
+                duration_ms,
+                category=category,
+                products_count=len(products),
+                status_code=200
+            )
+            return products
+        
+        elif response.status_code == 401:
+            error_msg = f"❌ Spocket API authentication failed. Check SPOCKET_API_KEY validity."
+            self.structured_logger.error(error_msg, status_code=401, category=category)
+            raise ValueError(error_msg)
+        
+        elif response.status_code == 429:
+            error_msg = f"❌ Spocket API rate limit exceeded. Retry will be attempted."
+            self.structured_logger.warning(error_msg, status_code=429, category=category)
+            raise httpx.HTTPError(error_msg)
+        
+        else:
+            error_msg = f"❌ Spocket API error: {response.status_code}"
+            duration_ms = (time.time() - start_time) * 1000
+            self.structured_logger.error(
+                error_msg,
+                status_code=response.status_code,
+                category=category,
+                duration_ms=duration_ms
+            )
+            raise httpx.HTTPError(error_msg)
+
 
     # PRODUCTION MODE: All fallback/stub methods removed
     # This agent now requires real AutoDS and Spocket API credentials
