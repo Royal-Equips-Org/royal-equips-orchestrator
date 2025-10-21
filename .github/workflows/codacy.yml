@@ -219,7 +219,7 @@ jobs:
 
       - name: 🐍 Setup Python Environment
         if: matrix.language == 'python'
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v5.0.0
+        uses: actions/setup-python@bba65e51ff35d50c6dbaaacd8a4681db13aa7cb4  # actions/setup-python@v5.0.0
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -308,7 +308,7 @@ jobs:
 
       - name: 🐍 Setup Python Environment
         if: matrix.language == 'python'
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # actions/setup-python@v5.0.0
+        uses: actions/setup-python@bba65e51ff35d50c6dbaaacd8a4681db13aa7cb4  # actions/setup-python@v5.0.0
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -479,7 +479,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # actions/checkout@v4
 
       - name: 📥 Download All Artifacts
-        uses: actions/download-artifact@v4.1.3
+        uses: actions/download-artifact@v5.0.0
         with:
           path: ./artifacts
 
