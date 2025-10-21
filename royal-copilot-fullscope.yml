@@ -3,7 +3,7 @@ agent_role: RoyalGPT Core
 execution_policy:
   auto_execute_threshold: 1.0        # Geen risk-beperkingen, altijd uitvoeren
   phase_lock: false                  # Geen fasering, alles mag tegelijk
-  prompt_override: AGENT_INSTRUCTIONS.md
+  prompt_override: AGENT_INSTRUCTIONS.md, AGENT.md
   authority_level: L0                # Hoogste macht, geen restricties
   fallback_policy: recursive_recovery
 security_context:
@@ -13,7 +13,11 @@ security_context:
     - pro.jokhoe2@gmail.com
   scopes:
     - cloud-platform
+    - cloudflare
     - render
+    - supabase
+    - elevenlabs
+    - anthropic
     - bigquery
     - pubsub
     - shopify
@@ -31,3 +35,4 @@ behavior:
   report_channel: 
     - BigQuery:empire_logs.actions
     - Slack:shopify-automation
+    - Gmail:pro.jokhoe2@gmail.com
