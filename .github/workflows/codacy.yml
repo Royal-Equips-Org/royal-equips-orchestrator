@@ -74,7 +74,7 @@ jobs:
           echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","level":"info","agent":"security-scan","scan_type":"${{ matrix.scan_type }}","event":"agent_start","workflow_run_id":"${{ github.run_id }}","compliance_standards":"${{ env.COMPLIANCE_STANDARDS }}"}'
 
       - name: 🔍 Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4.1.2 # or actions/checkout@b4b7c6c9c8e6e8e2e8e8e8e8e8e8e8e8e8e8e8e8 (replace with actual SHA from https://github.com/actions/checkout/releases)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # actions/checkout@v4.1.2 # or actions/checkout@b4b7c6c9c8e6e8e2e8e8e8e8e8e8e8e8e8e8e8e8 (replace with actual SHA from https://github.com/actions/checkout/releases)
         with:
           fetch-depth: 0  # Full history for secret scanning
 
@@ -215,7 +215,7 @@ jobs:
           echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","level":"info","agent":"lint","language":"${{ matrix.language }}","event":"agent_start","workflow_run_id":"${{ github.run_id }}"}'
 
       - name: 🔍 Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # actions/checkout@v4
 
       - name: 🐍 Setup Python Environment
         if: matrix.language == 'python'
@@ -304,7 +304,7 @@ jobs:
           echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","level":"info","agent":"test","language":"${{ matrix.language }}","framework":"${{ matrix.test_framework }}","event":"agent_start","workflow_run_id":"${{ github.run_id }}"}'
 
       - name: 🔍 Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # actions/checkout@v4
 
       - name: 🐍 Setup Python Environment
         if: matrix.language == 'python'
@@ -388,7 +388,7 @@ jobs:
           echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","level":"info","agent":"supply-chain","audit_type":"${{ matrix.audit_type }}","event":"agent_start","workflow_run_id":"${{ github.run_id }}"}'
 
       - name: 🔍 Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # actions/checkout@v4
 
       - name: 📦 NPM Audit
         if: matrix.audit_type == 'npm'
@@ -476,7 +476,7 @@ jobs:
           echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","level":"info","agent":"observability","event":"agent_start","workflow_run_id":"${{ github.run_id }}","compliance_standards":"${{ env.COMPLIANCE_STANDARDS }}"}'
 
       - name: 🔍 Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # actions/checkout@v4
 
       - name: 📥 Download All Artifacts
         uses: actions/download-artifact@v4.1.3
