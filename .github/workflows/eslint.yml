@@ -35,16 +35,18 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      # Install pnpm at an exact version for reproducibility and supply chain security
       - name: Install pnpm
         run: npm install -g pnpm@8.15.4
+
+      - name: Add npm global bin to PATH
+        run: echo "$(npm bin -g)" >> $GITHUB_PATH
 
       - name: Install dependencies with pnpm
         run: pnpm install --frozen-lockfile
 
       - name: Audit dependencies
         run: pnpm audit --prod
-        continue-on-error: true # Fail-fast is good, but allow for non-blocking advisories
+        continue-on-error: true
 
       - name: Run ESLint (SARIF)
         env:
