@@ -95,7 +95,7 @@ jobs:
 
       - name: 🔐 Codacy Security Analysis with Self-Healing
         if: matrix.scan_type == 'codacy'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -120,7 +120,7 @@ jobs:
 
       - name: 🕵️ Secret Scanning with Gitleaks
         if: matrix.scan_type == 'secrets'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -140,7 +140,7 @@ jobs:
 
       - name: 🔍 Dependency Vulnerability Scanning
         if: matrix.scan_type == 'dependencies'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -159,7 +159,7 @@ jobs:
             echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","level":"info","agent":"security-scan","event":"dependency_scan_complete","sarif_generated":true}'
 
       - name: 📤 Upload SARIF Results with Circuit Breaker
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: 5
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -233,7 +233,7 @@ jobs:
 
       - name: 🐍 Python Linting with Ruff
         if: matrix.language == 'python'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -252,7 +252,7 @@ jobs:
 
       - name: 🟨 JavaScript/TypeScript Linting with ESLint
         if: matrix.language == 'javascript'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -322,7 +322,7 @@ jobs:
 
       - name: 🐍 Python Testing with Pytest
         if: matrix.language == 'python'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -341,7 +341,7 @@ jobs:
 
       - name: 🟨 JavaScript Testing with Jest
         if: matrix.language == 'javascript'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -392,7 +392,7 @@ jobs:
 
       - name: 📦 NPM Audit
         if: matrix.audit_type == 'npm'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -408,7 +408,7 @@ jobs:
 
       - name: 🐍 Python Dependencies Audit
         if: matrix.audit_type == 'pip'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -425,7 +425,7 @@ jobs:
 
       - name: 🐳 Container Security Audit
         if: matrix.audit_type == 'container'
-        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e  # nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08  # nick-fields/retry@v3.0.2
         with:
           timeout_minutes: ${{ env.AGENT_TIMEOUT_MINUTES }}
           max_attempts: ${{ env.MAX_RETRY_ATTEMPTS }}
@@ -479,7 +479,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # actions/checkout@v4
 
       - name: 📥 Download All Artifacts
-        uses: actions/download-artifact@v5.0.0
+        uses: actions/download-artifact@v6.0.0
         with:
           path: ./artifacts
 
