@@ -268,7 +268,7 @@ jobs:
 
       - name: 📤 Upload Lint Results
         if: always()
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4.3.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v4.3.0
         with:
           name: lint-results-${{ matrix.language }}
           path: |
@@ -357,7 +357,7 @@ jobs:
 
       - name: 📤 Upload Test Results & Coverage
         if: always()
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4.3.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v4.3.0
         with:
           name: test-results-${{ matrix.language }}
           path: |
@@ -450,7 +450,7 @@ jobs:
 
       - name: 📤 Upload Audit Results
         if: always()
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4.3.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v4.3.0
         with:
           name: supply-chain-audit-${{ matrix.audit_type }}
           path: |
@@ -560,7 +560,7 @@ jobs:
           echo '{"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","level":"info","agent":"observability","event":"compliance_audit_complete"}'
 
       - name: 📤 Upload Final Report
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # actions/upload-artifact@v4.3.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v4.3.0
         with:
           name: royal-equips-security-report
           path: |
