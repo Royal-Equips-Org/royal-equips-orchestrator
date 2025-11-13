@@ -1,6 +1,4 @@
-# OSSAR Static Analysis Workflow
-# Production-ready: Security, compliance, audit, self-healing, observability
-
+# OSSAR Static Analysis Workflow — PRODUCTION READY
 name: OSSAR
 
 on:
@@ -29,7 +27,10 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
-          languages: python, javascript, typescript
+          languages: 
+            - python
+            - javascript
+            - typescript
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
@@ -55,7 +56,3 @@ jobs:
         run: |
           echo "CodeQL scan for ${{ github.repository }} at ${{ github.sha }} by ${{ github.actor }}" \
             | tee -a /tmp/org-audit.log
-      # Security/Compliance: Add RBAC, secret push protection, code scanning, etc. as reusable workflows
-      # Use reusable workflows from your central security-playbook in future enhancement
-
-# Advanced Security: Enable in repo settings for full supply chain protection
