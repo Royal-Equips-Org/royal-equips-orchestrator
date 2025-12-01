@@ -219,7 +219,7 @@ jobs:
 
       - name: 🐍 Setup Python Environment
         if: matrix.language == 'python'
-        uses: actions/setup-python@bba65e51ff35d50c6dbaaacd8a4681db13aa7cb4  # actions/setup-python@v5.0.0
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548  # actions/setup-python@v5.0.0
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -308,7 +308,7 @@ jobs:
 
       - name: 🐍 Setup Python Environment
         if: matrix.language == 'python'
-        uses: actions/setup-python@bba65e51ff35d50c6dbaaacd8a4681db13aa7cb4  # actions/setup-python@v5.0.0
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548  # actions/setup-python@v5.0.0
         with:
           python-version: '3.12'
           cache: 'pip'
