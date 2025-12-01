@@ -54,7 +54,7 @@ jobs:
         run: pnpm test --ci --reporters=default || echo "⚠️ Test issues found but continuing..."
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@v6.0.0
+        uses: actions/setup-python@v6.1.0
         with:
           python-version: "3.11"
 
