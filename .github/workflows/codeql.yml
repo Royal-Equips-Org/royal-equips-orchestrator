@@ -43,7 +43,7 @@ jobs:
       # JS/TS dependency graph without running project scripts
       - name: Setup Node (JS/TS only)
         if: ${{ matrix.language == 'javascript-typescript' }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.1.0
         with:
           node-version: '20'
 

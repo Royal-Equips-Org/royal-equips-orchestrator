@@ -226,7 +226,7 @@ jobs:
 
       - name: 🟨 Setup Node.js Environment
         if: matrix.language == 'javascript'
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903  # actions/setup-node@v4.0.1
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # actions/setup-node@v4.0.1
         with:
           node-version: '20'
           cache: 'npm'
@@ -315,7 +315,7 @@ jobs:
 
       - name: 🟨 Setup Node.js Environment
         if: matrix.language == 'javascript'
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903  # actions/setup-node@v4.0.1
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # actions/setup-node@v4.0.1
         with:
           node-version: '20'
           cache: 'npm'
